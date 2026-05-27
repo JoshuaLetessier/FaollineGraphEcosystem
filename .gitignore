@@ -1,0 +1,26 @@
+# Unity generated folders
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emory[Cc]aptures/
+[Cc]rashdumps/
+[Ee]xported[Oo]bj/
+
+# IDE
+.DS_Store
+.idea/
+.vscode/
+*.sln
+*.csproj
+*.suo
+*.user
+*.userprefs
+*.tmp
+
+# OS
+Thumbs.db
+Desktop.ini
