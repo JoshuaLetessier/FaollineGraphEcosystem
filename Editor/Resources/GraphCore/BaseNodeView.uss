@@ -1,0 +1,43 @@
+/* BaseNodeView node chrome styles */
+
+.node {
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #444;
+    min-width: 120px;
+}
+
+.node #title {
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 4px 8px;
+    background-color: #808080;
+}
+
+.node #title-label {
+    font-size: 12px;
+    color: #fff;
+    -unity-font-style: bold;
+}
+
+.node #contents {
+    background-color: #2d2d2d;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+    padding: 4px;
+}
+
+.node:selected {
+    border-color: #4488ff;
+    border-width: 2px;
+}
+
+.node:selected #title {
+    border-color: #4488ff;
+}
+
+/* Port dot */
+.port .unity-base-field__label {
+    font-size: 11px;
+    color: #ccc;
+}

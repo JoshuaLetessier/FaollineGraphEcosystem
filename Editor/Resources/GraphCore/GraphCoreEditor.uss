@@ -1,0 +1,17 @@
+/* GraphCore canvas base styles */
+
+.graphView {
+    background-color: #1e1e1e;
+    flex-grow: 1;
+}
+
+.gridBackground {
+    background-color: #1e1e1e;
+}
+
+.unity-toolbar {
+    background-color: #2a2a2a;
+    border-bottom-width: 1px;
+    border-bottom-color: #111;
+    height: 22px;
+}

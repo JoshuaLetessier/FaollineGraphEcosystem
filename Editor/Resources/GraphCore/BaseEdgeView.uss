@@ -1,0 +1,9 @@
+/* BaseEdgeView edge styles */
+
+.edge {
+    --edge-color: #808080;
+}
+
+.edge:selected > .edge-control {
+    --edge-color: #4488ff;
+}

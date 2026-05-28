@@ -59,8 +59,14 @@ namespace Faolline.GraphCore
         /// <summary>Appends a node to this graph. Use from editor tooling only.</summary>
         public void AddNode(BaseNodeData node) => _nodes.Add(node);
 
+        /// <summary>Removes a node from this graph. Use from editor tooling only.</summary>
+        public void RemoveNode(BaseNodeData node) => _nodes.Remove(node);
+
         /// <summary>Appends an edge to this graph. Use from editor tooling only.</summary>
         public void AddEdge(BaseEdgeData edge) => _edges.Add(edge);
+
+        /// <summary>Removes an edge from this graph. Use from editor tooling only.</summary>
+        public void RemoveEdge(BaseEdgeData edge) => _edges.Remove(edge);
 
         /// <summary>Appends a parameter to this graph. Use from editor tooling only.</summary>
         public void AddParameter(ParameterData parameter) => _parameters.Add(parameter);
