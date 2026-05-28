@@ -2,7 +2,7 @@ using NUnit.Framework;
 
 namespace Faolline.GraphCore.Tests
 {
-    public class BaseContextTests
+    public class BaseContextDataLayerTests
     {
         [Test]
         public void BaseContext_IsConcreteClass()

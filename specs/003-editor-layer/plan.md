@@ -1,148 +1,113 @@
-# Implementation Plan: GraphCore Editor Layer
+# Implementation Plan: [FEATURE]
 
-**Branch**: `003-editor-layer` | **Date**: 2026-05-28 | **Spec**: [spec.md](spec.md)
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 
-**Input**: Feature specification from `specs/003-editor-layer/spec.md`
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+
+**Note**: This template is filled in by the `/speckit-plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
-This feature builds the editor layer of `com.faolline.graphcore` on top of the data and
-execution layers delivered in `001-data-layer` and `002-execution-runtime`. It delivers
-five cohesive components in a new editor-only assembly:
-
-1. **`BaseGraphView`** — extends Unity's `GraphView`; routes `graphViewChanged` callbacks
-   to three protected virtual hooks (`OnNodeCreated`, `OnEdgeConnected`, `OnNodeDeleted`);
-   implements one-way save-only data sync; split across two partial files (core +
-   copy/paste).
-2. **`BaseNodeView` + `BaseEdgeView`** — abstract visual nodes and edges with a sealed
-   three-step color resolution chain: `HasColorOverride` → `NodeTypeColorRegistry` →
-   graphcore default grey (`#808080`).
-3. **`BaseGraphEditorWindow`** — abstract `EditorWindow` that hosts a `BaseGraphView` and
-   provides a Save button wired to `BaseGraphView.SaveGraph()`.
-4. **`CycleDetector`** — stateless iterative DFS over `SubGraphNodeData.TargetGraph`
-   asset references; called on every `OnEdgeConnected` without exception; visually
-   refuses cyclic connections with a `[GraphCore]`-prefixed error.
-5. **`NodeTypeColorRegistry`** — static color map populated by downstream libs in
-   `[InitializeOnLoad]` constructors; consumed by the `ResolveColor()` chain.
-
-Semver assessment: **MINOR** bump (0.2.0 → 0.3.0) — new public API in a new
-editor-only assembly; no existing public API is removed or broken.
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
 
-**Language/Version**: C# 9 (Unity 6000.x Roslyn compiler)
+<!--
+  ACTION REQUIRED: Replace the content in this section with the technical details
+  for the project. The structure here is presented in advisory capacity to guide
+  the iteration process.
+-->
 
-**Primary Dependencies**:
-- `com.faolline.graphcore.Runtime` (001-data-layer + 002-execution-runtime assemblies)
-- `UnityEditor.Experimental.GraphView` (Unity 6000.x, Editor only — permitted by constitution)
-- `UnityEditor` engine assemblies (Editor only)
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
 
-**Storage**: ScriptableObject serialization via `EditorUtility.SetDirty` +
-`AssetDatabase.SaveAssets` on explicit save only
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
 
-**Testing**: Unity Test Runner, EditMode only
-(`com.faolline.graphcore.Tests.EditMode.asmdef`, extended with Editor assembly reference)
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
-**Target Platform**: Unity Editor only (assembly `includePlatforms: ["Editor"]`)
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
 
-**Project Type**: Library (editor extension)
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
 
-**Performance Goals**: Human-interaction speed — no frame-rate or throughput targets.
-`CycleDetector` DFS is bounded by the number of `BaseGraph` assets in the project
-(practical bound: hundreds, not millions).
+**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
 
-**Constraints**:
-- No inline C# style assignments — USS only (enforced by FR-006)
-- No `MonoBehaviour` or `UnityEvent` anywhere in the editor assembly
-- Save-only data sync — no writes to `BaseGraph` during node movement
-- `partial class` permitted for `BaseGraphView` only (constitution Development Standards)
-- No ecosystem lib references in the editor assembly
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
 
-**Scale/Scope**: New editor assembly; ~10 new source files + 3 USS files; ~600 LOC estimated
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
+
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-| Principle | Status | Notes |
-|-----------|--------|-------|
-| I. Foundation Stability | ✅ PASS | New editor-only assembly; zero Runtime changes. MINOR bump (0.2.0 → 0.3.0). No existing public API removed. |
-| II. Universal Abstractions Only | ✅ PASS | `BaseGraphView`, `BaseNodeView`, `BaseEdgeView`, `CycleDetector` are universal editor abstractions — no domain semantics (no dialogue, no quest). |
-| III. Specification-First | ✅ PASS | `spec.md` written and approved before `plan.md`. |
-| IV. Test-Driven Development | ✅ PASS | TDD enforced in tasks. `CycleDetector` and `NodeTypeColorRegistry` are pure logic — fully testable before visual implementation. `BaseNodeView.ResolveColor()` is sealed and independently testable. |
-| V. Simplicity (YAGNI) | ✅ PASS | Static `Dictionary` for `NodeTypeColorRegistry` (not ScriptableObject, not IoC). Iterative DFS for `CycleDetector` (not Kahn's). `partial` used only where constitution explicitly allows. See research.md for rejected alternatives. |
-| VI. Cross-lib Compatibility via SubGraph Only | ✅ PASS | `CycleDetector` follows `SubGraphNodeData.TargetGraph` references only — no knowledge of lib-specific graph types. Edit-time cycle detection satisfies the mandatory requirement. |
-
-**Pre-implementation gate**: PASSED. All six principles satisfied. No violations requiring
-justification.
-
-*Post-design re-check*: PASSED. Phase 1 data model introduces no new violations.
-`partial class` scope is limited to `BaseGraphView` per the constitution. `NodeTypeColorRegistry`
-remains a static dictionary (YAGNI confirmed).
+[Gates determined based on constitution file]
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/003-editor-layer/
-├── plan.md              # This file
-├── research.md          # Phase 0 output
-├── data-model.md        # Phase 1 output
-├── quickstart.md        # Phase 1 output
-├── contracts/
-│   └── public-api.md    # Phase 1 output — public C# interface surface
-└── tasks.md             # Phase 2 output (/speckit-tasks — NOT created by /speckit-plan)
+specs/[###-feature]/
+├── plan.md              # This file (/speckit-plan command output)
+├── research.md          # Phase 0 output (/speckit-plan command)
+├── data-model.md        # Phase 1 output (/speckit-plan command)
+├── quickstart.md        # Phase 1 output (/speckit-plan command)
+├── contracts/           # Phase 1 output (/speckit-plan command)
+└── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
 ```
 
-### Source Code
+### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 
 ```text
-Editor/
-├── Graph/
-│   ├── BaseGraphView.cs              # NEW — core canvas + hooks
-│   └── BaseGraphView.CopyPaste.cs    # NEW — partial: copy/paste with GUID reassignment
-├── Window/
-│   └── BaseGraphEditorWindow.cs      # NEW — EditorWindow host
-├── Nodes/
-│   └── BaseNodeView.cs               # NEW — abstract node view + color resolution
-├── Edges/
-│   └── BaseEdgeView.cs               # NEW — abstract edge view + color resolution
-├── Tools/
-│   ├── CycleDetector.cs              # NEW — iterative DFS over asset dependency graph
-│   └── CycleDetectionResult.cs       # NEW — readonly struct for DFS result
-├── Registry/
-│   ├── NodeTypeColorRegistry.cs      # NEW — static color map
-│   └── GraphCoreDefaults.cs          # NEW — shared constants (NodeGrey)
-├── Clipboard/
-│   └── GraphClipboardData.cs         # NEW — intermediate clipboard model
-├── Resources/
-│   └── GraphCore/
-│       ├── GraphCoreEditor.uss       # NEW — canvas base styles
-│       ├── BaseNodeView.uss          # NEW — node chrome styles
-│       └── BaseEdgeView.uss          # NEW — edge styles
-└── com.faolline.graphcore.Editor.asmdef  # NEW
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
 
-Tests/
-└── EditMode/
-    ├── Editor/
-    │   ├── CycleDetectorTests.cs          # NEW
-    │   ├── NodeTypeColorRegistryTests.cs  # NEW
-    │   ├── BaseNodeViewColorTests.cs      # NEW
-    │   ├── BaseEdgeViewColorTests.cs      # NEW
-    │   └── CopyPasteGuidTests.cs          # NEW
-    └── com.faolline.graphcore.Tests.EditMode.asmdef  # UPDATE: add Editor assembly reference
+tests/
+├── contract/
+├── integration/
+└── unit/
+
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
+
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: Editor code lives in a dedicated `Editor/` root folder (parallel to
-`Runtime/` and `Tests/`) under a new `com.faolline.graphcore.Editor.asmdef`. The `partial`
-split for `BaseGraphView` uses the `ClassName.Aspect.cs` naming convention. USS files are
-co-located under `Editor/Resources/GraphCore/` and loaded via `AssetDatabase.LoadAssetAtPath`.
-
-Pure-logic types (`CycleDetector`, `NodeTypeColorRegistry`, `GraphCoreDefaults`) are grouped
-in topology-named subfolders (`Tools/`, `Registry/`) matching the principle of one class per
-file and clear separation of concerns.
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Complexity Tracking
 
-> No constitution violations. Section not required.
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |

@@ -5,32 +5,24 @@ using UnityEngine;
 
 namespace Faolline.GraphCore.Tests
 {
-    /// <summary>
-    /// Tests for BaseRunner on a simple linear graph (Start → Statement → End).
-    /// No SubGraph or history features tested here.
-    /// </summary>
-    public class BaseRunnerLinearTests
+    public class BaseRunnerTests
     {
-        // ── Test fixtures ──────────────────────────────────────────────────────
-
-        private BaseGraph _graph;
-        private BaseContext _ctx;
-        private NodeExecutorRegistry _registry;
-        private BaseRunner _runner;
-
-        private StartNodeData _startNode;
-        private StatementNodeData _statementNode;
-        private EndNodeData _endNode;
-
-        private readonly List<UnityEngine.Object> _soInstances = new List<UnityEngine.Object>();
+        private BaseGraph              _graph;
+        private BaseContext            _ctx;
+        private NodeExecutorRegistry   _registry;
+        private BaseRunner             _runner;
+        private StartNodeData          _startNode;
+        private StatementNodeData      _statementNode;
+        private EndNodeData            _endNode;
+        private readonly List<UnityEngine.Object>  _soInstances = new List<UnityEngine.Object>();
 
         [SetUp]
         public void SetUp()
         {
-            _graph    = ScriptableObject.CreateInstance<BaseGraph>();
-            _ctx      = new BaseContext();
-            _registry = new NodeExecutorRegistry();
-            _runner   = new BaseRunner();
+            _graph         = ScriptableObject.CreateInstance<BaseGraph>();
+            _ctx           = new BaseContext();
+            _registry      = new NodeExecutorRegistry();
+            _runner        = new BaseRunner();
 
             _startNode = new StartNodeData
             {
@@ -62,16 +54,18 @@ namespace Faolline.GraphCore.Tests
         [TearDown]
         public void TearDown()
         {
-            foreach (var so in _soInstances) UnityEngine.Object.DestroyImmediate(so);
+            foreach (var so in _soInstances)
+                UnityEngine.Object.DestroyImmediate(so);
             _soInstances.Clear();
         }
 
-        // ── Start ──────────────────────────────────────────────────────────────
+        // ── Start ─────────────────────────────────────────────────────────────
 
         [Test]
-        public void Start_TransitionsToNodeReady()
+        public void Start_ValidGraph_TransitionsToNodeReady()
         {
             _runner.Start(_graph, _ctx, _registry);
+
             Assert.AreEqual(RunnerState.NodeReady, _runner.State);
         }
 
@@ -79,11 +73,12 @@ namespace Faolline.GraphCore.Tests
         public void Start_MissingEntryNodeId_ThrowsInvalidOperationException()
         {
             _graph.EntryNodeId = null;
+
             Assert.Throws<InvalidOperationException>(() => _runner.Start(_graph, _ctx, _registry));
         }
 
         [Test]
-        public void Start_RaisesOnNodeEntered_ForEntryNode()
+        public void Start_ValidGraph_RaisesOnNodeEntered()
         {
             BaseNodeData entered = null;
             _runner.OnNodeEntered += n => entered = n;
@@ -95,7 +90,7 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void Start_RaisesOnNodeCompleted_ForEntryNode()
+        public void Start_ValidGraph_RaisesOnNodeCompleted()
         {
             BaseNodeData completed = null;
             _runner.OnNodeCompleted += n => completed = n;
@@ -106,32 +101,30 @@ namespace Faolline.GraphCore.Tests
             Assert.AreEqual("start", completed.Id);
         }
 
-        // ── Proceed ────────────────────────────────────────────────────────────
+        // ── Proceed ───────────────────────────────────────────────────────────
 
         [Test]
-        public void Proceed_AdvancesToNextNode()
+        public void Proceed_FromNodeReady_AdvancesToNextNode()
         {
             var visited = new List<string>();
             _runner.OnNodeEntered += n => visited.Add(n.Id);
 
-            _runner.Start(_graph, _ctx, _registry); // enters Start
-            _runner.Proceed();                      // exits Start → enters Statement
+            _runner.Start(_graph, _ctx, _registry);
+            _runner.Proceed();
 
             Assert.AreEqual(2, visited.Count);
             Assert.AreEqual("stmt", visited[1]);
         }
 
         [Test]
-        public void Proceed_ExecutesFullNodeSequence()
+        public void Proceed_ExecutesFullNodeLifecycleOrder()
         {
-            var sequence = new List<string>();
-
-            var enterAction = CreateTrackingAction("enterAction", sequence);
+            var sequence     = new List<string>();
+            var enterAction  = CreateTrackingAction("enter:stmt", sequence);
             _statementNode.OnEnterActions.Add(enterAction);
 
-            var stmtExecutor = new LambdaExecutor(StatementNodeData.NodeTypeId,
-                (n, _) => sequence.Add($"execute:{n.Id}"));
-            _registry.Register(stmtExecutor);
+            _registry.Register(new LambdaExecutor(StatementNodeData.NodeTypeId,
+                (n, _) => sequence.Add($"exec:{n.Id}")));
 
             _runner.OnNodeCompleted += n =>
             {
@@ -139,16 +132,16 @@ namespace Faolline.GraphCore.Tests
             };
 
             _runner.Start(_graph, _ctx, _registry);
-            _runner.Proceed(); // enter Statement
+            _runner.Proceed();
 
-            Assert.That(sequence, Is.EqualTo(new[] { "enterAction", "execute:stmt", "completed:stmt" }));
+            Assert.That(sequence, Is.EqualTo(new[] { "enter:stmt", "exec:stmt", "completed:stmt" }));
         }
 
         [Test]
-        public void Proceed_OnExitActions_CalledOnCurrentNodeBeforeAdvancing()
+        public void Proceed_OnExitActions_RunBeforeNextNodeEntered()
         {
-            var sequence = new List<string>();
-            var exitAction = CreateTrackingAction("exitStart", sequence);
+            var sequence   = new List<string>();
+            var exitAction = CreateTrackingAction("exit:start", sequence);
             _startNode.OnExitActions.Add(exitAction);
 
             _runner.OnNodeEntered += n =>
@@ -159,47 +152,73 @@ namespace Faolline.GraphCore.Tests
             _runner.Start(_graph, _ctx, _registry);
             _runner.Proceed();
 
-            Assert.AreEqual(2, sequence.Count);
-            Assert.AreEqual("exitStart",    sequence[0]);
+            Assert.AreEqual(2,              sequence.Count);
+            Assert.AreEqual("exit:start",   sequence[0]);
             Assert.AreEqual("entered:stmt", sequence[1]);
         }
 
         [Test]
         public void Proceed_ReachesEndNode_TransitionsToEnded()
         {
-            AutoProceed();
+            AutoProceedAll();
+
             Assert.AreEqual(RunnerState.Ended, _runner.State);
         }
 
         [Test]
-        public void Proceed_AfterEnded_IsNoOp()
+        public void Proceed_WhenEnded_IsNoOp()
         {
-            AutoProceed();
+            AutoProceedAll();
+
             Assert.DoesNotThrow(() => _runner.Proceed());
             Assert.AreEqual(RunnerState.Ended, _runner.State);
         }
 
+        // ── OnEnded ───────────────────────────────────────────────────────────
+
         [Test]
-        public void OnEnded_RaisedWithCorrectReason()
+        public void OnEnded_RaisedWithCorrectEndReason()
         {
             EndReason? received = null;
             _runner.OnEnded += r => received = r;
 
-            AutoProceed();
+            AutoProceedAll();
 
             Assert.AreEqual(EndReason.Completed, received);
         }
 
-        // ── EntryConditions ────────────────────────────────────────────────────
+        [Test]
+        public void OnEnded_EndReasonCancelled_RaisedCorrectly()
+        {
+            _endNode.EndReason = EndReason.Cancelled;
+            EndReason? received = null;
+            _runner.OnEnded += r => received = r;
+
+            AutoProceedAll();
+
+            Assert.AreEqual(EndReason.Cancelled, received);
+        }
+
+        [Test]
+        public void OnEnded_EndReasonError_RaisedCorrectly()
+        {
+            _endNode.EndReason = EndReason.Error;
+            EndReason? received = null;
+            _runner.OnEnded += r => received = r;
+
+            AutoProceedAll();
+
+            Assert.AreEqual(EndReason.Error, received);
+        }
+
+        // ── EntryCondition ────────────────────────────────────────────────────
 
         [Test]
         public void EntryCondition_AllPass_NodeExecutes()
         {
-            var executed = false;
-            var cond = CreateCondition(true);
-            _statementNode.EntryConditions.Add(cond);
-            _registry.Register(new LambdaExecutor(StatementNodeData.NodeTypeId,
-                (_, __) => executed = true));
+            bool executed = false;
+            _statementNode.EntryConditions.Add(CreateCondition(true));
+            _registry.Register(new LambdaExecutor(StatementNodeData.NodeTypeId, (_, __) => executed = true));
 
             _runner.Start(_graph, _ctx, _registry);
             _runner.Proceed();
@@ -224,7 +243,6 @@ namespace Faolline.GraphCore.Tests
         public void EntryCondition_Fails_RunnerStaysNodeReady()
         {
             _statementNode.EntryConditions.Add(CreateCondition(false));
-            _runner.OnStuck += () => { };
 
             _runner.Start(_graph, _ctx, _registry);
             _runner.Proceed();
@@ -232,7 +250,7 @@ namespace Faolline.GraphCore.Tests
             Assert.AreEqual(RunnerState.NodeReady, _runner.State);
         }
 
-        // ── ChooseById ─────────────────────────────────────────────────────────
+        // ── ChooseById ────────────────────────────────────────────────────────
 
         [Test]
         public void ChooseById_SelectsEdgeByEdgeId()
@@ -246,7 +264,42 @@ namespace Faolline.GraphCore.Tests
             Assert.AreEqual("stmt", entered?.Id);
         }
 
-        // ── Executor dispatch ──────────────────────────────────────────────────
+        [Test]
+        public void ChooseById_SelectsEdgeByPortName()
+        {
+            var g = ScriptableObject.CreateInstance<BaseGraph>();
+            _soInstances.Add(g);
+
+            g.AddNode(new StartNodeData     { Id = "n0", NodeType = StartNodeData.NodeTypeId });
+            g.AddNode(new StatementNodeData { Id = "n1", NodeType = StatementNodeData.NodeTypeId });
+            g.AddNode(new EndNodeData       { Id = "n2", NodeType = EndNodeData.NodeTypeId });
+            g.AddEdge(new BaseEdgeData { Id = "ex1", FromNodeId = "n0", ToNodeId = "n1", PortName = "main" });
+            g.AddEdge(new BaseEdgeData { Id = "ex2", FromNodeId = "n1", ToNodeId = "n2" });
+            g.EntryNodeId = "n0";
+
+            BaseNodeData entered = null;
+            var r = new BaseRunner();
+            r.OnNodeEntered += n => entered = n;
+            r.Start(g, new BaseContext(), new NodeExecutorRegistry());
+
+            r.ChooseById("main");
+
+            Assert.AreEqual("n1", entered?.Id);
+        }
+
+        [Test]
+        public void ChooseById_NoMatchingEdge_RaisesOnStuck()
+        {
+            bool stuck = false;
+            _runner.OnStuck += () => stuck = true;
+
+            _runner.Start(_graph, _ctx, _registry);
+            _runner.ChooseById("nonexistent-id");
+
+            Assert.IsTrue(stuck);
+        }
+
+        // ── Execute ───────────────────────────────────────────────────────────
 
         [Test]
         public void Execute_NoRegisteredExecutor_DoesNotThrow()
@@ -265,9 +318,23 @@ namespace Faolline.GraphCore.Tests
             Assert.AreEqual(1, calls);
         }
 
-        // ── Helpers ────────────────────────────────────────────────────────────
+        [Test]
+        public void Execute_RegisteredExecutor_CalledWithCorrectNodeAndContext()
+        {
+            BaseNodeData receivedNode = null;
+            BaseContext  receivedCtx  = null;
+            _registry.Register(new LambdaExecutor(StartNodeData.NodeTypeId,
+                (n, c) => { receivedNode = n; receivedCtx = c; }));
 
-        private void AutoProceed()
+            _runner.Start(_graph, _ctx, _registry);
+
+            Assert.AreSame(_startNode, receivedNode);
+            Assert.AreSame(_ctx,       receivedCtx);
+        }
+
+        // ── Helpers ───────────────────────────────────────────────────────────
+
+        private void AutoProceedAll()
         {
             _runner.OnNodeCompleted += _ =>
             {
@@ -293,11 +360,11 @@ namespace Faolline.GraphCore.Tests
             return c;
         }
 
-        // ── Mock helpers (ScriptableObject-safe) ──────────────────────────────
+        // ── Inner stubs ───────────────────────────────────────────────────────
 
         private class TrackingAction : BaseAction
         {
-            public string Label;
+            public string       Label;
             public List<string> Log;
             public override void Execute(BaseContext context) => Log?.Add(Label);
         }

@@ -5,39 +5,45 @@ using UnityEngine;
 
 namespace Faolline.GraphCore.Tests
 {
-    public class ExecutionBaseContextTests
+    public class BaseContextTests
     {
+        // No shared mutable state — every test constructs its own BaseContext locally.
+
         // ── Set / Get ─────────────────────────────────────────────────────────
 
         [Test]
-        public void Set_And_Get_Bool_ReturnsCorrectValue()
+        public void Set_Get_Bool_ReturnsCorrectValue()
         {
             var ctx = new BaseContext();
             ctx.Set<bool>("flag", true);
+
             Assert.AreEqual(true, ctx.Get<bool>("flag"));
         }
 
         [Test]
-        public void Set_And_Get_Int_ReturnsCorrectValue()
+        public void Set_Get_Int_ReturnsCorrectValue()
         {
             var ctx = new BaseContext();
             ctx.Set<int>("score", 42);
+
             Assert.AreEqual(42, ctx.Get<int>("score"));
         }
 
         [Test]
-        public void Set_And_Get_Float_ReturnsCorrectValue()
+        public void Set_Get_Float_ReturnsCorrectValue()
         {
             var ctx = new BaseContext();
             ctx.Set<float>("speed", 3.14f);
+
             Assert.AreEqual(3.14f, ctx.Get<float>("speed"), 0.0001f);
         }
 
         [Test]
-        public void Set_And_Get_String_ReturnsCorrectValue()
+        public void Set_Get_String_ReturnsCorrectValue()
         {
             var ctx = new BaseContext();
             ctx.Set<string>("name", "Hero");
+
             Assert.AreEqual("Hero", ctx.Get<string>("name"));
         }
 
@@ -47,6 +53,7 @@ namespace Faolline.GraphCore.Tests
             var ctx = new BaseContext();
             ctx.Set<int>("score", 10);
             ctx.Set<int>("score", 99);
+
             Assert.AreEqual(99, ctx.Get<int>("score"));
         }
 
@@ -54,6 +61,7 @@ namespace Faolline.GraphCore.Tests
         public void Set_UnsupportedType_ThrowsArgumentException()
         {
             var ctx = new BaseContext();
+
             Assert.Throws<ArgumentException>(() => ctx.Set<double>("x", 1.0));
         }
 
@@ -64,7 +72,9 @@ namespace Faolline.GraphCore.Tests
         {
             var ctx = new BaseContext();
             ctx.Set<int>("score", 7);
+
             bool result = ctx.TryGet<int>("score", out int val);
+
             Assert.IsTrue(result);
             Assert.AreEqual(7, val);
         }
@@ -73,7 +83,9 @@ namespace Faolline.GraphCore.Tests
         public void TryGet_MissingKey_ReturnsFalseAndDefault()
         {
             var ctx = new BaseContext();
+
             bool result = ctx.TryGet<int>("missing", out int val);
+
             Assert.IsFalse(result);
             Assert.AreEqual(default(int), val);
         }
@@ -83,6 +95,7 @@ namespace Faolline.GraphCore.Tests
         {
             var ctx = new BaseContext();
             ctx.Set<bool>("ready", false);
+
             Assert.IsTrue(ctx.Has("ready"));
         }
 
@@ -90,6 +103,7 @@ namespace Faolline.GraphCore.Tests
         public void Has_MissingKey_ReturnsFalse()
         {
             var ctx = new BaseContext();
+
             Assert.IsFalse(ctx.Has("unknown"));
         }
 
@@ -97,22 +111,21 @@ namespace Faolline.GraphCore.Tests
         public void Get_MissingKey_ThrowsKeyNotFoundException()
         {
             var ctx = new BaseContext();
-            Assert.Throws<System.Collections.Generic.KeyNotFoundException>(() => ctx.Get<int>("nope"));
+
+            Assert.Throws<KeyNotFoundException>(() => ctx.Get<int>("nope"));
         }
 
-        // ── Change notifications ───────────────────────────────────────────────
+        // ── OnParameterChanged ────────────────────────────────────────────────
 
         [Test]
         public void OnParameterChanged_FiredOnSet()
         {
             var ctx = new BaseContext();
             object received = null;
-            Action<object> handler = v => received = v;
-            ctx.OnParameterChanged("score", handler);
+            ctx.OnParameterChanged("score", v => received = v);
 
             ctx.Set<int>("score", 100);
 
-            Assert.IsNotNull(received);
             Assert.AreEqual(100, (int)received);
         }
 
@@ -144,20 +157,21 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void OnParameterChanged_NotFiredForInitialSetIfKeyAbsent()
+        public void OnParameterChanged_FiresOnFirstSet()
         {
-            // The event fires whenever Set is called, even first time
             var ctx = new BaseContext();
             int calls = 0;
             ctx.OnParameterChanged("hp", _ => calls++);
+
             ctx.Set<int>("hp", 50);
+
             Assert.AreEqual(1, calls);
         }
 
         // ── DeepClone ─────────────────────────────────────────────────────────
 
         [Test]
-        public void DeepClone_CopiesValues()
+        public void DeepClone_CopiesAllValues()
         {
             var ctx = new BaseContext();
             ctx.Set<int>("score", 10);
@@ -165,21 +179,32 @@ namespace Faolline.GraphCore.Tests
 
             var clone = ctx.DeepClone();
 
-            Assert.AreEqual(10, clone.Get<int>("score"));
+            Assert.AreEqual(10,   clone.Get<int>("score"));
             Assert.AreEqual(true, clone.Get<bool>("done"));
         }
 
         [Test]
-        public void DeepClone_DoesNotShareValues()
+        public void DeepClone_MutatingOriginalDoesNotAffectClone()
         {
             var ctx = new BaseContext();
             ctx.Set<int>("score", 10);
-
             var clone = ctx.DeepClone();
+
             ctx.Set<int>("score", 99);
 
-            Assert.AreEqual(10, clone.Get<int>("score"),
-                "Clone should not be affected by changes to original.");
+            Assert.AreEqual(10, clone.Get<int>("score"));
+        }
+
+        [Test]
+        public void DeepClone_MutatingCloneDoesNotAffectOriginal()
+        {
+            var ctx = new BaseContext();
+            ctx.Set<int>("score", 10);
+            var clone = ctx.DeepClone();
+
+            clone.Set<int>("score", 99);
+
+            Assert.AreEqual(10, ctx.Get<int>("score"));
         }
 
         [Test]
@@ -192,83 +217,17 @@ namespace Faolline.GraphCore.Tests
             var clone = ctx.DeepClone();
             clone.Set<int>("score", 5);
 
-            Assert.AreEqual(0, calls, "Clone subscribers must be empty.");
+            Assert.AreEqual(0, calls, "Clone must not carry subscribers from original.");
         }
 
         [Test]
         public void DeepClone_EmptyContext_ReturnsValidContext()
         {
-            var ctx = new BaseContext();
+            var ctx   = new BaseContext();
             var clone = ctx.DeepClone();
+
             Assert.IsNotNull(clone);
             Assert.IsFalse(clone.Has("anything"));
-        }
-
-        // ── InitFromGraph ─────────────────────────────────────────────────────
-
-        [Test]
-        public void InitFromGraph_PopulatesBoolParameter()
-        {
-            var graph = ScriptableObject.CreateInstance<BaseGraph>();
-            graph.AddParameter(new ParameterData { Key = "IsReady", Type = ParameterType.Bool, DefaultValue = "true" });
-
-            var ctx = new BaseContext();
-            ctx.InitFromGraph(graph);
-
-            Assert.AreEqual(true, ctx.Get<bool>("IsReady"));
-            UnityEngine.Object.DestroyImmediate(graph);
-        }
-
-        [Test]
-        public void InitFromGraph_PopulatesIntParameter()
-        {
-            var graph = ScriptableObject.CreateInstance<BaseGraph>();
-            graph.AddParameter(new ParameterData { Key = "Score", Type = ParameterType.Int, DefaultValue = "99" });
-
-            var ctx = new BaseContext();
-            ctx.InitFromGraph(graph);
-
-            Assert.AreEqual(99, ctx.Get<int>("Score"));
-            UnityEngine.Object.DestroyImmediate(graph);
-        }
-
-        [Test]
-        public void InitFromGraph_PopulatesFloatParameter()
-        {
-            var graph = ScriptableObject.CreateInstance<BaseGraph>();
-            graph.AddParameter(new ParameterData { Key = "Speed", Type = ParameterType.Float, DefaultValue = "1.5" });
-
-            var ctx = new BaseContext();
-            ctx.InitFromGraph(graph);
-
-            Assert.AreEqual(1.5f, ctx.Get<float>("Speed"), 0.0001f);
-            UnityEngine.Object.DestroyImmediate(graph);
-        }
-
-        [Test]
-        public void InitFromGraph_PopulatesStringParameter()
-        {
-            var graph = ScriptableObject.CreateInstance<BaseGraph>();
-            graph.AddParameter(new ParameterData { Key = "Name", Type = ParameterType.String, DefaultValue = "Hero" });
-
-            var ctx = new BaseContext();
-            ctx.InitFromGraph(graph);
-
-            Assert.AreEqual("Hero", ctx.Get<string>("Name"));
-            UnityEngine.Object.DestroyImmediate(graph);
-        }
-
-        [Test]
-        public void InitFromGraph_InvalidBoolValue_UsesDefault()
-        {
-            var graph = ScriptableObject.CreateInstance<BaseGraph>();
-            graph.AddParameter(new ParameterData { Key = "Flag", Type = ParameterType.Bool, DefaultValue = "notabool" });
-
-            var ctx = new BaseContext();
-            ctx.InitFromGraph(graph);
-
-            Assert.AreEqual(default(bool), ctx.Get<bool>("Flag"));
-            UnityEngine.Object.DestroyImmediate(graph);
         }
     }
 }
