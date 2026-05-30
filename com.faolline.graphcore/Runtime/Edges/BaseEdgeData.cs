@@ -10,9 +10,9 @@ namespace Faolline.GraphCore
     [Serializable]
     public class BaseEdgeData
     {
-        [SerializeField] private string        _id;
-        [SerializeField] private string        _fromNodeId;
-        [SerializeField] private string        _toNodeId;
+        [SerializeField, HideInInspector] private string        _id;
+        [SerializeField, HideInInspector] private string        _fromNodeId;
+        [SerializeField, HideInInspector] private string        _toNodeId;
         [SerializeField] private string        _portName;
         [SerializeField] private BaseCondition _condition;
         [SerializeField] private bool          _hasColorOverride;

@@ -22,6 +22,20 @@ namespace Faolline.GraphCore
         /// <summary>Current execution state.</summary>
         public RunnerState State => _state;
 
+        /// <summary>
+        /// The node currently active in the execution stack. Returns null when
+        /// <see cref="State"/> is <see cref="RunnerState.Idle"/> or the stack is empty.
+        /// </summary>
+        public BaseNodeData CurrentNode
+        {
+            get
+            {
+                if (_graphStack.Count == 0) return null;
+                var frame = _graphStack.Peek();
+                return FindNode(frame.Graph, frame.CurrentNodeId);
+            }
+        }
+
         // ── Internal fields ────────────────────────────────────────────────────
 
         private readonly Stack<GraphExecutionState> _graphStack =
@@ -154,6 +168,11 @@ namespace Faolline.GraphCore
             // 1. EntryConditions
             foreach (var condition in node.EntryConditions)
             {
+                if (condition == null)
+                {
+                    UnityEngine.Debug.LogWarning($"[GraphCore] Null condition entry skipped on node '{node.Id}'.");
+                    continue;
+                }
                 if (!condition.Evaluate(_context))
                 {
                     OnStuck?.Invoke();
@@ -163,7 +182,10 @@ namespace Faolline.GraphCore
 
             // 2. OnEnterActions
             foreach (var action in node.OnEnterActions)
+            {
+                if (action == null) { UnityEngine.Debug.LogWarning($"[GraphCore] Null action entry skipped on node '{node.Id}'."); continue; }
                 action.Execute(_context);
+            }
 
             // 3. Executor
             _registry?.GetExecutor(node.NodeType)?.Execute(node, _context);
@@ -183,7 +205,10 @@ namespace Faolline.GraphCore
 
             // 5. OnExitActions
             foreach (var action in node.OnExitActions)
+            {
+                if (action == null) { UnityEngine.Debug.LogWarning($"[GraphCore] Null action entry skipped on node '{node.Id}'."); continue; }
                 action.Execute(_context);
+            }
 
             // Collect outgoing edges
             var outEdges = GetOutgoingEdges(frame.Graph, frame.CurrentNodeId);

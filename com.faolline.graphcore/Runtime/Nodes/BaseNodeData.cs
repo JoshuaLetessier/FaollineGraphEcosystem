@@ -12,11 +12,9 @@ namespace Faolline.GraphCore
     [Serializable]
     public abstract class BaseNodeData
     {
-        [SerializeField] private string _id;
-        [SerializeField] private string _nodeType;
+        [SerializeField, HideInInspector] private string _id;
+        [SerializeField, HideInInspector] private string _nodeType;
         [SerializeField] private Vector2 _position;
-        [SerializeField] private string _serializedPayload;
-
         [SerializeField] private List<BaseCondition> _entryConditions  = new List<BaseCondition>();
         [SerializeField] private List<BaseAction>    _onEnterActions   = new List<BaseAction>();
         [SerializeField] private List<BaseAction>    _onExitActions    = new List<BaseAction>();
@@ -46,15 +44,6 @@ namespace Faolline.GraphCore
         {
             get => _position;
             set => _position = value;
-        }
-
-        /// <summary>
-        /// Opaque string payload for domain-specific data. The data layer does not validate content.
-        /// </summary>
-        public string SerializedPayload
-        {
-            get => _serializedPayload;
-            set => _serializedPayload = value;
         }
 
         /// <summary>

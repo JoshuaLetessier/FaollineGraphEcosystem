@@ -1,4 +1,4 @@
-/* GraphCore canvas base styles */
+/* GraphCore canvas and inspector base styles */
 
 .graphView {
     background-color: #1e1e1e;
@@ -14,4 +14,12 @@
     border-bottom-width: 1px;
     border-bottom-color: #111;
     height: 22px;
+}
+
+.graph-inspector-panel {
+    min-width: 260px;
+    background-color: #2d2d2d;
+    padding: 8px;
+    border-left-width: 1px;
+    border-left-color: #111;
 }

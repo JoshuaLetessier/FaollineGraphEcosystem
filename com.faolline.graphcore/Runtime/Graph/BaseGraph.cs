@@ -11,11 +11,11 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "GraphCore/Base Graph", fileName = "NewBaseGraph")]
     public class BaseGraph : ScriptableObject
     {
-        [SerializeField]   private string             _graphId;
+        [SerializeField, HideInInspector] private string             _graphId;
         [SerializeReference] private List<BaseNodeData> _nodes      = new List<BaseNodeData>();
         [SerializeReference] private List<BaseEdgeData> _edges      = new List<BaseEdgeData>();
         [SerializeField]   private List<ParameterData>  _parameters = new List<ParameterData>();
-        [SerializeField]   private string             _entryNodeId;
+        [SerializeField, HideInInspector] private string             _entryNodeId;
         [SerializeField]   private int                _historyDepth = 20;
 
         private void OnEnable()
@@ -70,5 +70,8 @@ namespace Faolline.GraphCore
 
         /// <summary>Appends a parameter to this graph. Use from editor tooling only.</summary>
         public void AddParameter(ParameterData parameter) => _parameters.Add(parameter);
+
+        /// <summary>Removes a parameter from this graph. Use from editor tooling only.</summary>
+        public void RemoveParameter(ParameterData parameter) => _parameters.Remove(parameter);
     }
 }

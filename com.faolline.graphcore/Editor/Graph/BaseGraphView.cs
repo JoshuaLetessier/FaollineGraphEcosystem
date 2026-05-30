@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
@@ -13,10 +14,23 @@ namespace Faolline.GraphCore.Editor
     /// </summary>
     public abstract partial class BaseGraphView : GraphView
     {
+        /// <summary>
+        /// Fired when exactly one <see cref="BaseNodeView"/> with non-null NodeData is selected.
+        /// </summary>
+        public event Action<BaseNodeData> NodeSelected;
+
+        /// <summary>
+        /// Fired when the selection is cleared, becomes empty, or contains more than one node.
+        /// </summary>
+        public event Action SelectionCleared;
+
         private static readonly string UssName = "GraphCoreEditor";
 
         private BaseGraph _graph;
         private readonly Dictionary<string, BaseNodeView> _nodeViews = new Dictionary<string, BaseNodeView>();
+
+        /// <summary>The graph currently loaded on this canvas. Null when no graph is loaded.</summary>
+        protected BaseGraph Graph => _graph;
 
         // Tracks whether the canvas has structural changes not yet saved to disk.
         // Node position changes are captured on SaveGraph(), not tracked here.
@@ -38,6 +52,49 @@ namespace Faolline.GraphCore.Editor
             graphViewChanged = OnGraphViewChanged;
             serializeGraphElements = OnSerializeGraphElements;
             unserializeAndPaste = OnUnserializeAndPaste;
+        }
+
+        // ── Selection overrides ───────────────────────────────────────────────
+
+        /// <inheritdoc/>
+        public override void AddToSelection(ISelectable selectable)
+        {
+            base.AddToSelection(selectable);
+            NotifySelectionChanged();
+        }
+
+        /// <inheritdoc/>
+        public override void RemoveFromSelection(ISelectable selectable)
+        {
+            base.RemoveFromSelection(selectable);
+            NotifySelectionChanged();
+        }
+
+        /// <inheritdoc/>
+        public override void ClearSelection()
+        {
+            base.ClearSelection();
+            SelectionCleared?.Invoke();
+        }
+
+        private void NotifySelectionChanged()
+        {
+            int nodeCount = 0;
+            BaseNodeData lastData = null;
+
+            foreach (var item in selection)
+            {
+                if (item is BaseNodeView nv && nv.NodeData != null)
+                {
+                    nodeCount++;
+                    lastData = nv.NodeData;
+                }
+            }
+
+            if (nodeCount == 1)
+                NodeSelected?.Invoke(lastData);
+            else
+                SelectionCleared?.Invoke();
         }
 
         // ── Public API ────────────────────────────────────────────────────────
@@ -70,8 +127,84 @@ namespace Faolline.GraphCore.Editor
             {
                 var view = CreateEdgeView(edgeData);
                 if (view == null) continue;
+                ConnectEdgeView(view, edgeData);
                 AddElement(view);
             }
+        }
+
+        /// <summary>
+        /// Rebuilds and reconnects every edge view touching <paramref name="nodeId"/> from the graph
+        /// data. Call after a node view regenerates its ports (e.g. a Choice node adding/removing a
+        /// choice) so edges bound to surviving ports are reconnected rather than left orphaned.
+        /// </summary>
+        public void ReconnectNodeEdges(string nodeId)
+        {
+            if (_graph == null) return;
+            if (!_nodeViews.ContainsKey(nodeId)) return;
+
+            var stale = new List<Edge>();
+            foreach (var el in edges.ToList())
+            {
+                if (el is BaseEdgeView bev && bev.EdgeData != null
+                    && (bev.EdgeData.FromNodeId == nodeId || bev.EdgeData.ToNodeId == nodeId))
+                    stale.Add(el);
+            }
+            foreach (var e in stale)
+            {
+                e.output?.Disconnect(e);
+                e.input?.Disconnect(e);
+                RemoveElement(e);
+            }
+
+            foreach (var edgeData in _graph.Edges)
+            {
+                if (edgeData.FromNodeId != nodeId && edgeData.ToNodeId != nodeId) continue;
+                var view = CreateEdgeView(edgeData);
+                if (view == null) continue;
+                ConnectEdgeView(view, edgeData);
+                AddElement(view);
+            }
+        }
+
+        /// <summary>
+        /// Reconnects a reloaded <paramref name="edgeView"/> to the source/target node ports so it
+        /// renders on the canvas and tracks node movement. The source port is matched by
+        /// <see cref="BaseEdgeData.PortName"/> (which equals the choice Id for Choice nodes); the
+        /// target uses the node's first input port. No-op if either endpoint cannot be resolved.
+        /// </summary>
+        private void ConnectEdgeView(BaseEdgeView edgeView, BaseEdgeData edgeData)
+        {
+            if (edgeData == null) return;
+            if (!_nodeViews.TryGetValue(edgeData.FromNodeId, out var fromView)) return;
+            if (!_nodeViews.TryGetValue(edgeData.ToNodeId, out var toView)) return;
+
+            var outputPort = FindPort(fromView.outputContainer, edgeData.PortName);
+            var inputPort  = FindPort(toView.inputContainer, null);
+            if (outputPort == null || inputPort == null) return;
+
+            edgeView.output = outputPort;
+            edgeView.input  = inputPort;
+            outputPort.Connect(edgeView);
+            inputPort.Connect(edgeView);
+        }
+
+        /// <summary>
+        /// Returns the port in <paramref name="container"/> whose <c>portName</c> equals
+        /// <paramref name="portName"/>. When <paramref name="portName"/> is null/empty, returns the
+        /// first port (used for single-input nodes). Returns null when no match is found.
+        /// </summary>
+        private static UnityEditor.Experimental.GraphView.Port FindPort(VisualElement container, string portName)
+        {
+            UnityEditor.Experimental.GraphView.Port first = null;
+            foreach (var child in container.Children())
+            {
+                if (child is UnityEditor.Experimental.GraphView.Port port)
+                {
+                    if (first == null) first = port;
+                    if (port.portName == portName) return port;
+                }
+            }
+            return string.IsNullOrEmpty(portName) ? first : null;
         }
 
         /// <summary>
@@ -94,6 +227,36 @@ namespace Faolline.GraphCore.Editor
             _isDirty = false;
         }
 
+        /// <summary>
+        /// Re-applies the resolved color to every node view currently on the canvas.
+        /// Call when node data is modified externally (e.g. from the Inspector).
+        /// </summary>
+        public void RefreshNodeColors()
+        {
+            foreach (var view in _nodeViews.Values)
+                view.RefreshColor();
+        }
+
+        // ── Port compatibility ────────────────────────────────────────────────
+
+        /// <summary>
+        /// Returns all ports that can receive a connection from <paramref name="startPort"/>.
+        /// Allows connections between ports of opposite directions on different nodes.
+        /// Override to add domain-specific type constraints.
+        /// </summary>
+        public override List<UnityEditor.Experimental.GraphView.Port> GetCompatiblePorts(
+            UnityEditor.Experimental.GraphView.Port startPort,
+            UnityEditor.Experimental.GraphView.NodeAdapter nodeAdapter)
+        {
+            var result = new List<UnityEditor.Experimental.GraphView.Port>();
+            foreach (var port in ports.ToList())
+            {
+                if (port.direction != startPort.direction && port.node != startPort.node)
+                    result.Add(port);
+            }
+            return result;
+        }
+
         // ── Abstract factory methods ──────────────────────────────────────────
 
         /// <summary>
@@ -105,6 +268,35 @@ namespace Faolline.GraphCore.Editor
         /// Create and return a <see cref="BaseEdgeView"/> for the given edge data.
         /// </summary>
         protected abstract BaseEdgeView CreateEdgeView(BaseEdgeData edge);
+
+        // ── Protected helpers for subclasses ─────────────────────────────────
+
+        /// <summary>
+        /// Adds <paramref name="nodeData"/> to the loaded graph and the canvas.
+        /// Assigns a GUID to <paramref name="nodeData"/> if <see cref="BaseNodeData.Id"/> is empty.
+        /// Sets the canvas position to <paramref name="position"/>.
+        /// No-op if no graph is currently loaded.
+        /// </summary>
+        protected void AddNodeToCanvas(BaseNodeData nodeData, Vector2 position)
+        {
+            if (_graph == null) return;
+
+            if (string.IsNullOrEmpty(nodeData.Id))
+                nodeData.Id = System.Guid.NewGuid().ToString("D");
+
+            nodeData.Position = position;
+
+            _graph.AddNode(nodeData);
+
+            var view = CreateNodeView(nodeData);
+            if (view == null) return;
+
+            view.SetPosition(new Rect(position, Vector2.zero));
+            AddElement(view);
+            _nodeViews[nodeData.Id] = view;
+            _isDirty = true;
+            OnNodeCreated(nodeData);
+        }
 
         // ── Hooks ─────────────────────────────────────────────────────────────
 

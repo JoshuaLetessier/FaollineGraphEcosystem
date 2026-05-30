@@ -1,5 +1,5 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/004-editmode-test-suite/plan.md
+at specs/007-graphtest-choices/plan.md
 <!-- SPECKIT END -->

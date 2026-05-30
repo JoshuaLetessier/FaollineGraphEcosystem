@@ -11,7 +11,7 @@ namespace Faolline.GraphCore
     [Serializable]
     public class BaseChoice
     {
-        [SerializeField] private string _id;
+        [SerializeField, HideInInspector] private string _id;
         [SerializeField] private BaseCondition _condition;
 
         /// <summary>Unique identifier (GUID) for this choice.</summary>

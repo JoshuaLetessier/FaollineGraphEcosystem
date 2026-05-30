@@ -26,12 +26,10 @@ namespace Faolline.GraphCore.Tests
                 Id = "id-001",
                 NodeType = ConcreteNode.NodeTypeId,
                 Position = new Vector2(10f, 20f),
-                SerializedPayload = "{\"key\":\"value\"}"
             };
             Assert.AreEqual("id-001", node.Id);
             Assert.AreEqual(ConcreteNode.NodeTypeId, node.NodeType);
             Assert.AreEqual(new Vector2(10f, 20f), node.Position);
-            Assert.AreEqual("{\"key\":\"value\"}", node.SerializedPayload);
         }
 
         // T032-T036: US2 lifecycle hook acceptance criteria

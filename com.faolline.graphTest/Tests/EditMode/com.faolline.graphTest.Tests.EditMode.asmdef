@@ -1,0 +1,26 @@
+{
+    "name": "com.faolline.graphTest.Tests.EditMode",
+    "rootNamespace": "Faolline.GraphTest.Tests",
+    "references": [
+        "GUID:273864fc28c64b54f8e6ac29172c83f4",
+        "GUID:68c90cf9b7a839043952233c3e46453d",
+        "GUID:a4f8e6b2c3d1e5f09a7b4c8d2e6f3a1b",
+        "GUID:c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5",
+        "GUID:27619889b8ba8c24980f49ee34dbb44a",
+        "GUID:0acc523941302664db1f4e527237feb3"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "testPlatforms": [
+        "EditMode"
+    ]
+}

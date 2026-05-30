@@ -1,0 +1,16 @@
+{
+    "name": "com.faolline.graphTest.Runtime",
+    "rootNamespace": "Faolline.GraphTest",
+    "references": [
+        "GUID:a4f8e6b2c3d1e5f09a7b4c8d2e6f3a1b"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

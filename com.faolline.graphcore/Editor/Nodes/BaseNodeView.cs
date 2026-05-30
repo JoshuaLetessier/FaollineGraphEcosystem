@@ -31,15 +31,18 @@ namespace Faolline.GraphCore.Editor
         protected virtual Color ColorOverride => Color.gray;
 
         /// <summary>
-        /// Resolves the node background color using the three-step chain:
-        /// override → lib type color → graphcore default grey.
+        /// Resolves the node background color using the four-step chain:
+        /// inspector instance override → code override → lib type color → graphcore default grey.
         /// </summary>
         public Color ResolveColor()
         {
+            if (NodeData != null && NodeData.HasColorOverride)
+                return NodeData.NodeColor;
+
             if (HasColorOverride)
                 return ColorOverride;
 
-            if (NodeData != null && NodeTypeColorRegistry.TryGet(NodeData.NodeType, out var registeredColor))
+            if (NodeData != null && NodeData.NodeType != null && NodeTypeColorRegistry.TryGet(NodeData.NodeType, out var registeredColor))
                 return registeredColor;
 
             return GraphCoreDefaults.NodeGrey;
@@ -78,6 +81,11 @@ namespace Faolline.GraphCore.Editor
                     }
                 }
             }
+        }
+
+        public void RefreshColor()
+        {
+            ApplyTitleColor();
         }
 
         private void ApplyTitleColor()
