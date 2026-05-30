@@ -32,8 +32,9 @@ namespace Faolline.GraphTest.Tests
                 view.RefreshNodeColors();
 
                 var nodeView = view.nodes.ToList().OfType<BaseNodeView>().First(v => v.NodeData?.Id == "n");
-                Assert.AreEqual(Color.red, nodeView.titleContainer.style.backgroundColor.value,
-                    "After a color override + RefreshNodeColors, the node title must show the chosen color");
+                var body = nodeView.Q("contents") ?? nodeView.mainContainer;
+                Assert.AreEqual(Color.red, body.style.backgroundColor.value,
+                    "After a color override + RefreshNodeColors, the node body must show the chosen color");
             }
             finally { Object.DestroyImmediate(graph); }
         }
@@ -54,8 +55,9 @@ namespace Faolline.GraphTest.Tests
                 view.RefreshNodeColors();
 
                 var nodeView = view.nodes.ToList().OfType<BaseNodeView>().First(v => v.NodeData?.Id == "n");
-                Assert.AreNotEqual(Color.red, nodeView.titleContainer.style.backgroundColor.value,
-                    "With HasColorOverride off, the node color must NOT be forced to NodeColor");
+                var body = nodeView.Q("contents") ?? nodeView.mainContainer;
+                Assert.AreNotEqual(Color.red, body.style.backgroundColor.value,
+                    "With HasColorOverride off, the node body must NOT be forced to NodeColor");
             }
             finally { Object.DestroyImmediate(graph); }
         }

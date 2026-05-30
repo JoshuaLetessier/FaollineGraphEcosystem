@@ -62,7 +62,7 @@ namespace Faolline.GraphCore.Editor
             NodeData = nodeData;
             LoadStyleSheet();
             OnBuildView();
-            ApplyTitleColor();
+            ApplyNodeColor();
         }
 
         private void LoadStyleSheet()
@@ -85,16 +85,36 @@ namespace Faolline.GraphCore.Editor
 
         public void RefreshColor()
         {
-            ApplyTitleColor();
+            ApplyNodeColor();
         }
 
-        private void ApplyTitleColor()
+        /// <summary>
+        /// Returns true and the resolved color when this node has an explicit color (instance
+        /// override → code override → registered lib type color). Returns false when only the
+        /// graphcore default would apply — so the canvas keeps its USS default instead of being
+        /// tinted grey. This is the "is there a real color to show" half of <see cref="ResolveColor"/>.
+        /// </summary>
+        public bool TryResolveColorOverride(out Color color)
         {
-            // Apply the resolved color to the title container background.
-            // Dynamic registry-based colors require this minimal C# bridge;
-            // all other layout/typography/spacing styling is in USS.
-            var color = ResolveColor();
-            titleContainer.style.backgroundColor = new StyleColor(color);
+            if (NodeData != null && NodeData.HasColorOverride) { color = NodeData.NodeColor; return true; }
+            if (HasColorOverride)                              { color = ColorOverride;       return true; }
+            if (NodeData != null && NodeData.NodeType != null && NodeTypeColorRegistry.TryGet(NodeData.NodeType, out color)) return true;
+            color = default;
+            return false;
+        }
+
+        private void ApplyNodeColor()
+        {
+            // Tint the node BODY (#contents), not the title bar. Only when an explicit color is set —
+            // otherwise reset to the USS default so un-colored nodes keep their normal look.
+            // Dynamic colors require this minimal C# bridge; all static styling stays in USS.
+            var body = this.Q("contents") ?? mainContainer;
+            if (body == null) return;
+
+            if (TryResolveColorOverride(out var color))
+                body.style.backgroundColor = new StyleColor(color);
+            else
+                body.style.backgroundColor = new StyleColor(StyleKeyword.Null);
         }
     }
 }
