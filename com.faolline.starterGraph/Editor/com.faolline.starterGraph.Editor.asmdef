@@ -1,0 +1,20 @@
+{
+    "name": "com.faolline.starterGraph.Editor",
+    "rootNamespace": "Faolline.StarterGraph.Editor",
+    "references": [
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Editor",
+        "com.faolline.starterGraph.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

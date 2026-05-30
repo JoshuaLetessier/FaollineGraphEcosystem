@@ -1,0 +1,27 @@
+{
+    "name": "com.faolline.starterGraph.Tests.EditMode",
+    "rootNamespace": "Faolline.StarterGraph.Tests",
+    "references": [
+        "com.faolline.starterGraph.Runtime",
+        "com.faolline.starterGraph.Editor",
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Editor",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
