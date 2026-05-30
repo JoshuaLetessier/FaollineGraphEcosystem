@@ -36,6 +36,12 @@ namespace Faolline.GraphTest.Editor
             _graphView = graphView;
         }
 
+        /// <summary>Refreshes node colors on the canvas when a node's color override changes in the inspector.</summary>
+        protected override void OnNodeVisualsChanged()
+        {
+            _graphView?.RefreshNodeColors();
+        }
+
         public override void BindNode(BaseNodeData node)
         {
             ClearInspector();
