@@ -205,6 +205,67 @@ namespace Faolline.GraphTest.Editor
                       "Win/Retreat are offered (Surrender is filtered out). Win → Completed, Retreat → Cancelled.");
         }
 
+        // ── History-depth stress sample ────────────────────────────────────────────
+
+        /// <summary>
+        /// Generates a long linear chain (Start → N statements → End) with a small HistoryDepth so
+        /// the GoBack history cap is observable: after Run, GoBack rewinds only ~HistoryDepth steps
+        /// before it can go no further. Menu: <c>Faolline/Create Sample TestGraph — History Depth Stress</c>.
+        /// </summary>
+        [MenuItem("Faolline/Create Sample TestGraph — History Depth Stress")]
+        public static void CreateHistoryStressSample()
+        {
+            EnsureFolder();
+
+            const int steps  = 50;
+            const int depth  = 10;
+            const int perRow = 10;
+
+            var g = ScriptableObject.CreateInstance<TestGraph>();
+            AssetDatabase.CreateAsset(g, Folder + "/SampleHistoryStress.asset");
+            g.HistoryDepth = depth;
+
+            var start = new StartNodeData { Id = NewId(), NodeType = StartNodeData.NodeTypeId, Position = GridPos(0, perRow) };
+            g.AddNode(start);
+            g.EntryNodeId = start.Id;
+
+            string prev = start.Id;
+            for (int i = 1; i <= steps; i++)
+            {
+                var node = new TestStatementNodeData
+                {
+                    Id = NewId(),
+                    NodeType = TestStatementNodeData.NodeTypeId,
+                    Label = $"Step {i}",
+                    Position = GridPos(i, perRow)
+                };
+                g.AddNode(node);
+                g.AddEdge(Edge(prev, node.Id, "out"));
+                prev = node.Id;
+            }
+
+            var end = new EndNodeData { Id = NewId(), NodeType = EndNodeData.NodeTypeId, Position = GridPos(steps + 1, perRow) };
+            g.AddNode(end);
+            g.AddEdge(Edge(prev, end.Id, "out"));
+
+            EditorUtility.SetDirty(g);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Selection.activeObject = g;
+            EditorGUIUtility.PingObject(g);
+            Debug.Log($"[GraphTest] History-depth stress sample: {steps} steps, HistoryDepth={depth}. " +
+                      $"Run, then click ← GoBack repeatedly — it rewinds only ~{depth} steps before stopping " +
+                      "(older history is dropped, so you cannot reach Start). Raise HistoryDepth on the asset to rewind further.");
+        }
+
+        private static Vector2 GridPos(int index, int perRow)
+        {
+            int col = index % perRow;
+            int row = index / perRow;
+            return new Vector2(col * 200f, row * 130f);
+        }
+
         // ── Helpers ───────────────────────────────────────────────────────────────
 
         private static string NewId() => System.Guid.NewGuid().ToString("D");
