@@ -112,9 +112,16 @@ namespace Faolline.GraphCore.Editor
             if (body == null) return;
 
             if (TryResolveColorOverride(out var color))
+            {
+                // A fully-transparent tint is invisible — the default Color is (0,0,0,0) and the
+                // color picker often leaves alpha at 0. Treat alpha 0 as "opaque" so a chosen color shows.
+                if (color.a <= 0f) color.a = 1f;
                 body.style.backgroundColor = new StyleColor(color);
+            }
             else
+            {
                 body.style.backgroundColor = new StyleColor(StyleKeyword.Null);
+            }
         }
     }
 }

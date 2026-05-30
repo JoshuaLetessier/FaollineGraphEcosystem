@@ -61,5 +61,28 @@ namespace Faolline.GraphTest.Tests
             }
             finally { Object.DestroyImmediate(graph); }
         }
+
+        [Test]
+        public void RefreshNodeColors_TransparentOverride_IsMadeOpaque()
+        {
+            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            var view = new TestGraphView();
+            try
+            {
+                var node = new TestStatementNodeData { Id = "n", NodeType = TestStatementNodeData.NodeTypeId };
+                graph.AddNode(node);
+                view.LoadGraph(graph);
+
+                node.HasColorOverride = true;
+                node.NodeColor = new Color(1f, 0f, 0f, 0f); // red, but fully transparent (the field's default alpha)
+                view.RefreshNodeColors();
+
+                var nodeView = view.nodes.ToList().OfType<BaseNodeView>().First(v => v.NodeData?.Id == "n");
+                var body = nodeView.Q("contents") ?? nodeView.mainContainer;
+                Assert.AreEqual(new Color(1f, 0f, 0f, 1f), body.style.backgroundColor.value,
+                    "A transparent override color (alpha 0) must be made opaque so the node body is visible");
+            }
+            finally { Object.DestroyImmediate(graph); }
+        }
     }
 }

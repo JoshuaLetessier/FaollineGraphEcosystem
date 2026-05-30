@@ -70,15 +70,19 @@ namespace Faolline.GraphCore.Editor
             var foldout = new Foldout { text = "Node Properties", value = true };
 
             AddField(foldout, nodeElement, "_isCheckpoint");
-            // The two color fields drive the node's canvas color — refresh the view live on change.
-            AddVisualField(foldout, nodeElement, "_hasColorOverride");
-            AddVisualField(foldout, nodeElement, "_nodeColor");
+            AddField(foldout, nodeElement, "_hasColorOverride");
+            AddField(foldout, nodeElement, "_nodeColor");
             AddField(foldout, nodeElement, "_entryConditions");
             AddField(foldout, nodeElement, "_onEnterActions");
             AddField(foldout, nodeElement, "_onExitActions");
 
             // Bind all PropertyFields within the foldout in one call.
             foldout.Bind(so);
+
+            // A change to any bound field here (notably the color override) must refresh the node's
+            // canvas visuals. SerializedPropertyChangeEvent bubbles up from the changed field to here.
+            foldout.RegisterCallback<SerializedPropertyChangeEvent>(_ => OnNodeVisualsChanged());
+
             Add(foldout);
         }
 
@@ -94,16 +98,6 @@ namespace Faolline.GraphCore.Editor
             var prop = nodeElement.FindPropertyRelative(relativePath);
             if (prop != null)
                 parent.Add(new PropertyField(prop));
-        }
-
-        // Like AddField, but notifies on value change so the canvas can refresh immediately.
-        private void AddVisualField(VisualElement parent, SerializedProperty nodeElement, string relativePath)
-        {
-            var prop = nodeElement.FindPropertyRelative(relativePath);
-            if (prop == null) return;
-            var field = new PropertyField(prop);
-            field.RegisterValueChangeCallback(_ => OnNodeVisualsChanged());
-            parent.Add(field);
         }
     }
 }
