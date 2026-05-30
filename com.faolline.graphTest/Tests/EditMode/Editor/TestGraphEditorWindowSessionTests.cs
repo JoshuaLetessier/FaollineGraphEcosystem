@@ -179,6 +179,43 @@ namespace Faolline.GraphTest.Tests
         }
 
         [Test]
+        public void AvailableChoices_FiltersByIntCondition()
+        {
+            var passCond = ScriptableObject.CreateInstance<TestIntCondition>();
+            passCond.ParameterKey = "score"; passCond.Operator = ComparisonOperator.GreaterOrEqual; passCond.ExpectedValue = 3;
+            var failCond = ScriptableObject.CreateInstance<TestIntCondition>();
+            failCond.ParameterKey = "score"; failCond.Operator = ComparisonOperator.GreaterOrEqual; failCond.ExpectedValue = 10;
+
+            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            try
+            {
+                graph.AddParameter(new ParameterData { Key = "score", Type = ParameterType.Int, DefaultValue = "5" });
+                var start  = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
+                var choice = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
+                choice.Choices.Add(new TestChoice { Id = "high",  Label = "High",     Condition = passCond });
+                choice.Choices.Add(new TestChoice { Id = "vhigh", Label = "VeryHigh", Condition = failCond });
+                var end = new EndNodeData { Id = "e", NodeType = EndNodeData.NodeTypeId };
+                graph.AddNode(start); graph.AddNode(choice); graph.AddNode(end); graph.EntryNodeId = "s";
+                graph.AddEdge(new BaseEdgeData { Id = "e0", FromNodeId = "s", ToNodeId = "c", PortName = "out" });
+                graph.AddEdge(new BaseEdgeData { Id = "eh", FromNodeId = "c", ToNodeId = "e", PortName = "high" });
+                graph.AddEdge(new BaseEdgeData { Id = "ev", FromNodeId = "c", ToNodeId = "e", PortName = "vhigh" });
+
+                _window.ExecuteGraph(graph);
+
+                Assert.IsTrue(_window.IsWaitingForChoice, "Must pause at the choice");
+                Assert.AreEqual(1, _window.AvailableChoices.Count,
+                    "Only the choice whose int condition passes (score 5 >= 3) is offered");
+                Assert.AreEqual("high", _window.AvailableChoices[0].Id);
+            }
+            finally
+            {
+                Object.DestroyImmediate(passCond);
+                Object.DestroyImmediate(failCond);
+                Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
         public void AvailableChoices_ExcludesFailingCondition()
         {
             var falseCond = ScriptableObject.CreateInstance<TestAlwaysFalseCondition>();

@@ -68,5 +68,52 @@ namespace Faolline.GraphTest.Tests
             Assert.AreEqual(0, _graph.Parameters.Count,
                 "RemoveBoolParameter must remove the entry from the graph");
         }
+
+        [Test]
+        public void ParameterPanel_AddIntParam_StoresTypeAndDefault()
+        {
+            _inspector.SetGraph(_graph);
+
+            _inspector.AddParameter("score", ParameterType.Int, "5");
+
+            Assert.AreEqual(1, _graph.Parameters.Count);
+            Assert.AreEqual("score", _graph.Parameters[0].Key);
+            Assert.AreEqual(ParameterType.Int, _graph.Parameters[0].Type);
+            Assert.AreEqual("5", _graph.Parameters[0].DefaultValue);
+        }
+
+        [Test]
+        public void ParameterPanel_TypedParams_SurviveSerializationRoundTrip()
+        {
+            _inspector.SetGraph(_graph);
+            _inspector.AddParameter("score", ParameterType.Int, "5");
+            _inspector.AddParameter("hp", ParameterType.Float, "0.5");
+            _inspector.AddParameter("name", ParameterType.String, "hero");
+
+            var clone = Object.Instantiate(_graph);
+            try
+            {
+                Assert.AreEqual(3, clone.Parameters.Count);
+                Assert.AreEqual(ParameterType.Int,    clone.Parameters[0].Type);
+                Assert.AreEqual("5",                  clone.Parameters[0].DefaultValue);
+                Assert.AreEqual(ParameterType.Float,  clone.Parameters[1].Type);
+                Assert.AreEqual("0.5",                clone.Parameters[1].DefaultValue);
+                Assert.AreEqual(ParameterType.String, clone.Parameters[2].Type);
+                Assert.AreEqual("hero",               clone.Parameters[2].DefaultValue);
+            }
+            finally { Object.DestroyImmediate(clone); }
+        }
+
+        [Test]
+        public void RemoveParameter_RemovesNonBoolParam()
+        {
+            _inspector.SetGraph(_graph);
+            _inspector.AddParameter("score", ParameterType.Int, "5");
+
+            _inspector.RemoveParameter("score");
+
+            Assert.AreEqual(0, _graph.Parameters.Count,
+                "RemoveParameter must remove a parameter of any type");
+        }
     }
 }

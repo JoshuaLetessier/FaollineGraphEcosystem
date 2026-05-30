@@ -38,6 +38,60 @@ namespace Faolline.GraphTest.Tests
         }
 
         [Test]
+        public void EndNode_EndReason_SurvivesSerializationRoundTrip()
+        {
+            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            TestGraph clone = null;
+            try
+            {
+                graph.AddNode(new EndNodeData { Id = "e", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Cancelled });
+
+                clone = UnityEngine.Object.Instantiate(graph);
+
+                var clonedEnd = clone.Nodes.OfType<EndNodeData>().FirstOrDefault();
+                Assert.IsNotNull(clonedEnd, "Cloned graph must still contain the End node");
+                Assert.AreEqual(EndReason.Cancelled, clonedEnd.EndReason,
+                    "End reason must be preserved across serialization");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(graph);
+                if (clone != null) UnityEngine.Object.DestroyImmediate(clone);
+            }
+        }
+
+        [Test]
+        public void SubGraphNode_TargetAndInheritFlag_SurviveSerializationRoundTrip()
+        {
+            var child = ScriptableObject.CreateInstance<TestGraph>();
+            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            TestGraph clone = null;
+            try
+            {
+                graph.AddNode(new SubGraphNodeData
+                {
+                    Id = "sg",
+                    NodeType = SubGraphNodeData.NodeTypeId,
+                    TargetGraph = child,
+                    InheritParentContext = true
+                });
+
+                clone = UnityEngine.Object.Instantiate(graph);
+
+                var sub = clone.Nodes.OfType<SubGraphNodeData>().FirstOrDefault();
+                Assert.IsNotNull(sub, "Cloned graph must still contain the SubGraph node");
+                Assert.IsTrue(sub.InheritParentContext, "InheritParentContext must persist across serialization");
+                Assert.AreSame(child, sub.TargetGraph, "TargetGraph reference must persist across serialization");
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(child);
+                UnityEngine.Object.DestroyImmediate(graph);
+                if (clone != null) UnityEngine.Object.DestroyImmediate(clone);
+            }
+        }
+
+        [Test]
         public void ChoiceNode_WithTwoChoicesAndEdges_SurvivesSerializationRoundTrip()
         {
             var graph = ScriptableObject.CreateInstance<TestGraph>();

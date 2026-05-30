@@ -58,6 +58,12 @@ namespace Faolline.GraphTest.Editor
             if (node is ChoiceNodeData choiceNode)
                 BuildChoiceSection(choiceNode);
 
+            if (node is EndNodeData endNode)
+                BuildEndReasonSection(endNode);
+
+            if (node is SubGraphNodeData subNode)
+                BuildSubGraphSection(subNode);
+
             if (nodeElement != null && _serializedGraph != null)
                 AddBaseNodeSection(nodeElement, _serializedGraph);
         }
@@ -73,19 +79,39 @@ namespace Faolline.GraphTest.Editor
 
         // ── Public helpers for tests ──────────────────────────────────────────
 
-        /// <summary>Adds a bool parameter with the given key and default value to the loaded graph.</summary>
-        public void AddBoolParameter(string key, bool defaultValue)
+        /// <summary>Adds a typed parameter (any <see cref="ParameterType"/>) with a string default to the loaded graph.</summary>
+        public void AddParameter(string key, ParameterType type, string defaultValue)
         {
             if (_graph == null) return;
             _graph.AddParameter(new ParameterData
             {
                 Key          = key,
-                Type         = ParameterType.Bool,
-                DefaultValue = defaultValue.ToString()
+                Type         = type,
+                DefaultValue = defaultValue ?? string.Empty
             });
             EditorUtility.SetDirty(_graph);
             RebuildParameterPanel();
         }
+
+        /// <summary>Removes the first parameter with the given key, regardless of type.</summary>
+        public void RemoveParameter(string key)
+        {
+            if (_graph == null) return;
+            for (int i = _graph.Parameters.Count - 1; i >= 0; i--)
+            {
+                if (_graph.Parameters[i].Key == key)
+                {
+                    _graph.RemoveParameter(_graph.Parameters[i]);
+                    EditorUtility.SetDirty(_graph);
+                    break;
+                }
+            }
+            RebuildParameterPanel();
+        }
+
+        /// <summary>Adds a bool parameter (backward-compatible wrapper over <see cref="AddParameter"/>).</summary>
+        public void AddBoolParameter(string key, bool defaultValue)
+            => AddParameter(key, ParameterType.Bool, defaultValue.ToString());
 
         /// <summary>Removes the first bool parameter with the given key from the loaded graph.</summary>
         public void RemoveBoolParameter(string key)
@@ -101,6 +127,108 @@ namespace Faolline.GraphTest.Editor
                 }
             }
             RebuildParameterPanel();
+        }
+
+        // ── End node helpers ──────────────────────────────────────────────────
+
+        /// <summary>
+        /// Sets <paramref name="node"/>'s <see cref="EndNodeData.EndReason"/>, marks the graph dirty,
+        /// and refreshes the inspector if the node is currently bound.
+        /// </summary>
+        public void SetEndReason(EndNodeData node, EndReason reason)
+        {
+            if (node == null) return;
+            node.EndReason = reason;
+            MarkGraphDirty();
+            RefreshIfBound(node);
+        }
+
+        private void BuildEndReasonSection(EndNodeData node)
+        {
+            var foldout = new Foldout { text = "End", value = true };
+
+            var field = new EnumField("End Reason", node.EndReason);
+            field.RegisterValueChangedCallback(e =>
+            {
+                node.EndReason = (EndReason)e.newValue;
+                MarkGraphDirty();
+            });
+            foldout.Add(field);
+
+            Add(foldout);
+        }
+
+        // ── SubGraph node helpers ─────────────────────────────────────────────
+
+        /// <summary>
+        /// Assigns <paramref name="target"/> as the sub-graph target, refusing it (returning false,
+        /// logging a warning) when it would create an inter-graph cycle. Marks dirty and refreshes on success.
+        /// </summary>
+        public bool SetSubGraphTarget(SubGraphNodeData node, BaseGraph target)
+        {
+            if (node == null) return false;
+
+            if (target != null && _graph != null)
+            {
+                var result = CycleDetector.Check(_graph, target);
+                if (result.HasCycle)
+                {
+                    var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
+                    Debug.LogWarning($"[GraphTest] Cycle refused: {path}");
+                    return false;
+                }
+            }
+
+            node.TargetGraph = target;
+            MarkGraphDirty();
+            RefreshIfBound(node);
+            return true;
+        }
+
+        /// <summary>Sets the sub-graph's inherit-parent-context flag, marks dirty, and refreshes if bound.</summary>
+        public void SetInheritParentContext(SubGraphNodeData node, bool inherit)
+        {
+            if (node == null) return;
+            node.InheritParentContext = inherit;
+            MarkGraphDirty();
+            RefreshIfBound(node);
+        }
+
+        private void BuildSubGraphSection(SubGraphNodeData node)
+        {
+            var foldout = new Foldout { text = "SubGraph", value = true };
+
+            var targetField = new ObjectField("Target Graph")
+            {
+                objectType        = typeof(BaseGraph),
+                allowSceneObjects = false,
+                value             = node.TargetGraph
+            };
+            targetField.RegisterValueChangedCallback(e =>
+            {
+                var proposed = e.newValue as BaseGraph;
+                if (proposed != null && _graph != null && CycleDetector.Check(_graph, proposed).HasCycle)
+                {
+                    var result = CycleDetector.Check(_graph, proposed);
+                    var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
+                    Debug.LogWarning($"[GraphTest] Cycle refused: {path}");
+                    targetField.SetValueWithoutNotify(node.TargetGraph); // revert
+                    return;
+                }
+                node.TargetGraph = proposed;
+                MarkGraphDirty();
+            });
+            foldout.Add(targetField);
+
+            var inheritToggle = new Toggle("Inherit Parent Context") { value = node.InheritParentContext };
+            inheritToggle.RegisterValueChangedCallback(e =>
+            {
+                node.InheritParentContext = e.newValue;
+                MarkGraphDirty();
+            });
+            foldout.Add(inheritToggle);
+
+            Add(foldout);
         }
 
         // ── Choice node helpers ───────────────────────────────────────────────
@@ -210,23 +338,22 @@ namespace Faolline.GraphTest.Editor
 
         private void BuildParameterPanel()
         {
-            var foldout = new Foldout { text = "Bool Parameters", value = true };
+            var foldout = new Foldout { text = "Parameters", value = true };
 
             foreach (var param in _graph.Parameters)
             {
-                if (param.Type != ParameterType.Bool) continue;
+                var capturedKey = param.Key; // capture for the closure
 
                 var row = new VisualElement();
                 row.style.flexDirection = FlexDirection.Row;
 
-                var keyLabel = new Label(param.Key) { style = { flexGrow = 1 } };
-                var defaultLabel = new Label($"default: {param.DefaultValue}") { style = { flexGrow = 1 } };
-                var removeBtn = new Button(() =>
-                {
-                    RemoveBoolParameter(param.Key);
-                }) { text = "×" };
+                var keyLabel     = new Label(param.Key) { style = { flexGrow = 1 } };
+                var typeLabel    = new Label(param.Type.ToString()) { style = { width = 56 } };
+                var defaultLabel = new Label($"= {param.DefaultValue}") { style = { flexGrow = 1 } };
+                var removeBtn    = new Button(() => RemoveParameter(capturedKey)) { text = "×" };
 
                 row.Add(keyLabel);
+                row.Add(typeLabel);
                 row.Add(defaultLabel);
                 row.Add(removeBtn);
                 foldout.Add(row);
@@ -234,13 +361,17 @@ namespace Faolline.GraphTest.Editor
 
             var addRow = new VisualElement();
             addRow.style.flexDirection = FlexDirection.Row;
-            var keyField = new TextField("key") { style = { flexGrow = 1 } };
+            var keyField     = new TextField("key") { style = { flexGrow = 1 } };
+            var typeField    = new EnumField(ParameterType.Bool) { style = { width = 72 } };
+            var defaultField = new TextField("default") { style = { flexGrow = 1 } };
             var addBtn = new Button(() =>
             {
                 if (!string.IsNullOrWhiteSpace(keyField.value))
-                    AddBoolParameter(keyField.value.Trim(), false);
-            }) { text = "Add Bool" };
+                    AddParameter(keyField.value.Trim(), (ParameterType)typeField.value, defaultField.value ?? string.Empty);
+            }) { text = "Add" };
             addRow.Add(keyField);
+            addRow.Add(typeField);
+            addRow.Add(defaultField);
             addRow.Add(addBtn);
             foldout.Add(addRow);
 

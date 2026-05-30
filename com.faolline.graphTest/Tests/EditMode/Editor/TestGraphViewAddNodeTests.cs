@@ -1,3 +1,4 @@
+using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -77,6 +78,19 @@ namespace Faolline.GraphTest.Tests
             var choiceView = _view.GetChoiceView(node.Id);
             Assert.IsNotNull(choiceView,
                 "CreateNodeView must dispatch a ChoiceNodeData to a ChoiceNodeView");
+        }
+
+        [Test]
+        public void AddSubGraphNode_AddsNodeAndDispatchesView()
+        {
+            var node = new SubGraphNodeData { NodeType = SubGraphNodeData.NodeTypeId };
+            _view.CallAddNodeToCanvas(node, Vector2.zero);
+
+            Assert.AreEqual(1, _graph.Nodes.Count);
+            Assert.IsInstanceOf<SubGraphNodeData>(_graph.Nodes[0]);
+
+            var dispatched = _view.nodes.ToList().OfType<SubGraphNodeView>().Any(v => v.NodeData?.Id == node.Id);
+            Assert.IsTrue(dispatched, "CreateNodeView must dispatch a SubGraphNodeData to a SubGraphNodeView");
         }
 
         [Test]

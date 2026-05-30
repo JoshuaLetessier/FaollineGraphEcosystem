@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Faolline.GraphCore;
 using Faolline.GraphTest.Editor;
 
@@ -30,6 +31,75 @@ namespace Faolline.GraphTest.Tests
             var node = new EndNodeData { Id = "e1", NodeType = EndNodeData.NodeTypeId };
             Assert.DoesNotThrow(() => _inspector.BindNode(node),
                 "BindNode with EndNodeData must not throw");
+        }
+
+        [Test]
+        public void SetEndReason_UpdatesNodeReason()
+        {
+            var node = new EndNodeData { Id = "e1", NodeType = EndNodeData.NodeTypeId };
+            _inspector.BindNode(node);
+
+            _inspector.SetEndReason(node, EndReason.Cancelled);
+
+            Assert.AreEqual(EndReason.Cancelled, node.EndReason,
+                "SetEndReason must update the End node's reason");
+        }
+
+        [Test]
+        public void BindNode_WithSubGraphNodeData_DoesNotThrow()
+        {
+            var node = new SubGraphNodeData { Id = "sg", NodeType = SubGraphNodeData.NodeTypeId };
+            Assert.DoesNotThrow(() => _inspector.BindNode(node),
+                "BindNode with SubGraphNodeData must not throw");
+        }
+
+        [Test]
+        public void SetSubGraphTarget_AcceptsNonCyclicGraph()
+        {
+            var graphA = ScriptableObject.CreateInstance<TestGraph>();
+            var graphB = ScriptableObject.CreateInstance<TestGraph>();
+            var inspector = new TestNodeInspectorView();
+            inspector.SetGraph(graphA);
+            var node = new SubGraphNodeData { Id = "sg", NodeType = SubGraphNodeData.NodeTypeId };
+            try
+            {
+                bool accepted = inspector.SetSubGraphTarget(node, graphB);
+                Assert.IsTrue(accepted, "A non-cyclic target graph must be accepted");
+                Assert.AreSame(graphB, node.TargetGraph);
+            }
+            finally
+            {
+                Object.DestroyImmediate(graphA);
+                Object.DestroyImmediate(graphB);
+            }
+        }
+
+        [Test]
+        public void SetSubGraphTarget_RefusesSelfReference()
+        {
+            var graphA = ScriptableObject.CreateInstance<TestGraph>();
+            var inspector = new TestNodeInspectorView();
+            inspector.SetGraph(graphA);
+            var node = new SubGraphNodeData { Id = "sg", NodeType = SubGraphNodeData.NodeTypeId };
+            try
+            {
+                LogAssert.Expect(LogType.Warning,
+                    new System.Text.RegularExpressions.Regex(@"Cycle refused"));
+
+                bool accepted = inspector.SetSubGraphTarget(node, graphA);
+
+                Assert.IsFalse(accepted, "Assigning the graph as its own sub-graph must be refused");
+                Assert.IsNull(node.TargetGraph, "A refused target must not be stored");
+            }
+            finally { Object.DestroyImmediate(graphA); }
+        }
+
+        [Test]
+        public void SetInheritParentContext_UpdatesNode()
+        {
+            var node = new SubGraphNodeData { Id = "sg", NodeType = SubGraphNodeData.NodeTypeId };
+            _inspector.SetInheritParentContext(node, true);
+            Assert.IsTrue(node.InheritParentContext);
         }
 
         [Test]

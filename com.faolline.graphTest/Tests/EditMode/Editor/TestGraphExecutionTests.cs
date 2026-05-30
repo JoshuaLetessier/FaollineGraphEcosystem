@@ -144,6 +144,102 @@ namespace Faolline.GraphTest.Tests
         }
 
         [Test]
+        public void SubGraphNode_RunsChildThenResumesParent()
+        {
+            var child  = ScriptableObject.CreateInstance<TestGraph>();
+            var parent = ScriptableObject.CreateInstance<TestGraph>();
+            try
+            {
+                // child: Start → Statement("inner") → End
+                child.AddNode(new StartNodeData         { Id = "cs",    NodeType = StartNodeData.NodeTypeId });
+                child.AddNode(new TestStatementNodeData { Id = "cstmt", NodeType = TestStatementNodeData.NodeTypeId, Label = "inner" });
+                child.AddNode(new EndNodeData           { Id = "ce",    NodeType = EndNodeData.NodeTypeId });
+                child.EntryNodeId = "cs";
+                child.AddEdge(new BaseEdgeData { Id = "ce1", FromNodeId = "cs",    ToNodeId = "cstmt", PortName = "out" });
+                child.AddEdge(new BaseEdgeData { Id = "ce2", FromNodeId = "cstmt", ToNodeId = "ce",    PortName = "out" });
+
+                // parent: Start → SubGraph(child) → End
+                parent.AddNode(new StartNodeData    { Id = "ps", NodeType = StartNodeData.NodeTypeId });
+                parent.AddNode(new SubGraphNodeData { Id = "sg", NodeType = SubGraphNodeData.NodeTypeId, TargetGraph = child });
+                parent.AddNode(new EndNodeData      { Id = "pe", NodeType = EndNodeData.NodeTypeId });
+                parent.EntryNodeId = "ps";
+                parent.AddEdge(new BaseEdgeData { Id = "pe1", FromNodeId = "ps", ToNodeId = "sg", PortName = "out" });
+                parent.AddEdge(new BaseEdgeData { Id = "pe2", FromNodeId = "sg", ToNodeId = "pe", PortName = "out" });
+
+                var visited = new List<string>();
+                var runner  = new BaseRunner();
+                runner.OnNodeEntered += n => visited.Add(n.Id);
+                runner.Start(parent, new BaseContext(), new NodeExecutorRegistry());
+                int guard = 0;
+                while (runner.State == RunnerState.NodeReady && guard++ < 100) runner.Proceed();
+
+                Assert.AreEqual(RunnerState.Ended, runner.State, "Parent must complete after the sub-graph returns");
+                Assert.Contains("cstmt", visited, "The child graph's node must be visited inside the sub-graph");
+                Assert.Contains("pe", visited, "Execution must resume to the parent End after the sub-graph");
+            }
+            finally
+            {
+                Object.DestroyImmediate(child);
+                Object.DestroyImmediate(parent);
+            }
+        }
+
+        [Test]
+        public void SubGraphNode_NullTarget_HaltsAsStuck()
+        {
+            var parent = ScriptableObject.CreateInstance<TestGraph>();
+            try
+            {
+                parent.AddNode(new StartNodeData    { Id = "ps", NodeType = StartNodeData.NodeTypeId });
+                parent.AddNode(new SubGraphNodeData { Id = "sg", NodeType = SubGraphNodeData.NodeTypeId }); // TargetGraph null
+                parent.AddNode(new EndNodeData      { Id = "pe", NodeType = EndNodeData.NodeTypeId });
+                parent.EntryNodeId = "ps";
+                parent.AddEdge(new BaseEdgeData { Id = "pe1", FromNodeId = "ps", ToNodeId = "sg", PortName = "out" });
+                parent.AddEdge(new BaseEdgeData { Id = "pe2", FromNodeId = "sg", ToNodeId = "pe", PortName = "out" });
+
+                bool stuck = false;
+                var runner = new BaseRunner();
+                runner.OnStuck += () => stuck = true;
+
+                LogAssert.Expect(LogType.Error,
+                    new System.Text.RegularExpressions.Regex(@"TargetGraph is null"));
+
+                runner.Start(parent, new BaseContext(), new NodeExecutorRegistry());
+                int guard = 0;
+                while (runner.State == RunnerState.NodeReady && !stuck && guard++ < 100) runner.Proceed();
+
+                Assert.IsTrue(stuck, "A null sub-graph target must halt via OnStuck, not throw");
+            }
+            finally { Object.DestroyImmediate(parent); }
+        }
+
+        [Test]
+        public void ExecuteGraph_EndReasonCancelled_LogsCancelled()
+        {
+            var window = ScriptableObject.CreateInstance<TestGraphEditorWindow>();
+            var graph  = ScriptableObject.CreateInstance<TestGraph>();
+            try
+            {
+                var start = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
+                var end   = new EndNodeData   { Id = "e", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Cancelled };
+                graph.AddNode(start);
+                graph.AddNode(end);
+                graph.EntryNodeId = "s";
+                graph.AddEdge(new BaseEdgeData { Id = "e1", FromNodeId = "s", ToNodeId = "e", PortName = "out" });
+
+                LogAssert.Expect(LogType.Log,
+                    new System.Text.RegularExpressions.Regex(@"Graph ended: Cancelled"));
+
+                window.ExecuteGraph(graph);
+            }
+            finally
+            {
+                Object.DestroyImmediate(window);
+                Object.DestroyImmediate(graph);
+            }
+        }
+
+        [Test]
         public void ExecuteGraph_NullGraph_LogsError()
         {
             var window = ScriptableObject.CreateInstance<TestGraphEditorWindow>();

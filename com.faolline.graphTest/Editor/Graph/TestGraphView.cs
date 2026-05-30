@@ -22,6 +22,7 @@ namespace Faolline.GraphTest.Editor
                 TestStatementNodeData.NodeTypeId => new TestStatementNodeView((TestStatementNodeData)node),
                 EndNodeData.NodeTypeId       => new EndNodeView((EndNodeData)node),
                 ChoiceNodeData.NodeTypeId    => new ChoiceNodeView((ChoiceNodeData)node),
+                SubGraphNodeData.NodeTypeId  => new SubGraphNodeView((SubGraphNodeData)node),
                 _                            => null
             };
         }
@@ -111,6 +112,12 @@ namespace Faolline.GraphTest.Editor
             evt.menu.AppendAction("Add Choice Node", _ =>
             {
                 var node = new ChoiceNodeData { NodeType = ChoiceNodeData.NodeTypeId };
+                AddNodeToCanvas(node, mousePos);
+            });
+
+            evt.menu.AppendAction("Add SubGraph Node", _ =>
+            {
+                var node = new SubGraphNodeData { NodeType = SubGraphNodeData.NodeTypeId };
                 AddNodeToCanvas(node, mousePos);
             });
         }
