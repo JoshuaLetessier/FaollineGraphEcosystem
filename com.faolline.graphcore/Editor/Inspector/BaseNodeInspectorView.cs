@@ -79,9 +79,24 @@ namespace Faolline.GraphCore.Editor
             // Bind all PropertyFields within the foldout in one call.
             foldout.Bind(so);
 
-            // A change to any bound field here (notably the color override) must refresh the node's
-            // canvas visuals. SerializedPropertyChangeEvent bubbles up from the changed field to here.
-            foldout.RegisterCallback<SerializedPropertyChangeEvent>(_ => OnNodeVisualsChanged());
+            // A change to any bound field here must refresh the node's canvas visuals.
+            // Additionally, changing the color implies the override should be ON — enable it
+            // automatically so a developer can recolor a node without first ticking Has Color Override
+            // (the checkbox stays visible to turn the override back off).
+            foldout.RegisterCallback<SerializedPropertyChangeEvent>(evt =>
+            {
+                var changed = evt.changedProperty;
+                if (changed != null && changed.propertyPath != null && changed.propertyPath.EndsWith("_nodeColor"))
+                {
+                    var hasOverride = nodeElement.FindPropertyRelative("_hasColorOverride");
+                    if (hasOverride != null && !hasOverride.boolValue)
+                    {
+                        hasOverride.boolValue = true;
+                        so.ApplyModifiedProperties();
+                    }
+                }
+                OnNodeVisualsChanged();
+            });
 
             Add(foldout);
         }
