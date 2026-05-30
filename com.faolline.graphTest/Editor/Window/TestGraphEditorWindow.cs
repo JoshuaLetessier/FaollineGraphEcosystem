@@ -62,7 +62,19 @@ namespace Faolline.GraphTest.Editor
             var asset = EditorUtility.InstanceIDToObject(instanceId) as TestGraph;
             if (asset == null) return false;
 
-            var window = GetWindow<TestGraphEditorWindow>("TestGraph Editor");
+            // Focus an existing window already showing this asset; otherwise open a NEW window,
+            // so multiple graphs (e.g. a parent and its sub-graph) can be edited side by side.
+            foreach (var existing in Resources.FindObjectsOfTypeAll<TestGraphEditorWindow>())
+            {
+                if (existing.LoadedGraph == asset)
+                {
+                    existing.Focus();
+                    return true;
+                }
+            }
+
+            var window = CreateWindow<TestGraphEditorWindow>();
+            window.titleContent = new GUIContent(asset.name);
             window.LoadGraph(asset);
             return true;
         }
