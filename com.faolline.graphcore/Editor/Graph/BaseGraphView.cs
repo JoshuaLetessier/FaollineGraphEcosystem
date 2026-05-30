@@ -105,30 +105,43 @@ namespace Faolline.GraphCore.Editor
         /// </summary>
         public void LoadGraph(BaseGraph graph)
         {
-            _graph = graph;
-            _isDirty = false;
-
-            DeleteElements(graphElements.ToList());
-            _nodeViews.Clear();
-
-            if (_graph == null)
-                return;
-
-            foreach (var nodeData in _graph.Nodes)
+            // Suppress change-tracking for the whole load. Clearing the old visual elements via
+            // DeleteElements fires graphViewChanged → HandleRemovals, which would otherwise delete
+            // node/edge DATA from the just-assigned graph (Unity may defer element removal by a step,
+            // so the removal callback can land on the wrong graph and wipe it). Rebuilding is also
+            // purely programmatic, so it must not be tracked either.
+            graphViewChanged = null;
+            try
             {
-                var view = CreateNodeView(nodeData);
-                if (view == null) continue;
-                view.SetPosition(new Rect(nodeData.Position, Vector2.zero));
-                AddElement(view);
-                _nodeViews[nodeData.Id] = view;
+                _graph = graph;
+                _isDirty = false;
+
+                DeleteElements(graphElements.ToList());
+                _nodeViews.Clear();
+
+                if (_graph == null)
+                    return;
+
+                foreach (var nodeData in _graph.Nodes)
+                {
+                    var view = CreateNodeView(nodeData);
+                    if (view == null) continue;
+                    view.SetPosition(new Rect(nodeData.Position, Vector2.zero));
+                    AddElement(view);
+                    _nodeViews[nodeData.Id] = view;
+                }
+
+                foreach (var edgeData in _graph.Edges)
+                {
+                    var view = CreateEdgeView(edgeData);
+                    if (view == null) continue;
+                    ConnectEdgeView(view, edgeData);
+                    AddElement(view);
+                }
             }
-
-            foreach (var edgeData in _graph.Edges)
+            finally
             {
-                var view = CreateEdgeView(edgeData);
-                if (view == null) continue;
-                ConnectEdgeView(view, edgeData);
-                AddElement(view);
+                graphViewChanged = OnGraphViewChanged;
             }
         }
 

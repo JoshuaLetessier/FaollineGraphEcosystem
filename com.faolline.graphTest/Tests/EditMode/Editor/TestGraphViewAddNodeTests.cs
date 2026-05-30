@@ -150,6 +150,42 @@ namespace Faolline.GraphTest.Tests
         }
 
         [Test]
+        public void LoadGraph_ReloadingSameGraph_PreservesData()
+        {
+            _graph.AddNode(new StartNodeData         { Id = "s", NodeType = StartNodeData.NodeTypeId });
+            _graph.AddNode(new TestStatementNodeData { Id = "n", NodeType = TestStatementNodeData.NodeTypeId });
+            _graph.AddEdge(new BaseEdgeData { Id = "e1", FromNodeId = "s", ToNodeId = "n", PortName = "out" });
+
+            _view.LoadGraph(_graph);
+            _view.LoadGraph(_graph); // reload must NOT delete the graph's own data via the change callback
+
+            Assert.AreEqual(2, _graph.Nodes.Count, "Reloading a graph must not delete its nodes");
+            Assert.AreEqual(1, _graph.Edges.Count, "Reloading a graph must not delete its edges");
+        }
+
+        [Test]
+        public void LoadGraph_SwitchingBetweenGraphs_PreservesBothDatasets()
+        {
+            _graph.AddNode(new StartNodeData         { Id = "as", NodeType = StartNodeData.NodeTypeId });
+            _graph.AddNode(new TestStatementNodeData { Id = "an", NodeType = TestStatementNodeData.NodeTypeId });
+            _graph.AddEdge(new BaseEdgeData { Id = "ae", FromNodeId = "as", ToNodeId = "an", PortName = "out" });
+
+            var other = ScriptableObject.CreateInstance<TestGraph>();
+            other.AddNode(new StartNodeData { Id = "bs", NodeType = StartNodeData.NodeTypeId });
+            try
+            {
+                _view.LoadGraph(_graph);
+                _view.LoadGraph(other);
+                _view.LoadGraph(_graph); // switch back
+
+                Assert.AreEqual(2, _graph.Nodes.Count, "Switching away and back must not delete the first graph's nodes");
+                Assert.AreEqual(1, _graph.Edges.Count, "Switching away and back must not delete the first graph's edges");
+                Assert.AreEqual(1, other.Nodes.Count, "The other graph's data must remain intact too");
+            }
+            finally { Object.DestroyImmediate(other); }
+        }
+
+        [Test]
         public void RemoveChoice_KeepsSurvivingChoiceEdgeConnected()
         {
             var choice = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
