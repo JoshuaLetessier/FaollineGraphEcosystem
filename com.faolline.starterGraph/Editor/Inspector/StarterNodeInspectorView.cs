@@ -49,6 +49,10 @@ namespace Faolline.StarterGraph.Editor
             if (node == null) return;
 
             _boundNode = node;
+            // Guard against a SerializedObject whose target asset was destroyed (reimport / domain
+            // reload): rebuild it from the graph, or drop it, instead of erroring on Update().
+            if (_serializedGraph != null && _serializedGraph.targetObject == null)
+                _serializedGraph = _graph != null ? new SerializedObject(_graph) : null;
             _serializedGraph?.Update();
 
             var nodeElement = FindNodeProperty(_serializedGraph, node.Id);

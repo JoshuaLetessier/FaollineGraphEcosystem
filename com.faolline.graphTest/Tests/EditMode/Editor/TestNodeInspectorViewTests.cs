@@ -34,6 +34,22 @@ namespace Faolline.GraphTest.Tests
         }
 
         [Test]
+        public void BindNode_AfterGraphDestroyed_DoesNotErrorOnSerializedObject()
+        {
+            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            var node = new TestStatementNodeData { Id = "n", NodeType = TestStatementNodeData.NodeTypeId };
+            graph.AddNode(node);
+            _inspector.SetGraph(graph);
+            _inspector.BindNode(node);
+
+            Object.DestroyImmediate(graph); // simulate an asset reimport / domain reload
+
+            // Re-selecting the node must not raise "SerializedObject target has been destroyed".
+            Assert.DoesNotThrow(() => _inspector.BindNode(node),
+                "BindNode must guard against a destroyed SerializedObject target");
+        }
+
+        [Test]
         public void SetEndReason_UpdatesNodeReason()
         {
             var node = new EndNodeData { Id = "e1", NodeType = EndNodeData.NodeTypeId };
