@@ -31,11 +31,11 @@ Runtime namespace `Faolline.GraphDialogue`, editor `Faolline.GraphDialogue.Edito
 
 **Purpose**: Create the package skeleton and assemblies, mirroring `com.faolline.starterGraph`.
 
-- [ ] T001 Create package folder `com.faolline.graphdialoguesystem/` with `package.json` (name `com.faolline.graphdialoguesystem`, version `0.1.0`, unity `6000.0`, dependency `com.faolline.graphcore`) mirroring `com.faolline.starterGraph/package.json`
-- [ ] T002 [P] Create Runtime assembly `com.faolline.graphdialoguesystem/Runtime/com.faolline.graphdialoguesystem.Runtime.asmdef` (rootNamespace `Faolline.GraphDialogue`, references `com.faolline.graphcore.Runtime`, autoReferenced true, NO external deps)
-- [ ] T003 [P] Create Editor assembly `com.faolline.graphdialoguesystem/Editor/com.faolline.graphdialoguesystem.Editor.asmdef` (rootNamespace `Faolline.GraphDialogue.Editor`, references graphcore.Runtime+Editor and the lib Runtime, Editor platform only, autoReferenced false)
-- [ ] T004 [P] Create Tests assembly `com.faolline.graphdialoguesystem/Tests/EditMode/com.faolline.graphdialoguesystem.Tests.EditMode.asmdef` (references lib Runtime+Editor, graphcore Runtime+Editor, TestRunner; Editor platform; overrideReferences true + nunit.framework.dll; defineConstraints `UNITY_INCLUDE_TESTS`) mirroring the starterGraph tests asmdef
-- [ ] T005 [P] Create optional adapter assembly `com.faolline.graphdialoguesystem/Localization.Unity/com.faolline.graphdialoguesystem.Localization.Unity.asmdef` (rootNamespace `Faolline.GraphDialogue.Localization.Unity`, references lib Runtime, references `Unity.Localization`, `versionDefines` mapping `com.unity.localization` → define `GRAPHDIALOGUE_UNITY_LOCALIZATION`, `defineConstraints: ["GRAPHDIALOGUE_UNITY_LOCALIZATION"]` so it compiles only when the package is present)
+- [X] T001 Create package folder `com.faolline.graphdialoguesystem/` with `package.json` (name `com.faolline.graphdialoguesystem`, version `0.1.0`, unity `6000.0`, dependency `com.faolline.graphcore`) mirroring `com.faolline.starterGraph/package.json`
+- [X] T002 [P] Create Runtime assembly `com.faolline.graphdialoguesystem/Runtime/com.faolline.graphdialoguesystem.Runtime.asmdef` (rootNamespace `Faolline.GraphDialogue`, references `com.faolline.graphcore.Runtime`, autoReferenced true, NO external deps)
+- [X] T003 [P] Create Editor assembly `com.faolline.graphdialoguesystem/Editor/com.faolline.graphdialoguesystem.Editor.asmdef` (rootNamespace `Faolline.GraphDialogue.Editor`, references graphcore.Runtime+Editor and the lib Runtime, Editor platform only, autoReferenced false)
+- [X] T004 [P] Create Tests assembly `com.faolline.graphdialoguesystem/Tests/EditMode/com.faolline.graphdialoguesystem.Tests.EditMode.asmdef` (references lib Runtime+Editor, graphcore Runtime+Editor, TestRunner; Editor platform; overrideReferences true + nunit.framework.dll; defineConstraints `UNITY_INCLUDE_TESTS`) mirroring the starterGraph tests asmdef
+- [X] T005 [P] Create optional adapter assembly `com.faolline.graphdialoguesystem/Localization.Unity/com.faolline.graphdialoguesystem.Localization.Unity.asmdef` (rootNamespace `Faolline.GraphDialogue.Localization.Unity`, references lib Runtime, references `Unity.Localization`, `versionDefines` mapping `com.unity.localization` → define `GRAPHDIALOGUE_UNITY_LOCALIZATION`, `defineConstraints: ["GRAPHDIALOGUE_UNITY_LOCALIZATION"]` so it compiles only when the package is present)
 
 **Checkpoint**: Empty package compiles with four resolvable assemblies (adapter compiles to nothing without the localization package).
 
@@ -51,28 +51,28 @@ start until these exist.
 
 ### Tests (write first, must FAIL)
 
-- [ ] T006 [P] Write `Tests/EditMode/Runtime/DialogueContextContractTests.cs`: asserts `DialogueContext` typed props (Flag/Counter/Amount/Tag) round-trip via keys, `CreateCloneInstance()` returns `DialogueContext`, and values survive `DeepClone`
-- [ ] T007 [P] Write `Tests/EditMode/Runtime/DialogueGraphTests.cs`: asserts `DialogueGraph` is a `BaseGraph`, assigns a stable `GraphId`, and round-trips nodes/edges/parameters
-- [ ] T008 [P] Write `Tests/EditMode/Runtime/CsvLocalizationProviderTests.cs`: asserts CSV parse, `Resolve(key, locale)` per locale, fallback (`#key` + warning) on missing key, locale switch
-- [ ] T009 [P] Write `Tests/EditMode/Runtime/LocalizationSettingsTests.cs`: asserts safe default provider when unconfigured, `Resolve(key)` uses active provider + locale
-- [ ] T010 [P] Write `Tests/EditMode/Runtime/ConditionTests.cs`: asserts each condition (AlwaysTrue/False, Bool, Int+operator, Float+operator, String+negate) incl. null-safe false+warning on missing/mistyped key
-- [ ] T011 [P] Write `Tests/EditMode/Runtime/ActionTests.cs`: asserts Log + SetBool/Int/Float/String write the context via key
+- [X] T006 [P] Write `Tests/EditMode/Runtime/DialogueContextContractTests.cs`: asserts `DialogueContext` typed props (Flag/Counter/Amount/Tag) round-trip via keys, `CreateCloneInstance()` returns `DialogueContext`, and values survive `DeepClone`
+- [X] T007 [P] Write `Tests/EditMode/Runtime/DialogueGraphTests.cs`: asserts `DialogueGraph` is a `BaseGraph`, assigns a stable `GraphId`, and round-trips nodes/edges/parameters
+- [X] T008 [P] Write `Tests/EditMode/Runtime/CsvLocalizationProviderTests.cs`: asserts CSV parse, `Resolve(key, locale)` per locale, fallback (`#key` + warning) on missing key, locale switch
+- [X] T009 [P] Write `Tests/EditMode/Runtime/LocalizationSettingsTests.cs`: asserts safe default provider when unconfigured, `Resolve(key)` uses active provider + locale
+- [X] T010 [P] Write `Tests/EditMode/Runtime/ConditionTests.cs`: asserts each condition (AlwaysTrue/False, Bool, Int+operator, Float+operator, String+negate) incl. null-safe false+warning on missing/mistyped key
+- [X] T011 [P] Write `Tests/EditMode/Runtime/ActionTests.cs`: asserts Log + SetBool/Int/Float/String write the context via key
 
 ### Implementation
 
-- [ ] T012 [P] Implement `Runtime/DialogueContextKeys.cs` (const string keys: Flag, Counter, Amount, Tag — the only place literals live)
-- [ ] T013 Implement `Runtime/DialogueContext.cs` (`BaseContext` subclass; typed Flag/Counter/Amount/Tag via `TryGet`/`Set` + keys; override `CreateCloneInstance()`) — depends on T012
-- [ ] T014 [P] Implement `Runtime/DialogueGraph.cs` (`BaseGraph` subclass + `[CreateAssetMenu(menuName="GraphDialogue/Dialogue Graph")]`)
-- [ ] T015 [P] Implement `Runtime/Localization/ILocalizationProvider.cs` (`CurrentLocale`, `Resolve(key, locale)` contract)
-- [ ] T016 Implement `Runtime/Localization/CsvLocalizationProvider.cs` (default, dependency-free; in-memory key→locale→text; fallback + `[GraphDialogue]` warning) — depends on T015
-- [ ] T017 Implement `Runtime/Localization/LocalizationSettings.cs` + `Runtime/Localization/LocalizationContext.cs` (active provider+locale, safe default) — depends on T015, T016
-- [ ] T018 [P] Implement `Runtime/Conditions/ComparisonOperator.cs` (enum Equal/NotEqual/Less/LessOrEqual/Greater/GreaterOrEqual)
-- [ ] T019 [P] Implement `Runtime/Conditions/AlwaysTrueCondition.cs` and `Runtime/Conditions/AlwaysFalseCondition.cs` (`BaseCondition`, `[CreateAssetMenu]`)
-- [ ] T020 Implement `Runtime/Conditions/BoolCondition.cs` (`BaseCondition`; ParameterKey+ExpectedValue; null-safe) — depends on T018
-- [ ] T021 Implement `Runtime/Conditions/IntCondition.cs` and `FloatCondition.cs` (operator compare; null-safe) — depends on T018
-- [ ] T022 Implement `Runtime/Conditions/StringCondition.cs` (equality+Negate; null-safe) — depends on T018
-- [ ] T023 [P] Implement `Runtime/Actions/LogAction.cs` (`BaseAction`, logs with `[GraphDialogue]` prefix)
-- [ ] T024 [P] Implement `Runtime/Actions/SetBoolAction.cs`, `SetIntAction.cs`, `SetFloatAction.cs`, `SetStringAction.cs` (`BaseAction`; ParameterKey+Value → `Set<T>`)
+- [X] T012 [P] Implement `Runtime/DialogueContextKeys.cs` (const string keys: Flag, Counter, Amount, Tag — the only place literals live)
+- [X] T013 Implement `Runtime/DialogueContext.cs` (`BaseContext` subclass; typed Flag/Counter/Amount/Tag via `TryGet`/`Set` + keys; override `CreateCloneInstance()`) — depends on T012
+- [X] T014 [P] Implement `Runtime/DialogueGraph.cs` (`BaseGraph` subclass + `[CreateAssetMenu(menuName="GraphDialogue/Dialogue Graph")]`)
+- [X] T015 [P] Implement `Runtime/Localization/ILocalizationProvider.cs` (`CurrentLocale`, `Resolve(key, locale)` contract)
+- [X] T016 Implement `Runtime/Localization/CsvLocalizationProvider.cs` (default, dependency-free; in-memory key→locale→text; fallback + `[GraphDialogue]` warning) — depends on T015
+- [X] T017 Implement `Runtime/Localization/LocalizationSettings.cs` + `Runtime/Localization/LocalizationContext.cs` (active provider+locale, safe default) — depends on T015, T016
+- [X] T018 [P] Implement `Runtime/Conditions/ComparisonOperator.cs` (enum Equal/NotEqual/Less/LessOrEqual/Greater/GreaterOrEqual)
+- [X] T019 [P] Implement `Runtime/Conditions/AlwaysTrueCondition.cs` and `Runtime/Conditions/AlwaysFalseCondition.cs` (`BaseCondition`, `[CreateAssetMenu]`)
+- [X] T020 Implement `Runtime/Conditions/BoolCondition.cs` (`BaseCondition`; ParameterKey+ExpectedValue; null-safe) — depends on T018
+- [X] T021 Implement `Runtime/Conditions/IntCondition.cs` and `FloatCondition.cs` (operator compare; null-safe) — depends on T018
+- [X] T022 Implement `Runtime/Conditions/StringCondition.cs` (equality+Negate; null-safe) — depends on T018
+- [X] T023 [P] Implement `Runtime/Actions/LogAction.cs` (`BaseAction`, logs with `[GraphDialogue]` prefix)
+- [X] T024 [P] Implement `Runtime/Actions/SetBoolAction.cs`, `SetIntAction.cs`, `SetFloatAction.cs`, `SetStringAction.cs` (`BaseAction`; ParameterKey+Value → `Set<T>`)
 
 **Checkpoint**: Foundational tests T006–T011 green. Context, graph, localization, conditions/actions ready.
 
@@ -88,29 +88,29 @@ and choice labels, connect, save, reopen → identical structure/ids/order/field
 
 ### Tests (write first, must FAIL)
 
-- [ ] T025 [P] [US1] Write `Tests/EditMode/Runtime/DialogueLineNodeDataTests.cs`: asserts `NodeTypeId == "graphdialogue/line"`, SpeakerKey/TextKey/ExpressionKey (default `neutral`) persist
-- [ ] T026 [P] [US1] Write `Tests/EditMode/Runtime/DialogueChoiceTests.cs`: asserts `DialogueChoice : BaseChoice` carries `DisplayTextKey`, inherits Id+Condition
-- [ ] T027 [P] [US1] Write `Tests/EditMode/Editor/DialogueGraphViewAddNodeTests.cs`: asserts context menu adds each of the 5 node types and `CreateNodeView` returns the right view per `NodeType`
-- [ ] T028 [P] [US1] Write `Tests/EditMode/Editor/ChoiceNodeViewTests.cs`: asserts one output port per choice, `portName == choice.Id`, `RebuildPorts`/`UpdateChoiceLabel`, label = DisplayTextKey/label
-- [ ] T029 [P] [US1] Write `Tests/EditMode/Editor/DialogueNodeInspectorViewTests.cs`: asserts line speaker/text fields, choice add/remove/label/condition, EndReason, subgraph target, param panel render and mutate the graph
-- [ ] T030 [P] [US1] Write `Tests/EditMode/Editor/DialogueReloadReconnectTests.cs`: asserts removing one choice preserves surviving option edges (`ReconnectNodeEdges`); LoadGraph loses no data; reopened edges reconnect
-- [ ] T031 [P] [US1] Write `Tests/EditMode/Editor/DialogueWindowMultiTests.cs`: asserts opening a second asset focuses/creates a separate window without disturbing the first
+- [X] T025 [P] [US1] Write `Tests/EditMode/Runtime/DialogueLineNodeDataTests.cs`: asserts `NodeTypeId == "graphdialogue/line"`, SpeakerKey/TextKey/ExpressionKey (default `neutral`) persist
+- [X] T026 [P] [US1] Write `Tests/EditMode/Runtime/DialogueChoiceTests.cs`: asserts `DialogueChoice : BaseChoice` carries `DisplayTextKey`, inherits Id+Condition
+- [X] T027 [P] [US1] Write `Tests/EditMode/Editor/DialogueGraphViewAddNodeTests.cs`: asserts context menu adds each of the 5 node types and `CreateNodeView` returns the right view per `NodeType`
+- [X] T028 [P] [US1] Write `Tests/EditMode/Editor/ChoiceNodeViewTests.cs`: asserts one output port per choice, `portName == choice.Id`, `RebuildPorts`/`UpdateChoiceLabel`, label = DisplayTextKey/label
+- [X] T029 [P] [US1] Write `Tests/EditMode/Editor/DialogueNodeInspectorViewTests.cs`: asserts line speaker/text fields, choice add/remove/label/condition, EndReason, subgraph target, param panel render and mutate the graph
+- [X] T030 [P] [US1] Write `Tests/EditMode/Editor/DialogueReloadReconnectTests.cs`: asserts removing one choice preserves surviving option edges (`ReconnectNodeEdges`); LoadGraph loses no data; reopened edges reconnect
+- [X] T031 [P] [US1] Write `Tests/EditMode/Editor/DialogueWindowMultiTests.cs`: asserts opening a second asset focuses/creates a separate window without disturbing the first
 
 ### Implementation
 
-- [ ] T032 [P] [US1] Implement `Runtime/Nodes/DialogueLineNodeData.cs` (`StatementNodeData` subclass; `NodeTypeId`; SpeakerKey/TextKey/ExpressionKey)
-- [ ] T033 [P] [US1] Implement `Runtime/Choices/DialogueChoice.cs` (`BaseChoice` subclass; DisplayTextKey)
-- [ ] T034 [P] [US1] Implement `Editor/Edges/DialogueEdgeView.cs` (`BaseEdgeView` subclass)
-- [ ] T035 [P] [US1] Implement `Editor/Nodes/StartNodeView.cs` and `Editor/Nodes/EndNodeView.cs` (`BaseNodeView`; in/out ports) using `DialogueEdgeView` — depends on T034
-- [ ] T036 [US1] Implement `Editor/Nodes/DialogueLineNodeView.cs` (`BaseNodeView`; in+out; shows speaker + text key in body) — depends on T032, T034
-- [ ] T037 [US1] Implement `Editor/Nodes/ChoiceNodeView.cs` (one input; one output per choice, `portName=choice.Id`, label from DisplayTextKey; `RebuildPorts`/`UpdateChoiceLabel`) — depends on T033, T034
-- [ ] T038 [P] [US1] Implement `Editor/Nodes/SubGraphNodeView.cs` (`BaseNodeView`; in+out; shows target graph name) — depends on T034
-- [ ] T039 [US1] Implement `Editor/Graph/DialogueGraphView.cs` (`BaseGraphView`; `CreateNodeView` dispatch for 5 types; `CreateEdgeView`→DialogueEdgeView; context menu Add Start/Line/Choice/SubGraph/End; `GetChoiceView`/`RemoveChoiceEdges`; `OnNodeCreated` auto-entry on first Start) — depends on T035, T036, T037, T038
-- [ ] T040 [US1] Implement `Editor/Inspector/DialogueNodeInspectorView.cs` (`BaseNodeInspectorView`; line speaker/text/expression section, choice add/remove/label/condition with live ports + `ReconnectNodeEdges`, EndReason EnumField, subgraph ObjectField + cycle refusal via `CycleDetector`, typed parameter panel, `AddBaseNodeSection`) — depends on T039
-- [ ] T041 [US1] Implement `Editor/Window/DialogueGraphEditorWindow.cs` (`BaseGraphEditorWindow`; `CreateGraphView`/`CreateNodeInspectorView`/`OnGraphLoaded`; `[MenuItem]` open; `[OnOpenAsset]` per-asset multi-window) — depends on T039, T040
-- [ ] T041a [P] [US1] Write `Tests/EditMode/Editor/DialogueEdgeConditionTests.cs`: asserts an edge selected in the inspector can be assigned a `BaseCondition`, the value persists on `BaseEdgeData.Condition`, and a false edge condition blocks traversal at runtime (covers FR-021 "to a connection")
-- [ ] T041b [US1] Add an edge-condition section to `Editor/Inspector/DialogueNodeInspectorView.cs` (when a single edge is selected, an `ObjectField<BaseCondition>` bound to `BaseEdgeData.Condition`; mark graph dirty) — depends on T040; resolves analyze finding G2
-- [ ] T041c [US1] Accessibility/contrast pass for the dialogue editor: add a USS stylesheet giving each node type a distinct, sufficiently contrasting color, and on-screen hints for primary actions (toolbar tooltips + a one-line help label); verify keyboard add/select works via the inherited canvas. USS/visual only — validated in quickstart, no logic test. Resolves analyze finding G1 (FR-011)
+- [X] T032 [P] [US1] Implement `Runtime/Nodes/DialogueLineNodeData.cs` (`StatementNodeData` subclass; `NodeTypeId`; SpeakerKey/TextKey/ExpressionKey)
+- [X] T033 [P] [US1] Implement `Runtime/Choices/DialogueChoice.cs` (`BaseChoice` subclass; DisplayTextKey)
+- [X] T034 [P] [US1] Implement `Editor/Edges/DialogueEdgeView.cs` (`BaseEdgeView` subclass)
+- [X] T035 [P] [US1] Implement `Editor/Nodes/StartNodeView.cs` and `Editor/Nodes/EndNodeView.cs` (`BaseNodeView`; in/out ports) using `DialogueEdgeView` — depends on T034
+- [X] T036 [US1] Implement `Editor/Nodes/DialogueLineNodeView.cs` (`BaseNodeView`; in+out; shows speaker + text key in body) — depends on T032, T034
+- [X] T037 [US1] Implement `Editor/Nodes/ChoiceNodeView.cs` (one input; one output per choice, `portName=choice.Id`, label from DisplayTextKey; `RebuildPorts`/`UpdateChoiceLabel`) — depends on T033, T034
+- [X] T038 [P] [US1] Implement `Editor/Nodes/SubGraphNodeView.cs` (`BaseNodeView`; in+out; shows target graph name) — depends on T034
+- [X] T039 [US1] Implement `Editor/Graph/DialogueGraphView.cs` (`BaseGraphView`; `CreateNodeView` dispatch for 5 types; `CreateEdgeView`→DialogueEdgeView; context menu Add Start/Line/Choice/SubGraph/End; `GetChoiceView`/`RemoveChoiceEdges`; `OnNodeCreated` auto-entry on first Start) — depends on T035, T036, T037, T038
+- [X] T040 [US1] Implement `Editor/Inspector/DialogueNodeInspectorView.cs` (`BaseNodeInspectorView`; line speaker/text/expression section, choice add/remove/label/condition with live ports + `ReconnectNodeEdges`, EndReason EnumField, subgraph ObjectField + cycle refusal via `CycleDetector`, typed parameter panel, `AddBaseNodeSection`) — depends on T039
+- [X] T041 [US1] Implement `Editor/Window/DialogueGraphEditorWindow.cs` (`BaseGraphEditorWindow`; `CreateGraphView`/`CreateNodeInspectorView`/`OnGraphLoaded`; `[MenuItem]` open; `[OnOpenAsset]` per-asset multi-window) — depends on T039, T040
+- [X] T041a [P] [US1] Write `Tests/EditMode/Editor/DialogueEdgeConditionTests.cs`: asserts an edge selected in the inspector can be assigned a `BaseCondition`, the value persists on `BaseEdgeData.Condition`, and a false edge condition blocks traversal at runtime (covers FR-021 "to a connection")
+- [X] T041b [US1] Add an edge-condition section to `Editor/Inspector/DialogueNodeInspectorView.cs` (when a single edge is selected, an `ObjectField<BaseCondition>` bound to `BaseEdgeData.Condition`; mark graph dirty) — depends on T040; resolves analyze finding G2
+- [X] T041c [US1] Accessibility/contrast pass for the dialogue editor: add a USS stylesheet giving each node type a distinct, sufficiently contrasting color, and on-screen hints for primary actions (toolbar tooltips + a one-line help label); verify keyboard add/select works via the inherited canvas. USS/visual only — validated in quickstart, no logic test. Resolves analyze finding G1 (FR-011)
 
 **Checkpoint**: US1 tests green. A dialogue can be authored (incl. edge conditions), saved, reopened, multi-windowed, with accessible node-type contrast and action hints.
 
@@ -126,22 +126,22 @@ advance; assert choice set; choose; advance to end; assert single end event (FR-
 
 ### Tests (write first, must FAIL)
 
-- [ ] T042 [P] [US2] Write `Tests/EditMode/Runtime/SpeakerTests.cs`: asserts `Speaker` resolves DisplayName via provider with literal fallback, `TryGetExpression` falls back safely
-- [ ] T043 [P] [US2] Write `Tests/EditMode/Runtime/DialogueLineExecutorTests.cs`: asserts the executor's `NodeType` matches the line node and `Execute` exposes the current line for emission
-- [ ] T044 [P] [US2] Write `Tests/EditMode/Runtime/DialoguePlayerLineTests.cs`: asserts `Start` emits first `LineStep` with resolved speaker name + text; `Advance` follows the single edge
-- [ ] T045 [P] [US2] Write `Tests/EditMode/Runtime/DialoguePlayerChoiceTests.cs`: asserts `ChoiceStep` lists options with resolved labels + availability; `Choose(available)` routes that branch; `Choose(unavailable)` no-op
-- [ ] T046 [P] [US2] Write `Tests/EditMode/Runtime/DialoguePlayerEndTests.cs`: asserts `EndStep` fires once with `EndReason`; terminal/empty-choice cases report stuck; missing entry → diagnostic, no crash
-- [ ] T047 [P] [US2] Write `Tests/EditMode/Runtime/DialogueSubGraphTests.cs`: asserts sub-dialogue plays and resumes parent on end; cyclic target → `GraphCycleException` before recursion
-- [ ] T048 [P] [US2] Write `Tests/EditMode/Editor/DialogueWindowExecutionTests.cs`: asserts the window Run/Choose/Continue drain loop pauses at a choice and ends correctly (mirrors starter window tests)
+- [X] T042 [P] [US2] Write `Tests/EditMode/Runtime/SpeakerTests.cs`: asserts `Speaker` resolves DisplayName via provider with literal fallback, `TryGetExpression` falls back safely
+- [X] T043 [P] [US2] Write `Tests/EditMode/Runtime/DialogueLineExecutorTests.cs`: asserts the executor's `NodeType` matches the line node and `Execute` exposes the current line for emission
+- [X] T044 [P] [US2] Write `Tests/EditMode/Runtime/DialoguePlayerLineTests.cs`: asserts `Start` emits first `LineStep` with resolved speaker name + text; `Advance` follows the single edge
+- [X] T045 [P] [US2] Write `Tests/EditMode/Runtime/DialoguePlayerChoiceTests.cs`: asserts `ChoiceStep` lists options with resolved labels + availability; `Choose(available)` routes that branch; `Choose(unavailable)` no-op
+- [X] T046 [P] [US2] Write `Tests/EditMode/Runtime/DialoguePlayerEndTests.cs`: asserts `EndStep` fires once with `EndReason`; terminal/empty-choice cases report stuck; missing entry → diagnostic, no crash
+- [X] T047 [P] [US2] Write `Tests/EditMode/Runtime/DialogueSubGraphTests.cs`: asserts sub-dialogue plays and resumes parent on end; cyclic target → `GraphCycleException` before recursion
+- [X] T048 [P] [US2] Write `Tests/EditMode/Editor/DialogueWindowExecutionTests.cs`: asserts the window Run/Choose/Continue drain loop pauses at a choice and ends correctly (mirrors starter window tests)
 
 ### Implementation
 
-- [ ] T049 [P] [US2] Implement `Runtime/Speakers/SpeakerExpression.cs` (`[Serializable]`; Key + Asset) and `Runtime/Speakers/Speaker.cs` (`ScriptableObject`; SpeakerId, DisplayNameKey, DisplayNameFallback, Expressions, FallbackExpression, `TryGetExpression`)
-- [ ] T050 [P] [US2] Implement `Runtime/Playback/DialogueStep.cs` (abstract `DialogueStep` + `LineStep`/`EndStep`) and `Runtime/Playback/ChoiceOption.cs` + `ChoiceStep.cs`
-- [ ] T051 [US2] Implement `Runtime/Execution/DialogueLineExecutor.cs` (`INodeExecutor` for `DialogueLineNodeData.NodeTypeId`; exposes line speaker/text) — depends on T032
-- [ ] T052 [US2] Implement `Runtime/Execution/DialogueExecutorRegistryFactory.cs` (builds `NodeExecutorRegistry` with the line executor) — depends on T051
-- [ ] T053 [US2] Implement `Runtime/Playback/DialoguePlayer.cs` (wraps `BaseRunner`; ctor graph+context+provider+speakerLookup; Start/Advance/Choose/Back/BackToCheckpoint; OnLine/OnChoices/OnEnded/OnStuck; resolves text+speaker via provider; choice availability via condition eval) — depends on T013, T016, T049, T050, T052
-- [ ] T054 [US2] Implement `Editor/Window/DialogueGraphEditorWindow.cs` execution path: Run uses `DialogueContext` + registry factory + active provider; drain loop pausing at `ChoiceNodeData`; Choose/Continue/GoBack/Checkpoint (extends T041) — depends on T041, T053
+- [X] T049 [P] [US2] Implement `Runtime/Speakers/SpeakerExpression.cs` (`[Serializable]`; Key + Asset) and `Runtime/Speakers/Speaker.cs` (`ScriptableObject`; SpeakerId, DisplayNameKey, DisplayNameFallback, Expressions, FallbackExpression, `TryGetExpression`)
+- [X] T050 [P] [US2] Implement `Runtime/Playback/DialogueStep.cs` (abstract `DialogueStep` + `LineStep`/`EndStep`) and `Runtime/Playback/ChoiceOption.cs` + `ChoiceStep.cs`
+- [X] T051 [US2] Implement `Runtime/Execution/DialogueLineExecutor.cs` (`INodeExecutor` for `DialogueLineNodeData.NodeTypeId`; exposes line speaker/text) — depends on T032
+- [X] T052 [US2] Implement `Runtime/Execution/DialogueExecutorRegistryFactory.cs` (builds `NodeExecutorRegistry` with the line executor) — depends on T051
+- [X] T053 [US2] Implement `Runtime/Playback/DialoguePlayer.cs` (wraps `BaseRunner`; ctor graph+context+provider+speakerLookup; Start/Advance/Choose/Back/BackToCheckpoint; OnLine/OnChoices/OnEnded/OnStuck; resolves text+speaker via provider; choice availability via condition eval) — depends on T013, T016, T049, T050, T052
+- [X] T054 [US2] Implement `Editor/Window/DialogueGraphEditorWindow.cs` execution path: Run uses `DialogueContext` + registry factory + active provider; drain loop pausing at `ChoiceNodeData`; Choose/Continue/GoBack/Checkpoint (extends T041) — depends on T041, T053
 
 **Checkpoint**: US2 tests green. A dialogue plays start→end headlessly and via the window.
 
