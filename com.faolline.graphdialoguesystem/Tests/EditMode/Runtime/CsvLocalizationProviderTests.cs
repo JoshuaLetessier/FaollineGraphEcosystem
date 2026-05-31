@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEngine;
 using UnityEngine.TestTools;
 using System.Text.RegularExpressions;
 using Faolline.GraphDialogue;
