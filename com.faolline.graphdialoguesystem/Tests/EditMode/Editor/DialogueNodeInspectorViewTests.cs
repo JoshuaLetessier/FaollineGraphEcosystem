@@ -55,9 +55,9 @@ namespace Faolline.GraphDialogue.Tests
             var node = new EndNodeData { Id = "e", NodeType = EndNodeData.NodeTypeId };
             _graph.AddNode(node);
 
-            _insp.SetEndReason(node, EndReason.Aborted);
+            _insp.SetEndReason(node, EndReason.Cancelled);
 
-            Assert.AreEqual(EndReason.Aborted, node.EndReason);
+            Assert.AreEqual(EndReason.Cancelled, node.EndReason);
         }
     }
 }

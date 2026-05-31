@@ -29,6 +29,12 @@ namespace Faolline.GraphDialogue.Editor
 
         protected override BaseEdgeView CreateEdgeView(BaseEdgeData edge) => new DialogueEdgeView(edge);
 
+        /// <summary>Test hook: exposes the protected node-view dispatch.</summary>
+        public BaseNodeView CreateNodeViewForTest(BaseNodeData node) => CreateNodeView(node);
+
+        /// <summary>Test hook: exposes the protected graph load.</summary>
+        public void LoadGraphForTest(BaseGraph graph) => LoadGraph(graph);
+
         // ── Edge selection → inspector wiring ──────────────────────────────────
         // graphcore's BaseGraphView surfaces node selection (OnNodeSelected / OnSelectionCleared).
         // We extend the same overridden selection hooks to also surface a single selected edge, so
