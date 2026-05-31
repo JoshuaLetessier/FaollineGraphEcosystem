@@ -61,16 +61,16 @@ start until these exist.
 ### Implementation
 
 - [ ] T012 [P] Implement `Runtime/DialogueContextKeys.cs` (const string keys: Flag, Counter, Amount, Tag — the only place literals live)
-- [ ] T013 [US-FND] Implement `Runtime/DialogueContext.cs` (`BaseContext` subclass; typed Flag/Counter/Amount/Tag via `TryGet`/`Set` + keys; override `CreateCloneInstance()`) — depends on T012
+- [ ] T013 Implement `Runtime/DialogueContext.cs` (`BaseContext` subclass; typed Flag/Counter/Amount/Tag via `TryGet`/`Set` + keys; override `CreateCloneInstance()`) — depends on T012
 - [ ] T014 [P] Implement `Runtime/DialogueGraph.cs` (`BaseGraph` subclass + `[CreateAssetMenu(menuName="GraphDialogue/Dialogue Graph")]`)
 - [ ] T015 [P] Implement `Runtime/Localization/ILocalizationProvider.cs` (`CurrentLocale`, `Resolve(key, locale)` contract)
-- [ ] T016 [US-FND] Implement `Runtime/Localization/CsvLocalizationProvider.cs` (default, dependency-free; in-memory key→locale→text; fallback + `[GraphDialogue]` warning) — depends on T015
-- [ ] T017 [US-FND] Implement `Runtime/Localization/LocalizationSettings.cs` + `Runtime/Localization/LocalizationContext.cs` (active provider+locale, safe default) — depends on T015, T016
+- [ ] T016 Implement `Runtime/Localization/CsvLocalizationProvider.cs` (default, dependency-free; in-memory key→locale→text; fallback + `[GraphDialogue]` warning) — depends on T015
+- [ ] T017 Implement `Runtime/Localization/LocalizationSettings.cs` + `Runtime/Localization/LocalizationContext.cs` (active provider+locale, safe default) — depends on T015, T016
 - [ ] T018 [P] Implement `Runtime/Conditions/ComparisonOperator.cs` (enum Equal/NotEqual/Less/LessOrEqual/Greater/GreaterOrEqual)
 - [ ] T019 [P] Implement `Runtime/Conditions/AlwaysTrueCondition.cs` and `Runtime/Conditions/AlwaysFalseCondition.cs` (`BaseCondition`, `[CreateAssetMenu]`)
-- [ ] T020 [US-FND] Implement `Runtime/Conditions/BoolCondition.cs` (`BaseCondition`; ParameterKey+ExpectedValue; null-safe) — depends on T018
-- [ ] T021 [US-FND] Implement `Runtime/Conditions/IntCondition.cs` and `FloatCondition.cs` (operator compare; null-safe) — depends on T018
-- [ ] T022 [US-FND] Implement `Runtime/Conditions/StringCondition.cs` (equality+Negate; null-safe) — depends on T018
+- [ ] T020 Implement `Runtime/Conditions/BoolCondition.cs` (`BaseCondition`; ParameterKey+ExpectedValue; null-safe) — depends on T018
+- [ ] T021 Implement `Runtime/Conditions/IntCondition.cs` and `FloatCondition.cs` (operator compare; null-safe) — depends on T018
+- [ ] T022 Implement `Runtime/Conditions/StringCondition.cs` (equality+Negate; null-safe) — depends on T018
 - [ ] T023 [P] Implement `Runtime/Actions/LogAction.cs` (`BaseAction`, logs with `[GraphDialogue]` prefix)
 - [ ] T024 [P] Implement `Runtime/Actions/SetBoolAction.cs`, `SetIntAction.cs`, `SetFloatAction.cs`, `SetStringAction.cs` (`BaseAction`; ParameterKey+Value → `Set<T>`)
 
@@ -108,8 +108,11 @@ and choice labels, connect, save, reopen → identical structure/ids/order/field
 - [ ] T039 [US1] Implement `Editor/Graph/DialogueGraphView.cs` (`BaseGraphView`; `CreateNodeView` dispatch for 5 types; `CreateEdgeView`→DialogueEdgeView; context menu Add Start/Line/Choice/SubGraph/End; `GetChoiceView`/`RemoveChoiceEdges`; `OnNodeCreated` auto-entry on first Start) — depends on T035, T036, T037, T038
 - [ ] T040 [US1] Implement `Editor/Inspector/DialogueNodeInspectorView.cs` (`BaseNodeInspectorView`; line speaker/text/expression section, choice add/remove/label/condition with live ports + `ReconnectNodeEdges`, EndReason EnumField, subgraph ObjectField + cycle refusal via `CycleDetector`, typed parameter panel, `AddBaseNodeSection`) — depends on T039
 - [ ] T041 [US1] Implement `Editor/Window/DialogueGraphEditorWindow.cs` (`BaseGraphEditorWindow`; `CreateGraphView`/`CreateNodeInspectorView`/`OnGraphLoaded`; `[MenuItem]` open; `[OnOpenAsset]` per-asset multi-window) — depends on T039, T040
+- [ ] T041a [P] [US1] Write `Tests/EditMode/Editor/DialogueEdgeConditionTests.cs`: asserts an edge selected in the inspector can be assigned a `BaseCondition`, the value persists on `BaseEdgeData.Condition`, and a false edge condition blocks traversal at runtime (covers FR-021 "to a connection")
+- [ ] T041b [US1] Add an edge-condition section to `Editor/Inspector/DialogueNodeInspectorView.cs` (when a single edge is selected, an `ObjectField<BaseCondition>` bound to `BaseEdgeData.Condition`; mark graph dirty) — depends on T040; resolves analyze finding G2
+- [ ] T041c [US1] Accessibility/contrast pass for the dialogue editor: add a USS stylesheet giving each node type a distinct, sufficiently contrasting color, and on-screen hints for primary actions (toolbar tooltips + a one-line help label); verify keyboard add/select works via the inherited canvas. USS/visual only — validated in quickstart, no logic test. Resolves analyze finding G1 (FR-011)
 
-**Checkpoint**: US1 tests green. A dialogue can be authored, saved, reopened, multi-windowed.
+**Checkpoint**: US1 tests green. A dialogue can be authored (incl. edge conditions), saved, reopened, multi-windowed, with accessible node-type contrast and action hints.
 
 ---
 

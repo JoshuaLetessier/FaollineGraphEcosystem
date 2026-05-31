@@ -180,7 +180,7 @@ dialogue resolves text through it without graph changes.
 - **FR-002**: The library MUST let an author place, on a single canvas, at minimum: a start, spoken-line
   nodes, choice nodes, sub-dialogue nodes, and end nodes — each visually distinguishable by type.
 - **FR-003**: A spoken-line node MUST expose an editable speaker reference and an editable localized line
-  of text.
+  of text, plus an optional speaker expression key (used with the speaker's expressions, FR-034/035).
 - **FR-004**: A choice node MUST let the author add and remove options, give each option a localized
   label, and (optionally) attach a condition to each option.
 - **FR-005**: Each choice option MUST present exactly one outgoing connection point on the canvas, and
