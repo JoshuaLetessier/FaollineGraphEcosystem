@@ -100,6 +100,8 @@ namespace Faolline.GraphDialogue.Editor
 
         // ── Toolbar ───────────────────────────────────────────────────────────
 
+        private string _locale = "en";
+
         protected override void PopulateToolbar(Toolbar toolbar)
         {
             // Tooltips double as on-screen hints for the primary actions (accessibility, FR-011).
@@ -108,6 +110,12 @@ namespace Faolline.GraphDialogue.Editor
             toolbar.Add(new ToolbarButton(Continue)         { text = "▶ Continue",   tooltip = "Advance past the current line." });
             toolbar.Add(new ToolbarButton(Back)             { text = "← GoBack",     tooltip = "Step back one node, restoring earlier state." });
             toolbar.Add(new ToolbarButton(BackToCheckpoint) { text = "⏮ Checkpoint", tooltip = "Jump back to the most recent checkpoint node." });
+
+            // Locale selection for a Run: switches the active language with no graph change (FR-032/SC-004).
+            var localeField = new ToolbarTextField { value = _locale, tooltip = "Active locale code (e.g. en, fr). Applied on Run." };
+            localeField.style.width = 48;
+            localeField.RegisterValueChangedCallback(e => _locale = string.IsNullOrEmpty(e.newValue) ? "en" : e.newValue);
+            toolbar.Add(localeField);
         }
 
         // ── Public session API (also used by tests) ───────────────────────────
@@ -129,7 +137,14 @@ namespace Faolline.GraphDialogue.Editor
 
             _waitingChoice = null;
             _context = new DialogueContext();
-            _player = new DialoguePlayer(graph, _context, LocalizationContext.Current.Provider, BuildSpeakerLookup());
+
+            // Apply the toolbar locale for this Run (FR-032). The CSV provider tracks its own active
+            // locale; for other providers the locale is set on the shared settings.
+            LocalizationContext.Current.CurrentLocale = _locale;
+            var provider = LocalizationContext.Current.Provider;
+            if (provider is CsvLocalizationProvider csv) csv.SetLocale(_locale);
+
+            _player = new DialoguePlayer(graph, _context, provider, BuildSpeakerLookup());
 
             _player.OnLine += step =>
                 Debug.Log($"[GraphDialogue] Line [{step.SpeakerId}] {step.ResolvedText}");

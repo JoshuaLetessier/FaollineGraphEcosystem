@@ -1,0 +1,96 @@
+using System.IO;
+using UnityEditor;
+using UnityEngine;
+using Faolline.GraphCore;
+
+namespace Faolline.GraphDialogue.Editor
+{
+    /// <summary>
+    /// Editor menu utility that programmatically builds a sample dialogue: a parent
+    /// <see cref="DialogueGraph"/> with a sub-dialogue, two speakers, a gated choice, inline
+    /// conditions/actions, a checkpoint, typed parameters, and a 2-locale CSV table — the same shape
+    /// the EditMode tests cover. Menu: <c>Faolline/GraphDialogue/Generate Sample Dialogue</c>.
+    /// </summary>
+    public static class DialogueSampleBuilder
+    {
+        private const string Folder = "Assets/GraphDialogueSamples";
+
+        [MenuItem("Faolline/GraphDialogue/Generate Sample Dialogue")]
+        public static void GenerateSample()
+        {
+            if (!AssetDatabase.IsValidFolder(Folder))
+                AssetDatabase.CreateFolder("Assets", "GraphDialogueSamples");
+
+            // ── Localization CSV (2 locales) ───────────────────────────────────────────
+            var csv =
+                "Key,en,fr\n" +
+                "dlg.intro,Welcome traveller.,Bienvenue voyageur.\n" +
+                "dlg.opt.ask,Ask about the town,Se renseigner sur la ville\n" +
+                "dlg.opt.leave,Leave,Partir\n" +
+                "dlg.town,It is a quiet place.,C'est un endroit paisible.\n" +
+                "speaker.mayor.name,Mayor,Maire\n";
+            File.WriteAllText($"{Folder}/SampleDialogue_Strings.csv", csv);
+
+            // ── Speaker ────────────────────────────────────────────────────────────────
+            var mayor = ScriptableObject.CreateInstance<Speaker>();
+            mayor.SpeakerId = "npc_mayor";
+            mayor.DisplayNameKey = "speaker.mayor.name";
+            mayor.DisplayNameFallback = "Mayor";
+            AssetDatabase.CreateAsset(mayor, $"{Folder}/SampleSpeaker_Mayor.asset");
+
+            // ── Child sub-dialogue ──────────────────────────────────────────────────────
+            var child = ScriptableObject.CreateInstance<DialogueGraph>();
+            var cStart = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId };
+            var cLine  = new DialogueLineNodeData { Id = Guid(), NodeType = DialogueLineNodeData.NodeTypeId, SpeakerKey = "npc_mayor", TextKey = "dlg.town" };
+            var cEnd   = new EndNodeData { Id = Guid(), NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
+            child.AddNode(cStart); child.AddNode(cLine); child.AddNode(cEnd);
+            child.EntryNodeId = cStart.Id;
+            child.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = cStart.Id, ToNodeId = cLine.Id, PortName = "out" });
+            child.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = cLine.Id,  ToNodeId = cEnd.Id,  PortName = "out" });
+            AssetDatabase.CreateAsset(child, $"{Folder}/SampleSubDialogue.asset");
+
+            // ── Inline condition / action as sub-assets on the child (portable) ──────────
+            var setVisited = ScriptableObject.CreateInstance<SetBoolAction>();
+            setVisited.ParameterKey = DialogueContextKeys.Flag; setVisited.Value = true; setVisited.name = "SetVisited";
+            AssetDatabase.AddObjectToAsset(setVisited, child);
+
+            var visitedTrue = ScriptableObject.CreateInstance<BoolCondition>();
+            visitedTrue.ParameterKey = DialogueContextKeys.Flag; visitedTrue.ExpectedValue = true; visitedTrue.name = "VisitedTrue";
+            AssetDatabase.AddObjectToAsset(visitedTrue, child);
+
+            // ── Parent dialogue ──────────────────────────────────────────────────────────
+            var graph = ScriptableObject.CreateInstance<DialogueGraph>();
+            graph.AddParameter(new ParameterData { Key = DialogueContextKeys.Flag, Type = ParameterType.Bool, DefaultValue = "false" });
+
+            var start  = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId };
+            var intro  = new DialogueLineNodeData { Id = Guid(), NodeType = DialogueLineNodeData.NodeTypeId, SpeakerKey = "npc_mayor", TextKey = "dlg.intro" };
+            intro.IsCheckpoint = true;
+            intro.OnEnterActions.Add(setVisited);
+            var choice = new ChoiceNodeData { Id = Guid(), NodeType = ChoiceNodeData.NodeTypeId };
+            var sub    = new SubGraphNodeData { Id = Guid(), NodeType = SubGraphNodeData.NodeTypeId, TargetGraph = child, InheritParentContext = true };
+            var end    = new EndNodeData { Id = Guid(), NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
+
+            graph.AddNode(start); graph.AddNode(intro); graph.AddNode(choice); graph.AddNode(sub); graph.AddNode(end);
+            graph.EntryNodeId = start.Id;
+
+            choice.Choices.Add(new DialogueChoice { Id = Guid(), DisplayTextKey = "dlg.opt.ask" });
+            choice.Choices.Add(new DialogueChoice { Id = Guid(), DisplayTextKey = "dlg.opt.leave" });
+
+            graph.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = start.Id,  ToNodeId = intro.Id,  PortName = "out" });
+            graph.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = intro.Id,  ToNodeId = choice.Id, PortName = "out" });
+            graph.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = choice.Id, ToNodeId = sub.Id,    PortName = choice.Choices[0].Id });
+            graph.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = choice.Id, ToNodeId = end.Id,    PortName = choice.Choices[1].Id });
+            graph.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = sub.Id,    ToNodeId = end.Id,    PortName = "out" });
+
+            AssetDatabase.CreateAsset(graph, $"{Folder}/SampleDialogue.asset");
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Selection.activeObject = graph;
+            EditorGUIUtility.PingObject(graph);
+            Debug.Log($"[GraphDialogue] Sample dialogue created at {Folder}/SampleDialogue.asset");
+        }
+
+        private static string Guid() => System.Guid.NewGuid().ToString("D");
+    }
+}

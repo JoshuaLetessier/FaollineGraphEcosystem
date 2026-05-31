@@ -157,15 +157,15 @@ flips it true; on return the option becomes available; step-back restores (FR-02
 
 ### Tests (write first, must FAIL)
 
-- [ ] T055 [P] [US3] Write `Tests/EditMode/Runtime/InlineConditionPlaybackTests.cs`: asserts a gated `DialogueChoice.Condition` toggles `ChoiceOption.Available`; a failing `EntryConditions` reports stuck without presenting the node
-- [ ] T056 [P] [US3] Write `Tests/EditMode/Runtime/InlineEffectPlaybackTests.cs`: asserts `OnEnterActions` set state before the step is emitted and `OnExitActions` run before advancing; later conditions read the new value
-- [ ] T057 [P] [US3] Write `Tests/EditMode/Runtime/DialoguePlayerHistoryTests.cs`: asserts `Back()` restores prior context values and `BackToCheckpoint()` returns to the nearest checkpoint node
+- [X] T055 [P] [US3] Write `Tests/EditMode/Runtime/InlineConditionPlaybackTests.cs`: asserts a gated `DialogueChoice.Condition` toggles `ChoiceOption.Available`; a failing `EntryConditions` reports stuck without presenting the node
+- [X] T056 [P] [US3] Write `Tests/EditMode/Runtime/InlineEffectPlaybackTests.cs`: asserts `OnEnterActions` set state before the step is emitted and `OnExitActions` run before advancing; later conditions read the new value
+- [X] T057 [P] [US3] Write `Tests/EditMode/Runtime/DialoguePlayerHistoryTests.cs`: asserts `Back()` restores prior context values and `BackToCheckpoint()` returns to the nearest checkpoint node
 
 ### Implementation
 
-- [ ] T058 [US3] Wire condition evaluation for choice availability and entry/edge gating through `DialoguePlayer` (ensure parity with `BaseRunner` semantics; null-safe) — depends on T053; verifies T020–T022 integrate
-- [ ] T059 [US3] Wire enter/exit effect execution + `Back`/`BackToCheckpoint` snapshot restoration through `DialoguePlayer` (delegates to `BaseRunner` history; `DialogueContext` round-trips) — depends on T053
-- [ ] T060 [P] [US3] Add the inline condition/effect editing surface in `Editor/Inspector/DialogueNodeInspectorView.cs` (entry conditions, enter/exit actions, per-choice condition already present) — depends on T040
+- [X] T058 [US3] Wire condition evaluation for choice availability and entry/edge gating through `DialoguePlayer` (ensure parity with `BaseRunner` semantics; null-safe) — depends on T053; verifies T020–T022 integrate
+- [X] T059 [US3] Wire enter/exit effect execution + `Back`/`BackToCheckpoint` snapshot restoration through `DialoguePlayer` (delegates to `BaseRunner` history; `DialogueContext` round-trips) — depends on T053
+- [X] T060 [P] [US3] Add the inline condition/effect editing surface in `Editor/Inspector/DialogueNodeInspectorView.cs` (entry conditions, enter/exit actions, per-choice condition already present) — depends on T040
 
 **Checkpoint**: US3 tests green. Reactivity works end to end with step-back.
 
@@ -181,15 +181,15 @@ text; swap to the Unity adapter, assert same graph resolves through it (FR-028..
 
 ### Tests (write first, must FAIL)
 
-- [ ] T061 [P] [US4] Write `Tests/EditMode/Runtime/LocalizedPlaybackTests.cs`: asserts `LineStep.ResolvedText` and `ChoiceOption.ResolvedLabel` match the active locale across two languages with no graph change; speaker display name localized
-- [ ] T062 [P] [US4] Write `Tests/EditMode/Runtime/LocalizationFallbackTests.cs`: asserts a key missing in the active locale yields the defined fallback + warning, never empty
-- [ ] T063 [P] [US4] Write `Tests/EditMode/Runtime/ProviderSwapTests.cs`: asserts the same graph resolves through a stub "engine" provider and the CSV provider identically (adapter contract; runs without `com.unity.localization` via a stand-in implementing `ILocalizationProvider`)
+- [X] T061 [P] [US4] Write `Tests/EditMode/Runtime/LocalizedPlaybackTests.cs`: asserts `LineStep.ResolvedText` and `ChoiceOption.ResolvedLabel` match the active locale across two languages with no graph change; speaker display name localized
+- [X] T062 [P] [US4] Write `Tests/EditMode/Runtime/LocalizationFallbackTests.cs`: asserts a key missing in the active locale yields the defined fallback + warning, never empty
+- [X] T063 [P] [US4] Write `Tests/EditMode/Runtime/ProviderSwapTests.cs`: asserts the same graph resolves through a stub "engine" provider and the CSV provider identically (adapter contract; runs without `com.unity.localization` via a stand-in implementing `ILocalizationProvider`)
 
 ### Implementation
 
-- [ ] T064 [US4] Verify/extend `DialoguePlayer` resolves all author-facing text (line, choice label, speaker name) through the injected provider + active locale (extends T053) — depends on T053
-- [ ] T065 [P] [US4] Implement `Localization.Unity/UnityLocalizationProvider.cs` (`ILocalizationProvider` over `com.unity.localization` String Tables; guarded by `GRAPHDIALOGUE_UNITY_LOCALIZATION`) — depends on T005, T015
-- [ ] T066 [US4] Add a lightweight provider/locale selection surface (settings asset or window field) wiring `LocalizationSettings` into the window Run path — depends on T017, T054
+- [X] T064 [US4] Verify/extend `DialoguePlayer` resolves all author-facing text (line, choice label, speaker name) through the injected provider + active locale (extends T053) — depends on T053
+- [X] T065 [P] [US4] Implement `Localization.Unity/UnityLocalizationProvider.cs` (`ILocalizationProvider` over `com.unity.localization` String Tables; guarded by `GRAPHDIALOGUE_UNITY_LOCALIZATION`) — depends on T005, T015
+- [X] T066 [US4] Add a lightweight provider/locale selection surface (settings asset or window field) wiring `LocalizationSettings` into the window Run path — depends on T017, T054
 
 **Checkpoint**: US4 tests green. Same dialogue plays in 2 locales through both providers.
 
@@ -197,9 +197,9 @@ text; swap to the Unity adapter, assert same graph resolves through it (FR-028..
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T067 [P] Implement `Editor/Samples/DialogueSampleBuilder.cs` (menu builds a parent + child `DialogueGraph` with speakers, a gated choice, inline conditions/actions, a checkpoint, a sub-dialogue, typed parameters, and a 2-locale CSV table)
-- [ ] T068 [P] Write `Tests/EditMode/Editor/DialogueSampleIntegrationTests.cs`: builds the sample and plays it start→end in two locales headlessly (covers SC-001/003/004 end to end)
-- [ ] T069 [P] Add `com.faolline.graphdialoguesystem/README.md` documenting the public API (from contracts/public-api.md), the localization providers, and the inline-only reactivity model
+- [X] T067 [P] Implement `Editor/Samples/DialogueSampleBuilder.cs` (menu builds a parent + child `DialogueGraph` with speakers, a gated choice, inline conditions/actions, a checkpoint, a sub-dialogue, typed parameters, and a 2-locale CSV table)
+- [X] T068 [P] Write `Tests/EditMode/Editor/DialogueSampleIntegrationTests.cs`: builds the sample and plays it start→end in two locales headlessly (covers SC-001/003/004 end to end)
+- [X] T069 [P] Add `com.faolline.graphdialoguesystem/README.md` documenting the public API (from contracts/public-api.md), the localization providers, and the inline-only reactivity model
 - [ ] T070 Run `quickstart.md` validation manually in the editor; confirm `git diff` shows zero changes under `com.faolline.graphcore/` (SC-008)
 - [ ] T071 Final full EditMode suite run — all green (SC-009); confirm no `[GraphDialogue]`/`[GraphCore]` errors in console, warnings justified
 
