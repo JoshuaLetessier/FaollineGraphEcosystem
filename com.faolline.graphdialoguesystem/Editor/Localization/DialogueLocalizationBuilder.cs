@@ -213,7 +213,7 @@ namespace Faolline.GraphDialogue.Editor
 
             try
             {
-                syncMethod.Invoke(null, new object[] { db });
+                syncMethod.Invoke(null, new object[] { db, settingsAsset.LocaleValidation });
                 Debug.Log("[GraphDialogueLocalizationBuilder] Phase 2 complete: synced to Unity Localization String Tables.");
             }
             catch (Exception ex)
