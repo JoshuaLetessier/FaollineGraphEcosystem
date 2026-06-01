@@ -69,6 +69,7 @@ namespace Faolline.GraphCore.Editor
 
             var foldout = new Foldout { text = "Node Properties", value = true };
 
+            AddField(foldout, nodeElement, "_title");
             AddField(foldout, nodeElement, "_isCheckpoint");
             AddField(foldout, nodeElement, "_hasColorOverride");
             AddField(foldout, nodeElement, "_nodeColor");

@@ -127,6 +127,7 @@ namespace Faolline.GraphCore.Editor
                     var view = CreateNodeView(nodeData);
                     if (view == null) continue;
                     view.SetPosition(new Rect(nodeData.Position, Vector2.zero));
+                    view.TitleChanged += OnNodeTitleChanged;
                     AddElement(view);
                     _nodeViews[nodeData.Id] = view;
                 }
@@ -305,10 +306,18 @@ namespace Faolline.GraphCore.Editor
             if (view == null) return;
 
             view.SetPosition(new Rect(position, Vector2.zero));
+            view.TitleChanged += OnNodeTitleChanged;
             AddElement(view);
             _nodeViews[nodeData.Id] = view;
             _isDirty = true;
             OnNodeCreated(nodeData);
+        }
+
+        // Inline title edits on any node view mark the canvas dirty so they persist on save.
+        private void OnNodeTitleChanged()
+        {
+            _isDirty = true;
+            if (_graph != null) EditorUtility.SetDirty(_graph);
         }
 
         // ── Hooks ─────────────────────────────────────────────────────────────

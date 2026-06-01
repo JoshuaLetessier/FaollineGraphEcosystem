@@ -106,8 +106,6 @@ namespace Faolline.GraphDialogue.Editor
         {
             var foldout = new Foldout { text = "Line", value = true };
 
-            foldout.Add(BuildBoundOrPlainField(nodeElement, "_title", "Title",
-                () => node.Title, v => node.Title = v));
             foldout.Add(BuildBoundOrPlainField(nodeElement, "_speakerKey", "Speaker Key",
                 () => node.SpeakerKey, v => node.SpeakerKey = v));
             foldout.Add(BuildBoundOrPlainField(nodeElement, "_textKey", "Text Key",

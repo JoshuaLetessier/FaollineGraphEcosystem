@@ -14,6 +14,7 @@ namespace Faolline.GraphCore
     {
         [SerializeField, HideInInspector] private string _id;
         [SerializeField, HideInInspector] private string _nodeType;
+        [SerializeField] private string _title = string.Empty;
         [SerializeField] private Vector2 _position;
         [SerializeField] private List<BaseCondition> _entryConditions  = new List<BaseCondition>();
         [SerializeField] private List<BaseAction>    _onEnterActions   = new List<BaseAction>();
@@ -37,6 +38,17 @@ namespace Faolline.GraphCore
         {
             get => _nodeType;
             set => _nodeType = value;
+        }
+
+        /// <summary>
+        /// Optional editor-facing display name shown on the node title bar (editable inline). When empty,
+        /// the node view falls back to its type label. Purely visual metadata to make graphs readable;
+        /// downstream libs may also read it (e.g. as default/source text). Never null.
+        /// </summary>
+        public string Title
+        {
+            get => _title;
+            set => _title = value ?? string.Empty;
         }
 
         /// <summary>Editor canvas position of this node.</summary>

@@ -1,3 +1,4 @@
+using System;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -10,6 +11,8 @@ namespace Faolline.GraphCore.Editor
     /// Implement <see cref="OnBuildView"/> to populate the node content area.
     /// Override <see cref="HasColorOverride"/> and <see cref="ColorOverride"/> to apply a
     /// custom node background color.
+    /// The title bar is editable inline (double-click) and persisted to
+    /// <see cref="BaseNodeData.Title"/>; an empty title falls back to the subclass's type label.
     /// </summary>
     public abstract class BaseNodeView : Node
     {
@@ -17,6 +20,18 @@ namespace Faolline.GraphCore.Editor
 
         /// <summary>The data object this view represents. Null until Initialize is called.</summary>
         public BaseNodeData NodeData { get; protected set; }
+
+        /// <summary>
+        /// Raised after the title is edited inline. Hosts (the graph view) subscribe to mark the
+        /// graph dirty so the change persists.
+        /// </summary>
+        public event Action TitleChanged;
+
+        // The type label set by the subclass constructor (e.g. "Line", "Statement"); used when
+        // BaseNodeData.Title is empty. Captured at Initialize time.
+        private string _defaultTitle;
+        private Label _titleLabel;
+        private TextField _titleEditor;
 
         /// <summary>
         /// When <c>true</c>, <see cref="ColorOverride"/> is used as the node background color.
@@ -60,9 +75,88 @@ namespace Faolline.GraphCore.Editor
         protected void Initialize(BaseNodeData nodeData)
         {
             NodeData = nodeData;
+            _defaultTitle = title; // type label set by the subclass ctor before Initialize
             LoadStyleSheet();
             OnBuildView();
             ApplyNodeColor();
+            SetupEditableTitle();
+            ApplyTitleFromData();
+        }
+
+        // ── Inline title editing ────────────────────────────────────────────────
+
+        /// <summary>Shows <see cref="BaseNodeData.Title"/> on the title bar, or the type label when empty.</summary>
+        private void ApplyTitleFromData()
+        {
+            title = (NodeData != null && !string.IsNullOrEmpty(NodeData.Title)) ? NodeData.Title : _defaultTitle;
+        }
+
+        private void SetupEditableTitle()
+        {
+            _titleLabel = this.Q<Label>("title-label");
+            if (_titleLabel == null) return;
+
+            _titleEditor = new TextField { isDelayed = true };
+            _titleEditor.style.display = DisplayStyle.None;
+            _titleEditor.style.flexGrow = 1;
+            _titleLabel.parent.Insert(_titleLabel.parent.IndexOf(_titleLabel), _titleEditor);
+
+            _titleLabel.RegisterCallback<MouseDownEvent>(evt =>
+            {
+                if (evt.button == 0 && evt.clickCount == 2)
+                {
+                    BeginTitleEdit();
+                    evt.StopImmediatePropagation();
+                }
+            });
+
+            _titleEditor.RegisterCallback<FocusOutEvent>(_ => EndTitleEdit());
+            _titleEditor.RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
+                {
+                    EndTitleEdit();
+                    evt.StopPropagation();
+                }
+                else if (evt.keyCode == KeyCode.Escape)
+                {
+                    CloseTitleEditor();
+                    evt.StopPropagation();
+                }
+            });
+        }
+
+        private void BeginTitleEdit()
+        {
+            if (_titleEditor == null) return;
+            _titleEditor.SetValueWithoutNotify(NodeData?.Title ?? string.Empty);
+            _titleLabel.style.display = DisplayStyle.None;
+            _titleEditor.style.display = DisplayStyle.Flex;
+            _titleEditor.Focus();
+            _titleEditor.SelectAll();
+        }
+
+        private void EndTitleEdit()
+        {
+            if (_titleEditor == null || _titleEditor.style.display == DisplayStyle.None) return;
+
+            var newTitle = (_titleEditor.value ?? string.Empty).Trim();
+            CloseTitleEditor();
+
+            var current = NodeData?.Title ?? string.Empty;
+            if (NodeData != null && newTitle != current)
+            {
+                NodeData.Title = newTitle;
+                ApplyTitleFromData();
+                TitleChanged?.Invoke();
+            }
+        }
+
+        private void CloseTitleEditor()
+        {
+            if (_titleEditor == null) return;
+            _titleEditor.style.display = DisplayStyle.None;
+            if (_titleLabel != null) _titleLabel.style.display = DisplayStyle.Flex;
         }
 
         private void LoadStyleSheet()

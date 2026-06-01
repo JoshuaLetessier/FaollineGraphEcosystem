@@ -16,29 +16,15 @@ namespace Faolline.GraphDialogue.Editor
     {
         protected override BaseNodeView CreateNodeView(BaseNodeData node)
         {
-            switch (node.NodeType)
+            return node.NodeType switch
             {
-                case StartNodeData.NodeTypeId:
-                    return new StartNodeView((StartNodeData)node);
-                case DialogueLineNodeData.NodeTypeId:
-                    var lineView = new DialogueLineNodeView((DialogueLineNodeData)node);
-                    lineView.TitleChanged = () => MarkDirty();
-                    return lineView;
-                case EndNodeData.NodeTypeId:
-                    return new EndNodeView((EndNodeData)node);
-                case ChoiceNodeData.NodeTypeId:
-                    return new ChoiceNodeView((ChoiceNodeData)node);
-                case SubGraphNodeData.NodeTypeId:
-                    return new SubGraphNodeView((SubGraphNodeData)node);
-                default:
-                    return null;
-            }
-        }
-
-        /// <summary>Marks the loaded graph asset dirty so inline edits (e.g. node title) persist on save.</summary>
-        private void MarkDirty()
-        {
-            if (Graph != null) UnityEditor.EditorUtility.SetDirty(Graph);
+                StartNodeData.NodeTypeId        => new StartNodeView((StartNodeData)node),
+                DialogueLineNodeData.NodeTypeId => new DialogueLineNodeView((DialogueLineNodeData)node),
+                EndNodeData.NodeTypeId          => new EndNodeView((EndNodeData)node),
+                ChoiceNodeData.NodeTypeId       => new ChoiceNodeView((ChoiceNodeData)node),
+                SubGraphNodeData.NodeTypeId     => new SubGraphNodeView((SubGraphNodeData)node),
+                _                               => null
+            };
         }
 
         protected override BaseEdgeView CreateEdgeView(BaseEdgeData edge) => new DialogueEdgeView(edge);
