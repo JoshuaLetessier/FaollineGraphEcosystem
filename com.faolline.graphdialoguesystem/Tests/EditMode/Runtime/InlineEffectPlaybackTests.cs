@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
@@ -5,7 +6,7 @@ using Faolline.GraphDialogue;
 
 namespace Faolline.GraphDialogue.Tests
 {
-    /// <summary>US3 — inline enter/exit effects mutate shared state during playback.</summary>
+    /// <summary>US3 â€” inline enter/exit effects mutate shared state during playback.</summary>
     public class InlineEffectPlaybackTests
     {
         [Test]
@@ -69,7 +70,7 @@ namespace Faolline.GraphDialogue.Tests
 
                 player.Start();    // pauses at l1
                 Assert.AreEqual(0, ctx.Counter, "Exit effect has not run yet at l1.");
-                player.Advance();  // l1 exit (counter=9) → l2
+                player.Advance();  // l1 exit (counter=9) â†’ l2
 
                 Assert.AreEqual(9, counterAtL2, "Exit effect must run before the next node is entered.");
             }

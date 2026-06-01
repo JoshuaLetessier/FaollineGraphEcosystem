@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -6,7 +7,7 @@ using Faolline.GraphDialogue;
 
 namespace Faolline.GraphDialogue.Tests
 {
-    /// <summary>US4 — missing keys/locales fall back safely, never empty.</summary>
+    /// <summary>US4 â€” missing keys/locales fall back safely, never empty.</summary>
     public class LocalizationFallbackTests
     {
         [Test]
@@ -24,7 +25,7 @@ namespace Faolline.GraphDialogue.Tests
         {
             var provider = new CsvLocalizationProvider("Key,en\ndlg.hi,Hello\n", "en");
             LogAssert.Expect(LogType.Warning, new Regex("not found"));
-            // "de" column absent → fallback rather than empty/broken
+            // "de" column absent â†’ fallback rather than empty/broken
             Assert.AreEqual("#dlg.hi", provider.Resolve("dlg.hi", "de"));
         }
     }

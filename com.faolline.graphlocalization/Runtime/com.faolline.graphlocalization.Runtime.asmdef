@@ -1,10 +1,7 @@
 {
-    "name": "com.faolline.graphdialoguesystem.Runtime",
-    "rootNamespace": "Faolline.GraphDialogue",
-    "references": [
-        "com.faolline.graphcore.Runtime",
-        "com.faolline.graphlocalization.Runtime"
-    ],
+    "name": "com.faolline.graphlocalization.Runtime",
+    "rootNamespace": "Faolline.GraphLocalization",
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

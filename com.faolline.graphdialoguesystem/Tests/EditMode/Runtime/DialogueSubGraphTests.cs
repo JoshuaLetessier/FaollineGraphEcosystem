@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
@@ -47,7 +48,7 @@ namespace Faolline.GraphDialogue.Tests
                 Assert.IsNotNull(line, "Child sub-dialogue line should be emitted.");
                 Assert.AreEqual("Hello", line.ResolvedText);
 
-                player.Advance();  // child line → child end → resume parent → parent end
+                player.Advance();  // child line â†’ child end â†’ resume parent â†’ parent end
                 Assert.IsNotNull(end, "Parent should resume and end after the sub-dialogue.");
                 Assert.AreEqual(EndReason.Completed, end.EndReason);
             }

@@ -1,10 +1,11 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphDialogue;
 
 namespace Faolline.GraphDialogue.Tests
 {
-    /// <summary>P1 — project-wide localization mode selection (CSV vs. Unity Localization).</summary>
+    /// <summary>P1 â€” project-wide localization mode selection (CSV vs. Unity Localization).</summary>
     public class LocalizationModeTests
     {
         [Test]

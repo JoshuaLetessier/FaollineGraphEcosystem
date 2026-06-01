@@ -1,10 +1,11 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphDialogue;
 
 namespace Faolline.GraphDialogue.Tests
 {
-    /// <summary>P1 — localization settings auto-discovery and loading.</summary>
+    /// <summary>P1 â€” localization settings auto-discovery and loading.</summary>
     public class LocalizationSettingsLoaderTests
     {
         [Test]

@@ -1,11 +1,7 @@
 {
-    "name": "com.faolline.graphdialoguesystem.Tests.EditMode",
-    "rootNamespace": "Faolline.GraphDialogue.Tests",
+    "name": "com.faolline.graphlocalization.Tests.EditMode",
+    "rootNamespace": "Faolline.GraphLocalization.Tests",
     "references": [
-        "com.faolline.graphdialoguesystem.Runtime",
-        "com.faolline.graphdialoguesystem.Editor",
-        "com.faolline.graphcore.Runtime",
-        "com.faolline.graphcore.Editor",
         "com.faolline.graphlocalization.Runtime",
         "com.faolline.graphlocalization.Editor",
         "UnityEngine.TestRunner",
@@ -21,9 +17,7 @@
         "nunit.framework.dll"
     ],
     "autoReferenced": false,
-    "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
-    ],
+    "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false
 }

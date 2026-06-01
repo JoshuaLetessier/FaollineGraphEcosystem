@@ -1,4 +1,4 @@
-namespace Faolline.GraphDialogue
+namespace Faolline.GraphLocalization
 {
     /// <summary>Selects the project-wide localization backend.</summary>
     public enum LocalizationMode

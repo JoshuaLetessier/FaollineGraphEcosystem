@@ -1,16 +1,17 @@
 {
-    "name": "com.faolline.graphdialoguesystem.Runtime",
-    "rootNamespace": "Faolline.GraphDialogue",
+    "name": "com.faolline.graphlocalization.Editor",
+    "rootNamespace": "Faolline.GraphLocalization.Editor",
     "references": [
-        "com.faolline.graphcore.Runtime",
         "com.faolline.graphlocalization.Runtime"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": true,
+    "autoReferenced": false,
     "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false

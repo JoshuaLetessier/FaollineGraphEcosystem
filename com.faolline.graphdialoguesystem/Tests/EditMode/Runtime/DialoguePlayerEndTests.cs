@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -24,7 +25,7 @@ namespace Faolline.GraphDialogue.Tests
                 player.OnEnded += s => { ended++; reason = s.EndReason; };
 
                 player.Start();    // pauses at line
-                player.Advance();  // line → end
+                player.Advance();  // line â†’ end
 
                 Assert.AreEqual(1, ended, "OnEnded must fire exactly once.");
                 Assert.AreEqual(EndReason.Completed, reason);

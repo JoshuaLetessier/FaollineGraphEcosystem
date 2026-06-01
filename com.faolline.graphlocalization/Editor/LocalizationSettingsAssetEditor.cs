@@ -1,8 +1,7 @@
 using UnityEditor;
 using UnityEngine;
-using Faolline.GraphDialogue;
 
-namespace Faolline.GraphDialogue.Editor
+namespace Faolline.GraphLocalization.Editor
 {
     [CustomEditor(typeof(LocalizationSettingsAsset))]
     public sealed class LocalizationSettingsAssetEditor : UnityEditor.Editor
@@ -18,27 +17,15 @@ namespace Faolline.GraphDialogue.Editor
             "Warn — Log a warning for each untranslated locale. Default: catches problems without blocking iteration.",
             "Strict — Log gaps as errors. Use as a pre-release QA gate to enforce complete translations.",
         };
-
-        private static readonly MessageType[] _validationMsgType =
-        {
-            MessageType.None,
-            MessageType.Warning,
-            MessageType.Error,
-        };
+        private static readonly MessageType[] _validationMsgType = { MessageType.None, MessageType.Warning, MessageType.Error };
 
         private static readonly string[] _strictModeHelp =
         {
             "Permissive — Missing keys fall back to #key silently. Safe for production builds.",
-            "Audit — Fall back to #key, log a warning, and record missing keys in DialoguePlayer.MissingKeys. Default.",
+            "Audit — Fall back to #key, log a warning, and record missing keys in MissingKeys. Default.",
             "Strict — Throw LocalizationException on the first missing key. Use in automated QA or CI test runs.",
         };
-
-        private static readonly MessageType[] _strictModeMsgType =
-        {
-            MessageType.None,
-            MessageType.Warning,
-            MessageType.Error,
-        };
+        private static readonly MessageType[] _strictModeMsgType = { MessageType.None, MessageType.Warning, MessageType.Error };
 
         private void OnEnable()
         {
@@ -52,23 +39,18 @@ namespace Faolline.GraphDialogue.Editor
         {
             serializedObject.Update();
 
-            // ── Provider ──────────────────────────────────────────────────────────
             EditorGUILayout.LabelField("Provider", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_mode);
             if (_mode.enumValueIndex == (int)LocalizationMode.UnityLocalization)
                 EditorGUILayout.PropertyField(_tableName);
 
             EditorGUILayout.Space(6);
-
-            // ── Build-time validation ─────────────────────────────────────────────
             EditorGUILayout.LabelField("Build-time Validation", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_localeValidation, new GUIContent("Locale Validation"));
             var valIdx = Mathf.Clamp(_localeValidation.enumValueIndex, 0, _validationHelp.Length - 1);
             EditorGUILayout.HelpBox(_validationHelp[valIdx], _validationMsgType[valIdx]);
 
             EditorGUILayout.Space(6);
-
-            // ── Runtime playback ──────────────────────────────────────────────────
             EditorGUILayout.LabelField("Runtime Playback", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(_playerStrictMode, new GUIContent("Player Strict Mode"));
             var strictIdx = Mathf.Clamp(_playerStrictMode.enumValueIndex, 0, _strictModeHelp.Length - 1);

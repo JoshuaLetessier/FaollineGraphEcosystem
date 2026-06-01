@@ -2,32 +2,31 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace Faolline.GraphDialogue
+namespace Faolline.GraphLocalization
 {
     /// <summary>
-    /// Indexed database of all localization keys found across DialogueGraphs.
-    /// Acts as validator and cache between graphs (source) and provider (translations).
-    /// Built by DialogueLocalizationBuilder.
+    /// Indexed database of all localization keys found across graphs, built by the localization builder.
+    /// Acts as validator and cache between graphs (source of truth) and provider (translations).
+    /// One asset per lib, stored under Assets/Resources by convention.
     /// </summary>
-    [CreateAssetMenu(menuName = "GraphDialogue/Localization Database", fileName = "GraphDialogueLocalizationDatabase")]
+    [CreateAssetMenu(menuName = "GraphLocalization/Localization Database", fileName = "LocalizationDatabase")]
     public class LocalizationDatabase : ScriptableObject
     {
         [SerializeField] private List<LocalizationGraphEntry> _graphs = new();
-        [SerializeField] private List<LocalizationKeyEntry> _speakerKeys = new();
+        [SerializeField] private List<LocalizationKeyEntry> _globalKeys = new();
         [SerializeField] private LocalizationDatabaseMetadata _metadata = new();
 
         public IReadOnlyList<LocalizationGraphEntry> Graphs => _graphs;
 
         /// <summary>
-        /// Global speaker display-name keys, derived from each Speaker's SpeakerId at build time.
-        /// These are NOT per-graph: speakers are shared across dialogues. Synced to the global
-        /// Dialogue_Speakers collection by the provider.
+        /// Global keys not tied to a specific graph (e.g. speaker display names).
+        /// Synced to a shared collection by the provider.
         /// </summary>
-        public IReadOnlyList<LocalizationKeyEntry> SpeakerKeys => _speakerKeys;
+        public IReadOnlyList<LocalizationKeyEntry> GlobalKeys => _globalKeys;
 
         public LocalizationDatabaseMetadata Metadata => _metadata;
 
-        /// <summary>Gets or creates entry for a graph (by GUID).</summary>
+        /// <summary>Gets or creates the entry for a graph identified by GUID.</summary>
         public LocalizationGraphEntry GetOrCreateGraphEntry(string graphGuid, string graphName)
         {
             var existing = _graphs.Find(e => e.GraphGuid == graphGuid);
@@ -38,36 +37,34 @@ namespace Faolline.GraphDialogue
             return entry;
         }
 
-        /// <summary>Finds a graph entry by GUID.</summary>
+        /// <summary>Finds a graph entry by GUID, or null.</summary>
         public LocalizationGraphEntry FindGraphEntry(string graphGuid) => _graphs.Find(e => e.GraphGuid == graphGuid);
 
-        /// <summary>Adds a global speaker display-name key (deduplicated).</summary>
-        public void AddSpeakerKey(string key, string defaultHint = "")
+        /// <summary>Adds a global key (deduplicated by key string).</summary>
+        public void AddGlobalKey(string key, LocalizationKeyType type, string defaultHint = "")
         {
             if (string.IsNullOrWhiteSpace(key)) return;
             var trimmed = key.Trim();
-            if (_speakerKeys.Exists(k => k.Key == trimmed)) return;
-            _speakerKeys.Add(new LocalizationKeyEntry { Key = trimmed, Type = LocalizationKeyType.SpeakerName, DefaultHint = defaultHint });
+            if (_globalKeys.Exists(k => k.Key == trimmed)) return;
+            _globalKeys.Add(new LocalizationKeyEntry { Key = trimmed, Type = type, DefaultHint = defaultHint });
         }
 
-        /// <summary>Clears all entries (used during rebuild).</summary>
+        /// <summary>Clears all entries (used at the start of each rebuild).</summary>
         public void Clear()
         {
             _graphs.Clear();
-            _speakerKeys.Clear();
+            _globalKeys.Clear();
         }
 
-        /// <summary>Gets all unique keys across all graphs and speakers.</summary>
+        /// <summary>Gets all unique keys across graphs and global keys.</summary>
         public HashSet<string> GetAllKeys()
         {
             var keys = new HashSet<string>();
             foreach (var graph in _graphs)
-            {
                 foreach (var key in graph.Keys)
                     keys.Add(key.Key);
-            }
-            foreach (var speakerKey in _speakerKeys)
-                keys.Add(speakerKey.Key);
+            foreach (var key in _globalKeys)
+                keys.Add(key.Key);
             return keys;
         }
     }
@@ -103,7 +100,7 @@ namespace Faolline.GraphDialogue
     [Serializable]
     public class LocalizationDatabaseMetadata
     {
-        public System.DateTime LastBuildTime = System.DateTime.MinValue;
+        public DateTime LastBuildTime = DateTime.MinValue;
         public int TotalGraphsScanned;
         public int TotalKeysFound;
         public int OrphansDetected;
@@ -111,8 +108,8 @@ namespace Faolline.GraphDialogue
 
     public enum LocalizationKeyType
     {
-        Text = 0,           // Line content (key derived via DialogueLocalizationKeys.ForLine)
-        SpeakerName = 1,    // Speaker display name (key derived via DialogueLocalizationKeys.ForSpeaker)
-        ChoiceLabel = 2,    // Choice option label (key derived via DialogueLocalizationKeys.ForChoice)
+        Text = 0,
+        SpeakerName = 1,
+        ChoiceLabel = 2,
     }
 }

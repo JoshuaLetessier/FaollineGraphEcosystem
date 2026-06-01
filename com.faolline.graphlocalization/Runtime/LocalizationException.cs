@@ -1,9 +1,9 @@
 using System;
 
-namespace Faolline.GraphDialogue
+namespace Faolline.GraphLocalization
 {
     /// <summary>
-    /// Thrown by the player when a localization key cannot be resolved and the active
+    /// Thrown when a localization key cannot be resolved and the active
     /// <see cref="LocalizationStrictMode"/> is <see cref="LocalizationStrictMode.Strict"/>.
     /// </summary>
     public sealed class LocalizationException : Exception
@@ -15,7 +15,7 @@ namespace Faolline.GraphDialogue
         public string Locale { get; }
 
         public LocalizationException(string key, string locale)
-            : base($"[GraphDialogue] Missing localization key '{key}' for locale '{locale}'.")
+            : base($"[GraphLocalization] Missing localization key '{key}' for locale '{locale}'.")
         {
             Key = key;
             Locale = locale;

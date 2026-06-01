@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
@@ -5,7 +6,7 @@ using Faolline.GraphDialogue;
 
 namespace Faolline.GraphDialogue.Tests
 {
-    /// <summary>US3 — inline conditions gate choices and node entry during playback.</summary>
+    /// <summary>US3 â€” inline conditions gate choices and node entry during playback.</summary>
     public class InlineConditionPlaybackTests
     {
         [Test]

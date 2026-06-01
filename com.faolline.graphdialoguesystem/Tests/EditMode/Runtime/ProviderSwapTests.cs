@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphDialogue;
@@ -5,7 +6,7 @@ using Faolline.GraphDialogue;
 namespace Faolline.GraphDialogue.Tests
 {
     /// <summary>
-    /// US4 — the same graph resolves through any <see cref="ILocalizationProvider"/>. A stand-in
+    /// US4 â€” the same graph resolves through any <see cref="ILocalizationProvider"/>. A stand-in
     /// "engine" provider (implementing the same contract) proves the adapter seam without requiring
     /// com.unity.localization to be installed in the test run.
     /// </summary>
@@ -15,7 +16,7 @@ namespace Faolline.GraphDialogue.Tests
         private sealed class StubEngineProvider : ILocalizationProvider
         {
             public string CurrentLocale => "en";
-            // The Linear graph's line has Id "l" → derived key "line_l".
+            // The Linear graph's line has Id "l" â†’ derived key "line_l".
             public string Resolve(string key, string locale) => key == "line_l" ? "EngineHello" : $"#{key}";
         }
 

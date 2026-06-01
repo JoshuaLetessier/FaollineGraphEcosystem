@@ -1,10 +1,11 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphDialogue;
 
 namespace Faolline.GraphDialogue.Tests
 {
-    /// <summary>P2a — per-locale validation mode configuration on the settings asset.</summary>
+    /// <summary>P2a â€” per-locale validation mode configuration on the settings asset.</summary>
     public class LocaleValidationModeTests
     {
         [Test]

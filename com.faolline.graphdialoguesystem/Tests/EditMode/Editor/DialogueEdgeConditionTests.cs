@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
@@ -34,7 +35,7 @@ namespace Faolline.GraphDialogue.Tests
                 player.OnEnded += _ => ended = true;
 
                 player.Start();    // pauses at line
-                player.Advance();  // blocked edge → stuck
+                player.Advance();  // blocked edge â†’ stuck
 
                 Assert.IsTrue(stuck, "A false edge condition must block traversal (stuck).");
                 Assert.IsFalse(ended, "Playback must not reach the end through a blocked edge.");

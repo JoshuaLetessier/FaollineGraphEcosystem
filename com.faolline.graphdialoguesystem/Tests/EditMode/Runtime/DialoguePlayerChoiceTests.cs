@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
@@ -69,7 +70,7 @@ namespace Faolline.GraphDialogue.Tests
 
                 Assert.IsFalse(choices.Options[1].Available, "Option 'b' is gated false.");
 
-                player.Choose("b"); // unavailable → no-op
+                player.Choose("b"); // unavailable â†’ no-op
                 Assert.IsNull(end, "Choosing an unavailable option must not advance.");
                 Assert.AreEqual(RunnerState.NodeReady, player.State);
             }

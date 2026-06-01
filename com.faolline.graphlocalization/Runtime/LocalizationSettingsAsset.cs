@@ -1,10 +1,9 @@
 using UnityEngine;
 
-namespace Faolline.GraphDialogue
+namespace Faolline.GraphLocalization
 {
     /// <summary>
-    /// Serializable asset that stores project-wide localization configuration.
-    /// Wrap in LocalizationSettings for runtime use.
+    /// Project-wide localization configuration asset. One per project, stored in Resources.
     /// </summary>
     public class LocalizationSettingsAsset : ScriptableObject
     {
@@ -18,7 +17,7 @@ namespace Faolline.GraphDialogue
         private string _unityLocalizationTableName = "Dialogue";
 
         [Header("Build-time validation")]
-        [SerializeField, Tooltip("How the table builder reports per-locale translation gaps (a key with an empty value in some locale).\n\n" +
+        [SerializeField, Tooltip("How the table builder reports per-locale translation gaps.\n\n" +
             "• Permissive: accept gaps silently.\n" +
             "• Warn (default): log warnings, never block.\n" +
             "• Strict: log gaps as errors (pre-release QA gate).")]
@@ -33,25 +32,20 @@ namespace Faolline.GraphDialogue
 
         public LocalizationMode Mode => _mode;
         public string UnityLocalizationTableName => _unityLocalizationTableName;
-
-        /// <summary>How per-locale translation gaps are reported when building tables. Default: Warn.</summary>
         public LocaleValidationMode LocaleValidation => _localeValidation;
-
-        /// <summary>How the runtime player reacts to a missing key during playback. Default: Audit.</summary>
         public LocalizationStrictMode PlayerStrictMode => _playerStrictMode;
 
-        /// <summary>Create a LocalizationSettings instance from this asset configuration.</summary>
         public LocalizationSettings CreateSettings(string locale = "en")
         {
-            ILocalizationProvider provider = CreateProviderForMode();
+            var provider = CreateProviderForMode();
             return new LocalizationSettings(provider, locale) { StrictMode = _playerStrictMode };
         }
 
         private ILocalizationProvider CreateProviderForMode()
         {
-#if GRAPHDIALOGUE_UNITY_LOCALIZATION
+#if GRAPHLOCALIZATION_UNITY_LOCALIZATION
             if (_mode == LocalizationMode.UnityLocalization)
-                return new Localization.Unity.UnityLocalizationProvider(_unityLocalizationTableName);
+                return new Unity.UnityLocalizationProvider(_unityLocalizationTableName);
 #endif
             return new CsvLocalizationProvider("Key,en\n", "en");
         }

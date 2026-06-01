@@ -1,10 +1,11 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphDialogue;
 
 namespace Faolline.GraphDialogue.Tests
 {
-    /// <summary>US4 — the same graph plays in multiple locales with no graph change.</summary>
+    /// <summary>US4 â€” the same graph plays in multiple locales with no graph change.</summary>
     public class LocalizedPlaybackTests
     {
         [Test]

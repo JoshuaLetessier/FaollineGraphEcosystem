@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
@@ -6,8 +7,8 @@ using Faolline.GraphDialogue;
 namespace Faolline.GraphDialogue.Tests
 {
     /// <summary>
-    /// Polish — an end-to-end integration check that mirrors the sample dialogue shape and plays it
-    /// start→end in two locales headlessly (covers SC-001/003/004 without touching AssetDatabase).
+    /// Polish â€” an end-to-end integration check that mirrors the sample dialogue shape and plays it
+    /// startâ†’end in two locales headlessly (covers SC-001/003/004 without touching AssetDatabase).
     /// </summary>
     public class DialogueSampleIntegrationTests
     {
@@ -21,7 +22,7 @@ namespace Faolline.GraphDialogue.Tests
             "line_cl,Quiet place,Endroit paisible\n" +
             "speaker_npc_mayor,Mayor,Maire\n";
 
-        // Start → intro(line) → choice[ask→sub→end, leave→end]
+        // Start â†’ intro(line) â†’ choice[askâ†’subâ†’end, leaveâ†’end]
         private static DialogueGraph Build(out DialogueGraph child)
         {
             child = ScriptableObject.CreateInstance<DialogueGraph>();
@@ -70,10 +71,10 @@ namespace Faolline.GraphDialogue.Tests
 
                     player.Start();        // intro line
                     Assert.AreEqual(intro, introText, $"intro @ {locale}");
-                    player.Advance();      // → choice
-                    player.Choose("ask");  // → sub-dialogue line
+                    player.Advance();      // â†’ choice
+                    player.Choose("ask");  // â†’ sub-dialogue line
                     Assert.AreEqual(town, townText, $"sub line @ {locale}");
-                    player.Advance();      // sub line → sub end → parent end
+                    player.Advance();      // sub line â†’ sub end â†’ parent end
 
                     Assert.IsNotNull(end, "Dialogue reaches the end.");
                     Assert.AreEqual(EndReason.Completed, end.EndReason);

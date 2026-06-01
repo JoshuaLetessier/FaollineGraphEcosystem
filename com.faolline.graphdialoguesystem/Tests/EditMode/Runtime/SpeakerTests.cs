@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphDialogue;
@@ -15,7 +16,7 @@ namespace Faolline.GraphDialogue.Tests
             var fallbackAsset = ScriptableObject.CreateInstance<Speaker>();
             try
             {
-                // No expressions, no fallback → false.
+                // No expressions, no fallback â†’ false.
                 Assert.IsFalse(speaker.TryGetExpression("happy", out _));
 
                 speaker.FallbackExpression = fallbackAsset;

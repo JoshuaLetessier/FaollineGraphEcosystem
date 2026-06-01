@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
@@ -5,10 +6,10 @@ using Faolline.GraphDialogue;
 
 namespace Faolline.GraphDialogue.Tests
 {
-    /// <summary>US3 — step-back restores prior shared state and checkpoint navigation.</summary>
+    /// <summary>US3 â€” step-back restores prior shared state and checkpoint navigation.</summary>
     public class DialoguePlayerHistoryTests
     {
-        // Start → L1(enter Counter=1, checkpoint) → L2(enter Counter=2) → End
+        // Start â†’ L1(enter Counter=1, checkpoint) â†’ L2(enter Counter=2) â†’ End
         private static DialogueGraph Build(out SetIntAction a1, out SetIntAction a2)
         {
             a1 = ScriptableObject.CreateInstance<SetIntAction>(); a1.ParameterKey = DialogueContextKeys.Counter; a1.Value = 1;

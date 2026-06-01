@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLocalization;
 
 namespace Faolline.GraphDialogue
 {

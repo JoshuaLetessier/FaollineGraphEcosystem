@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using Faolline.GraphCore;
 using Faolline.GraphDialogue;
 using UnityEngine;
@@ -17,7 +18,7 @@ namespace Faolline.GraphDialogue.Tests
             "choice_b,No,Non\n" +
             "speaker_npc,NPC,PNJ\n";
 
-        /// <summary>Start → Line (Id "l", speaker "npc") → End. Caller destroys the graph.</summary>
+        /// <summary>Start â†’ Line (Id "l", speaker "npc") â†’ End. Caller destroys the graph.</summary>
         public static DialogueGraph Linear()
         {
             var g = ScriptableObject.CreateInstance<DialogueGraph>();
@@ -32,8 +33,8 @@ namespace Faolline.GraphDialogue.Tests
         }
 
         /// <summary>
-        /// Start → Choice with two options. Option "a" (key "choice_a") → End(Completed). Option "b"
-        /// (key "choice_b") → End(Cancelled), gated by an optional <paramref name="gateB"/> condition.
+        /// Start â†’ Choice with two options. Option "a" (key "choice_a") â†’ End(Completed). Option "b"
+        /// (key "choice_b") â†’ End(Cancelled), gated by an optional <paramref name="gateB"/> condition.
         /// </summary>
         public static DialogueGraph WithChoice(BaseCondition gateB = null)
         {

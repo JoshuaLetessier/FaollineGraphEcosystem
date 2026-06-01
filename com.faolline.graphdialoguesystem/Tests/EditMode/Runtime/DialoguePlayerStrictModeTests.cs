@@ -1,3 +1,4 @@
+﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -5,10 +6,10 @@ using Faolline.GraphDialogue;
 
 namespace Faolline.GraphDialogue.Tests
 {
-    /// <summary>P2a-iii — runtime reaction to missing keys per LocalizationStrictMode.</summary>
+    /// <summary>P2a-iii â€” runtime reaction to missing keys per LocalizationStrictMode.</summary>
     public class DialoguePlayerStrictModeTests
     {
-        // Empty table → the Linear graph's line key "line_l" cannot be resolved.
+        // Empty table â†’ the Linear graph's line key "line_l" cannot be resolved.
         private static CsvLocalizationProvider EmptyProvider() => new CsvLocalizationProvider("Key,en\n", "en");
 
         [Test]
