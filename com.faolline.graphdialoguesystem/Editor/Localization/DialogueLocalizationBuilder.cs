@@ -90,13 +90,13 @@ namespace Faolline.GraphDialogue.Editor
                     // expressionKey is optional, not a translation key
                 }
 
-                // ChoiceNodeData: each choice has DisplayTextKey
+                // ChoiceNodeData: each DialogueChoice has DisplayTextKey
                 if (node is ChoiceNodeData choiceNode && choiceNode.Choices != null)
                 {
                     foreach (var choice in choiceNode.Choices)
                     {
-                        if (choice != null && !string.IsNullOrWhiteSpace(choice.DisplayTextKey))
-                            keys.Add((choice.DisplayTextKey.Trim(), LocalizationKeyType.ChoiceLabel));
+                        if (choice is DialogueChoice dlgChoice && !string.IsNullOrWhiteSpace(dlgChoice.DisplayTextKey))
+                            keys.Add((dlgChoice.DisplayTextKey.Trim(), LocalizationKeyType.ChoiceLabel));
                     }
                 }
             }
