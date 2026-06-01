@@ -112,7 +112,7 @@ namespace Faolline.GraphDialogue.Editor
             toolbar.Add(new ToolbarButton(BackToCheckpoint) { text = "⏮ Checkpoint", tooltip = "Jump back to the most recent checkpoint node." });
 
             // Locale selection for a Run: switches the active language with no graph change (FR-032/SC-004).
-            var localeField = new ToolbarTextField { value = _locale, tooltip = "Active locale code (e.g. en, fr). Applied on Run." };
+            var localeField = new TextField { value = _locale, tooltip = "Active locale code (e.g. en, fr). Applied on Run." };
             localeField.style.width = 48;
             localeField.RegisterValueChangedCallback(e => _locale = string.IsNullOrEmpty(e.newValue) ? "en" : e.newValue);
             toolbar.Add(localeField);
