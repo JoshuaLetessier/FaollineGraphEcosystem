@@ -41,7 +41,7 @@ namespace Faolline.GraphDialogue.Editor
             // ── Child sub-dialogue ──────────────────────────────────────────────────────
             var child = ScriptableObject.CreateInstance<DialogueGraph>();
             var cStart = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
-            var cLine  = new DialogueLineNodeData { Id = Guid(), NodeType = DialogueLineNodeData.NodeTypeId, SpeakerKey = "npc_mayor", TextKey = "dlg.town", Position = new Vector2(240, 0) };
+            var cLine  = new DialogueLineNodeData { Id = Guid(), NodeType = DialogueLineNodeData.NodeTypeId, Title = "It is a quiet place.", SpeakerKey = "npc_mayor", TextKey = "dlg.town", Position = new Vector2(240, 0) };
             var cEnd   = new EndNodeData { Id = Guid(), NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed, Position = new Vector2(480, 0) };
             child.AddNode(cStart); child.AddNode(cLine); child.AddNode(cEnd);
             child.EntryNodeId = cStart.Id;
@@ -63,7 +63,7 @@ namespace Faolline.GraphDialogue.Editor
             graph.AddParameter(new ParameterData { Key = DialogueContextKeys.Flag, Type = ParameterType.Bool, DefaultValue = "false" });
 
             var start  = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
-            var intro  = new DialogueLineNodeData { Id = Guid(), NodeType = DialogueLineNodeData.NodeTypeId, SpeakerKey = "npc_mayor", TextKey = "dlg.intro", Position = new Vector2(240, 0) };
+            var intro  = new DialogueLineNodeData { Id = Guid(), NodeType = DialogueLineNodeData.NodeTypeId, Title = "Welcome traveller.", SpeakerKey = "npc_mayor", TextKey = "dlg.intro", Position = new Vector2(240, 0) };
             intro.IsCheckpoint = true;
             intro.OnEnterActions.Add(setVisited);
             var choice = new ChoiceNodeData { Id = Guid(), NodeType = ChoiceNodeData.NodeTypeId, Position = new Vector2(480, 0) };

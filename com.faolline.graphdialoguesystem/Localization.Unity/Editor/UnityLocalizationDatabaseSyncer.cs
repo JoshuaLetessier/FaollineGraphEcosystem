@@ -7,6 +7,7 @@ using UnityEditor.Localization;
 using UnityEngine.Localization;
 using UnityEngine.Localization.Tables;
 using Faolline.GraphDialogue;
+using UnityLocalizationSettings = UnityEngine.Localization.Settings.LocalizationSettings;
 
 namespace Faolline.GraphDialogue.Localization.Unity.Editor
 {
@@ -28,19 +29,22 @@ namespace Faolline.GraphDialogue.Localization.Unity.Editor
                 return;
             }
 
+            // The source locale receives the pre-filled default text (node Title / speaker fallback).
+            var sourceLocale = GetSourceLocale(locales);
+
             // Create collections per graph
             foreach (var graphEntry in database.Graphs)
             {
                 var collectionName = $"DLG_{Sanitize(graphEntry.GraphName)}";
                 var collection = GetOrCreateCollection(collectionName);
                 EnsureTablesForAllLocales(collection, locales);
-                SyncEntries(collection, graphEntry.Keys);
+                SyncEntries(collection, graphEntry.Keys, sourceLocale);
             }
 
             // Create + populate global Speakers collection (shared across graphs)
             var speakersCollection = GetOrCreateCollection("Dialogue_Speakers");
             EnsureTablesForAllLocales(speakersCollection, locales);
-            SyncEntries(speakersCollection, database.SpeakerKeys);
+            SyncEntries(speakersCollection, database.SpeakerKeys, sourceLocale);
 
             AssetDatabase.SaveAssets();
             Debug.Log("[UnityLocalizationDatabaseSyncer] Sync complete");
@@ -74,21 +78,53 @@ namespace Faolline.GraphDialogue.Localization.Unity.Editor
             }
         }
 
-        private static void SyncEntries(StringTableCollection collection, IReadOnlyList<LocalizationKeyEntry> keys)
+        private static void SyncEntries(StringTableCollection collection, IReadOnlyList<LocalizationKeyEntry> keys, Locale sourceLocale)
         {
             var shared = collection.SharedData;
+
+            // Resolve the source-locale table once: only that table is pre-filled with default text.
+            StringTable sourceTable = null;
+            if (sourceLocale != null)
+                sourceTable = collection.GetTable(sourceLocale.Identifier) as StringTable;
+
             foreach (var keyEntry in keys)
             {
                 if (string.IsNullOrWhiteSpace(keyEntry.Key)) continue;
 
-                var existing = shared.GetEntry(keyEntry.Key);
-                if (existing == null)
-                    shared.AddKey(keyEntry.Key);
+                var sharedEntry = shared.GetEntry(keyEntry.Key) ?? shared.AddKey(keyEntry.Key);
+                if (sharedEntry == null) continue;
+
+                // Pre-fill the source-locale entry with the default text (node Title / speaker fallback)
+                // only when it is currently empty — never overwrite an existing translation.
+                if (sourceTable != null && !string.IsNullOrEmpty(keyEntry.DefaultHint))
+                {
+                    var entry = sourceTable.GetEntry(sharedEntry.Id) ?? sourceTable.AddEntry(sharedEntry.Id, string.Empty);
+                    if (entry != null && string.IsNullOrEmpty(entry.Value))
+                        entry.Value = keyEntry.DefaultHint;
+                }
             }
 
             EditorUtility.SetDirty(shared);
             foreach (var table in collection.StringTables)
                 if (table != null) EditorUtility.SetDirty(table);
+        }
+
+        /// <summary>
+        /// Determines the project's source locale (receives pre-filled default text). Prefers the
+        /// configured ProjectLocale, falling back to the first available locale.
+        /// </summary>
+        private static Locale GetSourceLocale(IList<Locale> locales)
+        {
+            try
+            {
+                var project = UnityLocalizationSettings.ProjectLocale;
+                if (project != null) return project;
+            }
+            catch
+            {
+                // LocalizationSettings may be unavailable/unconfigured at edit time — fall through.
+            }
+            return locales != null && locales.Count > 0 ? locales[0] : null;
         }
 
         private static string Sanitize(string name)

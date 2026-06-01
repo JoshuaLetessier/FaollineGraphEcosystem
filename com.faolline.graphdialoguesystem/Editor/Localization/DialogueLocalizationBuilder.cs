@@ -35,8 +35,8 @@ namespace Faolline.GraphDialogue.Editor
                     var entry = db.GetOrCreateGraphEntry(guid, graph.name);
 
                     var keys = ExtractKeysFromGraph(graph);
-                    foreach (var (key, type) in keys)
-                        entry.AddKey(key, type);
+                    foreach (var (key, type, hint) in keys)
+                        entry.AddKey(key, type, defaultHint: hint);
 
                     totalKeysFound += keys.Count;
                 }
@@ -104,38 +104,56 @@ namespace Faolline.GraphDialogue.Editor
             return count;
         }
 
-        private static HashSet<(string key, LocalizationKeyType type)> ExtractKeysFromGraph(DialogueGraph graph)
+        private static List<(string key, LocalizationKeyType type, string hint)> ExtractKeysFromGraph(DialogueGraph graph)
         {
-            var keys = new HashSet<(string, LocalizationKeyType)>();
+            // Dedupe by (key, type); keep the first non-empty source hint encountered.
+            var seen = new Dictionary<(string, LocalizationKeyType), string>();
 
             if (graph == null || graph.Nodes == null || graph.Nodes.Count == 0)
-                return keys;
+                return new List<(string, LocalizationKeyType, string)>();
+
+            void Register(string key, LocalizationKeyType type, string hint)
+            {
+                var id = (key, type);
+                if (seen.TryGetValue(id, out var existingHint))
+                {
+                    if (string.IsNullOrEmpty(existingHint) && !string.IsNullOrEmpty(hint))
+                        seen[id] = hint;
+                }
+                else
+                {
+                    seen[id] = hint ?? string.Empty;
+                }
+            }
 
             foreach (var node in graph.Nodes)
             {
                 if (node == null) continue;
 
-                // DialogueLineNodeData: only textKey is a translation key.
-                // speakerKey is a logical id (matches Speaker.SpeakerId) — not translated.
-                // expressionKey is a visual selector — not translated.
+                // DialogueLineNodeData: only textKey is a translation key. The node Title is the
+                // source/default text used to pre-fill the entry. speakerKey is a logical id (matches
+                // Speaker.SpeakerId) — not translated. expressionKey is a visual selector — not translated.
                 if (node is DialogueLineNodeData lineNode)
                 {
                     if (!string.IsNullOrWhiteSpace(lineNode.TextKey))
-                        keys.Add((lineNode.TextKey.Trim(), LocalizationKeyType.Text));
+                        Register(lineNode.TextKey.Trim(), LocalizationKeyType.Text, lineNode.Title);
                 }
 
-                // ChoiceNodeData: each DialogueChoice has DisplayTextKey
+                // ChoiceNodeData: each DialogueChoice has DisplayTextKey (no source-text field yet).
                 if (node is ChoiceNodeData choiceNode && choiceNode.Choices != null)
                 {
                     foreach (var choice in choiceNode.Choices)
                     {
                         if (choice is DialogueChoice dlgChoice && !string.IsNullOrWhiteSpace(dlgChoice.DisplayTextKey))
-                            keys.Add((dlgChoice.DisplayTextKey.Trim(), LocalizationKeyType.ChoiceLabel));
+                            Register(dlgChoice.DisplayTextKey.Trim(), LocalizationKeyType.ChoiceLabel, string.Empty);
                     }
                 }
             }
 
-            return keys;
+            var result = new List<(string, LocalizationKeyType, string)>(seen.Count);
+            foreach (var kvp in seen)
+                result.Add((kvp.Key.Item1, kvp.Key.Item2, kvp.Value));
+            return result;
         }
 
         private static LocalizationDatabase GetOrCreateDatabase()

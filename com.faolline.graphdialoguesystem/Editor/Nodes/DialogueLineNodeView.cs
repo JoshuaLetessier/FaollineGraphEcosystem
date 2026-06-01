@@ -1,3 +1,4 @@
+using UnityEngine;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine.UIElements;
 using Faolline.GraphCore.Editor;
@@ -6,16 +7,24 @@ namespace Faolline.GraphDialogue.Editor
 {
     /// <summary>
     /// Canvas view for <see cref="DialogueLineNodeData"/>. One input "in" and one output "out".
-    /// Shows the speaker key and the line's text key in the node body.
+    /// Shows the speaker key and the line's text key in the node body. The node title is editable
+    /// inline (double-click) and is persisted to <see cref="DialogueLineNodeData.Title"/>.
     /// </summary>
     public class DialogueLineNodeView : BaseNodeView
     {
+        private const string DefaultTitle = "Line";
+
         private readonly DialogueLineNodeData _data;
+        private Label _titleLabel;
+        private TextField _titleEditor;
+
+        /// <summary>Raised after the title is edited inline so the host can persist the graph.</summary>
+        public System.Action TitleChanged;
 
         public DialogueLineNodeView(DialogueLineNodeData data)
         {
             _data = data;
-            title = "Line";
+            title = ResolveTitle();
             AddToClassList("gd-node-line");
             Initialize(data);
         }
@@ -40,7 +49,83 @@ namespace Faolline.GraphDialogue.Editor
             text.AddToClassList("node-label");
             extensionContainer.Add(text);
 
+            SetupEditableTitle();
+
             RefreshExpandedState();
+        }
+
+        private string ResolveTitle() => string.IsNullOrEmpty(_data?.Title) ? DefaultTitle : _data.Title;
+
+        // ── Inline title editing ────────────────────────────────────────────────
+
+        private void SetupEditableTitle()
+        {
+            _titleLabel = this.Q<Label>("title-label");
+            if (_titleLabel == null) return;
+
+            _titleEditor = new TextField { isDelayed = true };
+            _titleEditor.style.display = DisplayStyle.None;
+            _titleEditor.style.flexGrow = 1;
+            _titleLabel.parent.Insert(_titleLabel.parent.IndexOf(_titleLabel), _titleEditor);
+
+            _titleLabel.RegisterCallback<MouseDownEvent>(evt =>
+            {
+                if (evt.button == 0 && evt.clickCount == 2)
+                {
+                    BeginTitleEdit();
+                    evt.StopImmediatePropagation();
+                }
+            });
+
+            _titleEditor.RegisterCallback<FocusOutEvent>(_ => EndTitleEdit());
+            _titleEditor.RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode == KeyCode.Return || evt.keyCode == KeyCode.KeypadEnter)
+                {
+                    EndTitleEdit();
+                    evt.StopPropagation();
+                }
+                else if (evt.keyCode == KeyCode.Escape)
+                {
+                    CancelTitleEdit();
+                    evt.StopPropagation();
+                }
+            });
+        }
+
+        private void BeginTitleEdit()
+        {
+            if (_titleEditor == null) return;
+            _titleEditor.SetValueWithoutNotify(_data?.Title ?? string.Empty);
+            _titleLabel.style.display = DisplayStyle.None;
+            _titleEditor.style.display = DisplayStyle.Flex;
+            _titleEditor.Focus();
+            _titleEditor.SelectAll();
+        }
+
+        private void EndTitleEdit()
+        {
+            if (_titleEditor == null || _titleEditor.style.display == DisplayStyle.None) return;
+
+            var newTitle = (_titleEditor.value ?? string.Empty).Trim();
+            CloseTitleEditor();
+
+            var current = _data?.Title ?? string.Empty;
+            if (_data != null && newTitle != current)
+            {
+                _data.Title = newTitle;
+                title = ResolveTitle();
+                TitleChanged?.Invoke();
+            }
+        }
+
+        private void CancelTitleEdit() => CloseTitleEditor();
+
+        private void CloseTitleEditor()
+        {
+            if (_titleEditor == null) return;
+            _titleEditor.style.display = DisplayStyle.None;
+            if (_titleLabel != null) _titleLabel.style.display = DisplayStyle.Flex;
         }
     }
 }

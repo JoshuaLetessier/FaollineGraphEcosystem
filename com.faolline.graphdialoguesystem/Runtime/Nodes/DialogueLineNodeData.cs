@@ -16,9 +16,20 @@ namespace Faolline.GraphDialogue
         /// <summary>Canonical type identifier for dialogue line nodes.</summary>
         public new const string NodeTypeId = "graphdialogue/line";
 
+        [SerializeField] private string _title = string.Empty;
         [SerializeField] private string _speakerKey = string.Empty;
         [SerializeField] private string _textKey = string.Empty;
         [SerializeField] private string _expressionKey = "neutral";
+
+        /// <summary>
+        /// Editor-facing node title (shown on the node and editable inline). Doubles as the source/default
+        /// text used to pre-fill this line's localization entry (for <see cref="TextKey"/>) at build time.
+        /// </summary>
+        public string Title
+        {
+            get => _title;
+            set => _title = value ?? string.Empty;
+        }
 
         /// <summary>Logical speaker id (matches a <see cref="Speaker.SpeakerId"/>). Not translated.</summary>
         public string SpeakerKey
