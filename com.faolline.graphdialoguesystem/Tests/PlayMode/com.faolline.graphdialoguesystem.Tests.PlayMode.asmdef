@@ -1,0 +1,24 @@
+{
+    "name": "com.faolline.graphdialoguesystem.Tests.PlayMode",
+    "rootNamespace": "Faolline.GraphDialogue.Tests.PlayMode",
+    "references": [
+        "com.faolline.graphdialoguesystem.Runtime",
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphlocalization.Runtime",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
