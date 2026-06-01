@@ -5,6 +5,11 @@ using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
 
+#if GRAPHDIALOGUE_UNITY_LOCALIZATION
+using UnityEditor.Localization;
+using UnityEngine.Localization;
+#endif
+
 namespace Faolline.GraphDialogue.Editor
 {
     /// <summary>
@@ -21,6 +26,7 @@ namespace Faolline.GraphDialogue.Editor
         {
             try
             {
+                // Phase 1: Scan & Index
                 var db = GetOrCreateDatabase();
                 db.Clear();
 
@@ -47,7 +53,17 @@ namespace Faolline.GraphDialogue.Editor
                 EditorUtility.SetDirty(db);
                 AssetDatabase.SaveAssets();
 
-                Debug.Log($"[GraphDialogueLocalizationBuilder] Build complete: {graphs.Count} graphs, {totalKeysFound} keys found.");
+                Debug.Log($"[GraphDialogueLocalizationBuilder] Phase 1 complete: {graphs.Count} graphs, {totalKeysFound} keys found.");
+
+                // Phase 2: Sync to provider
+                var mode = LocalizationContext.Current.Mode;
+#if GRAPHDIALOGUE_UNITY_LOCALIZATION
+                if (mode == LocalizationMode.UnityLocalization)
+                {
+                    SyncToUnityLocalization(db);
+                    Debug.Log("[GraphDialogueLocalizationBuilder] Phase 2 complete: synced to Unity Localization String Tables.");
+                }
+#endif
             }
             catch (Exception ex)
             {
@@ -120,5 +136,82 @@ namespace Faolline.GraphDialogue.Editor
             Debug.Log($"[GraphDialogueLocalizationBuilder] Created database at {DefaultDatabasePath}");
             return db;
         }
+
+#if GRAPHDIALOGUE_UNITY_LOCALIZATION
+        private static void SyncToUnityLocalization(LocalizationDatabase db)
+        {
+            var locales = LocalizationEditorSettings.GetLocales();
+            if (locales == null || locales.Count == 0)
+            {
+                Debug.LogWarning("[GraphDialogueLocalizationBuilder] No locales configured in Project Settings > Localization");
+                return;
+            }
+
+            // Create collections per graph
+            foreach (var graphEntry in db.Graphs)
+            {
+                var collectionName = $"DLG_{Sanitize(graphEntry.GraphName)}";
+                var collection = GetOrCreateCollection(collectionName);
+                EnsureTablesForAllLocales(collection, locales);
+                SyncEntries(collection, graphEntry.Keys);
+            }
+
+            // Create global Speakers collection
+            var speakersCollection = GetOrCreateCollection("Dialogue_Speakers");
+            EnsureTablesForAllLocales(speakersCollection, locales);
+
+            AssetDatabase.SaveAssets();
+        }
+
+        private static UnityEditor.Localization.StringTableCollection GetOrCreateCollection(string collectionName)
+        {
+            var existing = LocalizationEditorSettings.GetStringTableCollection(collectionName);
+            if (existing != null) return existing;
+
+            var folder = "Assets/Localization/Collections";
+            if (!AssetDatabase.IsValidFolder(folder))
+                AssetDatabase.CreateFolder(AssetDatabase.IsValidFolder("Assets/Localization") ? "Assets/Localization" : "Assets",
+                    AssetDatabase.IsValidFolder("Assets/Localization") ? "Collections" : "Localization");
+
+            var collection = LocalizationEditorSettings.CreateStringTableCollection(collectionName, $"{folder}/{collectionName}");
+            Debug.Log($"[GraphDialogueLocalizationBuilder] Created String Table Collection: {collectionName}");
+            return collection;
+        }
+
+        private static void EnsureTablesForAllLocales(UnityEditor.Localization.StringTableCollection collection, IEnumerable<Locale> locales)
+        {
+            foreach (var locale in locales)
+            {
+                var table = collection.GetTable(locale.Identifier);
+                if (table == null)
+                    collection.AddNewTable(locale.Identifier);
+            }
+        }
+
+        private static void SyncEntries(UnityEditor.Localization.StringTableCollection collection, IReadOnlyList<LocalizationKeyEntry> keys)
+        {
+            var shared = collection.SharedData;
+            foreach (var keyEntry in keys)
+            {
+                if (string.IsNullOrWhiteSpace(keyEntry.Key)) continue;
+
+                var existing = shared.GetEntry(keyEntry.Key);
+                if (existing == null)
+                    shared.AddKey(keyEntry.Key);
+            }
+
+            EditorUtility.SetDirty(shared);
+            foreach (var table in collection.StringTables)
+                if (table != null) EditorUtility.SetDirty(table);
+        }
+
+        private static string Sanitize(string name)
+        {
+            if (string.IsNullOrEmpty(name)) return "Unnamed";
+            var invalid = System.IO.Path.GetInvalidFileNameChars();
+            var chars = name.Select(c => invalid.Contains(c) ? '_' : c).ToArray();
+            return new string(chars);
+        }
+#endif
     }
 }
