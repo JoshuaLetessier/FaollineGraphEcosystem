@@ -40,9 +40,9 @@ namespace Faolline.GraphDialogue.Editor
 
             // ── Child sub-dialogue ──────────────────────────────────────────────────────
             var child = ScriptableObject.CreateInstance<DialogueGraph>();
-            var cStart = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId };
-            var cLine  = new DialogueLineNodeData { Id = Guid(), NodeType = DialogueLineNodeData.NodeTypeId, SpeakerKey = "npc_mayor", TextKey = "dlg.town" };
-            var cEnd   = new EndNodeData { Id = Guid(), NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
+            var cStart = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
+            var cLine  = new DialogueLineNodeData { Id = Guid(), NodeType = DialogueLineNodeData.NodeTypeId, SpeakerKey = "npc_mayor", TextKey = "dlg.town", Position = new Vector2(240, 0) };
+            var cEnd   = new EndNodeData { Id = Guid(), NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed, Position = new Vector2(480, 0) };
             child.AddNode(cStart); child.AddNode(cLine); child.AddNode(cEnd);
             child.EntryNodeId = cStart.Id;
             child.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = cStart.Id, ToNodeId = cLine.Id, PortName = "out" });
@@ -62,13 +62,13 @@ namespace Faolline.GraphDialogue.Editor
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
             graph.AddParameter(new ParameterData { Key = DialogueContextKeys.Flag, Type = ParameterType.Bool, DefaultValue = "false" });
 
-            var start  = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId };
-            var intro  = new DialogueLineNodeData { Id = Guid(), NodeType = DialogueLineNodeData.NodeTypeId, SpeakerKey = "npc_mayor", TextKey = "dlg.intro" };
+            var start  = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
+            var intro  = new DialogueLineNodeData { Id = Guid(), NodeType = DialogueLineNodeData.NodeTypeId, SpeakerKey = "npc_mayor", TextKey = "dlg.intro", Position = new Vector2(240, 0) };
             intro.IsCheckpoint = true;
             intro.OnEnterActions.Add(setVisited);
-            var choice = new ChoiceNodeData { Id = Guid(), NodeType = ChoiceNodeData.NodeTypeId };
-            var sub    = new SubGraphNodeData { Id = Guid(), NodeType = SubGraphNodeData.NodeTypeId, TargetGraph = child, InheritParentContext = true };
-            var end    = new EndNodeData { Id = Guid(), NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
+            var choice = new ChoiceNodeData { Id = Guid(), NodeType = ChoiceNodeData.NodeTypeId, Position = new Vector2(480, 0) };
+            var sub    = new SubGraphNodeData { Id = Guid(), NodeType = SubGraphNodeData.NodeTypeId, TargetGraph = child, InheritParentContext = true, Position = new Vector2(720, 0) };
+            var end    = new EndNodeData { Id = Guid(), NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed, Position = new Vector2(960, 0) };
 
             graph.AddNode(start); graph.AddNode(intro); graph.AddNode(choice); graph.AddNode(sub); graph.AddNode(end);
             graph.EntryNodeId = start.Id;
