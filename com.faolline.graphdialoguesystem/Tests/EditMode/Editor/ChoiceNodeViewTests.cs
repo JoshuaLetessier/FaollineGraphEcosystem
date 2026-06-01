@@ -11,8 +11,8 @@ namespace Faolline.GraphDialogue.Tests
         public void OneOutputPortPerChoice_PortNameIsChoiceId()
         {
             var data = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
-            data.Choices.Add(new DialogueChoice { Id = "a", DisplayTextKey = "dlg.yes" });
-            data.Choices.Add(new DialogueChoice { Id = "b", DisplayTextKey = "dlg.no" });
+            data.Choices.Add(new DialogueChoice { Id = "a" });
+            data.Choices.Add(new DialogueChoice { Id = "b" });
 
             var view = new ChoiceNodeView(data);
 
@@ -25,11 +25,11 @@ namespace Faolline.GraphDialogue.Tests
         public void RebuildPorts_ReflectsChoiceListChanges()
         {
             var data = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
-            data.Choices.Add(new DialogueChoice { Id = "a", DisplayTextKey = "k" });
+            data.Choices.Add(new DialogueChoice { Id = "a" });
             var view = new ChoiceNodeView(data);
             Assert.AreEqual(1, view.OutputPortsLive.Count);
 
-            data.Choices.Add(new DialogueChoice { Id = "b", DisplayTextKey = "k2" });
+            data.Choices.Add(new DialogueChoice { Id = "b" });
             view.RebuildPorts();
             Assert.AreEqual(2, view.OutputPortsLive.Count);
         }

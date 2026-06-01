@@ -12,7 +12,7 @@ namespace Faolline.GraphDialogue.Tests
         {
             var graph = DialoguePlayerTestGraphs.Linear();
             var speaker = ScriptableObject.CreateInstance<Speaker>();
-            speaker.SpeakerId = "npc"; speaker.DisplayNameKey = "speaker.npc"; speaker.DisplayNameFallback = "NPC";
+            speaker.SpeakerId = "npc"; speaker.DisplayNameFallback = "NPC";
             try
             {
                 var provider = new CsvLocalizationProvider(DialoguePlayerTestGraphs.Csv, "en");

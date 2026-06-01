@@ -11,20 +11,22 @@ namespace Faolline.GraphDialogue.Tests
     /// </summary>
     public class DialogueSampleIntegrationTests
     {
+        // Keys are derived from node/choice/speaker identity (DialogueLocalizationKeys). The graph below
+        // uses deterministic Ids so this static CSV matches the generated keys.
         private const string Csv =
             "Key,en,fr\n" +
-            "dlg.intro,Welcome,Bienvenue\n" +
-            "dlg.opt.ask,Ask,Demander\n" +
-            "dlg.opt.leave,Leave,Partir\n" +
-            "dlg.town,Quiet place,Endroit paisible\n" +
-            "speaker.mayor.name,Mayor,Maire\n";
+            "line_i,Welcome,Bienvenue\n" +
+            "choice_ask,Ask,Demander\n" +
+            "choice_leave,Leave,Partir\n" +
+            "line_cl,Quiet place,Endroit paisible\n" +
+            "speaker_npc_mayor,Mayor,Maire\n";
 
         // Start → intro(line) → choice[ask→sub→end, leave→end]
         private static DialogueGraph Build(out DialogueGraph child)
         {
             child = ScriptableObject.CreateInstance<DialogueGraph>();
             var cs = new StartNodeData { Id = "cs", NodeType = StartNodeData.NodeTypeId };
-            var cl = new DialogueLineNodeData { Id = "cl", NodeType = DialogueLineNodeData.NodeTypeId, SpeakerKey = "npc_mayor", TextKey = "dlg.town" };
+            var cl = new DialogueLineNodeData { Id = "cl", NodeType = DialogueLineNodeData.NodeTypeId, SpeakerKey = "npc_mayor" };
             var ce = new EndNodeData { Id = "ce", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
             child.AddNode(cs); child.AddNode(cl); child.AddNode(ce); child.EntryNodeId = "cs";
             child.AddEdge(new BaseEdgeData { Id = "c1", FromNodeId = "cs", ToNodeId = "cl", PortName = "out" });
@@ -32,10 +34,10 @@ namespace Faolline.GraphDialogue.Tests
 
             var g = ScriptableObject.CreateInstance<DialogueGraph>();
             var s = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
-            var intro = new DialogueLineNodeData { Id = "i", NodeType = DialogueLineNodeData.NodeTypeId, SpeakerKey = "npc_mayor", TextKey = "dlg.intro" };
+            var intro = new DialogueLineNodeData { Id = "i", NodeType = DialogueLineNodeData.NodeTypeId, SpeakerKey = "npc_mayor" };
             var choice = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
-            choice.Choices.Add(new DialogueChoice { Id = "ask", DisplayTextKey = "dlg.opt.ask" });
-            choice.Choices.Add(new DialogueChoice { Id = "leave", DisplayTextKey = "dlg.opt.leave" });
+            choice.Choices.Add(new DialogueChoice { Id = "ask" });
+            choice.Choices.Add(new DialogueChoice { Id = "leave" });
             var sub = new SubGraphNodeData { Id = "sub", NodeType = SubGraphNodeData.NodeTypeId, TargetGraph = child, InheritParentContext = true };
             var end = new EndNodeData { Id = "e", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
             g.AddNode(s); g.AddNode(intro); g.AddNode(choice); g.AddNode(sub); g.AddNode(end);
@@ -55,7 +57,7 @@ namespace Faolline.GraphDialogue.Tests
             {
                 var graph = Build(out var child);
                 var speaker = ScriptableObject.CreateInstance<Speaker>();
-                speaker.SpeakerId = "npc_mayor"; speaker.DisplayNameKey = "speaker.mayor.name"; speaker.DisplayNameFallback = "Mayor";
+                speaker.SpeakerId = "npc_mayor"; speaker.DisplayNameFallback = "Mayor";
                 try
                 {
                     var player = new DialoguePlayer(graph, new DialogueContext(),

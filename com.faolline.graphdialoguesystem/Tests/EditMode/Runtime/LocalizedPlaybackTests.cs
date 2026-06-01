@@ -11,7 +11,7 @@ namespace Faolline.GraphDialogue.Tests
         public void LineAndSpeaker_ResolveInActiveLocale_AcrossTwoLanguages()
         {
             var speaker = ScriptableObject.CreateInstance<Speaker>();
-            speaker.SpeakerId = "npc"; speaker.DisplayNameKey = "speaker.npc"; speaker.DisplayNameFallback = "NPC";
+            speaker.SpeakerId = "npc"; speaker.DisplayNameFallback = "NPC";
             try
             {
                 foreach (var (locale, expectedText, expectedName) in new[]

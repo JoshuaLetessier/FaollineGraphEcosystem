@@ -16,8 +16,8 @@ namespace Faolline.GraphDialogue.Tests
             try
             {
                 var choice = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
-                choice.Choices.Add(new DialogueChoice { Id = "a", DisplayTextKey = "ka" });
-                choice.Choices.Add(new DialogueChoice { Id = "b", DisplayTextKey = "kb" });
+                choice.Choices.Add(new DialogueChoice { Id = "a" });
+                choice.Choices.Add(new DialogueChoice { Id = "b" });
                 var e1 = new EndNodeData { Id = "e1", NodeType = EndNodeData.NodeTypeId };
                 var e2 = new EndNodeData { Id = "e2", NodeType = EndNodeData.NodeTypeId };
                 graph.AddNode(choice); graph.AddNode(e1); graph.AddNode(e2);

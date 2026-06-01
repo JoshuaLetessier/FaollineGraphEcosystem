@@ -8,20 +8,21 @@ namespace Faolline.GraphDialogue.Tests
     public class DialogueChoiceTests
     {
         [Test]
-        public void IsBaseChoice_WithDisplayTextKey()
+        public void IsBaseChoice_CarriesIdTitleCondition()
         {
-            var choice = new DialogueChoice { Id = "a", DisplayTextKey = "dlg.yes" };
+            var choice = new DialogueChoice { Id = "a", Title = "Ask" };
             Assert.IsInstanceOf<BaseChoice>(choice);
             Assert.AreEqual("a", choice.Id);
-            Assert.AreEqual("dlg.yes", choice.DisplayTextKey);
+            Assert.AreEqual("Ask", choice.Title);
             Assert.IsNull(choice.Condition);
         }
 
         [Test]
-        public void DisplayTextKey_NeverNull()
+        public void LocalizationKey_IsDerivedFromId()
         {
-            var choice = new DialogueChoice { DisplayTextKey = null };
-            Assert.AreEqual(string.Empty, choice.DisplayTextKey);
+            var choice = new DialogueChoice { Id = "a" };
+            // The label's localization key is derived from the choice Id, not a stored field.
+            Assert.AreEqual("choice_a", DialogueLocalizationKeys.ForChoice(choice));
         }
     }
 }

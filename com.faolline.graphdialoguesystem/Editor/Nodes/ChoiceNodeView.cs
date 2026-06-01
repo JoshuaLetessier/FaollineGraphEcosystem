@@ -9,7 +9,7 @@ namespace Faolline.GraphDialogue.Editor
     /// <summary>
     /// Canvas view for <see cref="ChoiceNodeData"/>. One input port "in" and one output port per
     /// choice. Each output port's <c>portName</c> is the choice's <c>Id</c> (routing key used by
-    /// <c>ChooseById</c>); its displayed label is the choice's <see cref="DialogueChoice.DisplayTextKey"/>.
+    /// <c>ChooseById</c>); its displayed label is the choice's <see cref="BaseChoice.Title"/>.
     /// Call <see cref="RebuildPorts"/> after the choice list changes.
     /// </summary>
     public class ChoiceNodeView : BaseNodeView
@@ -37,7 +37,7 @@ namespace Faolline.GraphDialogue.Editor
         /// <summary>
         /// Clears and regenerates the output ports from <see cref="ChoiceNodeData.Choices"/>.
         /// One <see cref="Port.Capacity.Single"/> output per choice; <c>portName = choice.Id</c>,
-        /// displayed label = the choice's <see cref="DialogueChoice.DisplayTextKey"/> (or its Id).
+        /// displayed label = the choice's <see cref="BaseChoice.Title"/> (or its Id).
         /// </summary>
         public void RebuildPorts()
         {
@@ -91,15 +91,13 @@ namespace Faolline.GraphDialogue.Editor
 
         /// <summary>
         /// The port label prefers the choice's friendly <see cref="BaseChoice.Title"/> (for easy
-        /// identification), then its localization key, then its Id.
+        /// identification), then its Id. The localization key is derived from the Id, not shown here.
         /// </summary>
         public static string ResolveLabel(BaseChoice choice)
         {
             if (choice == null) return "(choice)";
             if (!string.IsNullOrEmpty(choice.Title))
                 return choice.Title;
-            if (choice is DialogueChoice dc && !string.IsNullOrEmpty(dc.DisplayTextKey))
-                return dc.DisplayTextKey;
             return string.IsNullOrEmpty(choice.Id) ? "(choice)" : choice.Id;
         }
 

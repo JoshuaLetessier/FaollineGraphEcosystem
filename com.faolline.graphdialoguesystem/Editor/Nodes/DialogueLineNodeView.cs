@@ -6,8 +6,9 @@ namespace Faolline.GraphDialogue.Editor
 {
     /// <summary>
     /// Canvas view for <see cref="DialogueLineNodeData"/>. One input "in" and one output "out".
-    /// Shows the speaker key and the line's text key in the node body. The node title is editable
-    /// inline (handled by <see cref="BaseNodeView"/>) and persisted to <c>BaseNodeData.Title</c>.
+    /// Shows the speaker in the node body; the line's text is identified by the editable node title
+    /// (handled by <see cref="BaseNodeView"/>, persisted to <c>BaseNodeData.Title</c>). The localization
+    /// key is derived from the node Id, so there is no text-key field to display.
     /// </summary>
     public class DialogueLineNodeView : BaseNodeView
     {
@@ -36,10 +37,6 @@ namespace Faolline.GraphDialogue.Editor
             var speaker = new Label(string.IsNullOrEmpty(_data?.SpeakerKey) ? "(no speaker)" : _data.SpeakerKey);
             speaker.AddToClassList("gd-node-speaker");
             extensionContainer.Add(speaker);
-
-            var text = new Label(string.IsNullOrEmpty(_data?.TextKey) ? "(no text key)" : _data.TextKey);
-            text.AddToClassList("node-label");
-            extensionContainer.Add(text);
 
             RefreshExpandedState();
         }

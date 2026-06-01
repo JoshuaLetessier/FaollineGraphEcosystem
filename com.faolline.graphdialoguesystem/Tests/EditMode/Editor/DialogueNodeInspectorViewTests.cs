@@ -41,7 +41,7 @@ namespace Faolline.GraphDialogue.Tests
         {
             var node = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
             _graph.AddNode(node);
-            var choice = new DialogueChoice { Id = "a", DisplayTextKey = "k" };
+            var choice = new DialogueChoice { Id = "a" };
             node.Choices.Add(choice);
 
             _insp.RemoveChoice(node, choice);

@@ -212,7 +212,7 @@ namespace Faolline.GraphDialogue
 
         private LineStep BuildLineStep(DialogueLineNodeData line)
         {
-            string text = _localization.Resolve(line.TextKey, _localization.CurrentLocale);
+            string text = _localization.Resolve(DialogueLocalizationKeys.ForLine(line), _localization.CurrentLocale);
             string speakerName = ResolveSpeakerName(line.SpeakerKey);
             return new LineStep(line.Id, line.SpeakerKey, speakerName, text, line.ExpressionKey);
         }
@@ -223,7 +223,7 @@ namespace Faolline.GraphDialogue
             foreach (var baseChoice in choiceNode.Choices)
             {
                 if (baseChoice == null) continue;
-                string labelKey = (baseChoice as DialogueChoice)?.DisplayTextKey ?? string.Empty;
+                string labelKey = DialogueLocalizationKeys.ForChoice(baseChoice);
                 string label = string.IsNullOrEmpty(labelKey)
                     ? baseChoice.Id
                     : _localization.Resolve(labelKey, _localization.CurrentLocale);
@@ -239,10 +239,11 @@ namespace Faolline.GraphDialogue
             var speaker = _speakerLookup?.Invoke(speakerKey);
             if (speaker == null) return speakerKey;
 
-            if (!string.IsNullOrEmpty(speaker.DisplayNameKey))
+            var nameKey = DialogueLocalizationKeys.ForSpeaker(speaker);
+            if (!string.IsNullOrEmpty(nameKey))
             {
-                var resolved = _localization.Resolve(speaker.DisplayNameKey, _localization.CurrentLocale);
-                if (!string.IsNullOrEmpty(resolved) && resolved != $"#{speaker.DisplayNameKey}")
+                var resolved = _localization.Resolve(nameKey, _localization.CurrentLocale);
+                if (!string.IsNullOrEmpty(resolved) && resolved != $"#{nameKey}")
                     return resolved;
             }
             return string.IsNullOrEmpty(speaker.DisplayNameFallback) ? speakerKey : speaker.DisplayNameFallback;

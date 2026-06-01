@@ -22,26 +22,27 @@ namespace Faolline.GraphDialogue.Editor
                 AssetDatabase.CreateFolder("Assets", "GraphDialogueSamples");
 
             // ── Localization CSV (2 locales) ───────────────────────────────────────────
+            // Keys are derived from node/choice/speaker identity (see DialogueLocalizationKeys); the
+            // sample uses deterministic Ids so this static CSV matches the generated keys.
             var csv =
                 "Key,en,fr\n" +
-                "dlg.intro,Welcome traveller.,Bienvenue voyageur.\n" +
-                "dlg.opt.ask,Ask about the town,Se renseigner sur la ville\n" +
-                "dlg.opt.leave,Leave,Partir\n" +
-                "dlg.town,It is a quiet place.,C'est un endroit paisible.\n" +
-                "speaker.mayor.name,Mayor,Maire\n";
+                "line_intro,Welcome traveller.,Bienvenue voyageur.\n" +
+                "choice_ask,Ask about the town,Se renseigner sur la ville\n" +
+                "choice_leave,Leave,Partir\n" +
+                "line_town,It is a quiet place.,C'est un endroit paisible.\n" +
+                "speaker_npc_mayor,Mayor,Maire\n";
             File.WriteAllText($"{Folder}/SampleDialogue_Strings.csv", csv);
 
             // ── Speaker ────────────────────────────────────────────────────────────────
             var mayor = ScriptableObject.CreateInstance<Speaker>();
             mayor.SpeakerId = "npc_mayor";
-            mayor.DisplayNameKey = "speaker.mayor.name";
             mayor.DisplayNameFallback = "Mayor";
             AssetDatabase.CreateAsset(mayor, $"{Folder}/SampleSpeaker_Mayor.asset");
 
             // ── Child sub-dialogue ──────────────────────────────────────────────────────
             var child = ScriptableObject.CreateInstance<DialogueGraph>();
             var cStart = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
-            var cLine  = new DialogueLineNodeData { Id = Guid(), NodeType = DialogueLineNodeData.NodeTypeId, Title = "It is a quiet place.", SpeakerKey = "npc_mayor", TextKey = "dlg.town", Position = new Vector2(240, 0) };
+            var cLine  = new DialogueLineNodeData { Id = "town", NodeType = DialogueLineNodeData.NodeTypeId, Title = "It is a quiet place.", SpeakerKey = "npc_mayor", Position = new Vector2(240, 0) };
             var cEnd   = new EndNodeData { Id = Guid(), NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed, Position = new Vector2(480, 0) };
             child.AddNode(cStart); child.AddNode(cLine); child.AddNode(cEnd);
             child.EntryNodeId = cStart.Id;
@@ -63,7 +64,7 @@ namespace Faolline.GraphDialogue.Editor
             graph.AddParameter(new ParameterData { Key = DialogueContextKeys.Flag, Type = ParameterType.Bool, DefaultValue = "false" });
 
             var start  = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
-            var intro  = new DialogueLineNodeData { Id = Guid(), NodeType = DialogueLineNodeData.NodeTypeId, Title = "Welcome traveller.", SpeakerKey = "npc_mayor", TextKey = "dlg.intro", Position = new Vector2(240, 0) };
+            var intro  = new DialogueLineNodeData { Id = "intro", NodeType = DialogueLineNodeData.NodeTypeId, Title = "Welcome traveller.", SpeakerKey = "npc_mayor", Position = new Vector2(240, 0) };
             intro.IsCheckpoint = true;
             intro.OnEnterActions.Add(setVisited);
             var choice = new ChoiceNodeData { Id = Guid(), NodeType = ChoiceNodeData.NodeTypeId, Position = new Vector2(480, 0) };
@@ -73,8 +74,8 @@ namespace Faolline.GraphDialogue.Editor
             graph.AddNode(start); graph.AddNode(intro); graph.AddNode(choice); graph.AddNode(sub); graph.AddNode(end);
             graph.EntryNodeId = start.Id;
 
-            choice.Choices.Add(new DialogueChoice { Id = Guid(), Title = "Ask about the town", DisplayTextKey = "dlg.opt.ask" });
-            choice.Choices.Add(new DialogueChoice { Id = Guid(), Title = "Leave", DisplayTextKey = "dlg.opt.leave" });
+            choice.Choices.Add(new DialogueChoice { Id = "ask", Title = "Ask about the town" });
+            choice.Choices.Add(new DialogueChoice { Id = "leave", Title = "Leave" });
 
             graph.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = start.Id,  ToNodeId = intro.Id,  PortName = "out" });
             graph.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = intro.Id,  ToNodeId = choice.Id, PortName = "out" });

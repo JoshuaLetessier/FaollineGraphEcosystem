@@ -16,9 +16,9 @@ namespace Faolline.GraphDialogue.Tests
 
             var g = ScriptableObject.CreateInstance<DialogueGraph>();
             var s = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
-            var l1 = new DialogueLineNodeData { Id = "l1", NodeType = DialogueLineNodeData.NodeTypeId, TextKey = "dlg.hi" };
+            var l1 = new DialogueLineNodeData { Id = "l1", NodeType = DialogueLineNodeData.NodeTypeId };
             l1.OnEnterActions.Add(a1); l1.IsCheckpoint = true;
-            var l2 = new DialogueLineNodeData { Id = "l2", NodeType = DialogueLineNodeData.NodeTypeId, TextKey = "dlg.yes" };
+            var l2 = new DialogueLineNodeData { Id = "l2", NodeType = DialogueLineNodeData.NodeTypeId };
             l2.OnEnterActions.Add(a2);
             var e = new EndNodeData { Id = "e", NodeType = EndNodeData.NodeTypeId };
             g.AddNode(s); g.AddNode(l1); g.AddNode(l2); g.AddNode(e);

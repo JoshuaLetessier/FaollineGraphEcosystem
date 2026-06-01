@@ -37,11 +37,11 @@ namespace Faolline.GraphDialogue.Tests
             try
             {
                 speaker.SpeakerId = "npc_mayor";
-                speaker.DisplayNameKey = "speaker.mayor.name";
                 speaker.DisplayNameFallback = "Mayor";
                 Assert.AreEqual("npc_mayor", speaker.SpeakerId);
-                Assert.AreEqual("speaker.mayor.name", speaker.DisplayNameKey);
                 Assert.AreEqual("Mayor", speaker.DisplayNameFallback);
+                // The display-name localization key is derived from the SpeakerId, not a stored field.
+                Assert.AreEqual("speaker_npc_mayor", DialogueLocalizationKeys.ForSpeaker(speaker));
             }
             finally { Object.DestroyImmediate(speaker); }
         }

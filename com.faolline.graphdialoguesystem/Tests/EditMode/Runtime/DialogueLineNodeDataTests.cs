@@ -19,12 +19,13 @@ namespace Faolline.GraphDialogue.Tests
             var node = new DialogueLineNodeData
             {
                 Id = "n", NodeType = DialogueLineNodeData.NodeTypeId,
-                SpeakerKey = "npc", TextKey = "dlg.hi"
+                SpeakerKey = "npc"
             };
             Assert.IsInstanceOf<StatementNodeData>(node);
             Assert.AreEqual("npc", node.SpeakerKey);
-            Assert.AreEqual("dlg.hi", node.TextKey);
             Assert.AreEqual("neutral", node.ExpressionKey, "ExpressionKey defaults to 'neutral'.");
+            // The localization key is derived from the node Id, not a stored field.
+            Assert.AreEqual("line_n", DialogueLocalizationKeys.ForLine(node));
         }
 
         [Test]

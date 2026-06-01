@@ -18,7 +18,7 @@ namespace Faolline.GraphDialogue.Tests
         public void Execute_RecordsLastLine()
         {
             var exec = new DialogueLineExecutor();
-            var line = new DialogueLineNodeData { Id = "n", NodeType = DialogueLineNodeData.NodeTypeId, TextKey = "k" };
+            var line = new DialogueLineNodeData { Id = "n", NodeType = DialogueLineNodeData.NodeTypeId };
             exec.Execute(line, new DialogueContext());
             Assert.AreSame(line, exec.LastLine);
         }

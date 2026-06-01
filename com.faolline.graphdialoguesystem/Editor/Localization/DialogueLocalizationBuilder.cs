@@ -9,7 +9,7 @@ namespace Faolline.GraphDialogue.Editor
 {
     /// <summary>
     /// Scans all DialogueGraphs in the project and builds a LocalizationDatabase.
-    /// Extracts textKey, speakerKey, displayTextKey from all nodes.
+    /// Keys are derived from node/choice/speaker identity (see DialogueLocalizationKeys).
     /// Menu: Faolline ▸ GraphDialogue ▸ Build Localization Tables
     /// </summary>
     public static class DialogueLocalizationBuilder
@@ -41,9 +41,9 @@ namespace Faolline.GraphDialogue.Editor
                     totalKeysFound += keys.Count;
                 }
 
-                // Scan Speaker assets for their DisplayNameKey (global, shared across graphs).
-                // SpeakerKey on nodes is a logical id (not translated) — the translatable key is
-                // Speaker.DisplayNameKey, which lives on the Speaker ScriptableObject.
+                // Scan Speaker assets for their display-name keys (global, shared across graphs).
+                // SpeakerKey on nodes is a logical id (not translated); the speaker's display-name key is
+                // derived from its SpeakerId via DialogueLocalizationKeys.ForSpeaker.
                 int speakerKeysFound = ScanSpeakerAssets(db);
                 totalKeysFound += speakerKeysFound;
 
@@ -80,7 +80,7 @@ namespace Faolline.GraphDialogue.Editor
         }
 
         /// <summary>
-        /// Scans all Speaker assets and registers their DisplayNameKey as global speaker keys.
+        /// Scans all Speaker assets and registers their derived display-name keys as global speaker keys.
         /// Returns the number of keys added.
         /// </summary>
         private static int ScanSpeakerAssets(LocalizationDatabase db)
@@ -93,9 +93,10 @@ namespace Faolline.GraphDialogue.Editor
                 var speaker = AssetDatabase.LoadAssetAtPath<Speaker>(path);
                 if (speaker == null) continue;
 
-                if (!string.IsNullOrWhiteSpace(speaker.DisplayNameKey))
+                var key = DialogueLocalizationKeys.ForSpeaker(speaker);
+                if (!string.IsNullOrEmpty(key))
                 {
-                    db.AddSpeakerKey(speaker.DisplayNameKey, speaker.DisplayNameFallback);
+                    db.AddSpeakerKey(key, speaker.DisplayNameFallback);
                     count++;
                 }
             }
@@ -130,23 +131,26 @@ namespace Faolline.GraphDialogue.Editor
             {
                 if (node == null) continue;
 
-                // DialogueLineNodeData: only textKey is a translation key. The node Title is the
-                // source/default text used to pre-fill the entry. speakerKey is a logical id (matches
-                // Speaker.SpeakerId) — not translated. expressionKey is a visual selector — not translated.
+                // DialogueLineNodeData: the line's key is derived from its Id (no hand-typed field).
+                // The node Title is the source/default text used to pre-fill the entry. speakerKey is a
+                // logical id (matches Speaker.SpeakerId) — not translated; expressionKey is visual-only.
                 if (node is DialogueLineNodeData lineNode)
                 {
-                    if (!string.IsNullOrWhiteSpace(lineNode.TextKey))
-                        Register(lineNode.TextKey.Trim(), LocalizationKeyType.Text, lineNode.Title);
+                    var key = DialogueLocalizationKeys.ForLine(lineNode);
+                    if (!string.IsNullOrEmpty(key))
+                        Register(key, LocalizationKeyType.Text, lineNode.Title);
                 }
 
-                // ChoiceNodeData: each DialogueChoice has a DisplayTextKey; the choice Title is its
+                // ChoiceNodeData: each choice's key is derived from its Id; the choice Title is its
                 // source/default text used to pre-fill the entry.
                 if (node is ChoiceNodeData choiceNode && choiceNode.Choices != null)
                 {
                     foreach (var choice in choiceNode.Choices)
                     {
-                        if (choice is DialogueChoice dlgChoice && !string.IsNullOrWhiteSpace(dlgChoice.DisplayTextKey))
-                            Register(dlgChoice.DisplayTextKey.Trim(), LocalizationKeyType.ChoiceLabel, dlgChoice.Title);
+                        if (choice == null) continue;
+                        var key = DialogueLocalizationKeys.ForChoice(choice);
+                        if (!string.IsNullOrEmpty(key))
+                            Register(key, LocalizationKeyType.ChoiceLabel, choice.Title);
                     }
                 }
             }

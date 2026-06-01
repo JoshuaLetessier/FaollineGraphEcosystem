@@ -19,7 +19,7 @@ namespace Faolline.GraphDialogue
         public IReadOnlyList<LocalizationGraphEntry> Graphs => _graphs;
 
         /// <summary>
-        /// Global speaker display-name keys, collected from Speaker assets (Speaker.DisplayNameKey).
+        /// Global speaker display-name keys, derived from each Speaker's SpeakerId at build time.
         /// These are NOT per-graph: speakers are shared across dialogues. Synced to the global
         /// Dialogue_Speakers collection by the provider.
         /// </summary>
@@ -111,8 +111,8 @@ namespace Faolline.GraphDialogue
 
     public enum LocalizationKeyType
     {
-        Text = 0,           // Line content (DialogueLineNodeData.TextKey)
-        SpeakerName = 1,    // Speaker display name (Speaker.DisplayNameKey)
-        ChoiceLabel = 2,    // Choice option label (DialogueChoice.DisplayTextKey)
+        Text = 0,           // Line content (key derived via DialogueLocalizationKeys.ForLine)
+        SpeakerName = 1,    // Speaker display name (key derived via DialogueLocalizationKeys.ForSpeaker)
+        ChoiceLabel = 2,    // Choice option label (key derived via DialogueLocalizationKeys.ForChoice)
     }
 }

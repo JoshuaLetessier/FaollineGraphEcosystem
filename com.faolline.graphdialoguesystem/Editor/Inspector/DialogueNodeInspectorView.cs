@@ -108,8 +108,6 @@ namespace Faolline.GraphDialogue.Editor
 
             foldout.Add(BuildBoundOrPlainField(nodeElement, "_speakerKey", "Speaker Key",
                 () => node.SpeakerKey, v => node.SpeakerKey = v));
-            foldout.Add(BuildBoundOrPlainField(nodeElement, "_textKey", "Text Key",
-                () => node.TextKey, v => node.TextKey = v));
             foldout.Add(BuildBoundOrPlainField(nodeElement, "_expressionKey", "Expression Key",
                 () => node.ExpressionKey, v => node.ExpressionKey = v));
 
@@ -232,8 +230,7 @@ namespace Faolline.GraphDialogue.Editor
             if (node == null) return;
             node.Choices.Add(new DialogueChoice
             {
-                Id = System.Guid.NewGuid().ToString("D"),
-                DisplayTextKey = "dlg.choice"
+                Id = System.Guid.NewGuid().ToString("D")
             });
             MarkGraphDirty();
             _graphView?.GetChoiceView(node.Id)?.RebuildPorts();
@@ -267,6 +264,7 @@ namespace Faolline.GraphDialogue.Editor
                 row.style.flexDirection = FlexDirection.Row;
 
                 // Friendly name → shown on the choice's output port and used as localization source text.
+                // The localization key itself is derived from the choice Id (no hand-typed key field).
                 var nameField = new TextField("Name") { value = choice.Title };
                 nameField.style.flexGrow = 1;
                 nameField.RegisterValueChangedCallback(e =>
@@ -274,18 +272,6 @@ namespace Faolline.GraphDialogue.Editor
                     choice.Title = e.newValue;
                     MarkGraphDirty();
                     _graphView?.GetChoiceView(node.Id)?.UpdateChoiceLabel(choice.Id, ChoiceNodeView.ResolveLabel(choice));
-                });
-
-                var labelField = new TextField("Key") { value = (choice as DialogueChoice)?.DisplayTextKey ?? string.Empty };
-                labelField.style.flexGrow = 1;
-                labelField.RegisterValueChangedCallback(e =>
-                {
-                    if (choice is DialogueChoice dc)
-                    {
-                        dc.DisplayTextKey = e.newValue;
-                        MarkGraphDirty();
-                        _graphView?.GetChoiceView(node.Id)?.UpdateChoiceLabel(choice.Id, ChoiceNodeView.ResolveLabel(choice));
-                    }
                 });
 
                 var conditionField = new ObjectField
@@ -304,7 +290,6 @@ namespace Faolline.GraphDialogue.Editor
                 var removeBtn = new Button(() => RemoveChoice(node, choice)) { text = "×" };
 
                 row.Add(nameField);
-                row.Add(labelField);
                 row.Add(conditionField);
                 row.Add(removeBtn);
                 foldout.Add(row);

@@ -17,7 +17,7 @@ namespace Faolline.GraphDialogue.Tests
         {
             var g = ScriptableObject.CreateInstance<DialogueGraph>();
             g.AddNode(new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId });
-            g.AddNode(new DialogueLineNodeData { Id = "l", NodeType = DialogueLineNodeData.NodeTypeId, TextKey = "k" });
+            g.AddNode(new DialogueLineNodeData { Id = "l", NodeType = DialogueLineNodeData.NodeTypeId });
             g.AddNode(new EndNodeData { Id = "e", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed });
             g.AddEdge(new BaseEdgeData { Id = "e1", FromNodeId = "s", ToNodeId = "l", PortName = "out" });
             g.AddEdge(new BaseEdgeData { Id = "e2", FromNodeId = "l", ToNodeId = "e", PortName = "out" });
@@ -29,8 +29,8 @@ namespace Faolline.GraphDialogue.Tests
         {
             var g = ScriptableObject.CreateInstance<DialogueGraph>();
             var c = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
-            c.Choices.Add(new DialogueChoice { Id = "a", DisplayTextKey = "ka" });
-            c.Choices.Add(new DialogueChoice { Id = "b", DisplayTextKey = "kb" });
+            c.Choices.Add(new DialogueChoice { Id = "a" });
+            c.Choices.Add(new DialogueChoice { Id = "b" });
             g.AddNode(new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId });
             g.AddNode(c);
             g.AddNode(new EndNodeData { Id = "e1", NodeType = EndNodeData.NodeTypeId });

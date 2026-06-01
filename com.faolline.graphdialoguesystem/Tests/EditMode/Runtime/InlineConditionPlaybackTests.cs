@@ -40,7 +40,7 @@ namespace Faolline.GraphDialogue.Tests
             try
             {
                 var s = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
-                var l = new DialogueLineNodeData { Id = "l", NodeType = DialogueLineNodeData.NodeTypeId, TextKey = "dlg.hi" };
+                var l = new DialogueLineNodeData { Id = "l", NodeType = DialogueLineNodeData.NodeTypeId };
                 l.EntryConditions.Add(gate); // node cannot be entered
                 var e = new EndNodeData { Id = "e", NodeType = EndNodeData.NodeTypeId };
                 graph.AddNode(s); graph.AddNode(l); graph.AddNode(e);

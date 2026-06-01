@@ -19,7 +19,7 @@ namespace Faolline.GraphDialogue.Tests
             try
             {
                 var s = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
-                var l = new DialogueLineNodeData { Id = "l", NodeType = DialogueLineNodeData.NodeTypeId, TextKey = "k" };
+                var l = new DialogueLineNodeData { Id = "l", NodeType = DialogueLineNodeData.NodeTypeId };
                 var e = new EndNodeData { Id = "e", NodeType = EndNodeData.NodeTypeId };
                 graph.AddNode(s); graph.AddNode(l); graph.AddNode(e);
                 graph.AddEdge(new BaseEdgeData { Id = "e1", FromNodeId = "s", ToNodeId = "l", PortName = "out" });

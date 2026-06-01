@@ -17,24 +17,17 @@ namespace Faolline.GraphDialogue
         public new const string NodeTypeId = "graphdialogue/line";
 
         [SerializeField] private string _speakerKey = string.Empty;
-        [SerializeField] private string _textKey = string.Empty;
         [SerializeField] private string _expressionKey = "neutral";
 
-        // Note: the node Title (editable display name, also used as source text to pre-fill this line's
-        // localization entry) is inherited from BaseNodeData.Title.
+        // The line's localization key is NOT stored as a field — it is derived from this node's Id via
+        // DialogueLocalizationKeys.ForLine(node), so it can never be mistyped or drift. The editable
+        // Title (inherited from BaseNodeData) is the source text used to pre-fill the table entry.
 
         /// <summary>Logical speaker id (matches a <see cref="Speaker.SpeakerId"/>). Not translated.</summary>
         public string SpeakerKey
         {
             get => _speakerKey;
             set => _speakerKey = value ?? string.Empty;
-        }
-
-        /// <summary>Localization key for this line's spoken text.</summary>
-        public string TextKey
-        {
-            get => _textKey;
-            set => _textKey = value ?? string.Empty;
         }
 
         /// <summary>Speaker expression key used to pick a visual expression. Defaults to "neutral".</summary>

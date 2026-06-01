@@ -12,7 +12,7 @@ namespace Faolline.GraphDialogue.Tests
         {
             var g = ScriptableObject.CreateInstance<DialogueGraph>();
             var s = new StartNodeData { Id = "cs", NodeType = StartNodeData.NodeTypeId };
-            var l = new DialogueLineNodeData { Id = "cl", NodeType = DialogueLineNodeData.NodeTypeId, TextKey = "dlg.hi" };
+            var l = new DialogueLineNodeData { Id = "cl", NodeType = DialogueLineNodeData.NodeTypeId };
             var e = new EndNodeData { Id = "ce", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
             g.AddNode(s); g.AddNode(l); g.AddNode(e);
             g.AddEdge(new BaseEdgeData { Id = "ce1", FromNodeId = "cs", ToNodeId = "cl", PortName = "out" });
