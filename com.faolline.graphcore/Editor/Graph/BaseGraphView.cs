@@ -28,6 +28,7 @@ namespace Faolline.GraphCore.Editor
 
         private BaseGraph _graph;
         private readonly Dictionary<string, BaseNodeView> _nodeViews = new Dictionary<string, BaseNodeView>();
+        private readonly Dictionary<string, BaseGroupView> _groupViews = new Dictionary<string, BaseGroupView>();
 
         /// <summary>The graph currently loaded on this canvas. Null when no graph is loaded.</summary>
         protected BaseGraph Graph => _graph;
@@ -118,6 +119,7 @@ namespace Faolline.GraphCore.Editor
 
                 DeleteElements(graphElements.ToList());
                 _nodeViews.Clear();
+                _groupViews.Clear();
 
                 if (_graph == null)
                     return;
@@ -138,6 +140,22 @@ namespace Faolline.GraphCore.Editor
                     if (view == null) continue;
                     ConnectEdgeView(view, edgeData);
                     AddElement(view);
+                }
+
+                // Load groups (before nodes so groups render behind them)
+                foreach (var groupData in _graph.Groups)
+                {
+                    var groupView = new BaseGroupView(groupData);
+                    groupView.DataChanged = () => { _isDirty = true; EditorUtility.SetDirty(_graph); };
+                    AddElement(groupView);
+                    _groupViews[groupData.Id] = groupView;
+
+                    // Re-add contained node views into the group
+                    foreach (var nodeId in groupData.NodeIds)
+                    {
+                        if (_nodeViews.TryGetValue(nodeId, out var nv))
+                            groupView.AddElement(nv);
+                    }
                 }
             }
             finally
@@ -236,6 +254,18 @@ namespace Faolline.GraphCore.Editor
                 kvp.Value.NodeData.Position = rect.position;
             }
 
+            // Sync group positions/sizes and member node IDs
+            foreach (var kvp in _groupViews)
+            {
+                var rect = kvp.Value.GetPosition();
+                kvp.Value.GroupData.Position = rect.position;
+                kvp.Value.GroupData.Size     = rect.size;
+                kvp.Value.GroupData.NodeIds.Clear();
+                foreach (var child in kvp.Value.containedElements)
+                    if (child is BaseNodeView nv && nv.NodeData != null)
+                        kvp.Value.GroupData.NodeIds.Add(nv.NodeData.Id);
+            }
+
             EditorUtility.SetDirty(_graph);
             AssetDatabase.SaveAssets();
             _isDirty = false;
@@ -249,6 +279,85 @@ namespace Faolline.GraphCore.Editor
         {
             foreach (var view in _nodeViews.Values)
                 view.RefreshColor();
+        }
+
+        // ── Groups ────────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Called from the canvas context menu. Creates a group around all currently selected nodes.
+        /// If no nodes are selected, creates an empty group at the mouse position.
+        /// </summary>
+        public void GroupSelection(Vector2 mousePosition)
+        {
+            if (_graph == null) return;
+
+            var groupData = new GraphGroupData
+            {
+                Id       = System.Guid.NewGuid().ToString("D"),
+                Title    = "Group",
+                Position = mousePosition,
+            };
+
+            // Collect selected node views
+            var selected = new List<BaseNodeView>();
+            foreach (var item in selection)
+                if (item is BaseNodeView nv && nv.NodeData != null) selected.Add(nv);
+
+            if (selected.Count > 0)
+            {
+                // Size the group to encompass the selection
+                var min = new Vector2(float.MaxValue, float.MaxValue);
+                var max = new Vector2(float.MinValue, float.MinValue);
+                foreach (var nv in selected)
+                {
+                    var r = nv.GetPosition();
+                    min = Vector2.Min(min, r.position);
+                    max = Vector2.Max(max, r.position + r.size);
+                }
+                const float padding = 20f;
+                groupData.Position = min - Vector2.one * padding;
+                groupData.Size     = (max - min) + Vector2.one * padding * 2;
+                foreach (var nv in selected)
+                    groupData.NodeIds.Add(nv.NodeData.Id);
+            }
+
+            _graph.AddGroup(groupData);
+
+            var groupView = new BaseGroupView(groupData);
+            groupView.DataChanged = () => { _isDirty = true; EditorUtility.SetDirty(_graph); };
+            AddElement(groupView);
+            _groupViews[groupData.Id] = groupView;
+            foreach (var nv in selected) groupView.AddElement(nv);
+
+            _isDirty = true;
+            EditorUtility.SetDirty(_graph);
+        }
+
+        /// <summary>Removes a group view and its data from the graph. Contained nodes are NOT deleted.</summary>
+        private void RemoveGroup(BaseGroupView groupView)
+        {
+            if (_graph == null || groupView?.GroupData == null) return;
+            _graph.RemoveGroup(groupView.GroupData);
+            _groupViews.Remove(groupView.GroupData.Id);
+            RemoveElement(groupView);
+            _isDirty = true;
+            EditorUtility.SetDirty(_graph);
+        }
+
+        public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            base.BuildContextualMenu(evt);
+
+            // "Group Selection" appears on the canvas (not on a node or group)
+            if (evt.target is GraphView || evt.target is VisualElement ve && ve.ClassListContains("graphView"))
+            {
+                bool hasNodeSelection = false;
+                foreach (var item in selection)
+                    if (item is BaseNodeView) { hasNodeSelection = true; break; }
+
+                var label = hasNodeSelection ? "Group Selection" : "Add Group";
+                evt.menu.AppendAction(label, _ => GroupSelection(contentViewContainer.WorldToLocal(evt.mousePosition)));
+            }
         }
 
         // ── Port compatibility ────────────────────────────────────────────────
@@ -391,6 +500,12 @@ namespace Faolline.GraphCore.Editor
                 else if (element is BaseEdgeView edgeView && edgeView.EdgeData != null)
                 {
                     _graph?.RemoveEdge(edgeView.EdgeData);
+                    _isDirty = true;
+                }
+                else if (element is BaseGroupView groupView && groupView.GroupData != null)
+                {
+                    _graph?.RemoveGroup(groupView.GroupData);
+                    _groupViews.Remove(groupView.GroupData.Id);
                     _isDirty = true;
                 }
             }

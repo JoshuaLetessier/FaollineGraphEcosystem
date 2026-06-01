@@ -15,6 +15,7 @@ namespace Faolline.GraphCore
         [SerializeReference] private List<BaseNodeData> _nodes      = new List<BaseNodeData>();
         [SerializeReference] private List<BaseEdgeData> _edges      = new List<BaseEdgeData>();
         [SerializeField]   private List<ParameterData>  _parameters = new List<ParameterData>();
+        [SerializeField]   private List<GraphGroupData> _groups     = new List<GraphGroupData>();
         [SerializeField, HideInInspector] private string             _entryNodeId;
         [SerializeField]   private int                _historyDepth = 20;
 
@@ -55,6 +56,15 @@ namespace Faolline.GraphCore
             get => _historyDepth;
             set => _historyDepth = value;
         }
+
+        /// <summary>All node groups on this graph (authoring aid, no runtime effect).</summary>
+        public IReadOnlyList<GraphGroupData> Groups => _groups;
+
+        /// <summary>Appends a group to this graph. Use from editor tooling only.</summary>
+        public void AddGroup(GraphGroupData group) => _groups.Add(group);
+
+        /// <summary>Removes a group from this graph. Use from editor tooling only.</summary>
+        public void RemoveGroup(GraphGroupData group) => _groups.Remove(group);
 
         /// <summary>Appends a node to this graph. Use from editor tooling only.</summary>
         public void AddNode(BaseNodeData node) => _nodes.Add(node);
