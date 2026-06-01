@@ -266,7 +266,17 @@ namespace Faolline.GraphDialogue.Editor
                 var row = new VisualElement();
                 row.style.flexDirection = FlexDirection.Row;
 
-                var labelField = new TextField { value = (choice as DialogueChoice)?.DisplayTextKey ?? string.Empty };
+                // Friendly name → shown on the choice's output port and used as localization source text.
+                var nameField = new TextField("Name") { value = choice.Title };
+                nameField.style.flexGrow = 1;
+                nameField.RegisterValueChangedCallback(e =>
+                {
+                    choice.Title = e.newValue;
+                    MarkGraphDirty();
+                    _graphView?.GetChoiceView(node.Id)?.UpdateChoiceLabel(choice.Id, ChoiceNodeView.ResolveLabel(choice));
+                });
+
+                var labelField = new TextField("Key") { value = (choice as DialogueChoice)?.DisplayTextKey ?? string.Empty };
                 labelField.style.flexGrow = 1;
                 labelField.RegisterValueChangedCallback(e =>
                 {
@@ -274,7 +284,7 @@ namespace Faolline.GraphDialogue.Editor
                     {
                         dc.DisplayTextKey = e.newValue;
                         MarkGraphDirty();
-                        _graphView?.GetChoiceView(node.Id)?.UpdateChoiceLabel(choice.Id, e.newValue);
+                        _graphView?.GetChoiceView(node.Id)?.UpdateChoiceLabel(choice.Id, ChoiceNodeView.ResolveLabel(choice));
                     }
                 });
 
@@ -293,6 +303,7 @@ namespace Faolline.GraphDialogue.Editor
 
                 var removeBtn = new Button(() => RemoveChoice(node, choice)) { text = "×" };
 
+                row.Add(nameField);
                 row.Add(labelField);
                 row.Add(conditionField);
                 row.Add(removeBtn);

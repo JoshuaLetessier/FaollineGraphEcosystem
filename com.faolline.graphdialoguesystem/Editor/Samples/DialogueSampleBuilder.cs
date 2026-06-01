@@ -73,8 +73,8 @@ namespace Faolline.GraphDialogue.Editor
             graph.AddNode(start); graph.AddNode(intro); graph.AddNode(choice); graph.AddNode(sub); graph.AddNode(end);
             graph.EntryNodeId = start.Id;
 
-            choice.Choices.Add(new DialogueChoice { Id = Guid(), DisplayTextKey = "dlg.opt.ask" });
-            choice.Choices.Add(new DialogueChoice { Id = Guid(), DisplayTextKey = "dlg.opt.leave" });
+            choice.Choices.Add(new DialogueChoice { Id = Guid(), Title = "Ask about the town", DisplayTextKey = "dlg.opt.ask" });
+            choice.Choices.Add(new DialogueChoice { Id = Guid(), Title = "Leave", DisplayTextKey = "dlg.opt.leave" });
 
             graph.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = start.Id,  ToNodeId = intro.Id,  PortName = "out" });
             graph.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = intro.Id,  ToNodeId = choice.Id, PortName = "out" });

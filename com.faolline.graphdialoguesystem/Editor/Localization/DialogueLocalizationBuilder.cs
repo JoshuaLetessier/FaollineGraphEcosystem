@@ -139,13 +139,14 @@ namespace Faolline.GraphDialogue.Editor
                         Register(lineNode.TextKey.Trim(), LocalizationKeyType.Text, lineNode.Title);
                 }
 
-                // ChoiceNodeData: each DialogueChoice has DisplayTextKey (no source-text field yet).
+                // ChoiceNodeData: each DialogueChoice has a DisplayTextKey; the choice Title is its
+                // source/default text used to pre-fill the entry.
                 if (node is ChoiceNodeData choiceNode && choiceNode.Choices != null)
                 {
                     foreach (var choice in choiceNode.Choices)
                     {
                         if (choice is DialogueChoice dlgChoice && !string.IsNullOrWhiteSpace(dlgChoice.DisplayTextKey))
-                            Register(dlgChoice.DisplayTextKey.Trim(), LocalizationKeyType.ChoiceLabel, string.Empty);
+                            Register(dlgChoice.DisplayTextKey.Trim(), LocalizationKeyType.ChoiceLabel, dlgChoice.Title);
                     }
                 }
             }

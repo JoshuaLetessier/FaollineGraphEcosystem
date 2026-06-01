@@ -89,8 +89,15 @@ namespace Faolline.GraphDialogue.Editor
             }
         }
 
-        private static string ResolveLabel(BaseChoice choice)
+        /// <summary>
+        /// The port label prefers the choice's friendly <see cref="BaseChoice.Title"/> (for easy
+        /// identification), then its localization key, then its Id.
+        /// </summary>
+        public static string ResolveLabel(BaseChoice choice)
         {
+            if (choice == null) return "(choice)";
+            if (!string.IsNullOrEmpty(choice.Title))
+                return choice.Title;
             if (choice is DialogueChoice dc && !string.IsNullOrEmpty(dc.DisplayTextKey))
                 return dc.DisplayTextKey;
             return string.IsNullOrEmpty(choice.Id) ? "(choice)" : choice.Id;

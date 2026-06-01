@@ -12,6 +12,7 @@ namespace Faolline.GraphCore
     public class BaseChoice
     {
         [SerializeField, HideInInspector] private string _id;
+        [SerializeField] private string _title = string.Empty;
         [SerializeField] private BaseCondition _condition;
 
         /// <summary>Unique identifier (GUID) for this choice.</summary>
@@ -19,6 +20,17 @@ namespace Faolline.GraphCore
         {
             get => _id;
             set => _id = value;
+        }
+
+        /// <summary>
+        /// Optional editor-facing name for this choice, shown on its output port to make choices easy to
+        /// identify. Downstream libs may also read it (e.g. as default/source text for localization).
+        /// Never null.
+        /// </summary>
+        public string Title
+        {
+            get => _title;
+            set => _title = value ?? string.Empty;
         }
 
         /// <summary>Optional condition that gates this choice. Null means always available.</summary>
