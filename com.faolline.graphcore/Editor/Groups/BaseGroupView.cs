@@ -31,6 +31,13 @@ namespace Faolline.GraphCore.Editor
             AddCollapseButton();
             ApplyCollapsedState(data.IsCollapsed, animate: false);
 
+            // Contextual menu via manipulator (Group does not expose virtual BuildContextualMenu)
+            this.AddManipulator(new ContextualMenuManipulator(evt =>
+            {
+                evt.menu.InsertAction(0, data.IsCollapsed ? "Expand" : "Collapse", _ => ToggleCollapse());
+                evt.menu.InsertSeparator("/", 1);
+            }));
+
             // Sync title changes back to data
             var titleLabel = this.Q<Label>("titleLabel")
                 ?? this.Q<Label>(className: "group-title-label")
@@ -102,15 +109,5 @@ namespace Faolline.GraphCore.Editor
             DataChanged?.Invoke();
         }
 
-        // ── Contextual menu ───────────────────────────────────────────────────────
-
-        public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
-        {
-            evt.menu.AppendAction(GroupData.IsCollapsed ? "Expand" : "Collapse",
-                _ => ToggleCollapse());
-
-            evt.menu.AppendSeparator();
-            base.BuildContextualMenu(evt);
-        }
     }
 }
