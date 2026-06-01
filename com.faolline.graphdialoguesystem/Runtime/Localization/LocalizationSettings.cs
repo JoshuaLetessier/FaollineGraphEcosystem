@@ -1,7 +1,8 @@
 namespace Faolline.GraphDialogue
 {
     /// <summary>
-    /// Lightweight selection of the active <see cref="ILocalizationProvider"/> and current locale.
+    /// Runtime selection of the active <see cref="ILocalizationProvider"/> and current locale.
+    /// Can be created from a <see cref="LocalizationSettingsAsset"/> or programmatically.
     /// When no provider is configured, a safe default (an empty <see cref="CsvLocalizationProvider"/>)
     /// is used so resolution never fails for lack of setup — missing keys return the defined fallback.
     /// </summary>
@@ -9,6 +10,13 @@ namespace Faolline.GraphDialogue
     {
         private ILocalizationProvider _provider;
         private string _currentLocale = "en";
+
+        /// <summary>Initialize with explicit provider and locale.</summary>
+        public LocalizationSettings(ILocalizationProvider provider = null, string locale = "en")
+        {
+            _provider = provider;
+            _currentLocale = string.IsNullOrEmpty(locale) ? "en" : locale;
+        }
 
         /// <summary>
         /// The active provider. Setting it to null falls back to a safe default provider on next read.
