@@ -32,8 +32,8 @@ namespace Faolline.GraphDialogue.Tests
         }
 
         /// <summary>
-        /// Start → Choice with two options. Option "a" ("dlg.yes") → End(Completed). Option "b"
-        /// ("dlg.no") → End(Cancelled), gated by an optional <paramref name="gateB"/> condition.
+        /// Start → Choice with two options. Option "a" (key "choice_a") → End(Completed). Option "b"
+        /// (key "choice_b") → End(Cancelled), gated by an optional <paramref name="gateB"/> condition.
         /// </summary>
         public static DialogueGraph WithChoice(BaseCondition gateB = null)
         {
