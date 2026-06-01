@@ -9,10 +9,18 @@ namespace Faolline.GraphDialogue
     {
         private static LocalizationSettings _current;
 
-        /// <summary>The current settings. Never null — a safe default is created on first access.</summary>
+        /// <summary>The current settings. Never null — loads from asset or creates safe default on first access.</summary>
         public static LocalizationSettings Current
         {
-            get => _current ??= new LocalizationSettings();
+            get
+            {
+                if (_current == null)
+                {
+                    var asset = LocalizationSettingsLoader.Load();
+                    _current = asset != null ? asset.CreateSettings() : new LocalizationSettings();
+                }
+                return _current;
+            }
             set => _current = value;
         }
 
