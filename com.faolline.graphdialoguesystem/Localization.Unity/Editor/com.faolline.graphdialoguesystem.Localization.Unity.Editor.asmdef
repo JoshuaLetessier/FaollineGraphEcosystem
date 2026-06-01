@@ -4,6 +4,7 @@
     "references": [
         "com.faolline.graphdialoguesystem.Runtime",
         "com.faolline.graphdialoguesystem.Localization.Unity",
+        "Unity.Localization",
         "Unity.Localization.Editor"
     ],
     "includePlatforms": [
