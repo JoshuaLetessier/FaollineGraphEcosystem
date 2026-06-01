@@ -81,6 +81,10 @@ namespace Faolline.GraphCore.Editor
             ApplyNodeColor();
             SetupEditableTitle();
             ApplyTitleFromData();
+
+            // GraphView resets inline styles on every layout pass after a drag, erasing the color.
+            // Re-apply after each geometry change (fires post-layout, low frequency during drag).
+            RegisterCallback<GeometryChangedEvent>(_ => ApplyNodeColor());
         }
 
         // ── Inline title editing ────────────────────────────────────────────────
