@@ -43,6 +43,10 @@ namespace Faolline.GraphLocalization.Editor
             }
 
             Debug.Log($"[LocalizationBuilderCore] Done. {adapters.Count} lib(s) processed.");
+
+            // Refresh the dashboard if it is already open.
+            if (EditorWindow.HasOpenInstances<LocalizationDashboardWindow>())
+                EditorWindow.GetWindow<LocalizationDashboardWindow>().Refresh();
         }
 
         private static void BuildForAdapter(IGraphLocalizationAdapter adapter, LocaleValidationMode validation)

@@ -1,20 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-8527691730461546280
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 43a7b76252bd43c4a9a56f18a420822c, type: 3}
-  m_Name: SetLabel
-  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterSetStringAction
-  _parameterKey: label
-  _value: hero
---- !u!114 &-6459467524174549931
+--- !u!114 &-7739507138586070579
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -29,7 +15,7 @@ MonoBehaviour:
   _parameterKey: ratio
   _operator: 2
   _expectedValue: 0.5
---- !u!114 &-1822320976326979391
+--- !u!114 &-6609664550621288867
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -38,361 +24,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b6f29f6624fa5024c9813ef08edde659, type: 3}
-  m_Name: SetRatio
-  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterSetFloatAction
-  _parameterKey: ratio
-  _value: 0.3
---- !u!114 &-662110203776396261
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb2f2790de8d55543b6523c3c84424c8, type: 3}
-  m_Name: LogWin
-  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterLogAction
-  _message: 'Branch: WIN'
---- !u!114 &11400000
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2d11a49c3226e71418e7c88193ae3f8c, type: 3}
-  m_Name: StarterSampleGraph
-  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterGraph
-  _graphId: 49933703-f436-4e5f-8672-8119e1c9135a
-  _nodes:
-  - rid: 2948308575832244612
-  - rid: 2948308575832244613
-  - rid: 2948308575832244614
-  - rid: 2948308575832244615
-  - rid: 2948308575832244616
-  - rid: 2948308575832244617
-  - rid: 2948308575832244618
-  - rid: 2948308575832244619
-  - rid: 2948308575832244620
-  - rid: 2948308575832244621
-  _edges:
-  - rid: 2948308575832244622
-  - rid: 2948308575832244623
-  - rid: 2948308575832244624
-  - rid: 2948308575832244625
-  - rid: 2948308575832244626
-  - rid: 2948308575832244627
-  - rid: 2948308575832244628
-  - rid: 2948308575832244629
-  - rid: 2948308575832244630
-  _parameters:
-  - _key: score
-    _type: 1
-    _defaultValue: 0
-  - _key: ratio
-    _type: 2
-    _defaultValue: 1
-  - _key: label
-    _type: 3
-    _defaultValue: 
-  _entryNodeId: c5a2b4ff-0488-4e58-98d9-72da1727289d
-  _historyDepth: 20
-  references:
-    version: 2
-    RefIds:
-    - rid: 2948308575832244612
-      type: {class: StartNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: c5a2b4ff-0488-4e58-98d9-72da1727289d
-        _nodeType: graphcore/start
-        _title: 
-        _position: {x: 0, y: 0}
-        _entryConditions: []
-        _onEnterActions: []
-        _onExitActions: []
-        _isCheckpoint: 0
-        _hasColorOverride: 0
-        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
-    - rid: 2948308575832244613
-      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
-      data:
-        _id: 2f7a2a43-ee82-477a-a586-c5b7ebfc0bd7
-        _nodeType: startergraph/statement
-        _title: 
-        _position: {x: 240, y: 0}
-        _entryConditions: []
-        _onEnterActions:
-        - {fileID: 4330917022306446399}
-        - {fileID: 6646122122881474858}
-        - {fileID: -1822320976326979391}
-        - {fileID: -8527691730461546280}
-        _onExitActions: []
-        _isCheckpoint: 1
-        _hasColorOverride: 0
-        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
-        _label: Setup
-    - rid: 2948308575832244614
-      type: {class: SubGraphNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: f9b25498-579b-4263-9221-64ee1d4ba135
-        _nodeType: graphcore/subgraph
-        _title: 
-        _position: {x: 480, y: 0}
-        _entryConditions: []
-        _onEnterActions: []
-        _onExitActions: []
-        _isCheckpoint: 0
-        _hasColorOverride: 0
-        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
-        _targetGraph: {fileID: 11400000, guid: 8faeefbb6eaabcd4d9510ac729355915, type: 2}
-        _inheritParentContext: 1
-    - rid: 2948308575832244615
-      type: {class: ChoiceNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: 54a71583-5772-4c04-a36e-38def146d5a5
-        _nodeType: graphcore/choice
-        _title: 
-        _position: {x: 720, y: 0}
-        _entryConditions: []
-        _onEnterActions: []
-        _onExitActions: []
-        _isCheckpoint: 0
-        _hasColorOverride: 0
-        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
-        _choices:
-        - rid: 2948308575832244631
-        - rid: 2948308575832244632
-        - rid: 2948308575832244633
-    - rid: 2948308575832244616
-      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
-      data:
-        _id: a4f8a4f6-1e98-4a62-8cb6-f848b3f930ac
-        _nodeType: startergraph/statement
-        _title: 
-        _position: {x: 980, y: -180}
-        _entryConditions: []
-        _onEnterActions:
-        - {fileID: -662110203776396261}
-        _onExitActions: []
-        _isCheckpoint: 0
-        _hasColorOverride: 0
-        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
-        _label: Win
-    - rid: 2948308575832244617
-      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
-      data:
-        _id: f9ea2df8-6d9a-41c5-9f3b-ec1324f428e7
-        _nodeType: startergraph/statement
-        _title: 
-        _position: {x: 980, y: 0}
-        _entryConditions: []
-        _onEnterActions:
-        - {fileID: 906533357086918848}
-        _onExitActions: []
-        _isCheckpoint: 0
-        _hasColorOverride: 0
-        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
-        _label: Retreat
-    - rid: 2948308575832244618
-      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
-      data:
-        _id: 5bbd5ee6-f4c3-462b-b73d-2ad618bfd97c
-        _nodeType: startergraph/statement
-        _title: 
-        _position: {x: 980, y: 180}
-        _entryConditions: []
-        _onEnterActions:
-        - {fileID: 2979301804974298112}
-        _onExitActions: []
-        _isCheckpoint: 0
-        _hasColorOverride: 0
-        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
-        _label: Hidden
-    - rid: 2948308575832244619
-      type: {class: EndNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: cb3e0e41-a447-4469-ab1e-0c28b9d63369
-        _nodeType: graphcore/end
-        _title: 
-        _position: {x: 1240, y: -180}
-        _entryConditions: []
-        _onEnterActions: []
-        _onExitActions: []
-        _isCheckpoint: 0
-        _hasColorOverride: 0
-        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
-        _endReason: 0
-    - rid: 2948308575832244620
-      type: {class: EndNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: 646e3bee-097d-4fa1-8bf1-16a2474b4f9e
-        _nodeType: graphcore/end
-        _title: 
-        _position: {x: 1240, y: 0}
-        _entryConditions: []
-        _onEnterActions: []
-        _onExitActions: []
-        _isCheckpoint: 0
-        _hasColorOverride: 0
-        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
-        _endReason: 1
-    - rid: 2948308575832244621
-      type: {class: EndNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: a9a1ae3d-8ccb-4d5d-89d8-1b9a9fb698b6
-        _nodeType: graphcore/end
-        _title: 
-        _position: {x: 1240, y: 180}
-        _entryConditions: []
-        _onEnterActions: []
-        _onExitActions: []
-        _isCheckpoint: 0
-        _hasColorOverride: 0
-        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
-        _endReason: 2
-    - rid: 2948308575832244622
-      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: 244946cd-1847-4c56-926c-d9413b726d14
-        _fromNodeId: c5a2b4ff-0488-4e58-98d9-72da1727289d
-        _toNodeId: 2f7a2a43-ee82-477a-a586-c5b7ebfc0bd7
-        _portName: out
-        _condition: {fileID: 0}
-        _hasColorOverride: 0
-        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
-    - rid: 2948308575832244623
-      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: 54830dcc-114e-45d0-a066-5233944a86dc
-        _fromNodeId: 2f7a2a43-ee82-477a-a586-c5b7ebfc0bd7
-        _toNodeId: f9b25498-579b-4263-9221-64ee1d4ba135
-        _portName: out
-        _condition: {fileID: 0}
-        _hasColorOverride: 0
-        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
-    - rid: 2948308575832244624
-      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: b9c1213f-098a-46cc-8fa3-af1814ca0ae1
-        _fromNodeId: f9b25498-579b-4263-9221-64ee1d4ba135
-        _toNodeId: 54a71583-5772-4c04-a36e-38def146d5a5
-        _portName: out
-        _condition: {fileID: 0}
-        _hasColorOverride: 0
-        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
-    - rid: 2948308575832244625
-      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: 85d22822-7cc6-4c40-abf9-c68b9ede3be5
-        _fromNodeId: 54a71583-5772-4c04-a36e-38def146d5a5
-        _toNodeId: a4f8a4f6-1e98-4a62-8cb6-f848b3f930ac
-        _portName: 085384d5-e27a-4717-9680-da21a23b171e
-        _condition: {fileID: 0}
-        _hasColorOverride: 0
-        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
-    - rid: 2948308575832244626
-      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: c370f359-25f5-4996-9753-a14a789c2407
-        _fromNodeId: 54a71583-5772-4c04-a36e-38def146d5a5
-        _toNodeId: f9ea2df8-6d9a-41c5-9f3b-ec1324f428e7
-        _portName: c1b435c2-ed39-462f-a0a4-4229230f6904
-        _condition: {fileID: 0}
-        _hasColorOverride: 0
-        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
-    - rid: 2948308575832244627
-      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: 76f01e1d-4e50-4944-9158-1dc466e97a31
-        _fromNodeId: 54a71583-5772-4c04-a36e-38def146d5a5
-        _toNodeId: 5bbd5ee6-f4c3-462b-b73d-2ad618bfd97c
-        _portName: 95f38f7d-6e91-40df-96d2-5cfec22c305c
-        _condition: {fileID: 0}
-        _hasColorOverride: 0
-        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
-    - rid: 2948308575832244628
-      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: d83164c0-8e96-4518-9a0d-58d61982b86a
-        _fromNodeId: a4f8a4f6-1e98-4a62-8cb6-f848b3f930ac
-        _toNodeId: cb3e0e41-a447-4469-ab1e-0c28b9d63369
-        _portName: out
-        _condition: {fileID: 0}
-        _hasColorOverride: 0
-        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
-    - rid: 2948308575832244629
-      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: 904c8194-05c9-4b2e-b7d1-46acd7041aaf
-        _fromNodeId: f9ea2df8-6d9a-41c5-9f3b-ec1324f428e7
-        _toNodeId: 646e3bee-097d-4fa1-8bf1-16a2474b4f9e
-        _portName: out
-        _condition: {fileID: 0}
-        _hasColorOverride: 0
-        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
-    - rid: 2948308575832244630
-      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
-      data:
-        _id: ba4c44f7-05c4-4abe-99c7-4fb47ed1a952
-        _fromNodeId: 5bbd5ee6-f4c3-462b-b73d-2ad618bfd97c
-        _toNodeId: a9a1ae3d-8ccb-4d5d-89d8-1b9a9fb698b6
-        _portName: out
-        _condition: {fileID: 0}
-        _hasColorOverride: 0
-        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
-    - rid: 2948308575832244631
-      type: {class: StarterChoice, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
-      data:
-        _id: 085384d5-e27a-4717-9680-da21a23b171e
-        _title: 
-        _condition: {fileID: 3628747262586652106}
-        _label: Win (score >= 3)
-    - rid: 2948308575832244632
-      type: {class: StarterChoice, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
-      data:
-        _id: c1b435c2-ed39-462f-a0a4-4229230f6904
-        _title: 
-        _condition: {fileID: -6459467524174549931}
-        _label: Retreat (ratio < 0.5)
-    - rid: 2948308575832244633
-      type: {class: StarterChoice, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
-      data:
-        _id: 95f38f7d-6e91-40df-96d2-5cfec22c305c
-        _title: 
-        _condition: {fileID: 7385636176494521885}
-        _label: Hidden (label=villain)
---- !u!114 &906533357086918848
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb2f2790de8d55543b6523c3c84424c8, type: 3}
-  m_Name: LogRetreat
-  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterLogAction
-  _message: 'Branch: RETREAT'
---- !u!114 &2979301804974298112
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: eb2f2790de8d55543b6523c3c84424c8, type: 3}
-  m_Name: LogHidden
-  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterLogAction
-  _message: 'Branch: HIDDEN'
---- !u!114 &3628747262586652106
+  m_Script: {fileID: 11500000, guid: fe3d1bbf14ff1564ab4b3a4fc7498932, type: 3}
+  m_Name: SetScore
+  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterSetIntAction
+  _parameterKey: score
+  _value: 5
+--- !u!114 &-5704499329930473146
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -407,7 +44,384 @@ MonoBehaviour:
   _parameterKey: score
   _operator: 5
   _expectedValue: 3
---- !u!114 &4330917022306446399
+--- !u!114 &-4587619620972279529
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb2f2790de8d55543b6523c3c84424c8, type: 3}
+  m_Name: LogWin
+  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterLogAction
+  _message: 'Branch: WIN'
+--- !u!114 &-1088352852905116860
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb2f2790de8d55543b6523c3c84424c8, type: 3}
+  m_Name: LogHidden
+  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterLogAction
+  _message: 'Branch: HIDDEN'
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d11a49c3226e71418e7c88193ae3f8c, type: 3}
+  m_Name: StarterSampleGraph
+  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterGraph
+  _graphId: 30a366ff-35f4-4f30-8bc7-cefbc5323b73
+  _nodes:
+  - rid: 2948308575832244698
+  - rid: 2948308575832244699
+  - rid: 2948308575832244700
+  - rid: 2948308575832244701
+  - rid: 2948308575832244702
+  - rid: 2948308575832244703
+  - rid: 2948308575832244704
+  - rid: 2948308575832244705
+  - rid: 2948308575832244706
+  - rid: 2948308575832244707
+  _edges:
+  - rid: 2948308575832244708
+  - rid: 2948308575832244709
+  - rid: 2948308575832244710
+  - rid: 2948308575832244711
+  - rid: 2948308575832244712
+  - rid: 2948308575832244713
+  - rid: 2948308575832244714
+  - rid: 2948308575832244715
+  - rid: 2948308575832244716
+  _parameters:
+  - _key: score
+    _type: 1
+    _defaultValue: 0
+  - _key: ratio
+    _type: 2
+    _defaultValue: 1
+  - _key: label
+    _type: 3
+    _defaultValue: 
+  _entryNodeId: 3edd80a0-fa51-4e05-9a0d-0d4dbbfde410
+  _historyDepth: 20
+  references:
+    version: 2
+    RefIds:
+    - rid: 2948308575832244698
+      type: {class: StartNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 3edd80a0-fa51-4e05-9a0d-0d4dbbfde410
+        _nodeType: graphcore/start
+        _title: 
+        _position: {x: 0, y: 0}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308575832244699
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
+      data:
+        _id: 67b0ad02-5d02-49bf-b88b-c9d4bf35e92a
+        _nodeType: startergraph/statement
+        _title: 
+        _position: {x: 240, y: 0}
+        _entryConditions: []
+        _onEnterActions:
+        - {fileID: 5314046772467803121}
+        - {fileID: -6609664550621288867}
+        - {fileID: 1212389726736307690}
+        - {fileID: 5066769836448048191}
+        _onExitActions: []
+        _isCheckpoint: 1
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _label: Setup
+    - rid: 2948308575832244700
+      type: {class: SubGraphNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 4b4a2205-1375-4106-b2e4-fa19f4723d66
+        _nodeType: graphcore/subgraph
+        _title: 
+        _position: {x: 480, y: 0}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _targetGraph: {fileID: 11400000, guid: 8faeefbb6eaabcd4d9510ac729355915, type: 2}
+        _inheritParentContext: 1
+    - rid: 2948308575832244701
+      type: {class: ChoiceNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 8f6ee95b-2701-445a-9022-f5a7a87edfa8
+        _nodeType: graphcore/choice
+        _title: 
+        _position: {x: 720, y: 0}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _choices:
+        - rid: 2948308575832244717
+        - rid: 2948308575832244718
+        - rid: 2948308575832244719
+    - rid: 2948308575832244702
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
+      data:
+        _id: 8e681432-e8d2-41d2-a50a-f5954a238fe6
+        _nodeType: startergraph/statement
+        _title: 
+        _position: {x: 980, y: -180}
+        _entryConditions: []
+        _onEnterActions:
+        - {fileID: -4587619620972279529}
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _label: Win
+    - rid: 2948308575832244703
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
+      data:
+        _id: e55a1cd9-89f0-48bb-a590-1f91b9519276
+        _nodeType: startergraph/statement
+        _title: 
+        _position: {x: 980, y: 0}
+        _entryConditions: []
+        _onEnterActions:
+        - {fileID: 769218422031748487}
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _label: Retreat
+    - rid: 2948308575832244704
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
+      data:
+        _id: dfb1019b-d195-448d-8498-501b06940e43
+        _nodeType: startergraph/statement
+        _title: 
+        _position: {x: 980, y: 180}
+        _entryConditions: []
+        _onEnterActions:
+        - {fileID: -1088352852905116860}
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _label: Hidden
+    - rid: 2948308575832244705
+      type: {class: EndNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 79b50e3b-bbb6-4727-9998-7454783b30a2
+        _nodeType: graphcore/end
+        _title: 
+        _position: {x: 1240, y: -180}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _endReason: 0
+    - rid: 2948308575832244706
+      type: {class: EndNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 7b2da786-6d9e-4a9c-a1bf-8e3449582d4d
+        _nodeType: graphcore/end
+        _title: 
+        _position: {x: 1240, y: 0}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _endReason: 1
+    - rid: 2948308575832244707
+      type: {class: EndNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 9b057aa2-49cc-4e16-9d74-4e1ea954a1ba
+        _nodeType: graphcore/end
+        _title: 
+        _position: {x: 1240, y: 180}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _endReason: 2
+    - rid: 2948308575832244708
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 9f08de51-ceb6-4ca7-b335-5dc3f2894e47
+        _fromNodeId: 3edd80a0-fa51-4e05-9a0d-0d4dbbfde410
+        _toNodeId: 67b0ad02-5d02-49bf-b88b-c9d4bf35e92a
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308575832244709
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: d5244e30-8214-4795-b2a8-2723404f038a
+        _fromNodeId: 67b0ad02-5d02-49bf-b88b-c9d4bf35e92a
+        _toNodeId: 4b4a2205-1375-4106-b2e4-fa19f4723d66
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308575832244710
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 7932d820-0aa5-4617-b6e2-1324f231e515
+        _fromNodeId: 4b4a2205-1375-4106-b2e4-fa19f4723d66
+        _toNodeId: 8f6ee95b-2701-445a-9022-f5a7a87edfa8
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308575832244711
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 0f4789af-7c33-4beb-9e92-c02874d84586
+        _fromNodeId: 8f6ee95b-2701-445a-9022-f5a7a87edfa8
+        _toNodeId: 8e681432-e8d2-41d2-a50a-f5954a238fe6
+        _portName: 1421cd02-e44d-4696-8396-ff7db9a5dd82
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308575832244712
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: bd440dcd-9e34-4ed3-a994-414eabe4a904
+        _fromNodeId: 8f6ee95b-2701-445a-9022-f5a7a87edfa8
+        _toNodeId: e55a1cd9-89f0-48bb-a590-1f91b9519276
+        _portName: 71aae6b9-702b-4eb4-bc07-368b027f36f6
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308575832244713
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 01bb8959-696f-4592-b103-223722cb664c
+        _fromNodeId: 8f6ee95b-2701-445a-9022-f5a7a87edfa8
+        _toNodeId: dfb1019b-d195-448d-8498-501b06940e43
+        _portName: c2d1ed17-c8a5-44ec-acfb-63e294ddb16a
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308575832244714
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: a3cda4cc-911e-47f0-a6c8-0d38f6fe2806
+        _fromNodeId: 8e681432-e8d2-41d2-a50a-f5954a238fe6
+        _toNodeId: 79b50e3b-bbb6-4727-9998-7454783b30a2
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308575832244715
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 230e6f34-6045-464f-ab38-9a991fc1d4df
+        _fromNodeId: e55a1cd9-89f0-48bb-a590-1f91b9519276
+        _toNodeId: 7b2da786-6d9e-4a9c-a1bf-8e3449582d4d
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308575832244716
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: d26453df-c919-420e-9fb2-40f3292120ef
+        _fromNodeId: dfb1019b-d195-448d-8498-501b06940e43
+        _toNodeId: 9b057aa2-49cc-4e16-9d74-4e1ea954a1ba
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308575832244717
+      type: {class: StarterChoice, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
+      data:
+        _id: 1421cd02-e44d-4696-8396-ff7db9a5dd82
+        _title: 
+        _condition: {fileID: -5704499329930473146}
+        _label: Win (score >= 3)
+    - rid: 2948308575832244718
+      type: {class: StarterChoice, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
+      data:
+        _id: 71aae6b9-702b-4eb4-bc07-368b027f36f6
+        _title: 
+        _condition: {fileID: -7739507138586070579}
+        _label: Retreat (ratio < 0.5)
+    - rid: 2948308575832244719
+      type: {class: StarterChoice, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
+      data:
+        _id: c2d1ed17-c8a5-44ec-acfb-63e294ddb16a
+        _title: 
+        _condition: {fileID: 6485977180289324326}
+        _label: Hidden (label=villain)
+--- !u!114 &769218422031748487
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: eb2f2790de8d55543b6523c3c84424c8, type: 3}
+  m_Name: LogRetreat
+  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterLogAction
+  _message: 'Branch: RETREAT'
+--- !u!114 &1212389726736307690
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b6f29f6624fa5024c9813ef08edde659, type: 3}
+  m_Name: SetRatio
+  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterSetFloatAction
+  _parameterKey: ratio
+  _value: 0.3
+--- !u!114 &5066769836448048191
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 43a7b76252bd43c4a9a56f18a420822c, type: 3}
+  m_Name: SetLabel
+  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterSetStringAction
+  _parameterKey: label
+  _value: hero
+--- !u!114 &5314046772467803121
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -420,21 +434,7 @@ MonoBehaviour:
   m_Name: LogSetup
   m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterLogAction
   _message: 'Setup: score=5, ratio=0.3, label=hero'
---- !u!114 &6646122122881474858
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fe3d1bbf14ff1564ab4b3a4fc7498932, type: 3}
-  m_Name: SetScore
-  m_EditorClassIdentifier: com.faolline.starterGraph.Runtime::Faolline.StarterGraph.StarterSetIntAction
-  _parameterKey: score
-  _value: 5
---- !u!114 &7385636176494521885
+--- !u!114 &6485977180289324326
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
