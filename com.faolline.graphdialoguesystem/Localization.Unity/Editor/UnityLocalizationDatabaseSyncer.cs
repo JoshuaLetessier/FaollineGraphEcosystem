@@ -37,9 +37,10 @@ namespace Faolline.GraphDialogue.Localization.Unity.Editor
                 SyncEntries(collection, graphEntry.Keys);
             }
 
-            // Create global Speakers collection
+            // Create + populate global Speakers collection (shared across graphs)
             var speakersCollection = GetOrCreateCollection("Dialogue_Speakers");
             EnsureTablesForAllLocales(speakersCollection, locales);
+            SyncEntries(speakersCollection, database.SpeakerKeys);
 
             AssetDatabase.SaveAssets();
             Debug.Log("[UnityLocalizationDatabaseSyncer] Sync complete");

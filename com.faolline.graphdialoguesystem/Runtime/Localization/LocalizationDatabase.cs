@@ -13,9 +13,18 @@ namespace Faolline.GraphDialogue
     public class LocalizationDatabase : ScriptableObject
     {
         [SerializeField] private List<LocalizationGraphEntry> _graphs = new();
+        [SerializeField] private List<LocalizationKeyEntry> _speakerKeys = new();
         [SerializeField] private LocalizationDatabaseMetadata _metadata = new();
 
         public IReadOnlyList<LocalizationGraphEntry> Graphs => _graphs;
+
+        /// <summary>
+        /// Global speaker display-name keys, collected from Speaker assets (Speaker.DisplayNameKey).
+        /// These are NOT per-graph: speakers are shared across dialogues. Synced to the global
+        /// Dialogue_Speakers collection by the provider.
+        /// </summary>
+        public IReadOnlyList<LocalizationKeyEntry> SpeakerKeys => _speakerKeys;
+
         public LocalizationDatabaseMetadata Metadata => _metadata;
 
         /// <summary>Gets or creates entry for a graph (by GUID).</summary>
@@ -32,10 +41,23 @@ namespace Faolline.GraphDialogue
         /// <summary>Finds a graph entry by GUID.</summary>
         public LocalizationGraphEntry FindGraphEntry(string graphGuid) => _graphs.Find(e => e.GraphGuid == graphGuid);
 
-        /// <summary>Clears all entries (used during rebuild).</summary>
-        public void Clear() => _graphs.Clear();
+        /// <summary>Adds a global speaker display-name key (deduplicated).</summary>
+        public void AddSpeakerKey(string key, string defaultHint = "")
+        {
+            if (string.IsNullOrWhiteSpace(key)) return;
+            var trimmed = key.Trim();
+            if (_speakerKeys.Exists(k => k.Key == trimmed)) return;
+            _speakerKeys.Add(new LocalizationKeyEntry { Key = trimmed, Type = LocalizationKeyType.SpeakerName, DefaultHint = defaultHint });
+        }
 
-        /// <summary>Gets all unique keys across all graphs.</summary>
+        /// <summary>Clears all entries (used during rebuild).</summary>
+        public void Clear()
+        {
+            _graphs.Clear();
+            _speakerKeys.Clear();
+        }
+
+        /// <summary>Gets all unique keys across all graphs and speakers.</summary>
         public HashSet<string> GetAllKeys()
         {
             var keys = new HashSet<string>();
@@ -44,6 +66,8 @@ namespace Faolline.GraphDialogue
                 foreach (var key in graph.Keys)
                     keys.Add(key.Key);
             }
+            foreach (var speakerKey in _speakerKeys)
+                keys.Add(speakerKey.Key);
             return keys;
         }
     }
@@ -87,8 +111,8 @@ namespace Faolline.GraphDialogue
 
     public enum LocalizationKeyType
     {
-        Text = 0,           // Line content (textKey)
-        SpeakerName = 1,    // Speaker display name (speakerKey)
-        ChoiceLabel = 2,    // Choice option label (displayTextKey)
+        Text = 0,           // Line content (DialogueLineNodeData.TextKey)
+        SpeakerName = 1,    // Speaker display name (Speaker.DisplayNameKey)
+        ChoiceLabel = 2,    // Choice option label (DialogueChoice.DisplayTextKey)
     }
 }

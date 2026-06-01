@@ -41,6 +41,12 @@ namespace Faolline.GraphDialogue.Editor
                     totalKeysFound += keys.Count;
                 }
 
+                // Scan Speaker assets for their DisplayNameKey (global, shared across graphs).
+                // SpeakerKey on nodes is a logical id (not translated) — the translatable key is
+                // Speaker.DisplayNameKey, which lives on the Speaker ScriptableObject.
+                int speakerKeysFound = ScanSpeakerAssets(db);
+                totalKeysFound += speakerKeysFound;
+
                 db.Metadata.LastBuildTime = DateTime.Now;
                 db.Metadata.TotalGraphsScanned = graphs.Count;
                 db.Metadata.TotalKeysFound = totalKeysFound;
@@ -48,7 +54,7 @@ namespace Faolline.GraphDialogue.Editor
                 EditorUtility.SetDirty(db);
                 AssetDatabase.SaveAssets();
 
-                Debug.Log($"[GraphDialogueLocalizationBuilder] Phase 1 complete: {graphs.Count} graphs, {totalKeysFound} keys found.");
+                Debug.Log($"[GraphDialogueLocalizationBuilder] Phase 1 complete: {graphs.Count} graphs, {totalKeysFound} keys found ({speakerKeysFound} speaker keys).");
 
                 // Phase 2: Sync to provider (via adapter if available)
                 TrySyncToUnityLocalization(db);
@@ -73,6 +79,31 @@ namespace Faolline.GraphDialogue.Editor
             return results;
         }
 
+        /// <summary>
+        /// Scans all Speaker assets and registers their DisplayNameKey as global speaker keys.
+        /// Returns the number of keys added.
+        /// </summary>
+        private static int ScanSpeakerAssets(LocalizationDatabase db)
+        {
+            int count = 0;
+            var guids = AssetDatabase.FindAssets("t:Speaker");
+            foreach (var guid in guids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var speaker = AssetDatabase.LoadAssetAtPath<Speaker>(path);
+                if (speaker == null) continue;
+
+                if (!string.IsNullOrWhiteSpace(speaker.DisplayNameKey))
+                {
+                    db.AddSpeakerKey(speaker.DisplayNameKey, speaker.DisplayNameFallback);
+                    count++;
+                }
+            }
+
+            Debug.Log($"[GraphDialogueLocalizationBuilder] Scanned {guids.Length} Speaker assets, {count} display-name keys found.");
+            return count;
+        }
+
         private static HashSet<(string key, LocalizationKeyType type)> ExtractKeysFromGraph(DialogueGraph graph)
         {
             var keys = new HashSet<(string, LocalizationKeyType)>();
@@ -84,14 +115,13 @@ namespace Faolline.GraphDialogue.Editor
             {
                 if (node == null) continue;
 
-                // DialogueLineNodeData: textKey, speakerKey, expressionKey
+                // DialogueLineNodeData: only textKey is a translation key.
+                // speakerKey is a logical id (matches Speaker.SpeakerId) — not translated.
+                // expressionKey is a visual selector — not translated.
                 if (node is DialogueLineNodeData lineNode)
                 {
                     if (!string.IsNullOrWhiteSpace(lineNode.TextKey))
                         keys.Add((lineNode.TextKey.Trim(), LocalizationKeyType.Text));
-                    if (!string.IsNullOrWhiteSpace(lineNode.SpeakerKey))
-                        keys.Add((lineNode.SpeakerKey.Trim(), LocalizationKeyType.SpeakerName));
-                    // expressionKey is optional, not a translation key
                 }
 
                 // ChoiceNodeData: each DialogueChoice has DisplayTextKey
