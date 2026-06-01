@@ -200,8 +200,8 @@ text; swap to the Unity adapter, assert same graph resolves through it (FR-028..
 - [X] T067 [P] Implement `Editor/Samples/DialogueSampleBuilder.cs` (menu builds a parent + child `DialogueGraph` with speakers, a gated choice, inline conditions/actions, a checkpoint, a sub-dialogue, typed parameters, and a 2-locale CSV table)
 - [X] T068 [P] Write `Tests/EditMode/Editor/DialogueSampleIntegrationTests.cs`: builds the sample and plays it start→end in two locales headlessly (covers SC-001/003/004 end to end)
 - [X] T069 [P] Add `com.faolline.graphdialoguesystem/README.md` documenting the public API (from contracts/public-api.md), the localization providers, and the inline-only reactivity model
-- [ ] T070 Run `quickstart.md` validation manually in the editor; confirm `git diff` shows zero changes under `com.faolline.graphcore/` (SC-008)
-- [ ] T071 Final full EditMode suite run — all green (SC-009); confirm no `[GraphDialogue]`/`[GraphCore]` errors in console, warnings justified
+- [X] T070 Run `quickstart.md` validation manually in the editor; confirm `git diff` shows zero changes under `com.faolline.graphcore/` (SC-008)
+- [X] T071 Final full EditMode suite run — all green (SC-009); confirm no `[GraphDialogue]`/`[GraphCore]` errors in console, warnings justified
 
 ---
 
