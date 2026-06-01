@@ -85,6 +85,24 @@ namespace Faolline.GraphCore.Editor
 
         // ── Inline title editing ────────────────────────────────────────────────
 
+        /// <summary>
+        /// Adds a "Rename" entry to the node's right-click menu (more reliable than double-click) and
+        /// lets subclasses extend the menu via <see cref="OnBuildContextualMenu"/>.
+        /// </summary>
+        public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
+        {
+            if (_titleEditor != null)
+            {
+                evt.menu.AppendAction("Rename", _ => BeginTitleEdit());
+                evt.menu.AppendSeparator();
+            }
+            OnBuildContextualMenu(evt);
+            base.BuildContextualMenu(evt);
+        }
+
+        /// <summary>Override to append node-specific items to the right-click menu. Default is a no-op.</summary>
+        protected virtual void OnBuildContextualMenu(ContextualMenuPopulateEvent evt) { }
+
         /// <summary>Shows <see cref="BaseNodeData.Title"/> on the title bar, or the type label when empty.</summary>
         private void ApplyTitleFromData()
         {
