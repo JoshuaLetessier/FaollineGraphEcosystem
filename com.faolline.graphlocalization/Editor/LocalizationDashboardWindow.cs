@@ -60,7 +60,7 @@ namespace Faolline.GraphLocalization.Editor
 
         private void OnFocus() => Refresh();
 
-        private void Refresh()
+        public void Refresh()
         {
             _reports.Clear();
             var adapters = GraphLocalizationAdapterRegistry.Adapters;
