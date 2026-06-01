@@ -48,8 +48,8 @@ namespace Faolline.GraphLocalization.Tests
         public void LocalizationGraphEntry_AddKey_Deduplicates()
         {
             var entry = _db.GetOrCreateGraphEntry("g1", "G");
-            entry.AddKey("k1", LocalizationKeyType.Text, hint: "Hello");
-            entry.AddKey("k1", LocalizationKeyType.Text, hint: "Hello");
+            entry.AddKey("k1", LocalizationKeyType.Text, defaultHint: "Hello");
+            entry.AddKey("k1", LocalizationKeyType.Text, defaultHint: "Hello");
             Assert.AreEqual(1, entry.Keys.Count);
         }
 
