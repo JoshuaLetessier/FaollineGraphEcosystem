@@ -2,6 +2,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLocalization;
 
 namespace Faolline.GraphDialogue.Editor
 {
@@ -90,6 +91,18 @@ namespace Faolline.GraphDialogue.Editor
             Selection.activeObject = graph;
             EditorGUIUtility.PingObject(graph);
             Debug.Log($"[GraphDialogue] Sample dialogue created at {Folder}/SampleDialogue.asset");
+
+            // Auto-load the generated CSV into the active LocalizationContext so the editor session
+            // resolves keys immediately without any manual setup.
+            AutoLoadSampleCsv(csv);
+        }
+
+        private static void AutoLoadSampleCsv(string csvText)
+        {
+            var provider = new CsvLocalizationProvider(csvText, "en");
+            LocalizationContext.Current = new LocalizationSettings(provider, "en");
+            Debug.Log("[GraphDialogue] Sample CSV auto-loaded into LocalizationContext (en). " +
+                "Switch locale via LocalizationContext.Current.CurrentLocale = \"fr\" to test French.");
         }
 
         private static string Guid() => System.Guid.NewGuid().ToString("D");
