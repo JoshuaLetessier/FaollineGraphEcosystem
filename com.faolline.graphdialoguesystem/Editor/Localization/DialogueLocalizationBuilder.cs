@@ -5,11 +5,6 @@ using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
 
-#if GRAPHDIALOGUE_UNITY_LOCALIZATION
-using UnityEditor.Localization;
-using UnityEngine.Localization;
-#endif
-
 namespace Faolline.GraphDialogue.Editor
 {
     /// <summary>
@@ -55,19 +50,8 @@ namespace Faolline.GraphDialogue.Editor
 
                 Debug.Log($"[GraphDialogueLocalizationBuilder] Phase 1 complete: {graphs.Count} graphs, {totalKeysFound} keys found.");
 
-                // Phase 2: Sync to provider
-#if GRAPHDIALOGUE_UNITY_LOCALIZATION
-                var settingsAsset = LocalizationSettingsLoader.Load();
-                if (settingsAsset != null && settingsAsset.Mode == LocalizationMode.UnityLocalization)
-                {
-                    SyncToUnityLocalization(db);
-                    Debug.Log("[GraphDialogueLocalizationBuilder] Phase 2 complete: synced to Unity Localization String Tables.");
-                }
-                else if (settingsAsset == null)
-                {
-                    Debug.LogWarning("[GraphDialogueLocalizationBuilder] No LocalizationSettingsAsset found. Skipping Phase 2 (Unity Localization sync).");
-                }
-#endif
+                // Phase 2: Sync to provider (via adapter if available)
+                TrySyncToUnityLocalization(db);
             }
             catch (Exception ex)
             {
@@ -141,81 +125,48 @@ namespace Faolline.GraphDialogue.Editor
             return db;
         }
 
-#if GRAPHDIALOGUE_UNITY_LOCALIZATION
-        private static void SyncToUnityLocalization(LocalizationDatabase db)
+        private static void TrySyncToUnityLocalization(LocalizationDatabase db)
         {
-            var locales = LocalizationEditorSettings.GetLocales();
-            if (locales == null || locales.Count == 0)
+            var settingsAsset = LocalizationSettingsLoader.Load();
+            if (settingsAsset == null)
             {
-                Debug.LogWarning("[GraphDialogueLocalizationBuilder] No locales configured in Project Settings > Localization");
+                Debug.LogWarning("[GraphDialogueLocalizationBuilder] No LocalizationSettingsAsset found. Skipping Phase 2.\n" +
+                    "To enable Unity Localization sync, create one via:\n" +
+                    "  Menu: Faolline ▸ GraphDialogue ▸ Localization Settings");
                 return;
             }
 
-            // Create collections per graph
-            foreach (var graphEntry in db.Graphs)
+            if (settingsAsset.Mode != LocalizationMode.UnityLocalization)
             {
-                var collectionName = $"DLG_{Sanitize(graphEntry.GraphName)}";
-                var collection = GetOrCreateCollection(collectionName);
-                EnsureTablesForAllLocales(collection, locales);
-                SyncEntries(collection, graphEntry.Keys);
+                Debug.Log("[GraphDialogueLocalizationBuilder] Mode is CSV. Skipping Phase 2 (Unity Localization sync).");
+                return;
             }
 
-            // Create global Speakers collection
-            var speakersCollection = GetOrCreateCollection("Dialogue_Speakers");
-            EnsureTablesForAllLocales(speakersCollection, locales);
-
-            AssetDatabase.SaveAssets();
-        }
-
-        private static UnityEditor.Localization.StringTableCollection GetOrCreateCollection(string collectionName)
-        {
-            var existing = LocalizationEditorSettings.GetStringTableCollection(collectionName);
-            if (existing != null) return existing;
-
-            var folder = "Assets/Localization/Collections";
-            if (!AssetDatabase.IsValidFolder(folder))
-                AssetDatabase.CreateFolder(AssetDatabase.IsValidFolder("Assets/Localization") ? "Assets/Localization" : "Assets",
-                    AssetDatabase.IsValidFolder("Assets/Localization") ? "Collections" : "Localization");
-
-            var collection = LocalizationEditorSettings.CreateStringTableCollection(collectionName, $"{folder}/{collectionName}");
-            Debug.Log($"[GraphDialogueLocalizationBuilder] Created String Table Collection: {collectionName}");
-            return collection;
-        }
-
-        private static void EnsureTablesForAllLocales(UnityEditor.Localization.StringTableCollection collection, IEnumerable<Locale> locales)
-        {
-            foreach (var locale in locales)
+            // Try to call the syncer from the Unity Localization adapter via reflection
+            var syncerType = Type.GetType("Faolline.GraphDialogue.Localization.Unity.Editor.UnityLocalizationDatabaseSyncer, com.faolline.graphdialoguesystem.Localization.Unity.Editor");
+            if (syncerType == null)
             {
-                var table = collection.GetTable(locale.Identifier);
-                if (table == null)
-                    collection.AddNewTable(locale.Identifier);
-            }
-        }
-
-        private static void SyncEntries(UnityEditor.Localization.StringTableCollection collection, IReadOnlyList<LocalizationKeyEntry> keys)
-        {
-            var shared = collection.SharedData;
-            foreach (var keyEntry in keys)
-            {
-                if (string.IsNullOrWhiteSpace(keyEntry.Key)) continue;
-
-                var existing = shared.GetEntry(keyEntry.Key);
-                if (existing == null)
-                    shared.AddKey(keyEntry.Key);
+                Debug.LogWarning("[GraphDialogueLocalizationBuilder] Unity Localization adapter not available (com.unity.localization not installed?).\n" +
+                    "Skipping Phase 2 sync to String Tables.");
+                return;
             }
 
-            EditorUtility.SetDirty(shared);
-            foreach (var table in collection.StringTables)
-                if (table != null) EditorUtility.SetDirty(table);
-        }
+            var syncMethod = syncerType.GetMethod("SyncDatabase", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+            if (syncMethod == null)
+            {
+                Debug.LogError("[GraphDialogueLocalizationBuilder] Failed to find SyncDatabase method in UnityLocalizationDatabaseSyncer.");
+                return;
+            }
 
-        private static string Sanitize(string name)
-        {
-            if (string.IsNullOrEmpty(name)) return "Unnamed";
-            var invalid = System.IO.Path.GetInvalidFileNameChars();
-            var chars = name.Select(c => invalid.Contains(c) ? '_' : c).ToArray();
-            return new string(chars);
+            try
+            {
+                syncMethod.Invoke(null, new object[] { db });
+                Debug.Log("[GraphDialogueLocalizationBuilder] Phase 2 complete: synced to Unity Localization String Tables.");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[GraphDialogueLocalizationBuilder] Phase 2 sync failed: {ex}");
+            }
         }
-#endif
     }
 }

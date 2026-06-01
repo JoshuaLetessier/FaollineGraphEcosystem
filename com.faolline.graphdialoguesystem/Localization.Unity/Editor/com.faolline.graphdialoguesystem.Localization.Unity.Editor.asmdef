@@ -1,0 +1,28 @@
+{
+    "name": "com.faolline.graphdialoguesystem.Localization.Unity.Editor",
+    "rootNamespace": "Faolline.GraphDialogue.Localization.Unity.Editor",
+    "references": [
+        "com.faolline.graphdialoguesystem.Runtime",
+        "com.faolline.graphdialoguesystem.Localization.Unity",
+        "Unity.Localization"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "GRAPHDIALOGUE_UNITY_LOCALIZATION"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.localization",
+            "expression": "1.0.0",
+            "define": "GRAPHDIALOGUE_UNITY_LOCALIZATION"
+        }
+    ],
+    "noEngineReferences": false
+}
