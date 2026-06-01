@@ -147,6 +147,7 @@ namespace Faolline.GraphCore.Editor
                 {
                     var groupView = new BaseGroupView(groupData);
                     groupView.DataChanged = () => { _isDirty = true; EditorUtility.SetDirty(_graph); };
+                    WireGroupCollapseCallback(groupView);
                     AddElement(groupView);
                     _groupViews[groupData.Id] = groupView;
 
@@ -155,6 +156,13 @@ namespace Faolline.GraphCore.Editor
                     {
                         if (_nodeViews.TryGetValue(nodeId, out var nv))
                             groupView.AddElement(nv);
+                    }
+
+                    // Apply initial collapsed visual (including node visibility)
+                    if (groupData.IsCollapsed)
+                    {
+                        groupView.ApplyCollapsedVisual(true);
+                        SetGroupNodesVisible(groupData, false);
                     }
                 }
             }
@@ -257,13 +265,17 @@ namespace Faolline.GraphCore.Editor
             // Sync group positions/sizes and member node IDs
             foreach (var kvp in _groupViews)
             {
+                var data = kvp.Value.GroupData;
                 var rect = kvp.Value.GetPosition();
-                kvp.Value.GroupData.Position = rect.position;
-                kvp.Value.GroupData.Size     = rect.size;
-                kvp.Value.GroupData.NodeIds.Clear();
+                data.Position = rect.position;
+                // Don't overwrite the stored size while collapsed (height is reduced to the header) —
+                // it must be preserved so expand restores the original size.
+                if (!data.IsCollapsed)
+                    data.Size = rect.size;
+                data.NodeIds.Clear();
                 foreach (var child in kvp.Value.containedElements)
                     if (child is BaseNodeView nv && nv.NodeData != null)
-                        kvp.Value.GroupData.NodeIds.Add(nv.NodeData.Id);
+                        data.NodeIds.Add(nv.NodeData.Id);
             }
 
             EditorUtility.SetDirty(_graph);
@@ -325,12 +337,39 @@ namespace Faolline.GraphCore.Editor
 
             var groupView = new BaseGroupView(groupData);
             groupView.DataChanged = () => { _isDirty = true; EditorUtility.SetDirty(_graph); };
+            WireGroupCollapseCallback(groupView);
             AddElement(groupView);
             _groupViews[groupData.Id] = groupView;
             foreach (var nv in selected) groupView.AddElement(nv);
 
             _isDirty = true;
             EditorUtility.SetDirty(_graph);
+        }
+
+        /// <summary>Test/inspection hook: the live group views currently on the canvas.</summary>
+        public IReadOnlyList<BaseGroupView> GroupViewsForTest => new List<BaseGroupView>(_groupViews.Values);
+
+        /// <summary>Test/inspection hook: whether a node view is currently visible (not hidden by collapse).</summary>
+        public bool IsNodeViewVisibleForTest(string nodeId)
+            => _nodeViews.TryGetValue(nodeId, out var nv) && nv.style.display.value != DisplayStyle.None;
+
+        // ── Group collapse helpers ─────────────────────────────────────────────────
+
+        private void WireGroupCollapseCallback(BaseGroupView groupView)
+        {
+            groupView.CollapseToggled = collapsed =>
+            {
+                SetGroupNodesVisible(groupView.GroupData, !collapsed);
+                _isDirty = true;
+                EditorUtility.SetDirty(_graph);
+            };
+        }
+
+        private void SetGroupNodesVisible(GraphGroupData groupData, bool visible)
+        {
+            foreach (var nodeId in groupData.NodeIds)
+                if (_nodeViews.TryGetValue(nodeId, out var nv))
+                    nv.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         /// <summary>Removes a group view and its data from the graph. Contained nodes are NOT deleted.</summary>
@@ -463,20 +502,36 @@ namespace Faolline.GraphCore.Editor
             return change;
         }
 
+        /// <summary>
+        /// Test hook: simulates GraphView removing <paramref name="elements"/> (the same path the
+        /// canvas uses when the user presses Delete). Mutates the list like the real change pipeline.
+        /// </summary>
+        public void HandleRemovalsForTest(List<GraphElement> elements) => HandleRemovals(elements);
+
         private void HandleRemovals(List<GraphElement> elements)
         {
+            // When a group is deleted, GraphView automatically adds its contained nodes to the
+            // removal list too. Collect their IDs so we can keep them — the nodes must survive the
+            // group deletion (groups are authoring annotations only).
+            var protectedByGroup = new System.Collections.Generic.HashSet<string>();
+            foreach (var el in elements)
+                if (el is BaseGroupView gv && gv.GroupData != null)
+                    foreach (var id in gv.GroupData.NodeIds)
+                        protectedByGroup.Add(id);
+
+            // Physically remove the protected node views from the removal list so GraphView does not
+            // delete them visually (the list is change.elementsToRemove, consumed after this returns).
+            if (protectedByGroup.Count > 0)
+            {
+                elements.RemoveAll(el =>
+                    el is BaseNodeView nv && nv.NodeData != null && protectedByGroup.Contains(nv.NodeData.Id));
+            }
+
             foreach (var element in elements)
             {
                 if (element is BaseNodeView nodeView && nodeView.NodeData != null)
                 {
                     var nodeData = nodeView.NodeData;
-
-                    // Remove all edges attached to this node
-                    var edgesToRemove = new List<BaseEdgeData>();
-                    foreach (var kvp in _nodeViews)
-                    {
-                        // collect edges from graph whose FromNodeId or ToNodeId matches
-                    }
 
                     if (_graph != null)
                     {
