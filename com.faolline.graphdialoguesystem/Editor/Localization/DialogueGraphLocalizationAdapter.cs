@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphLocalization;
+using Faolline.GraphLocalization.Editor;
 
 namespace Faolline.GraphDialogue.Editor
 {
