@@ -129,13 +129,40 @@ namespace Faolline.GraphLocalization.Editor
             GUILayout.FlexibleSpace();
 
             var settingsAsset = LocalizationSettingsLoader.Load();
-            var modeLabel = settingsAsset != null
-                ? $"Mode: {settingsAsset.Mode}  |  Validation: {settingsAsset.LocaleValidation}"
-                : "No settings asset";
-            GUILayout.Label(modeLabel, _dimStyle ?? EditorStyles.miniLabel);
+            if (settingsAsset != null)
+            {
+                GUILayout.Label($"Mode: {settingsAsset.Mode}  |  Validation: {settingsAsset.LocaleValidation}",
+                    _dimStyle ?? EditorStyles.miniLabel);
+
+                if (GUILayout.Button("Settings", EditorStyles.toolbarButton, GUILayout.Width(60)))
+                    Selection.activeObject = settingsAsset;
+            }
+            else
+            {
+                GUILayout.Label("No settings asset", _dimStyle ?? EditorStyles.miniLabel);
+                if (GUILayout.Button("Create Settings", EditorStyles.toolbarButton, GUILayout.Width(100)))
+                    CreateOrSelectSettings();
+            }
 
             EditorGUILayout.EndHorizontal();
             EditorGUILayout.Space(2);
+        }
+
+        private static void CreateOrSelectSettings()
+        {
+            var path = LocalizationSettingsLoader.GetDefaultAssetPath();
+            var existing = AssetDatabase.LoadAssetAtPath<LocalizationSettingsAsset>(path);
+            if (existing != null) { Selection.activeObject = existing; return; }
+
+            var folder = System.IO.Path.GetDirectoryName(path);
+            if (!AssetDatabase.IsValidFolder(folder))
+                AssetDatabase.CreateFolder("Assets", "Resources");
+
+            var asset = ScriptableObject.CreateInstance<LocalizationSettingsAsset>();
+            AssetDatabase.CreateAsset(asset, path);
+            AssetDatabase.SaveAssets();
+            Selection.activeObject = asset;
+            Debug.Log($"[GraphLocalization] Created LocalizationSettingsAsset at {path}");
         }
 
         private void DrawLibReport(LibReport report)
