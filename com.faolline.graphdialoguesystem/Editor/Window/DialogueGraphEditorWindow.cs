@@ -145,7 +145,8 @@ namespace Faolline.GraphDialogue.Editor
             var provider = LocalizationContext.Current.Provider;
             if (provider is CsvLocalizationProvider csv) csv.SetLocale(_locale);
 
-            _player = new DialoguePlayer(graph, _context, provider, BuildSpeakerLookup());
+            _player = new DialoguePlayer(graph, _context, provider, BuildSpeakerLookup(),
+                LocalizationContext.Current.StrictMode);
 
             _player.OnLine += step =>
                 Debug.Log($"[GraphDialogue] Line [{step.SpeakerId}] {step.ResolvedText}");

@@ -11,6 +11,7 @@ namespace Faolline.GraphDialogue
         [SerializeField] private LocalizationMode _mode = LocalizationMode.Csv;
         [SerializeField] private string _unityLocalizationTableName = "Dialogue";
         [SerializeField] private LocaleValidationMode _localeValidation = LocaleValidationMode.Warn;
+        [SerializeField] private LocalizationStrictMode _playerStrictMode = LocalizationStrictMode.Audit;
 
         public LocalizationMode Mode => _mode;
         public string UnityLocalizationTableName => _unityLocalizationTableName;
@@ -18,11 +19,14 @@ namespace Faolline.GraphDialogue
         /// <summary>How per-locale translation gaps are reported when building tables. Default: Warn.</summary>
         public LocaleValidationMode LocaleValidation => _localeValidation;
 
+        /// <summary>How the runtime player reacts to a missing key during playback. Default: Audit.</summary>
+        public LocalizationStrictMode PlayerStrictMode => _playerStrictMode;
+
         /// <summary>Create a LocalizationSettings instance from this asset configuration.</summary>
         public LocalizationSettings CreateSettings(string locale = "en")
         {
             ILocalizationProvider provider = CreateProviderForMode();
-            return new LocalizationSettings(provider, locale);
+            return new LocalizationSettings(provider, locale) { StrictMode = _playerStrictMode };
         }
 
         private ILocalizationProvider CreateProviderForMode()

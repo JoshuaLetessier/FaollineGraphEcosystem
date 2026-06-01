@@ -21,6 +21,8 @@ namespace Faolline.GraphDialogue
         private readonly DialogueContext _context;
         private readonly ILocalizationProvider _localization;
         private readonly Func<string, Speaker> _speakerLookup;
+        private readonly LocalizationStrictMode _strictMode;
+        private readonly List<string> _missingKeys = new List<string>();
 
         private readonly BaseRunner _runner = new BaseRunner();
         private NodeExecutorRegistry _registry;
@@ -41,6 +43,12 @@ namespace Faolline.GraphDialogue
         /// <summary>Raised when no valid branch is available (stuck).</summary>
         public event Action OnStuck;
 
+        /// <summary>Raised once per distinct missing key (Audit/Strict modes), as it is first encountered.</summary>
+        public event Action<string> OnMissingKey;
+
+        /// <summary>Distinct localization keys that failed to resolve during this session (audit log).</summary>
+        public IReadOnlyList<string> MissingKeys => _missingKeys;
+
         /// <summary>The most recently emitted step, or null before <see cref="Start"/>.</summary>
         public DialogueStep CurrentStep { get; private set; }
 
@@ -51,12 +59,14 @@ namespace Faolline.GraphDialogue
             DialogueGraph graph,
             DialogueContext context,
             ILocalizationProvider localization,
-            Func<string, Speaker> speakerLookup = null)
+            Func<string, Speaker> speakerLookup = null,
+            LocalizationStrictMode strictMode = LocalizationStrictMode.Permissive)
         {
             _graph = graph;
             _context = context ?? new DialogueContext();
             _localization = localization ?? new CsvLocalizationProvider(string.Empty, "en");
             _speakerLookup = speakerLookup;
+            _strictMode = strictMode;
 
             _runner.OnEnded += reason =>
             {
@@ -212,7 +222,7 @@ namespace Faolline.GraphDialogue
 
         private LineStep BuildLineStep(DialogueLineNodeData line)
         {
-            string text = _localization.Resolve(DialogueLocalizationKeys.ForLine(line), _localization.CurrentLocale);
+            string text = ResolveChecked(DialogueLocalizationKeys.ForLine(line));
             string speakerName = ResolveSpeakerName(line.SpeakerKey);
             return new LineStep(line.Id, line.SpeakerKey, speakerName, text, line.ExpressionKey);
         }
@@ -226,11 +236,41 @@ namespace Faolline.GraphDialogue
                 string labelKey = DialogueLocalizationKeys.ForChoice(baseChoice);
                 string label = string.IsNullOrEmpty(labelKey)
                     ? baseChoice.Id
-                    : _localization.Resolve(labelKey, _localization.CurrentLocale);
+                    : ResolveChecked(labelKey);
                 bool available = baseChoice.Condition == null || baseChoice.Condition.Evaluate(_context);
                 options.Add(new ChoiceOption(baseChoice.Id, label, available));
             }
             return new ChoiceStep(choiceNode.Id, options);
+        }
+
+        /// <summary>
+        /// Resolves a key through the provider and applies the configured <see cref="LocalizationStrictMode"/>
+        /// when the key is missing (provider returns the <c>#key</c> fallback or empty):
+        /// Permissive returns the fallback silently; Audit warns + records it; Strict throws.
+        /// </summary>
+        private string ResolveChecked(string key)
+        {
+            var locale = _localization.CurrentLocale;
+            var value = _localization.Resolve(key, locale);
+
+            bool missing = string.IsNullOrEmpty(value) || value == $"#{key}";
+            if (!missing) return value;
+
+            switch (_strictMode)
+            {
+                case LocalizationStrictMode.Strict:
+                    throw new LocalizationException(key, locale);
+                case LocalizationStrictMode.Audit:
+                    if (!_missingKeys.Contains(key))
+                    {
+                        _missingKeys.Add(key);
+                        Debug.LogWarning($"[GraphDialogue] Missing localization key '{key}' for locale '{locale}'.");
+                        OnMissingKey?.Invoke(key);
+                    }
+                    break;
+                // Permissive: return the fallback silently.
+            }
+            return value;
         }
 
         private string ResolveSpeakerName(string speakerKey)

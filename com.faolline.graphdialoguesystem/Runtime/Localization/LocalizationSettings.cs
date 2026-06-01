@@ -11,6 +11,9 @@ namespace Faolline.GraphDialogue
         private ILocalizationProvider _provider;
         private string _currentLocale = "en";
 
+        /// <summary>How the runtime player reacts to a missing key during playback. Default: Audit.</summary>
+        public LocalizationStrictMode StrictMode { get; set; } = LocalizationStrictMode.Audit;
+
         /// <summary>Initialize with explicit provider and locale.</summary>
         public LocalizationSettings(ILocalizationProvider provider = null, string locale = "en")
         {
