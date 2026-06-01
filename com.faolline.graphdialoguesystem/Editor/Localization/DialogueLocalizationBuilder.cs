@@ -56,12 +56,16 @@ namespace Faolline.GraphDialogue.Editor
                 Debug.Log($"[GraphDialogueLocalizationBuilder] Phase 1 complete: {graphs.Count} graphs, {totalKeysFound} keys found.");
 
                 // Phase 2: Sync to provider
-                var mode = LocalizationContext.Current.Mode;
 #if GRAPHDIALOGUE_UNITY_LOCALIZATION
-                if (mode == LocalizationMode.UnityLocalization)
+                var settingsAsset = LocalizationSettingsLoader.Load();
+                if (settingsAsset != null && settingsAsset.Mode == LocalizationMode.UnityLocalization)
                 {
                     SyncToUnityLocalization(db);
                     Debug.Log("[GraphDialogueLocalizationBuilder] Phase 2 complete: synced to Unity Localization String Tables.");
+                }
+                else if (settingsAsset == null)
+                {
+                    Debug.LogWarning("[GraphDialogueLocalizationBuilder] No LocalizationSettingsAsset found. Skipping Phase 2 (Unity Localization sync).");
                 }
 #endif
             }
