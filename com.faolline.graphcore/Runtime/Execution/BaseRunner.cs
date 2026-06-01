@@ -104,6 +104,30 @@ namespace Faolline.GraphCore
         }
 
         /// <summary>
+        /// Starts execution at <paramref name="nodeId"/> instead of the graph's EntryNodeId.
+        /// Used when restoring a saved session — skips to a known checkpoint without re-running
+        /// the graph from the top. Enter-conditions and enter-actions of the restored node still run.
+        /// </summary>
+        public void StartFrom(BaseGraph graph, string nodeId, BaseContext context, NodeExecutorRegistry registry)
+        {
+            _context   = context;
+            _registry  = registry;
+            _rootGraph = graph;
+            _graphStack.Clear();
+            _history.Clear();
+
+            var frame = new GraphExecutionState
+            {
+                Graph         = graph,
+                CurrentNodeId = nodeId,
+                FrameContext  = context
+            };
+            _graphStack.Push(frame);
+            _state = RunnerState.NodeReady;
+            EnterCurrentNode();
+        }
+
+        /// <summary>
         /// Advances execution: runs exit-actions on the current node, evaluates outgoing
         /// edges, snapshots history, then enters the next node. No-op when <c>State == Ended</c>.
         /// </summary>

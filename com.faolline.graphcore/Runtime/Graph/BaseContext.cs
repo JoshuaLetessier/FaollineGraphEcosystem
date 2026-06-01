@@ -71,6 +71,13 @@ namespace Faolline.GraphCore
         /// <summary>Returns <c>true</c> when <paramref name="key"/> has a stored value.</summary>
         public bool Has(string key) => _params.ContainsKey(key);
 
+        /// <summary>
+        /// Returns a read-only snapshot of all stored parameter values (key → boxed value).
+        /// Used for serialization (e.g. save/restore). Types are limited to bool, int, float, string.
+        /// </summary>
+        public IReadOnlyDictionary<string, object> GetAllParameters()
+            => new System.Collections.ObjectModel.ReadOnlyDictionary<string, object>(_params);
+
         // ── Change notifications ───────────────────────────────────────────────
 
         /// <summary>

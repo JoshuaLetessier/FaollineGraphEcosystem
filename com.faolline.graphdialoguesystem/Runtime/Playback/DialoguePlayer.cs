@@ -115,6 +115,58 @@ namespace Faolline.GraphDialogue
             Drain();
         }
 
+        // ── Save / Restore ────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Captures the current playback position and context into a <see cref="DialogueSessionState"/>
+        /// that can be persisted (JSON) and used later to restore the session via
+        /// <see cref="RestoreFrom"/>. Returns null when no step has been emitted yet.
+        /// <para>
+        /// Best called when <see cref="CurrentStep"/> is a <see cref="LineStep"/> on a checkpoint node
+        /// (<c>IsCheckpoint == true</c>), but any active step is accepted.
+        /// </para>
+        /// </summary>
+        public DialogueSessionState SaveState(string graphGuid = "")
+        {
+            if (CurrentStep == null) return null;
+            return DialogueSessionState.Capture(graphGuid, CurrentStep.NodeId, _context);
+        }
+
+        /// <summary>
+        /// Resumes playback from a previously saved <see cref="DialogueSessionState"/>.
+        /// The saved context values are applied before the node is re-entered, so enter-actions
+        /// that read context will see the restored values.
+        /// </summary>
+        public void RestoreFrom(DialogueSessionState state)
+        {
+            if (state == null)
+            {
+                Debug.LogError("[GraphDialogue] RestoreFrom: state is null.");
+                return;
+            }
+
+            _stuck = false;
+            _ended = false;
+            _missingKeys.Clear();
+
+            // Apply saved context BEFORE entering the node so enter-actions see restored values.
+            state.ApplyContext(_context);
+
+            _registry = DialogueExecutorRegistryFactory.Create();
+
+            try
+            {
+                _runner.StartFrom(_graph, state.NodeId, _context, _registry);
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogError($"[GraphDialogue] RestoreFrom failed: {ex.Message}");
+                return;
+            }
+
+            Drain();
+        }
+
         /// <summary>Advances past the current line (linear). No-op unless paused on a line.</summary>
         public void Advance()
         {
