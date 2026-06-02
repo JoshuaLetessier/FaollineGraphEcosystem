@@ -74,10 +74,10 @@ validated via the samples (US5) / manual play.
 
 **Independent Test**: Play alternating-speaker lines; correct avatar per line; unknown speaker â†’ no avatar/no error; none left after hide.
 
-- [ ] T012 [P] [US3] Write FAILING EditMode tests `UI/Tests/EditMode/AvatarLifecycleTests.cs`: on a `DialogueViewBase` subclass, `RequestAvatarSwap(speakerId, expr)` resolves via `Speaker.TryGetExpression` (instantiates under a temp current root), swapping demotes the prior to the previous root, unknown speaker/expression spawns nothing and throws nothing (uses `FallbackExpression` when set), and `ClearAvatarsOnHide` leaves no instances.
-- [ ] T013 [US3] Add the avatar lifecycle to `UI/Runtime/DialogueViewBase.cs` to pass T012 (current/previous mounts, `destroyAvatarOnHide`, optional transition, spawn/demote/despawn coroutines, `RequestAvatarSwap`, `ClearAvatarsOnHide`, avatar events).
-- [ ] T014 [P] [US3] Create abstract `AvatarTransition` MonoBehaviour in `UI/Runtime/AvatarTransition.cs` (`IEnumerator Spawn/Despawn/DemoteToPrevious`).
-- [ ] T015 [US3] Wire avatars into the views: call `RequestAvatarSwap(step.SpeakerId, step.ExpressionKey)` in `CanvasDialogueView.ShowLine` and `UIToolkitDialogueView.ShowLine`; call `ClearAvatarsOnHide()` in both `HideAll`.
+- [x] T012 [P] [US3] Write FAILING EditMode tests `UI/Tests/EditMode/AvatarLifecycleTests.cs`: on a `DialogueViewBase` subclass, `RequestAvatarSwap(speakerId, expr)` resolves via `Speaker.TryGetExpression` (instantiates under a temp current root), swapping demotes the prior to the previous root, unknown speaker/expression spawns nothing and throws nothing (uses `FallbackExpression` when set), and `ClearAvatarsOnHide` leaves no instances.
+- [x] T013 [US3] Add the avatar lifecycle to `UI/Runtime/DialogueViewBase.cs` to pass T012 (current/previous mounts, `destroyAvatarOnHide`, optional transition, spawn/demote/despawn coroutines, `RequestAvatarSwap`, `ClearAvatarsOnHide`, avatar events).
+- [x] T014 [P] [US3] Create abstract `AvatarTransition` MonoBehaviour in `UI/Runtime/AvatarTransition.cs` (`IEnumerator Spawn/Despawn/DemoteToPrevious`).
+- [x] T015 [US3] Wire avatars into the views: call `RequestAvatarSwap(step.SpeakerId, step.ExpressionKey)` in `CanvasDialogueView.ShowLine` and `UIToolkitDialogueView.ShowLine`; call `ClearAvatarsOnHide()` in both `HideAll`.
 
 **Checkpoint**: Avatars work in both front-ends.
 

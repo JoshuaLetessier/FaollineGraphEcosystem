@@ -30,6 +30,8 @@ namespace Faolline.GraphDialogue.UI
 
             SetText(lineText, step?.ResolvedText);
             SetText(speakerText, step?.ResolvedSpeakerName);
+
+            RequestAvatarSwap(step?.SpeakerId, step?.ExpressionKey);
         }
 
         public override void ShowChoices(ChoiceStep step)
@@ -69,6 +71,7 @@ namespace Faolline.GraphDialogue.UI
             SetText(lineText, string.Empty);
             SetText(speakerText, string.Empty);
             DeactivateAllChoices();
+            ClearAvatarsOnHide();
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────────────
