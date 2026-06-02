@@ -48,8 +48,8 @@ validated via the samples (US5) / manual play.
 
 **Independent Test**: Drive a `CanvasDialogueView` with the driver; advance a line, click a choice, reach end â€” text shown, routing correct, UI cleared.
 
-- [ ] T008 [P] [US1] Write FAILING EditMode tests `UI/Tests/EditMode/CanvasDialogueViewTests.cs`: construct a `CanvasDialogueView` with TMP texts + buttons; `ShowLine` sets line/speaker text; `ShowChoices` enables exactly N buttons with correct labels and `interactable == Available`; invoking a button's `onClick` raises `ChoiceSelected` with that option's `ChoiceId`; `HideAll` clears texts and hides buttons.
-- [ ] T009 [US1] Implement `CanvasDialogueView : DialogueViewBase, IDialogueView` in `UI/Runtime/CanvasDialogueView.cs` to pass T008 (serialized `TMP_Text` line/speaker, `choicesContainer`, `List<Button>` with child `TMP_Text`; surplus options hidden + `[GraphDialogue]` warning; pointer-click advance hook).
+- [x] T008 [P] [US1] Write FAILING EditMode tests `UI/Tests/EditMode/CanvasDialogueViewTests.cs`: construct a `CanvasDialogueView` with TMP texts + buttons; `ShowLine` sets line/speaker text; `ShowChoices` enables exactly N buttons with correct labels and `interactable == Available`; invoking a button's `onClick` raises `ChoiceSelected` with that option's `ChoiceId`; `HideAll` clears texts and hides buttons.
+- [x] T009 [US1] Implement `CanvasDialogueView : DialogueViewBase, IDialogueView` in `UI/Runtime/CanvasDialogueView.cs` to pass T008 (serialized `TMP_Text` line/speaker, `choicesContainer`, `List<Button>` with child `TMP_Text`; surplus options hidden + `[GraphDialogue]` warning; pointer-click advance hook).
 
 **Checkpoint**: Canvas dialogue is playable end-to-end (text + choices). MVP shippable.
 
