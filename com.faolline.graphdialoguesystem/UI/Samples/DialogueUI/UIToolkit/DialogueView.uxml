@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:VisualElement name="dialogue-root" class="dialogue-root">
+        <ui:VisualElement name="line-panel" class="line-panel">
+            <ui:Label name="speaker-name" class="speaker-name" text="Speaker" />
+            <ui:Label name="line-text" class="line-text" text="Line goes here." />
+        </ui:VisualElement>
+        <ui:VisualElement name="choices-container" class="choices-container" />
+    </ui:VisualElement>
+</ui:UXML>

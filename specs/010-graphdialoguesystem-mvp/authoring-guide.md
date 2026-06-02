@@ -256,3 +256,36 @@ On *Build All Tables*:
 
 > Adapters that cannot be default-constructed can still be added manually via
 > `GraphLocalizationAdapterRegistry.Register(...)`.
+
+---
+
+## 11. Showing dialogue in-game (Canvas / UI Toolkit)
+
+The runtime player is headless; the `com.faolline.graphdialoguesystem.UI` assembly renders it on screen.
+Because the player resolves localized text upstream, the views display resolved strings directly (no
+localization dependency in the UI).
+
+**Components**
+- `IDialogueView` — the view contract (ShowLine / ShowChoices / HideAll / BindSpeakers + `ChoiceSelected`).
+- `DialogueViewBase` — shared MonoBehaviour: speaker registry + avatar lifecycle.
+- `CanvasDialogueView` — UGUI + TextMeshPro front-end.
+- `UIToolkitDialogueView` — UIDocument front-end (Dynamic or Slots choices).
+- `DialogueDriver` — drop-in: owns a `DialoguePlayer`, routes steps to the view, handles input.
+
+**Minimal setup**: add a view (Canvas or UI Toolkit) + a `DialogueDriver`, assign the `DialogueGraph`,
+the `Speaker` list, and the view. Press Play. **Space**/click advances; choice buttons (or **1–9**) select.
+
+**Swap front-ends** by changing only `DialogueDriver.view`. See the step-by-step recipes in
+`com.faolline.graphdialoguesystem/UI/Samples/DialogueUI/README.md` and the feature quickstart at
+`specs/011-dialogue-ui/quickstart.md`.
+
+**Scripting**
+```csharp
+[SerializeField] DialogueDriver driver;
+void Begin()        => driver.StartDialogue(myGraph);
+void OnNext()       => driver.Advance();
+void Pick(string id)=> driver.Choose(id);   // or driver.ChooseByIndex(1..9)
+```
+
+**Avatars**: assign each `Speaker`'s expression prefabs (+ optional fallback); the view spawns the
+current speaker's avatar and demotes the previous one. Assign an `AvatarTransition` to animate swaps.
