@@ -3,26 +3,20 @@ using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphLocalization;
-using Faolline.GraphLocalization.Editor;
 
 namespace Faolline.GraphDialogue.Editor
 {
     /// <summary>
-    /// Registers the GraphDialogue lib with the central localization builder.
-    /// Scans all <see cref="DialogueGraph"/> assets in the project and indexes their keys into a
+    /// Indexes the GraphDialogue lib for the central localization builder. Auto-discovered via
+    /// TypeCache (implements <see cref="IGraphLocalizationAdapter"/> with a parameterless ctor — no
+    /// registration needed). Scans all <see cref="DialogueGraph"/> assets and indexes their keys into a
     /// <see cref="LocalizationDatabase"/>, then scans all <see cref="Speaker"/> assets for global keys.
     /// Keys are derived deterministically from node/choice/speaker identity via
     /// <see cref="DialogueLocalizationKeys"/> — no hand-typed string fields.
     /// </summary>
-    [UnityEditor.InitializeOnLoad]
     public sealed class DialogueGraphLocalizationAdapter : IGraphLocalizationAdapter
     {
         public string LibName => "GraphDialogue";
-
-        static DialogueGraphLocalizationAdapter()
-        {
-            GraphLocalizationAdapterRegistry.Register(new DialogueGraphLocalizationAdapter());
-        }
 
         public void ScanAndIndex(LocalizationDatabase database)
         {

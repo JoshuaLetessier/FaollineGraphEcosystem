@@ -63,11 +63,11 @@ namespace Faolline.GraphLocalization.Editor
         public void Refresh()
         {
             _reports.Clear();
-            var adapters = GraphLocalizationAdapterRegistry.Adapters;
+            var adapters = GraphLocalizationAdapterRegistry.DiscoverAdapters();
 
             if (adapters.Count == 0)
             {
-                _reports.Add(new LibReport { LibName = "(no adapters registered)" });
+                _reports.Add(new LibReport { LibName = "(no adapters found)" });
                 return;
             }
 

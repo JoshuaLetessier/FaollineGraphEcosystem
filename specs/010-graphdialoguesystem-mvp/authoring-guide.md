@@ -235,22 +235,24 @@ This maps cleanly to localization keys: `speaker_npc_mayor`, `speaker_player`, e
 
 ## 10. Extending the localization system
 
-Register a new graph lib adapter at editor load time:
+Just implement `IGraphLocalizationAdapter` with a parameterless constructor — it is
+**auto-discovered** via `TypeCache` (no registration call, no `[InitializeOnLoad]`):
 
 ```csharp
-[InitializeOnLoad]
-public class MyGraphLocalizationAdapter : IGraphLocalizationAdapter
+public sealed class MyGraphLocalizationAdapter : IGraphLocalizationAdapter
 {
     public string LibName => "MyGraph";
 
-    static MyGraphLocalizationAdapter()
-        => GraphLocalizationAdapterRegistry.Register(new MyGraphLocalizationAdapter());
-
     public void ScanAndIndex(LocalizationDatabase db)
     {
-        // Find your graph assets and call db.GetOrCreateGraphEntry / db.AddGlobalKey
+        // Find your graph assets and call db.GetOrCreateGraphEntry(...).AddKey(...) / db.AddGlobalKey(...)
     }
 }
 ```
 
-String Tables are then created under `Assets/Localization/Collections/MyGraph/`.
+On *Build All Tables*:
+- **Csv mode** → `Assets/Localization/Csv/MyGraph.csv`
+- **UnityLocalization mode** → String Tables under `Assets/Localization/Collections/MyGraph/`
+
+> Adapters that cannot be default-constructed can still be added manually via
+> `GraphLocalizationAdapterRegistry.Register(...)`.

@@ -20,10 +20,11 @@ namespace Faolline.GraphLocalization.Editor
         [MenuItem("Faolline/Localization/Build All Tables")]
         public static void BuildAll()
         {
-            var adapters = GraphLocalizationAdapterRegistry.Adapters;
+            var adapters = GraphLocalizationAdapterRegistry.DiscoverAdapters();
             if (adapters.Count == 0)
             {
-                Debug.LogWarning("[LocalizationBuilderCore] No adapters registered. Make sure your graph libs are loaded.");
+                Debug.LogWarning("[LocalizationBuilderCore] No IGraphLocalizationAdapter found in the project. " +
+                    "Implement one (e.g. DialogueGraphLocalizationAdapter) so your graphs can be indexed.");
                 return;
             }
 

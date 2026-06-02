@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using Faolline.GraphLocalization;
 using Faolline.GraphLocalization.Editor;
@@ -15,11 +16,25 @@ namespace Faolline.GraphLocalization.Tests
             public void ScanAndIndex(LocalizationDatabase database) { }
         }
 
+        // The registry is a process-wide singleton populated by real adapters via [InitializeOnLoad].
+        // Snapshot and restore it around each test so running tests never wipes the live registrations
+        // (which would otherwise make Build All Tables find no adapters until the next domain reload).
+        private List<IGraphLocalizationAdapter> _saved;
+
         [SetUp]
-        public void SetUp() => GraphLocalizationAdapterRegistry.Clear();
+        public void SetUp()
+        {
+            _saved = new List<IGraphLocalizationAdapter>(GraphLocalizationAdapterRegistry.Adapters);
+            GraphLocalizationAdapterRegistry.Clear();
+        }
 
         [TearDown]
-        public void TearDown() => GraphLocalizationAdapterRegistry.Clear();
+        public void TearDown()
+        {
+            GraphLocalizationAdapterRegistry.Clear();
+            foreach (var adapter in _saved)
+                GraphLocalizationAdapterRegistry.Register(adapter);
+        }
 
         [Test]
         public void Register_AddsAdapter()
@@ -67,6 +82,30 @@ namespace Faolline.GraphLocalization.Tests
             GraphLocalizationAdapterRegistry.Register(new StubAdapter("B"));
             GraphLocalizationAdapterRegistry.Clear();
             Assert.AreEqual(0, GraphLocalizationAdapterRegistry.Adapters.Count);
+        }
+
+        [Test]
+        public void DiscoverAdapters_IncludesManualRegistrations()
+        {
+            GraphLocalizationAdapterRegistry.Register(new StubAdapter("ManualLib"));
+            var discovered = GraphLocalizationAdapterRegistry.DiscoverAdapters();
+
+            bool found = false;
+            foreach (var a in discovered) if (a.LibName == "ManualLib") { found = true; break; }
+            Assert.IsTrue(found, "DiscoverAdapters must include manually-registered adapters.");
+        }
+
+        [Test]
+        public void DiscoverAdapters_DeduplicatesByLibName()
+        {
+            // A manual adapter whose LibName collides with an auto-discovered one would appear once.
+            GraphLocalizationAdapterRegistry.Register(new StubAdapter("Dup"));
+            GraphLocalizationAdapterRegistry.Register(new StubAdapter("Dup")); // ignored by Register
+            var discovered = GraphLocalizationAdapterRegistry.DiscoverAdapters();
+
+            int count = 0;
+            foreach (var a in discovered) if (a.LibName == "Dup") count++;
+            Assert.AreEqual(1, count);
         }
 
         [Test]
