@@ -89,8 +89,8 @@ validated via the samples (US5) / manual play.
 
 **Independent Test**: With either backend, Space advances, number key chooses; unavailable/absent number is a no-op.
 
-- [ ] T016 [P] [US4] Write FAILING EditMode tests `UI/Tests/EditMode/DialogueDriverInputTests.cs` for the inputâ†’action mapping seam: a "choose index k" call selects the k-th currently-displayed available option's id (and is a no-op when absent/unavailable); an "advance" call is ignored during a choice step. (Test the internal mapping methods, not raw key polling.)
-- [ ] T017 [US4] Add keyboard handling to `UI/Runtime/DialogueDriver.cs` (`Update`: Spaceâ†’Advance when on a line; digits/numpad 1â€“9â†’choose the k-th option) behind `#if ENABLE_INPUT_SYSTEM` / `#else ENABLE_LEGACY_INPUT_MANAGER`, routing through the seam validated in T016.
+- [x] T016 [P] [US4] Write FAILING EditMode tests `UI/Tests/EditMode/DialogueDriverInputTests.cs` for the inputâ†’action mapping seam: a "choose index k" call selects the k-th currently-displayed available option's id (and is a no-op when absent/unavailable); an "advance" call is ignored during a choice step. (Test the internal mapping methods, not raw key polling.)
+- [x] T017 [US4] Add keyboard handling to `UI/Runtime/DialogueDriver.cs` (`Update`: Spaceâ†’Advance when on a line; digits/numpad 1â€“9â†’choose the k-th option) behind `#if ENABLE_INPUT_SYSTEM` / `#else ENABLE_LEGACY_INPUT_MANAGER`, routing through the seam validated in T016.
 
 **Checkpoint**: Keyboard parity with the reference; clicks still work.
 

@@ -3,6 +3,9 @@ using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphDialogue;
 using Faolline.GraphLocalization;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 namespace Faolline.GraphDialogue.UI
 {
@@ -27,6 +30,7 @@ namespace Faolline.GraphDialogue.UI
         private ILocalizationProvider _provider;
         private DialoguePlayer _player;
         private bool _awaitingChoice;
+        private ChoiceStep _lastChoices;
 
         /// <summary>The active view. Defaults to the assigned <c>viewBehaviour</c>; settable for tests.</summary>
         public IDialogueView View
@@ -51,6 +55,20 @@ namespace Faolline.GraphDialogue.UI
         {
             if (autoStart && graph != null)
                 StartDialogue(graph);
+        }
+
+        private void Update()
+        {
+            if (_player == null) return;
+            if (_awaitingChoice)
+            {
+                int k = ReadChoiceDigit();
+                if (k > 0) ChooseByIndex(k);
+            }
+            else if (ReadAdvance())
+            {
+                Advance();
+            }
         }
 
         private void OnDestroy() => Teardown();
@@ -109,6 +127,20 @@ namespace Faolline.GraphDialogue.UI
             _player.Choose(choiceId);
         }
 
+        /// <summary>
+        /// Selects the option at <paramref name="oneBasedIndex"/> in the currently displayed choices
+        /// (as a keyboard 1–9 press would). No-op when not at a choice, out of range, or unavailable.
+        /// </summary>
+        public void ChooseByIndex(int oneBasedIndex)
+        {
+            if (!_awaitingChoice || _lastChoices == null) return;
+            var options = _lastChoices.Options;
+            if (oneBasedIndex < 1 || oneBasedIndex > options.Count) return;
+            var option = options[oneBasedIndex - 1];
+            if (option == null || !option.Available) return;
+            Choose(option.ChoiceId);
+        }
+
         /// <summary>Steps back one entry (player history).</summary>
         public void Back() => _player?.Back();
 
@@ -120,18 +152,21 @@ namespace Faolline.GraphDialogue.UI
         private void HandleLine(LineStep step)
         {
             _awaitingChoice = false;
+            _lastChoices = null;
             View?.ShowLine(step);
         }
 
         private void HandleChoices(ChoiceStep step)
         {
             _awaitingChoice = true;
+            _lastChoices = step;
             View?.ShowChoices(step);
         }
 
         private void HandleEnded(EndStep step)
         {
             _awaitingChoice = false;
+            _lastChoices = null;
             View?.HideAll();
         }
 
@@ -144,6 +179,41 @@ namespace Faolline.GraphDialogue.UI
                 if (s != null && s.SpeakerId == speakerId) return s;
             return null;
         }
+
+        // ── Input (pointer always works via the view's buttons; keyboard is a convenience) ──────────
+
+#if ENABLE_INPUT_SYSTEM
+        private static bool ReadAdvance()
+        {
+            var kb = Keyboard.current;
+            return kb != null && kb.spaceKey.wasPressedThisFrame;
+        }
+
+        private static int ReadChoiceDigit()
+        {
+            var kb = Keyboard.current;
+            if (kb == null) return 0;
+            if (kb.digit1Key.wasPressedThisFrame || kb.numpad1Key.wasPressedThisFrame) return 1;
+            if (kb.digit2Key.wasPressedThisFrame || kb.numpad2Key.wasPressedThisFrame) return 2;
+            if (kb.digit3Key.wasPressedThisFrame || kb.numpad3Key.wasPressedThisFrame) return 3;
+            if (kb.digit4Key.wasPressedThisFrame || kb.numpad4Key.wasPressedThisFrame) return 4;
+            if (kb.digit5Key.wasPressedThisFrame || kb.numpad5Key.wasPressedThisFrame) return 5;
+            if (kb.digit6Key.wasPressedThisFrame || kb.numpad6Key.wasPressedThisFrame) return 6;
+            if (kb.digit7Key.wasPressedThisFrame || kb.numpad7Key.wasPressedThisFrame) return 7;
+            if (kb.digit8Key.wasPressedThisFrame || kb.numpad8Key.wasPressedThisFrame) return 8;
+            if (kb.digit9Key.wasPressedThisFrame || kb.numpad9Key.wasPressedThisFrame) return 9;
+            return 0;
+        }
+#else
+        private static bool ReadAdvance() => Input.GetKeyDown(KeyCode.Space);
+
+        private static int ReadChoiceDigit()
+        {
+            for (int k = 1; k <= 9; k++)
+                if (Input.GetKeyDown(KeyCode.Alpha0 + k) || Input.GetKeyDown(KeyCode.Keypad0 + k)) return k;
+            return 0;
+        }
+#endif
 
         private void Teardown()
         {
