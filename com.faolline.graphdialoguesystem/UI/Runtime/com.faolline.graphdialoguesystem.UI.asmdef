@@ -1,0 +1,21 @@
+{
+    "name": "com.faolline.graphdialoguesystem.UI",
+    "rootNamespace": "Faolline.GraphDialogue.UI",
+    "references": [
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphdialoguesystem.Runtime",
+        "com.faolline.graphlocalization.Runtime",
+        "Unity.TextMeshPro",
+        "UnityEngine.UI",
+        "Unity.InputSystem"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
