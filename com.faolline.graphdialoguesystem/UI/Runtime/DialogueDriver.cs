@@ -32,10 +32,20 @@ namespace Faolline.GraphDialogue.UI
         private bool _awaitingChoice;
         private ChoiceStep _lastChoices;
 
-        /// <summary>The active view. Defaults to the assigned <c>viewBehaviour</c>; settable for tests.</summary>
+        /// <summary>
+        /// The active view. Resolves from the assigned <c>viewBehaviour</c>: if that component is itself an
+        /// <see cref="IDialogueView"/> it is used directly; otherwise an <see cref="IDialogueView"/> on the
+        /// same GameObject is looked up (so dragging the Canvas/host object also works). Settable for tests.
+        /// </summary>
         public IDialogueView View
         {
-            get => _view ??= viewBehaviour as IDialogueView;
+            get
+            {
+                if (_view != null) return _view;
+                if (viewBehaviour is IDialogueView direct) _view = direct;
+                else if (viewBehaviour != null) _view = viewBehaviour.GetComponent<IDialogueView>();
+                return _view;
+            }
             set => _view = value;
         }
 
@@ -50,6 +60,17 @@ namespace Faolline.GraphDialogue.UI
         public DialoguePlayer Player => _player;
 
         // ── Lifecycle ───────────────────────────────────────────────────────────────
+
+        private void OnValidate()
+        {
+            if (viewBehaviour != null && !(viewBehaviour is IDialogueView) &&
+                viewBehaviour.GetComponent<IDialogueView>() == null)
+            {
+                Debug.LogWarning($"[GraphDialogue] DialogueDriver: assigned View Behaviour " +
+                    $"'{viewBehaviour.GetType().Name}' is not an IDialogueView and none is on its GameObject. " +
+                    "Assign a CanvasDialogueView or UIToolkitDialogueView.", this);
+            }
+        }
 
         private void Start()
         {
