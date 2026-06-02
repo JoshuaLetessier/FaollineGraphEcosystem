@@ -63,8 +63,23 @@ namespace Faolline.GraphLocalization.Editor
             Debug.Log($"[LocalizationBuilderCore] [{adapter.LibName}] Phase 1: {db.Graphs.Count} graphs, " +
                 $"{db.Metadata.TotalKeysFound} keys, {db.GlobalKeys.Count} global keys.");
 
-            // Phase 2: Unity Localization sync (via reflection — keeps this assembly dependency-free)
-            TrySyncToUnityLocalization(adapter.LibName, db, validation);
+            // Phase 2: export to the configured backend
+            var settingsAsset = LocalizationSettingsLoader.Load();
+            var mode = settingsAsset?.Mode ?? LocalizationMode.Csv;
+
+            if (mode == LocalizationMode.UnityLocalization)
+            {
+                // Unity Localization sync (via reflection — keeps this assembly dependency-free)
+                TrySyncToUnityLocalization(adapter.LibName, db, validation);
+            }
+            else
+            {
+                // CSV export
+                var locales = settingsAsset != null ? settingsAsset.CsvLocales : new[] { "en" };
+                var sourceLocale = locales != null && locales.Count > 0 ? locales[0] : "en";
+                var folder = settingsAsset != null ? settingsAsset.CsvOutputFolder : "Assets/Localization/Csv";
+                CsvLocalizationExporter.Export(adapter.LibName, db, locales, sourceLocale, folder, validation);
+            }
         }
 
         private static LocalizationDatabase GetOrCreateDatabase(string libName)

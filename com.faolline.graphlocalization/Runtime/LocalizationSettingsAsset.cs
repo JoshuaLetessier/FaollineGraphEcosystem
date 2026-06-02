@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Faolline.GraphLocalization
@@ -15,6 +16,15 @@ namespace Faolline.GraphLocalization
 
         [SerializeField, Tooltip("Unity Localization String Table collection name used when Mode = UnityLocalization.")]
         private string _unityLocalizationTableName = "Dialogue";
+
+        [Header("CSV mode")]
+        [SerializeField, Tooltip("Locale codes to generate as columns in the CSV files (Csv mode). " +
+            "The first locale is the source — its column is pre-filled with the node/choice/speaker " +
+            "default text. Others start empty for translators.")]
+        private List<string> _csvLocales = new List<string> { "en" };
+
+        [SerializeField, Tooltip("Folder where per-lib CSV files are written (Csv mode).")]
+        private string _csvOutputFolder = "Assets/Localization/Csv";
 
         [Header("Build-time validation")]
         [SerializeField, Tooltip("How the table builder reports per-locale translation gaps.\n\n" +
@@ -34,6 +44,12 @@ namespace Faolline.GraphLocalization
         public string UnityLocalizationTableName => _unityLocalizationTableName;
         public LocaleValidationMode LocaleValidation => _localeValidation;
         public LocalizationStrictMode PlayerStrictMode => _playerStrictMode;
+
+        /// <summary>Locale codes generated as CSV columns (Csv mode). First is the source locale.</summary>
+        public IReadOnlyList<string> CsvLocales => _csvLocales;
+
+        /// <summary>Folder where per-lib CSV files are written (Csv mode).</summary>
+        public string CsvOutputFolder => string.IsNullOrEmpty(_csvOutputFolder) ? "Assets/Localization/Csv" : _csvOutputFolder;
 
         public LocalizationSettings CreateSettings(string locale = "en")
         {
