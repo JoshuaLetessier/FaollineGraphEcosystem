@@ -1,11 +1,10 @@
-﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using System.Text.RegularExpressions;
-using Faolline.GraphDialogue;
+using Faolline.GraphLocalization;
 
-namespace Faolline.GraphDialogue.Tests
+namespace Faolline.GraphLocalization.Tests
 {
     /// <summary>EditMode tests for the default CSV localization provider.</summary>
     public class CsvLocalizationProviderTests

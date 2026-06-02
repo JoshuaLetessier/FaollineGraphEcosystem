@@ -1,8 +1,7 @@
-﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
-using Faolline.GraphDialogue;
+using Faolline.GraphLocalization;
 
-namespace Faolline.GraphDialogue.Tests
+namespace Faolline.GraphLocalization.Tests
 {
     /// <summary>EditMode tests for LocalizationSettings safe-default behavior.</summary>
     public class LocalizationSettingsTests

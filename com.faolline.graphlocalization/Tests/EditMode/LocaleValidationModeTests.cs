@@ -1,11 +1,10 @@
-﻿using Faolline.GraphLocalization;
 using NUnit.Framework;
 using UnityEngine;
-using Faolline.GraphDialogue;
+using Faolline.GraphLocalization;
 
-namespace Faolline.GraphDialogue.Tests
+namespace Faolline.GraphLocalization.Tests
 {
-    /// <summary>P2a â€” per-locale validation mode configuration on the settings asset.</summary>
+    /// <summary>Per-locale validation mode configuration on the settings asset.</summary>
     public class LocaleValidationModeTests
     {
         [Test]
@@ -23,7 +22,6 @@ namespace Faolline.GraphDialogue.Tests
         [Test]
         public void Enum_HasThreeTiers()
         {
-            // Permissive (silent) < Warn (default) < Strict (errors). Order matters for severity.
             Assert.AreEqual(0, (int)LocaleValidationMode.Permissive);
             Assert.AreEqual(1, (int)LocaleValidationMode.Warn);
             Assert.AreEqual(2, (int)LocaleValidationMode.Strict);
