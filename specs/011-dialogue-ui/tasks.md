@@ -61,8 +61,8 @@ validated via the samples (US5) / manual play.
 
 **Independent Test**: Swap the driver's view to `UIToolkitDialogueView`; same outcomes as US1.
 
-- [ ] T010 [P] [US2] Write EditMode tests `UI/Tests/EditMode/UIToolkitDialogueViewTests.cs` for the choice-mode logic that is panel-independent (Dynamic builds N buttons in a detached `VisualElement` container; Slots enables present / disables absent; `clicked` raises `ChoiceSelected(id)`; disabled when `!Available`). Use a manually-built `VisualElement` tree where a `UIDocument` is not required.
-- [ ] T011 [US2] Implement `UIToolkitDialogueView : DialogueViewBase, IDialogueView` in `UI/Runtime/UIToolkitDialogueView.cs` to pass T010 (serialized `UIDocument` + element names + `ChoiceDisplayMode {Dynamic,Slots}` + slot prefix/max; lazy element binding; line/speaker `Label`s; disabled USS class for unavailable options).
+- [x] T010 [P] [US2] Write EditMode tests `UI/Tests/EditMode/UIToolkitDialogueViewTests.cs` for the choice-mode logic that is panel-independent (Dynamic builds N buttons in a detached `VisualElement` container; Slots enables present / disables absent; `clicked` raises `ChoiceSelected(id)`; disabled when `!Available`). Use a manually-built `VisualElement` tree where a `UIDocument` is not required.
+- [x] T011 [US2] Implement `UIToolkitDialogueView : DialogueViewBase, IDialogueView` in `UI/Runtime/UIToolkitDialogueView.cs` to pass T010 (serialized `UIDocument` + element names + `ChoiceDisplayMode {Dynamic,Slots}` + slot prefix/max; lazy element binding; line/speaker `Label`s; disabled USS class for unavailable options).
 
 **Checkpoint**: Both front-ends interchangeable on the same driver (SC-002).
 
