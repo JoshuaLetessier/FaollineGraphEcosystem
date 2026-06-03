@@ -14,36 +14,62 @@ namespace Faolline.GraphLocalization.Editor
     public static class CsvLocalizationExporter
     {
         /// <summary>
-        /// Writes <c>{outputFolder}/{libName}.csv</c> from the database, merging with any existing file.
+        /// Writes one CSV per graph plus a global CSV under <c>{outputFolder}/{libName}/</c>, merging with any
+        /// existing files (translations preserved, orphan keys dropped). Returns the asset paths written, so
+        /// the builder can record them in the runtime manifest. The previous flat
+        /// <c>{outputFolder}/{libName}.csv</c> is removed if present.
         /// </summary>
-        public static void Export(string libName, LocalizationDatabase db, IReadOnlyList<string> locales,
+        public static List<string> Export(string libName, LocalizationDatabase db, IReadOnlyList<string> locales,
             string sourceLocale, string outputFolder, LocaleValidationMode validation)
         {
-            if (db == null) return;
+            var written = new List<string>();
+            if (db == null) return written;
             if (locales == null || locales.Count == 0)
             {
                 Debug.LogWarning($"[CsvLocalizationExporter] [{libName}] No CSV locales configured. Skipping.");
-                return;
+                return written;
             }
 
-            EnsureFolder(outputFolder);
-            var path = $"{outputFolder}/{Sanitize(libName)}.csv";
+            var libFolder = $"{outputFolder}/{Sanitize(libName)}";
+            EnsureFolder(libFolder);
 
+            // Migrate away from the old flat single-file layout.
+            var oldFlat = $"{outputFolder}/{Sanitize(libName)}.csv";
+            if (System.IO.File.Exists(oldFlat)) AssetDatabase.DeleteAsset(oldFlat);
+
+            // One file per graph: Csv/{lib}/{graph}.csv
+            foreach (var graph in db.Graphs)
+            {
+                var path = $"{libFolder}/{Sanitize(graph.GraphName)}.csv";
+                WriteCsv(path, $"{libName}/{graph.GraphName}", CollectKeys(graph.Keys), locales, sourceLocale, validation);
+                written.Add(path);
+            }
+
+            // Global keys (speakers, etc.): Csv/{lib}/{lib}_Global.csv
+            if (db.GlobalKeys.Count > 0)
+            {
+                var path = $"{libFolder}/{Sanitize(libName)}_Global.csv";
+                WriteCsv(path, $"{libName}/_Global", CollectKeys(db.GlobalKeys), locales, sourceLocale, validation);
+                written.Add(path);
+            }
+
+            return written;
+        }
+
+        private static void WriteCsv(string path, string label, IReadOnlyList<(string key, string hint)> desired,
+            IReadOnlyList<string> locales, string sourceLocale, LocaleValidationMode validation)
+        {
             var existing = System.IO.File.Exists(path) ? System.IO.File.ReadAllText(path) : null;
-            var desired = CollectDesiredKeys(db);
-
             var csv = BuildCsv(existing, desired, locales, sourceLocale, out var coverage, out int removed);
-
             System.IO.File.WriteAllText(path, csv);
             AssetDatabase.ImportAsset(path);
-
-            ReportCoverage(libName, coverage, validation, removed);
+            ReportCoverage(label, coverage, validation, removed);
         }
 
         // ── Desired keys ────────────────────────────────────────────────────────────
 
-        /// <summary>Flattens all graph + global keys into an ordered, de-duplicated (key, hint) list.</summary>
-        private static List<(string key, string hint)> CollectDesiredKeys(LocalizationDatabase db)
+        /// <summary>Flattens a key list into an ordered, de-duplicated (key, hint) list.</summary>
+        private static List<(string key, string hint)> CollectKeys(IReadOnlyList<LocalizationKeyEntry> keys)
         {
             var seen = new Dictionary<string, string>();
             var ordered = new List<string>();
@@ -56,11 +82,9 @@ namespace Faolline.GraphLocalization.Editor
                 else if (string.IsNullOrEmpty(seen[k]) && !string.IsNullOrEmpty(hint)) seen[k] = hint;
             }
 
-            foreach (var graph in db.Graphs)
-                foreach (var entry in graph.Keys)
+            if (keys != null)
+                foreach (var entry in keys)
                     Add(entry.Key, entry.DefaultHint);
-            foreach (var entry in db.GlobalKeys)
-                Add(entry.Key, entry.DefaultHint);
 
             var result = new List<(string, string)>(ordered.Count);
             foreach (var k in ordered) result.Add((k, seen[k]));

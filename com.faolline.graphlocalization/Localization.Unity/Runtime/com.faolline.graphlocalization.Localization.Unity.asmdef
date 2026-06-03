@@ -3,7 +3,8 @@
     "rootNamespace": "Faolline.GraphLocalization.Unity",
     "references": [
         "com.faolline.graphlocalization.Runtime",
-        "Unity.Localization"
+        "Unity.Localization",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

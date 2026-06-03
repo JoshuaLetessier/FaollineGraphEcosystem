@@ -116,8 +116,11 @@ public class PlaySoundAction : BaseAction
 1. Build the graph — give nodes descriptive Titles
 2. Run: Faolline ▸ Localization ▸ Build All Tables
    → LocalizationDatabase.asset updated
-   → (if mode = UnityLocalization) String Tables created/updated under
-     Assets/Localization/Collections/GraphDialogue/
+   → (if mode = UnityLocalization) one String Table collection per graph, each in its own
+     subfolder under Assets/Localization/Collections/GraphDialogue/<graph>/ (+ a _Global
+     collection for speakers)
+   → a manifest at Assets/Resources/GraphLocalizationManifest.asset indexes the produced
+     collections/files so the runtime provider resolves keys across them
 3. Open Dashboard to verify coverage per lib
 4. Translate empty entries in the String Table editor
 5. Repeat from step 2 when new nodes are added
@@ -250,9 +253,12 @@ public sealed class MyGraphLocalizationAdapter : IGraphLocalizationAdapter
 }
 ```
 
-On *Build All Tables*:
-- **Csv mode** → `Assets/Localization/Csv/MyGraph.csv`
-- **UnityLocalization mode** → String Tables under `Assets/Localization/Collections/MyGraph/`
+On *Build All Tables* (one file/collection per graph, plus a `_Global` one for speakers):
+- **Csv mode** → `Assets/Localization/Csv/MyGraph/<graph>.csv`
+- **UnityLocalization mode** → String Tables under `Assets/Localization/Collections/MyGraph/<graph>/`
+
+Both modes are indexed by `Assets/Resources/GraphLocalizationManifest.asset`, which the runtime
+provider reads to resolve keys spread across the per-graph collections/files.
 
 > Adapters that cannot be default-constructed can still be added manually via
 > `GraphLocalizationAdapterRegistry.Register(...)`.

@@ -25,16 +25,18 @@ namespace Faolline.GraphLocalization.Unity.Editor
         /// <summary>
         /// Entry point called via reflection from the builder core.
         /// Signature: (string libName, LocalizationDatabase database, LocaleValidationMode validation).
+        /// Returns the names of the String Table collections it created/updated for this lib, so the
+        /// builder can record them in the runtime manifest (the runtime provider searches across them).
         /// </summary>
-        public static void SyncDatabase(string libName, LocalizationDatabase database, LocaleValidationMode validation)
+        public static string[] SyncDatabase(string libName, LocalizationDatabase database, LocaleValidationMode validation)
         {
-            if (database == null) return;
+            if (database == null) return System.Array.Empty<string>();
 
             var locales = LocalizationEditorSettings.GetLocales();
             if (locales == null || locales.Count == 0)
             {
                 Debug.LogWarning($"[UnityLocalizationSyncer] [{libName}] No locales configured in Project Settings > Localization.");
-                return;
+                return System.Array.Empty<string>();
             }
 
             var libFolder = EnsureLibFolder(libName);
@@ -43,23 +45,27 @@ namespace Faolline.GraphLocalization.Unity.Editor
             var managed = new List<StringTableCollection>();
             var desiredNames = new HashSet<string>(StringComparer.Ordinal);
 
-            // Per-graph collections
+            // Per-graph collections, each in its own subfolder: Collections/{lib}/{graph}/
             foreach (var graphEntry in database.Graphs)
             {
                 var name = $"{GraphCollectionPrefix}{Sanitize(graphEntry.GraphName)}";
                 desiredNames.Add(name);
-                var col = GetOrCreateCollection(name, libFolder, report);
+                var folder = EnsureSubFolder(libFolder, Sanitize(graphEntry.GraphName));
+                var col = GetOrCreateCollection(name, folder, report);
+                MoveCollectionIfNeeded(col, folder, report);
                 EnsureTablesForAllLocales(col, locales);
                 SyncEntries(col, graphEntry.Keys, sourceLocale, report);
                 managed.Add(col);
             }
 
-            // Global collection (speakers, etc.)
+            // Global collection (speakers, etc.) in Collections/{lib}/_Global/
             if (database.GlobalKeys.Count > 0)
             {
                 var globalName = $"{Sanitize(libName)}{GlobalCollectionSuffix}";
                 desiredNames.Add(globalName);
-                var globalCol = GetOrCreateCollection(globalName, libFolder, report);
+                var folder = EnsureSubFolder(libFolder, "_Global");
+                var globalCol = GetOrCreateCollection(globalName, folder, report);
+                MoveCollectionIfNeeded(globalCol, folder, report);
                 EnsureTablesForAllLocales(globalCol, locales);
                 SyncEntries(globalCol, database.GlobalKeys, sourceLocale, report);
                 managed.Add(globalCol);
@@ -69,6 +75,8 @@ namespace Faolline.GraphLocalization.Unity.Editor
             AssetDatabase.SaveAssets();
             ReportCoverage(managed, locales, sourceLocale, validation, report);
             Debug.Log(report.Build());
+
+            return new List<string>(desiredNames).ToArray();
         }
 
         // ── Folder ───────────────────────────────────────────────────────────────
@@ -86,6 +94,44 @@ namespace Faolline.GraphLocalization.Unity.Editor
             if (!AssetDatabase.IsValidFolder(libPath))
                 AssetDatabase.CreateFolder(CollectionsRoot, safeName);
             return libPath;
+        }
+
+        private static string EnsureSubFolder(string parent, string child)
+        {
+            var path = $"{parent}/{child}";
+            if (!AssetDatabase.IsValidFolder(path))
+                AssetDatabase.CreateFolder(parent, child);
+            return path;
+        }
+
+        /// <summary>
+        /// Relocates an existing collection (created by an earlier flat layout) into its per-graph subfolder.
+        /// GUIDs are preserved, so cross-references stay intact. No-op when already in the right folder.
+        /// </summary>
+        private static void MoveCollectionIfNeeded(StringTableCollection col, string desiredFolder, SyncReport report)
+        {
+            if (col == null) return;
+            var colPath = AssetDatabase.GetAssetPath(col);
+            if (string.IsNullOrEmpty(colPath)) return;
+            var currentFolder = System.IO.Path.GetDirectoryName(colPath)?.Replace('\\', '/');
+            if (currentFolder == desiredFolder) return;
+
+            var assets = new List<UnityEngine.Object>();
+            if (col.SharedData != null) assets.Add(col.SharedData);
+            foreach (var t in col.StringTables) if (t != null) assets.Add(t);
+            assets.Add(col); // move the collection asset last
+
+            foreach (var asset in assets)
+            {
+                var path = AssetDatabase.GetAssetPath(asset);
+                if (string.IsNullOrEmpty(path)) continue;
+                var newPath = $"{desiredFolder}/{System.IO.Path.GetFileName(path)}";
+                if (path == newPath) continue;
+                var error = AssetDatabase.MoveAsset(path, newPath);
+                if (!string.IsNullOrEmpty(error))
+                    Debug.LogWarning($"[UnityLocalizationSyncer] Could not move '{path}' → '{newPath}': {error}");
+            }
+            report.CollectionsMoved++;
         }
 
         // ── Collections ──────────────────────────────────────────────────────────
@@ -211,7 +257,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
         private sealed class SyncReport
         {
             public readonly string LibName;
-            public int CollectionsCreated, KeysAdded, KeysRemoved;
+            public int CollectionsCreated, CollectionsMoved, KeysAdded, KeysRemoved;
             public readonly List<string> OrphanCollections = new();
             public readonly List<(string code, int filled, int total, bool isSource)> Coverage = new();
             public LocaleValidationMode Validation;
@@ -220,7 +266,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
             public string Build()
             {
                 var sb = new StringBuilder();
-                sb.AppendLine($"[UnityLocalizationSyncer] [{LibName}] Sync complete. Collections +{CollectionsCreated} | Keys +{KeysAdded}/-{KeysRemoved}");
+                sb.AppendLine($"[UnityLocalizationSyncer] [{LibName}] Sync complete. Collections +{CollectionsCreated}~{CollectionsMoved} | Keys +{KeysAdded}/-{KeysRemoved}");
                 foreach (var (code, filled, total, isSource) in Coverage)
                     sb.AppendLine($"  {code}{(isSource ? " (source)" : "")}: {filled}/{total} ({Pct(filled, total)}%)");
                 if (OrphanCollections.Count > 0)

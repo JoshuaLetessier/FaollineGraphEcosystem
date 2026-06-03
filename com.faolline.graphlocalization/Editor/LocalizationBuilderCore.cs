@@ -31,17 +31,22 @@ namespace Faolline.GraphLocalization.Editor
             var settingsAsset = LocalizationSettingsLoader.Load();
             var validation = settingsAsset?.LocaleValidation ?? LocaleValidationMode.Warn;
 
+            var manifest = GetOrCreateManifest();
+
             foreach (var adapter in adapters)
             {
                 try
                 {
-                    BuildForAdapter(adapter, validation);
+                    BuildForAdapter(adapter, validation, manifest);
                 }
                 catch (Exception ex)
                 {
                     Debug.LogError($"[LocalizationBuilderCore] Error building '{adapter.LibName}': {ex}");
                 }
             }
+
+            EditorUtility.SetDirty(manifest);
+            AssetDatabase.SaveAssets();
 
             Debug.Log($"[LocalizationBuilderCore] Done. {adapters.Count} lib(s) processed.");
 
@@ -50,7 +55,8 @@ namespace Faolline.GraphLocalization.Editor
                 EditorWindow.GetWindow<LocalizationDashboardWindow>().Refresh();
         }
 
-        private static void BuildForAdapter(IGraphLocalizationAdapter adapter, LocaleValidationMode validation)
+        private static void BuildForAdapter(IGraphLocalizationAdapter adapter, LocaleValidationMode validation,
+            GraphLocalizationManifest manifest)
         {
             // Phase 1: scan + index
             var db = GetOrCreateDatabase(adapter.LibName);
@@ -64,14 +70,19 @@ namespace Faolline.GraphLocalization.Editor
             Debug.Log($"[LocalizationBuilderCore] [{adapter.LibName}] Phase 1: {db.Graphs.Count} graphs, " +
                 $"{db.Metadata.TotalKeysFound} keys, {db.GlobalKeys.Count} global keys.");
 
-            // Phase 2: export to the configured backend
+            // Phase 2: export to the configured backend, recording the produced artifacts in the manifest
+            // so the runtime providers can find keys spread across per-graph collections/files.
             var settingsAsset = LocalizationSettingsLoader.Load();
             var mode = settingsAsset?.Mode ?? LocalizationMode.Csv;
+            var libEntry = manifest.GetOrCreateLib(adapter.LibName);
+            libEntry.UnityCollections.Clear();
+            libEntry.CsvFiles.Clear();
 
             if (mode == LocalizationMode.UnityLocalization)
             {
                 // Unity Localization sync (via reflection — keeps this assembly dependency-free)
-                TrySyncToUnityLocalization(adapter.LibName, db, validation);
+                var collections = TrySyncToUnityLocalization(adapter.LibName, db, validation);
+                if (collections != null) libEntry.UnityCollections.AddRange(collections);
             }
             else
             {
@@ -79,7 +90,13 @@ namespace Faolline.GraphLocalization.Editor
                 var locales = settingsAsset != null ? settingsAsset.CsvLocales : new[] { "en" };
                 var sourceLocale = locales != null && locales.Count > 0 ? locales[0] : "en";
                 var folder = settingsAsset != null ? settingsAsset.CsvOutputFolder : "Assets/Localization/Csv";
-                CsvLocalizationExporter.Export(adapter.LibName, db, locales, sourceLocale, folder, validation);
+                var paths = CsvLocalizationExporter.Export(adapter.LibName, db, locales, sourceLocale, folder, validation);
+                foreach (var path in paths)
+                {
+                    if (string.IsNullOrEmpty(path)) continue;
+                    var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
+                    if (asset != null) libEntry.CsvFiles.Add(asset);
+                }
             }
         }
 
@@ -101,20 +118,20 @@ namespace Faolline.GraphLocalization.Editor
             return db;
         }
 
-        private static void TrySyncToUnityLocalization(string libName, LocalizationDatabase db, LocaleValidationMode validation)
+        private static string[] TrySyncToUnityLocalization(string libName, LocalizationDatabase db, LocaleValidationMode validation)
         {
             var settingsAsset = LocalizationSettingsLoader.Load();
             if (settingsAsset == null)
             {
                 Debug.LogWarning($"[LocalizationBuilderCore] [{libName}] No LocalizationSettingsAsset found. " +
                     "Create one via Faolline ▸ Localization ▸ Localization Settings. Skipping Phase 2.");
-                return;
+                return null;
             }
 
             if (settingsAsset.Mode != LocalizationMode.UnityLocalization)
             {
                 Debug.Log($"[LocalizationBuilderCore] [{libName}] Mode is CSV. Skipping Phase 2.");
-                return;
+                return null;
             }
 
             var syncerType = Type.GetType(
@@ -124,7 +141,7 @@ namespace Faolline.GraphLocalization.Editor
             if (syncerType == null)
             {
                 Debug.LogWarning($"[LocalizationBuilderCore] [{libName}] Unity Localization adapter not found. Skipping Phase 2.");
-                return;
+                return null;
             }
 
             var method = syncerType.GetMethod("SyncDatabase",
@@ -132,11 +149,29 @@ namespace Faolline.GraphLocalization.Editor
             if (method == null)
             {
                 Debug.LogError($"[LocalizationBuilderCore] [{libName}] SyncDatabase method not found.");
-                return;
+                return null;
             }
 
-            method.Invoke(null, new object[] { libName, db, validation });
-            Debug.Log($"[LocalizationBuilderCore] [{libName}] Phase 2 complete.");
+            var result = method.Invoke(null, new object[] { libName, db, validation }) as string[];
+            Debug.Log($"[LocalizationBuilderCore] [{libName}] Phase 2 complete. " +
+                $"Collections: {(result != null ? string.Join(", ", result) : "(none)")}");
+            return result;
+        }
+
+        private static GraphLocalizationManifest GetOrCreateManifest()
+        {
+            var path = $"Assets/Resources/{GraphLocalizationManifest.ResourceName}.asset";
+            var existing = AssetDatabase.LoadAssetAtPath<GraphLocalizationManifest>(path);
+            if (existing != null) return existing;
+
+            if (!AssetDatabase.IsValidFolder("Assets/Resources"))
+                AssetDatabase.CreateFolder("Assets", "Resources");
+
+            var manifest = ScriptableObject.CreateInstance<GraphLocalizationManifest>();
+            AssetDatabase.CreateAsset(manifest, path);
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[LocalizationBuilderCore] Created localization manifest at {path}");
+            return manifest;
         }
 
         private static string SanitizeFileName(string name)

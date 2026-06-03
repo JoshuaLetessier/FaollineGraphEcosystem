@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -59,11 +60,39 @@ namespace Faolline.GraphLocalization
 
         private ILocalizationProvider CreateProviderForMode()
         {
-#if GRAPHLOCALIZATION_UNITY_LOCALIZATION
+            var manifest = GraphLocalizationManifest.Load();
+
             if (_mode == LocalizationMode.UnityLocalization)
-                return new Unity.UnityLocalizationProvider(_unityLocalizationTableName);
-#endif
-            return new CsvLocalizationProvider("Key,en\n", "en");
+            {
+                // The Unity provider lives in a gated assembly that references this Runtime, so we cannot
+                // reference it back (circular). Construct it via reflection instead — the same seam the
+                // builder uses for the syncer. Falls back to CSV if com.unity.localization is absent.
+                var collections = manifest != null ? manifest.AllUnityCollections() : new List<string>();
+                var unityProvider = TryCreateUnityProvider(collections, _unityLocalizationTableName);
+                if (unityProvider != null) return unityProvider;
+                Debug.LogWarning("[GraphLocalization] Mode is UnityLocalization but the Unity provider could not " +
+                    "be created (is com.unity.localization installed?). Falling back to CSV.");
+            }
+
+            // CSV mode (or fallback): merge every generated CSV so keys spread across per-graph files resolve.
+            var provider = new CsvLocalizationProvider("Key,en\n", "en");
+            if (manifest != null)
+                foreach (var csv in manifest.AllCsvFiles())
+                    if (csv != null) provider.Append(csv.text);
+            return provider;
+        }
+
+        private static ILocalizationProvider TryCreateUnityProvider(IEnumerable<string> collections, string fallbackCollectionName)
+        {
+            var type = Type.GetType(
+                "Faolline.GraphLocalization.Unity.UnityLocalizationProvider, " +
+                "com.faolline.graphlocalization.Localization.Unity");
+            if (type == null) return null;
+
+            var ctor = type.GetConstructor(new[] { typeof(IEnumerable<string>), typeof(string) });
+            if (ctor == null) return null;
+
+            return ctor.Invoke(new object[] { collections, fallbackCollectionName }) as ILocalizationProvider;
         }
     }
 }

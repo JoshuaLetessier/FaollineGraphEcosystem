@@ -20,9 +20,12 @@ namespace Faolline.GraphLocalization.Tests
         }
 
         [Test]
-        public void Current_FallsBackToCsvProvider_WhenNoAsset()
+        public void DefaultSettings_FallBackToCsvProvider_WhenNoProviderConfigured()
         {
-            Assert.IsInstanceOf<CsvLocalizationProvider>(LocalizationContext.Current.Provider);
+            // The genuine "nothing configured" path is a default-constructed LocalizationSettings; its
+            // Provider lazily defaults to CSV. (LocalizationContext.Current intentionally honours the
+            // project's LocalizationSettingsAsset, which may select the Unity provider.)
+            Assert.IsInstanceOf<CsvLocalizationProvider>(new LocalizationSettings().Provider);
         }
 
         [Test]

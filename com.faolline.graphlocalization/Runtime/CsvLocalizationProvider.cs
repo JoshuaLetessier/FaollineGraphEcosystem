@@ -26,6 +26,12 @@ namespace Faolline.GraphLocalization
 
         public void SetLocale(string locale) { if (!string.IsNullOrEmpty(locale)) _currentLocale = locale; }
 
+        /// <summary>
+        /// Merges additional CSV content into this provider (later files override earlier values for the
+        /// same key+locale). Lets one provider serve keys spread across several per-graph CSV files.
+        /// </summary>
+        public void Append(string csvText) => Parse(csvText);
+
         public string Resolve(string key, string locale)
         {
             if (string.IsNullOrEmpty(key)) return string.Empty;

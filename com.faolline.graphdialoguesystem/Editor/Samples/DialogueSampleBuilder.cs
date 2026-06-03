@@ -99,6 +99,16 @@ namespace Faolline.GraphDialogue.Editor
 
         private static void AutoLoadSampleCsv(string csvText)
         {
+            // Only override the ambient context in CSV mode. In UnityLocalization mode the real provider
+            // (manifest-backed, set up by Build All Tables) must win, so we don't clobber it here.
+            var settings = LocalizationSettingsLoader.Load();
+            if (settings != null && settings.Mode == LocalizationMode.UnityLocalization)
+            {
+                Debug.Log("[GraphDialogue] UnityLocalization mode: run Faolline ▸ Localization ▸ Build All Tables " +
+                    "to generate the String Tables + manifest for the sample.");
+                return;
+            }
+
             var provider = new CsvLocalizationProvider(csvText, "en");
             LocalizationContext.Current = new LocalizationSettings(provider, "en");
             Debug.Log("[GraphDialogue] Sample CSV auto-loaded into LocalizationContext (en). " +
