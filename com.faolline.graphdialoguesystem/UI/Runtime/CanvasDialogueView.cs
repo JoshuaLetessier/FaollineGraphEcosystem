@@ -28,8 +28,9 @@ namespace Faolline.GraphDialogue.UI
             if (choicesContainer) choicesContainer.SetActive(false);
             DeactivateAllChoices();
 
-            SetText(lineText, step?.ResolvedText);
             SetText(speakerText, step?.ResolvedSpeakerName);
+            if (speakerText != null) speakerText.color = ResolveNameColor(step?.SpeakerId);
+            ShowText(s => SetText(lineText, s), step?.ResolvedText);
 
             RequestAvatarSwap(step?.SpeakerId, step?.ExpressionKey);
         }

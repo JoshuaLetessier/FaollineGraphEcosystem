@@ -14,6 +14,7 @@ namespace Faolline.GraphDialogue.Editor
     {
         private SerializedProperty _speakerId;
         private SerializedProperty _displayNameFallback;
+        private SerializedProperty _nameColor;
         private SerializedProperty _fallbackExpression;
         private SerializedProperty _expressions;
         private ReorderableList _expressionsList;
@@ -22,6 +23,7 @@ namespace Faolline.GraphDialogue.Editor
         {
             _speakerId = serializedObject.FindProperty("_speakerId");
             _displayNameFallback = serializedObject.FindProperty("_displayNameFallback");
+            _nameColor = serializedObject.FindProperty("_nameColor");
             _fallbackExpression = serializedObject.FindProperty("_fallbackExpression");
             _expressions = serializedObject.FindProperty("_expressions");
 
@@ -42,6 +44,8 @@ namespace Faolline.GraphDialogue.Editor
                 EditorGUILayout.PropertyField(_speakerId, new GUIContent("Speaker Id", "Logical id referenced by line nodes. Not translated."));
             if (_displayNameFallback != null)
                 EditorGUILayout.PropertyField(_displayNameFallback, new GUIContent("Display Name Fallback", "Shown (and used as source text) when the localized name cannot resolve."));
+            if (_nameColor != null)
+                EditorGUILayout.PropertyField(_nameColor, new GUIContent("Name Color", "Tint applied to this speaker's name in the built-in views."));
 
             EditorGUILayout.Space(6);
             if (_fallbackExpression != null)

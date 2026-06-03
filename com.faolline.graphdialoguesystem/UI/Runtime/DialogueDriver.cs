@@ -25,6 +25,14 @@ namespace Faolline.GraphDialogue.UI
         [SerializeField] private bool autoStart = true;
         [SerializeField] private string locale = "en";
 
+        [Header("Flow")]
+        [SerializeField, Tooltip("Automatically advance a line after it finishes displaying.")]
+        private bool autoAdvance;
+        [SerializeField, Min(0f), Tooltip("Seconds to wait after a line finishes (typewriter included) before auto-advancing.")]
+        private float autoAdvanceDelay = 2f;
+        [SerializeField, Min(0f), Tooltip("Seconds before the first available choice is auto-selected. 0 = disabled.")]
+        private float choiceTimeout;
+
         [Header("Debug")]
         [SerializeField, Tooltip("Draws an on-screen OnGUI overlay (state, current node, line/choices) for dev.")]
         private bool showDebugOverlay;
@@ -40,6 +48,10 @@ namespace Faolline.GraphDialogue.UI
         // Last emitted steps, tracked only for the debug overlay.
         private LineStep _lastLine;
         private bool _ended;
+        // Flow timers.
+        private float _lineShownTime;
+        private float _choiceShownTime;
+        private bool _autoAdvanceArmed;
         private ChoiceStep _lastChoices;
 
         /// <summary>
@@ -97,13 +109,24 @@ namespace Faolline.GraphDialogue.UI
         private void Update()
         {
             if (_player == null) return;
+
             if (_awaitingChoice)
             {
                 int k = ReadChoiceDigit();
-                if (k > 0) ChooseByIndex(k);
+                if (k > 0) { ChooseByIndex(k); return; }
+                if (choiceTimeout > 0f && Time.time - _choiceShownTime >= choiceTimeout)
+                    SelectFirstAvailableChoice();
+                return;
             }
-            else if (ReadAdvance())
+
+            if (ReadAdvance()) { Advance(); return; }
+
+            // Auto-advance: the delay is measured from when the line finishes (typewriter included).
+            bool typing = View is DialogueViewBase vb && vb.IsTyping;
+            if (typing) _lineShownTime = Time.time;
+            else if (_autoAdvanceArmed && _lastLine != null && Time.time - _lineShownTime >= autoAdvanceDelay)
             {
+                _autoAdvanceArmed = false;
                 Advance();
             }
         }
@@ -119,6 +142,13 @@ namespace Faolline.GraphDialogue.UI
         /// <summary>Speakers in effect: the explicit override if provided, else the graph's own speakers.</summary>
         public IReadOnlyList<Speaker> ActiveSpeakers =>
             _speakersOverride ?? (graph != null ? graph.Speakers : System.Array.Empty<Speaker>());
+
+        internal void ConfigureFlowForTest(bool auto, float delay, float timeout)
+        {
+            autoAdvance = auto;
+            autoAdvanceDelay = delay;
+            choiceTimeout = timeout;
+        }
 
         // ── Control surface ─────────────────────────────────────────────────────────
 
@@ -158,6 +188,8 @@ namespace Faolline.GraphDialogue.UI
         public void Advance()
         {
             if (_player == null || _awaitingChoice) return;
+            // While the line is still revealing, the first advance completes it instead of skipping ahead.
+            if (View is DialogueViewBase vb && vb.IsTyping) { vb.SkipTyping(); return; }
             _player.Advance();
         }
 
@@ -196,6 +228,8 @@ namespace Faolline.GraphDialogue.UI
             _lastChoices = null;
             _lastLine = step;
             _ended = false;
+            _lineShownTime = Time.time;
+            _autoAdvanceArmed = autoAdvance;
             View?.ShowLine(step);
         }
 
@@ -205,6 +239,8 @@ namespace Faolline.GraphDialogue.UI
             _lastChoices = step;
             _lastLine = null;
             _ended = false;
+            _autoAdvanceArmed = false;
+            _choiceShownTime = Time.time;
             View?.ShowChoices(step);
         }
 
@@ -214,6 +250,7 @@ namespace Faolline.GraphDialogue.UI
             _lastChoices = null;
             _lastLine = null;
             _ended = true;
+            _autoAdvanceArmed = false;
             View?.HideAll();
         }
 
@@ -222,6 +259,7 @@ namespace Faolline.GraphDialogue.UI
             _awaitingChoice = false;
             _lastChoices = null;
             _lastLine = null;
+            _autoAdvanceArmed = false;
             Debug.LogWarning("[GraphDialogue] DialogueDriver: dialogue is stuck (no valid branch from the " +
                 "current node). Check your edge/choice conditions.", this);
             OnStuck?.Invoke();
@@ -263,6 +301,13 @@ namespace Faolline.GraphDialogue.UI
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────────────
+
+        private void SelectFirstAvailableChoice()
+        {
+            if (_lastChoices == null) return;
+            foreach (var o in _lastChoices.Options)
+                if (o != null && o.Available) { Choose(o.ChoiceId); return; }
+        }
 
         private Speaker FindSpeaker(string speakerId)
         {

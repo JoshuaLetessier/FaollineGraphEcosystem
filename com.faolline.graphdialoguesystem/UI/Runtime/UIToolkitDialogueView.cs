@@ -45,8 +45,9 @@ namespace Faolline.GraphDialogue.UI
         {
             EnsureBound();
             ClearChoices();
-            SetText(_lineLabel, step?.ResolvedText);
             SetText(_speakerLabel, step?.ResolvedSpeakerName);
+            if (_speakerLabel != null) _speakerLabel.style.color = ResolveNameColor(step?.SpeakerId);
+            ShowText(s => SetText(_lineLabel, s), step?.ResolvedText);
 
             RequestAvatarSwap(step?.SpeakerId, step?.ExpressionKey);
         }

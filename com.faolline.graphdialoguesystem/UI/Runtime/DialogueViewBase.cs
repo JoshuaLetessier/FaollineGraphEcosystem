@@ -19,8 +19,21 @@ namespace Faolline.GraphDialogue.UI
         [SerializeField] private bool destroyAvatarOnHide = true;
         [SerializeField] private AvatarTransition transition;
 
+        [Header("Typewriter")]
+        [SerializeField, Tooltip("Reveal line text character by character at play time.")]
+        private bool typewriter = true;
+        [SerializeField, Min(1f), Tooltip("Reveal speed in characters per second.")]
+        private float charactersPerSecond = 40f;
+
         [Header("Debug")]
         [SerializeField] protected bool verboseLog;
+
+        private Coroutine _typeRoutine;
+        private Action<string> _typeApply;
+        private string _typeFull = string.Empty;
+
+        /// <summary>True while a line is being revealed by the typewriter.</summary>
+        public bool IsTyping { get; private set; }
 
         // Speaker registry, indexed by Speaker.SpeakerId.
         private readonly Dictionary<string, Speaker> _speakersById = new Dictionary<string, Speaker>();
@@ -180,9 +193,71 @@ namespace Faolline.GraphDialogue.UI
 
         protected virtual void OnDestroy()
         {
+            StopTyping();
             if (_swapCo != null) { StopCoroutine(_swapCo); _swapCo = null; }
             DestroyAvatar(ref _currentAvatar);
             DestroyAvatar(ref _previousAvatar);
+        }
+
+        // ── Typewriter ───────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Applies <paramref name="full"/> via <paramref name="apply"/> — instantly in the editor or when
+        /// disabled, or progressively at play time. Concrete views call this from ShowLine with their text
+        /// setter so the typewriter is shared across front-ends.
+        /// </summary>
+        protected void ShowText(Action<string> apply, string full)
+        {
+            StopTyping();
+            _typeApply = apply;
+            _typeFull = full ?? string.Empty;
+
+            if (!typewriter || !Application.isPlaying || charactersPerSecond <= 0f || _typeFull.Length == 0)
+            {
+                apply?.Invoke(_typeFull);
+                IsTyping = false;
+                return;
+            }
+
+            IsTyping = true;
+            _typeRoutine = StartCoroutine(TypeRoutine());
+        }
+
+        /// <summary>Completes the current reveal immediately (e.g. the player advances while typing).</summary>
+        public void SkipTyping()
+        {
+            if (!IsTyping) return;
+            StopTyping();
+            _typeApply?.Invoke(_typeFull);
+        }
+
+        private IEnumerator TypeRoutine()
+        {
+            _typeApply?.Invoke(string.Empty);
+            float shown = 0f;
+            while (shown < _typeFull.Length)
+            {
+                shown += Time.deltaTime * charactersPerSecond;
+                int count = Mathf.Clamp(Mathf.FloorToInt(shown), 0, _typeFull.Length);
+                _typeApply?.Invoke(_typeFull.Substring(0, count));
+                yield return null;
+            }
+            _typeApply?.Invoke(_typeFull);
+            IsTyping = false;
+            _typeRoutine = null;
+        }
+
+        private void StopTyping()
+        {
+            if (_typeRoutine != null) { StopCoroutine(_typeRoutine); _typeRoutine = null; }
+            IsTyping = false;
+        }
+
+        /// <summary>Name tint for a bound speaker (white when unknown). Used by concrete views.</summary>
+        protected Color ResolveNameColor(string speakerId)
+        {
+            var s = FindSpeaker(speakerId);
+            return s != null ? s.NameColor : Color.white;
         }
 
         // ── Rendering (implemented by concrete views) ───────────────────────────────
@@ -209,6 +284,12 @@ namespace Faolline.GraphDialogue.UI
             => RequestAvatarSwap(speakerId, expressionKey);
 
         internal void TestClearAvatarsOnHide() => ClearAvatarsOnHide();
+
+        internal void ConfigureTypewriterForTest(bool enabled, float cps)
+        {
+            typewriter = enabled;
+            charactersPerSecond = cps;
+        }
 
         internal int TestCurrentAvatarCount => currentAvatarRoot != null ? currentAvatarRoot.childCount : 0;
         internal int TestPreviousAvatarCount => previousAvatarRoot != null ? previousAvatarRoot.childCount : 0;

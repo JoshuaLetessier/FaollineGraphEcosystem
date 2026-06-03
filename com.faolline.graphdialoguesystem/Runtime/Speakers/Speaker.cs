@@ -15,6 +15,7 @@ namespace Faolline.GraphDialogue
     {
         [SerializeField] private string _speakerId = string.Empty;
         [SerializeField] private string _displayNameFallback = "Speaker";
+        [SerializeField] private Color _nameColor = Color.white;
         [SerializeField] private List<SpeakerExpression> _expressions = new List<SpeakerExpression>();
         [SerializeField] private UnityEngine.Object _fallbackExpression;
 
@@ -26,6 +27,9 @@ namespace Faolline.GraphDialogue
 
         /// <summary>Literal display name used when the key cannot be resolved. Also the source text pre-filled into the table.</summary>
         public string DisplayNameFallback { get => _displayNameFallback; set => _displayNameFallback = value; }
+
+        /// <summary>Tint applied to this speaker's name in the built-in views (defaults to white).</summary>
+        public Color NameColor { get => _nameColor; set => _nameColor = value; }
 
         /// <summary>Read-only list of named expressions.</summary>
         public IReadOnlyList<SpeakerExpression> Expressions => _expressions;
