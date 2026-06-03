@@ -18,7 +18,6 @@ namespace Faolline.GraphDialogue
 
         [SerializeField] private string _speakerKey = string.Empty;
         [SerializeField] private string _expressionKey = "neutral";
-        [SerializeField] private AudioClip _voiceClip;
 
         // The line's localization key is NOT stored as a field — it is derived from this node's Id via
         // DialogueLocalizationKeys.ForLine(node), so it can never be mistyped or drift. The editable
@@ -36,13 +35,6 @@ namespace Faolline.GraphDialogue
         {
             get => _expressionKey;
             set => _expressionKey = string.IsNullOrEmpty(value) ? "neutral" : value;
-        }
-
-        /// <summary>Optional voice/SFX clip played when this line is shown (null when none).</summary>
-        public AudioClip VoiceClip
-        {
-            get => _voiceClip;
-            set => _voiceClip = value;
         }
     }
 }

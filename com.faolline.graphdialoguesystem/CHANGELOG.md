@@ -16,7 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
   `DialogueDriver` (Space / 1–9, new + legacy input), avatar lifecycle.
 - **Typewriter** reveal (+ skip), **auto-advance**, **timed choices**, per-speaker **name color**.
 - `{key}` **text interpolation** from the context blackboard (after localization).
-- Per-line **voice/SFX clip** played by the driver.
+- **Localized line audio** via Unity Localization Asset Tables (resolved by the line's key, per locale).
 - **Backlog/history**: driver `History` + `OnLineShown`; `CanvasDialogueBacklog`.
 - Editor: dialogue graph window (Run/Choose/Continue/Back/Validate), speaker/expression dropdowns,
   custom `Speaker` inspector, sample generator.

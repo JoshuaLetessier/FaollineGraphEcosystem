@@ -282,10 +282,10 @@ namespace Faolline.GraphDialogue
             text = DialogueTextInterpolator.Interpolate(text, _context);
             string speakerName = ResolveSpeakerName(line.SpeakerKey);
 
-            // Voice: the per-node clip wins; otherwise resolve a localized clip by the line's key.
-            var voice = line.VoiceClip;
-            if (voice == null && _assets != null)
-                voice = _assets.ResolveAsset<AudioClip>(DialogueLocalizationKeys.ForLine(line));
+            // Voice is resolved by the line's key from the localized asset tables (no per-node clip).
+            var voice = _assets != null
+                ? _assets.ResolveAsset<AudioClip>(DialogueLocalizationKeys.ForLine(line))
+                : null;
 
             return new LineStep(line.Id, line.SpeakerKey, speakerName, text, line.ExpressionKey, voice);
         }

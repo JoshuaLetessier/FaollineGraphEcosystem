@@ -56,7 +56,8 @@ to the previous mount. Assign an `AvatarTransition` subclass to animate swaps.
   The first Space/click completes the reveal; the next advances.
 - **Auto-advance / timed choices**: on the `DialogueDriver`, enable *Auto Advance* (+ delay) and/or set
   *Choice Timeout* (auto-selects the first available option).
-- **Voice/SFX**: assign an *AudioSource* on the driver; set a line node's *Voice Clip*.
+- **Voice/SFX (localized)**: assign an *AudioSource* on the driver; enable *Generate Asset Tables* in the
+  localization settings, *Build All Tables*, then drop a clip per key/locale in the `…_Assets` tables.
 - **Speaker name color**: set *Name Color* on a `Speaker`.
 - **Backlog**: add a `CanvasDialogueBacklog` (content container + a disabled TMP entry template), assign
   the driver; it lists past lines (`Show`/`Hide`/`Toggle`).

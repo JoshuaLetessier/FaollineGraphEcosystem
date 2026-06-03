@@ -371,14 +371,14 @@ dead-end choices, isolated nodes, and missing Start/End that branching graphs ac
 
 ## 15. Voice / localized audio
 
-Two ways to give a line audio (the per-node clip wins when both are set):
+Line audio is **localized by key** — there is no per-node clip.
 
-- **Per-node clip**: assign *Voice Clip* on the line node. Quick, not localized.
-- **Localized by key (UnityLocalization)**: enable *Generate Asset Tables* on the localization settings.
-  The build creates **Asset Table** collections mirroring the String Tables (same keys, `…_Assets`). Drop
-  a clip per key/locale; at playback the line's audio is resolved by its key (`line_<id>`) for the active
-  locale — different voices per language, no per-node wiring. CSV mode can't hold assets, so it uses only
-  the per-node clip.
+1. Localization settings → Mode = **UnityLocalization**, tick **Generate Asset Tables**.
+2. **Build All Tables** → mirror **Asset Table** collections are created beside the String Tables
+   (`…_Assets`, same keys).
+3. In each Asset Table, drop an `AudioClip` per key/locale. At playback the line's voice is resolved by
+   its key (`line_<id>`) for the active locale — different voices per language, no per-node wiring.
+4. Assign an `AudioSource` on the `DialogueDriver` for playback.
 
-Assign an `AudioSource` on the `DialogueDriver` for playback.
+> Requires `com.unity.localization` (CSV mode can't hold assets, so it has no line audio).
 
