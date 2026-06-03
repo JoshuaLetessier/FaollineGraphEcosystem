@@ -91,6 +91,15 @@ namespace Faolline.GraphDialogue.UI
         /// </summary>
         public event Action OnStuck;
 
+        /// <summary>Raised for each line as it is shown — drives backlog/history UIs.</summary>
+        public event Action<LineStep> OnLineShown;
+
+        // Lines shown so far this session (for a backlog/history view). Cleared on StartDialogue.
+        private readonly List<LineStep> _history = new List<LineStep>();
+
+        /// <summary>The lines shown so far this session, oldest first (backlog source).</summary>
+        public IReadOnlyList<LineStep> History => _history;
+
         // ── Lifecycle ───────────────────────────────────────────────────────────────
 
         private void OnValidate()
@@ -169,6 +178,7 @@ namespace Faolline.GraphDialogue.UI
             graph = dialogueGraph;
 
             Teardown();
+            _history.Clear();
 
             var provider = _provider ?? LocalizationContext.Current.Provider;
             var strict = LocalizationContext.Current.StrictMode;
@@ -236,6 +246,7 @@ namespace Faolline.GraphDialogue.UI
             _ended = false;
             _lineShownTime = Time.time;
             _autoAdvanceArmed = autoAdvance;
+            if (step != null) { _history.Add(step); OnLineShown?.Invoke(step); }
             PlayVoice(step);
             View?.ShowLine(step);
         }
