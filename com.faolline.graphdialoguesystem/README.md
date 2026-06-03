@@ -35,25 +35,27 @@ Depends on: `com.faolline.graphcore`, `com.faolline.graphlocalization`. See
 
 ```
 com.faolline.graphdialoguesystem
-├── Runtime/                         (refs graphcore.Runtime; NO external deps)
-│   ├── DialogueGraph                BaseGraph subclass ([CreateAssetMenu])
+├── Runtime/                         (refs graphcore.Runtime + graphlocalization.Runtime)
+│   ├── DialogueGraph                BaseGraph subclass ([CreateAssetMenu]); owns its Speakers
 │   ├── DialogueContext / Keys       BaseContext + typed bool/int/float/string (Principle VI)
-│   ├── Nodes/DialogueLineNodeData   StatementNodeData + SpeakerKey/TextKey/ExpressionKey
-│   ├── Choices/DialogueChoice       BaseChoice + DisplayTextKey
-│   ├── Speakers/Speaker(+Expression) localizable name + key→asset expressions
+│   ├── Nodes/DialogueLineNodeData   StatementNodeData + SpeakerKey + ExpressionKey (line key DERIVED)
+│   ├── Choices/DialogueChoice       BaseChoice (label key DERIVED from the Id; Title = source text)
+│   ├── Speakers/Speaker(+Expression) localizable name (key derived) + key→asset expressions
 │   ├── Conditions/                  Always T/F, Bool, Int, Float, String (+ ComparisonOperator)
 │   ├── Actions/                     Log, Set Bool/Int/Float/String
-│   ├── Localization/                ILocalizationProvider + CsvLocalizationProvider + Settings/Context
+│   ├── Localization/                DialogueLocalizationKeys (derives keys from node/choice/speaker id)
 │   ├── Execution/                   DialogueLineExecutor + registry factory
 │   └── Playback/                    DialoguePlayer + LineStep/ChoiceStep/EndStep + ChoiceOption
-├── Localization.Unity/              OPTIONAL adapter (gated; compiles only if com.unity.localization present)
-│   └── UnityLocalizationProvider    ILocalizationProvider over String Tables
-├── Editor/                          graph view, 5 node views, edge view, inspector, window, sample, colors
-└── Tests/EditMode/                  headless EditMode suite (Runtime + Editor)
+├── UI/                              Canvas + UI Toolkit views, DialogueDriver, avatars (separate assembly)
+├── Editor/                          graph view, node/edge views, inspector, window, sample, validator hook
+└── Tests/                           headless EditMode + PlayMode suites
 ```
 
 Nodes reuse graphcore's built-ins (`StartNodeData`, `ChoiceNodeData`, `EndNodeData`,
-`SubGraphNodeData`) unchanged; only `DialogueLineNodeData` and `DialogueChoice` are added.
+`SubGraphNodeData`) unchanged; only `DialogueLineNodeData` and `DialogueChoice` are added. **Localization**
+(providers, build pipeline, dashboard, manifest) lives in the separate **`com.faolline.graphlocalization`**
+package (a dependency): the player resolves text through its `ILocalizationProvider`, and keys are never
+hand-typed — they are derived from node/choice/speaker identity by `DialogueLocalizationKeys`.
 
 ---
 
@@ -62,9 +64,12 @@ Nodes reuse graphcore's built-ins (`StartNodeData`, `ChoiceNodeData`, `EndNodeDa
 1. `Assets > Create > GraphDialogue > Dialogue Graph`.
 2. Double-click it to open the **Dialogue Graph Editor** (one window per asset).
 3. Right-click the canvas → add Start / Line / Choice / SubDialogue / End nodes; connect them.
-4. Select a Line node to set its **Speaker Key** and **Text Key**; select a Choice to add options
-   with localized labels and optional per-option conditions.
-5. Provide translations (see Localization) and press **Run** (set the locale field first).
+4. Assign the graph's **Speakers** (graph inspector → *Speakers*). Select a Line node to pick its
+   **Speaker** + **Expression** from dropdowns and set its **Title** (the source text); select a Choice
+   to add options whose **Title** is the source label, with optional per-option conditions. Localization
+   keys are derived automatically — never typed.
+5. Build/provide translations (see Localization) and press **Run** (set the locale field first).
+   Use **✓ Validate** to check the graph for structural issues.
 
 Or generate a ready-made example: **Faolline ▸ GraphDialogue ▸ Generate Sample Dialogue**.
 
@@ -110,19 +115,19 @@ Context keys live only in `DialogueContextKeys` (Principle VI — no raw literal
 
 ---
 
-## Localization — abstraction + 2 providers
+## Localization
 
-`ILocalizationProvider` resolves `(key, locale) → string`, returning a defined `#key` fallback (with a
-warning) when a key is missing — never empty.
+Localization is provided by the **`com.faolline.graphlocalization`** package (a dependency). The player
+resolves every line/choice/speaker through its `ILocalizationProvider`, returning a defined `#key` fallback
+(with a warning) when a key is missing — never empty.
 
-- **`CsvLocalizationProvider`** (default, no external dependency): a CSV table whose header is
-  `Key,locale1,locale2,…`.
-- **`UnityLocalizationProvider`** (optional): in the isolated `Localization.Unity` assembly, compiled
-  only when `com.unity.localization` is installed (`GRAPHDIALOGUE_UNITY_LOCALIZATION`). Projects that
-  don't use Unity Localization take no dependency on it (Constitution v1.2.0).
+- **CSV** (default, no external dependency) or **Unity Localization** String Tables (optional, gated by
+  `GRAPHLOCALIZATION_UNITY_LOCALIZATION`) — selected project-wide in the localization settings asset.
+- Keys are **derived** from node/choice/speaker identity (`DialogueLocalizationKeys`); a node/choice
+  **Title** and a speaker **Display Name Fallback** are the source texts pre-filled into the tables.
+- Build via **Faolline ▸ Localization ▸ Build All Tables**; review coverage in the dashboard.
 
-`LocalizationSettings` / `LocalizationContext` select the active provider + locale, with a safe default
-when unconfigured.
+See the `com.faolline.graphlocalization` README for the full workflow.
 
 ---
 

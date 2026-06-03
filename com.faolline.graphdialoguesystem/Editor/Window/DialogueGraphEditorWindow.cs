@@ -112,6 +112,7 @@ namespace Faolline.GraphDialogue.Editor
             toolbar.Add(new ToolbarButton(Continue)         { text = "▶ Continue",   tooltip = "Advance past the current line." });
             toolbar.Add(new ToolbarButton(Back)             { text = "← GoBack",     tooltip = "Step back one node, restoring earlier state." });
             toolbar.Add(new ToolbarButton(BackToCheckpoint) { text = "⏮ Checkpoint", tooltip = "Jump back to the most recent checkpoint node." });
+            toolbar.Add(new ToolbarButton(ValidateGraph)    { text = "✓ Validate",   tooltip = "Check this graph for structural issues (Start/End, dangling edges, empty choices…)." });
 
             // Locale selection for a Run: switches the active language with no graph change (FR-032/SC-004).
             var localeField = new TextField { value = _locale, tooltip = "Active locale code (e.g. en, fr). Applied on Run." };
@@ -201,6 +202,18 @@ namespace Faolline.GraphDialogue.Editor
             if (!_hasSession || _player == null) { Debug.Log("[GraphDialogue] No active session — click Run first."); return; }
             _waitingChoice = null;
             _player.BackToCheckpoint();
+        }
+
+        /// <summary>Runs the structural validator on the loaded graph and logs a report to the console.</summary>
+        public void ValidateGraph()
+        {
+            var graph = LoadedGraph;
+            if (graph == null)
+            {
+                Debug.LogWarning("[GraphDialogue] No graph loaded to validate.");
+                return;
+            }
+            GraphValidator.LogReport(graph.name, GraphValidator.Validate(graph));
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────

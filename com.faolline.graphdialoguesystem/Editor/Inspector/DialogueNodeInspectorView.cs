@@ -110,10 +110,40 @@ namespace Faolline.GraphDialogue.Editor
             var foldout = new Foldout { text = "Line", value = true };
 
             foldout.Add(BuildSpeakerField(node));
-            foldout.Add(BuildBoundOrPlainField(nodeElement, "_expressionKey", "Expression Key",
-                () => node.ExpressionKey, v => node.ExpressionKey = v));
+            foldout.Add(BuildExpressionField(node));
 
             Add(foldout);
+        }
+
+        /// <summary>
+        /// Expression picker: a dropdown of the selected speaker's expression keys (so the key is not typed
+        /// by hand). Preserves a current/foreign value, and falls back to a plain text field when the
+        /// speaker is unknown or has no expressions.
+        /// </summary>
+        private VisualElement BuildExpressionField(DialogueLineNodeData node)
+        {
+            var dialogueGraph = _graph as DialogueGraph;
+            var speaker = dialogueGraph != null ? dialogueGraph.FindSpeaker(node.SpeakerKey) : null;
+
+            var keys = new System.Collections.Generic.List<string>();
+            if (speaker != null)
+                foreach (var e in speaker.Expressions)
+                    if (e != null && !string.IsNullOrEmpty(e.Key) && !keys.Contains(e.Key)) keys.Add(e.Key);
+
+            if (keys.Count == 0)
+            {
+                var tf = new TextField("Expression") { value = node.ExpressionKey };
+                tf.RegisterValueChangedCallback(e => { node.ExpressionKey = e.newValue; MarkGraphDirty(); });
+                return tf;
+            }
+
+            if (!string.IsNullOrEmpty(node.ExpressionKey) && !keys.Contains(node.ExpressionKey))
+                keys.Add(node.ExpressionKey); // keep a current/foreign expression selectable
+
+            var current = string.IsNullOrEmpty(node.ExpressionKey) ? keys[0] : node.ExpressionKey;
+            var dropdown = new DropdownField("Expression", keys, Mathf.Max(0, keys.IndexOf(current)));
+            dropdown.RegisterValueChangedCallback(e => { node.ExpressionKey = e.newValue; MarkGraphDirty(); });
+            return dropdown;
         }
 
         /// <summary>

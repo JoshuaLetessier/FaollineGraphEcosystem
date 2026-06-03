@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Faolline.GraphCore;
@@ -68,6 +69,12 @@ namespace Faolline.GraphDialogue.UI
         /// <summary>The underlying player (null before <see cref="StartDialogue"/>).</summary>
         public DialoguePlayer Player => _player;
 
+        /// <summary>
+        /// Raised when the dialogue gets stuck (no valid branch from the current node). Lets the game react
+        /// (e.g. close the UI or show an error) instead of freezing silently.
+        /// </summary>
+        public event Action OnStuck;
+
         // ── Lifecycle ───────────────────────────────────────────────────────────────
 
         private void OnValidate()
@@ -136,6 +143,7 @@ namespace Faolline.GraphDialogue.UI
             _player.OnLine += HandleLine;
             _player.OnChoices += HandleChoices;
             _player.OnEnded += HandleEnded;
+            _player.OnStuck += HandleStuck;
 
             if (View != null)
                 View.ChoiceSelected += Choose;
@@ -207,6 +215,16 @@ namespace Faolline.GraphDialogue.UI
             _lastLine = null;
             _ended = true;
             View?.HideAll();
+        }
+
+        private void HandleStuck()
+        {
+            _awaitingChoice = false;
+            _lastChoices = null;
+            _lastLine = null;
+            Debug.LogWarning("[GraphDialogue] DialogueDriver: dialogue is stuck (no valid branch from the " +
+                "current node). Check your edge/choice conditions.", this);
+            OnStuck?.Invoke();
         }
 
         // ── Debug overlay (optional dev aid) ───────────────────────────────────────────
@@ -296,6 +314,7 @@ namespace Faolline.GraphDialogue.UI
                 _player.OnLine -= HandleLine;
                 _player.OnChoices -= HandleChoices;
                 _player.OnEnded -= HandleEnded;
+                _player.OnStuck -= HandleStuck;
                 _player = null;
             }
             if (_view != null) _view.ChoiceSelected -= Choose;
