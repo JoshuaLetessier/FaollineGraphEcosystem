@@ -11,6 +11,26 @@ localized dialogues as a visual graph and play them back headlessly.
 
 ---
 
+## Installation
+
+Recommended — install `com.faolline.graphcore`, then **Window ▸ Faolline ▸ Graph Ecosystem Modules**
+and tick *Graph Dialogue System* (its dependencies `graphcore` + `graphlocalization` are added
+automatically).
+
+Direct git URL (**Package Manager ▸ + ▸ Add package from git URL**) — add all three, since UPM does
+not auto-resolve git dependencies:
+
+```
+…?path=Assets/FaollineGraphEcosystem/com.faolline.graphcore#master
+…?path=Assets/FaollineGraphEcosystem/com.faolline.graphlocalization#master
+https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=Assets/FaollineGraphEcosystem/com.faolline.graphdialoguesystem#master
+```
+
+Depends on: `com.faolline.graphcore`, `com.faolline.graphlocalization`. See
+[`../INSTALL.md`](../INSTALL.md).
+
+---
+
 ## Architecture
 
 ```

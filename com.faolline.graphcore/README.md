@@ -10,15 +10,18 @@ Shared foundation library for graph-based systems in the Faolline ecosystem. Pro
 
 ## Installation
 
-Add to your project's `Packages/manifest.json`:
+graphcore is the **base package** of the ecosystem. Install it via **Package Manager ▸ + ▸ Add
+package from git URL**:
 
-```json
-{
-  "dependencies": {
-    "com.faolline.graphcore": "file:../Assets/FaollineGraphEcosystem/com.faolline.graphcore"
-  }
-}
 ```
+https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=Assets/FaollineGraphEcosystem/com.faolline.graphcore#master
+```
+
+Then open **Window ▸ Faolline ▸ Graph Ecosystem Modules** to add the other packages (Graph
+Localization, Graph Dialogue System) with one click — dependencies are resolved automatically. Pin
+`#master` to a tag (e.g. `#graphcore-v0.2.0`) for reproducible installs.
+
+See [`../INSTALL.md`](../INSTALL.md) for the full install guide.
 
 ---
 
