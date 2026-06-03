@@ -276,6 +276,7 @@ namespace Faolline.GraphDialogue
         private LineStep BuildLineStep(DialogueLineNodeData line)
         {
             string text = ResolveChecked(DialogueLocalizationKeys.ForLine(line));
+            text = DialogueTextInterpolator.Interpolate(text, _context);
             string speakerName = ResolveSpeakerName(line.SpeakerKey);
             return new LineStep(line.Id, line.SpeakerKey, speakerName, text, line.ExpressionKey);
         }
@@ -290,6 +291,7 @@ namespace Faolline.GraphDialogue
                 string label = string.IsNullOrEmpty(labelKey)
                     ? baseChoice.Id
                     : ResolveChecked(labelKey);
+                label = DialogueTextInterpolator.Interpolate(label, _context);
                 bool available = baseChoice.Condition == null || baseChoice.Condition.Evaluate(_context);
                 options.Add(new ChoiceOption(baseChoice.Id, label, available));
             }

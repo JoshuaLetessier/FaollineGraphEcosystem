@@ -321,3 +321,21 @@ in graphcore). It reports structural mistakes the runtime cannot recover from gr
 
 Cycle detection is separate (`CycleDetector`, enforced on sub-graph wiring). Missing translations are
 reported by the localization build (coverage), not the graph validator.
+
+---
+
+## 13. Variables in text
+
+Line and choice text may embed blackboard values with `{key}` tokens, substituted at playback **after**
+localization (so it works with any provider):
+
+```
+Title / table value:  "Welcome back, {playerName}! Score: {score}."
+```
+
+- `{key}` is replaced with the `DialogueContext` value for that key (numbers use invariant culture).
+- Unknown keys are left literal (`{key}`) so authors can spot them.
+- Use `{{` / `}}` for literal braces.
+
+Populate values via graph **Parameters** (defaults) or `SetString/SetInt/...` actions before the line.
+
