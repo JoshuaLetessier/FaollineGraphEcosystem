@@ -21,13 +21,14 @@ namespace Faolline.GraphDialogue.UI
         [SerializeField] private DialogueGraph graph;
         [SerializeField, Tooltip("A component implementing IDialogueView (Canvas or UI Toolkit view).")]
         private MonoBehaviour viewBehaviour;
-        [SerializeField] private List<Speaker> speakers = new List<Speaker>();
         [SerializeField] private bool autoStart = true;
         [SerializeField] private string locale = "en";
 
         // Resolved/injected collaborators (settable for tests before StartDialogue).
         private IDialogueView _view;
         private ILocalizationProvider _provider;
+        // Optional programmatic override; when null, speakers come from the graph (graph.Speakers).
+        private IReadOnlyList<Speaker> _speakersOverride;
         private DialoguePlayer _player;
         private bool _awaitingChoice;
         private ChoiceStep _lastChoices;
@@ -94,12 +95,15 @@ namespace Faolline.GraphDialogue.UI
 
         private void OnDestroy() => Teardown();
 
-        /// <summary>Replaces the speaker set (used by tests and runtime reconfiguration).</summary>
-        public void SetSpeakers(IReadOnlyList<Speaker> value)
-        {
-            speakers.Clear();
-            if (value != null) speakers.AddRange(value);
-        }
+        /// <summary>
+        /// Optional programmatic override of the speaker set. When not set (or set to null), speakers come
+        /// from the played graph (<see cref="DialogueGraph.Speakers"/>), so the scene needs no speaker list.
+        /// </summary>
+        public void SetSpeakers(IReadOnlyList<Speaker> value) => _speakersOverride = value;
+
+        /// <summary>Speakers in effect: the explicit override if provided, else the graph's own speakers.</summary>
+        public IReadOnlyList<Speaker> ActiveSpeakers =>
+            _speakersOverride ?? (graph != null ? graph.Speakers : System.Array.Empty<Speaker>());
 
         // ── Control surface ─────────────────────────────────────────────────────────
 
@@ -118,7 +122,7 @@ namespace Faolline.GraphDialogue.UI
             var provider = _provider ?? LocalizationContext.Current.Provider;
             var strict = LocalizationContext.Current.StrictMode;
 
-            View?.BindSpeakers(speakers);
+            View?.BindSpeakers(ActiveSpeakers);
 
             _player = new DialoguePlayer(graph, new DialogueContext(), provider, FindSpeaker, strict);
             _player.OnLine += HandleLine;
@@ -196,7 +200,7 @@ namespace Faolline.GraphDialogue.UI
         private Speaker FindSpeaker(string speakerId)
         {
             if (string.IsNullOrEmpty(speakerId)) return null;
-            foreach (var s in speakers)
+            foreach (var s in ActiveSpeakers)
                 if (s != null && s.SpeakerId == speakerId) return s;
             return null;
         }

@@ -278,8 +278,10 @@ localization dependency in the UI).
 - `UIToolkitDialogueView` — UIDocument front-end (Dynamic or Slots choices).
 - `DialogueDriver` — drop-in: owns a `DialoguePlayer`, routes steps to the view, handles input.
 
-**Minimal setup**: add a view (Canvas or UI Toolkit) + a `DialogueDriver`, assign the `DialogueGraph`,
-the `Speaker` list, and the view. Press Play. **Space**/click advances; choice buttons (or **1–9**) select.
+**Minimal setup**: assign the graph's speakers in the graph inspector (*Speakers*), then add a view
+(Canvas or UI Toolkit) + a `DialogueDriver`, assign the `DialogueGraph` and the view. The driver reads the
+speakers from the graph (no scene-side list). Press Play. **Space**/click advances; choice buttons (or
+**1–9**) select.
 
 **Swap front-ends** by changing only `DialogueDriver.view`. See the step-by-step recipes in
 `com.faolline.graphdialoguesystem/UI/Samples/DialogueUI/README.md` and the feature quickstart at

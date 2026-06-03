@@ -5,7 +5,8 @@ prefabs are assembled in the editor by following these steps (a few minutes each
 
 Prerequisites:
 - A `DialogueGraph` asset — generate one via **Faolline ▸ GraphDialogue ▸ Generate Sample Dialogue**.
-- Its `Speaker` assets (the sample creates `SampleSpeaker_Mayor`).
+- Its `Speaker` assets (the sample creates `SampleSpeaker_Mayor`). Speakers are assigned **on the graph**
+  (graph inspector → *Speakers*); line nodes then pick a speaker from a dropdown and the driver reads them.
 - Localization set up (the sample auto-loads its CSV into `LocalizationContext`).
 
 ---
@@ -21,7 +22,7 @@ Prerequisites:
 2. Add **CanvasDialogueView** (to the Canvas) and assign: `lineText`, `speakerText`, `choicesContainer`,
    the `choiceButtons` list, and the two avatar roots.
 3. Add **DialogueDriver** (any GameObject) and assign: `graph`, `view` = the CanvasDialogueView,
-   `speakers` list, `autoStart = true`.
+   `autoStart = true`. (No speaker list — the driver takes them from the graph.)
 4. Press **Play**: the line shows; **Space** or a click advances; choice buttons appear; click or press
    **1–9** to choose.
 
@@ -36,7 +37,8 @@ Prerequisites:
    UXML element names. Pick `ChoiceDisplayMode`:
    - **Dynamic** — buttons are created at runtime in `choices-container`.
    - **Slots** — add `Button`s named `choice-0`, `choice-1`, … to the UXML and select Slots.
-3. Add **DialogueDriver**; assign `graph`, `view` = the UIToolkitDialogueView, `speakers`, `autoStart`.
+3. Add **DialogueDriver**; assign `graph`, `view` = the UIToolkitDialogueView, `autoStart` (speakers come
+   from the graph).
 4. Press **Play** — same interaction as Canvas.
 
 ---

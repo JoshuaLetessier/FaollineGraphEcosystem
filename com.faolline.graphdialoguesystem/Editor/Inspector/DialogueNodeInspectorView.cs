@@ -67,7 +67,10 @@ namespace Faolline.GraphDialogue.Editor
             Clear();
             _boundNode = null;
             if (_graph != null)
+            {
+                BuildSpeakerPanel();
                 BuildParameterPanel();
+            }
         }
 
         // ── Edge binding (FR-021: condition on a connection) ──────────────────
@@ -106,12 +109,45 @@ namespace Faolline.GraphDialogue.Editor
         {
             var foldout = new Foldout { text = "Line", value = true };
 
-            foldout.Add(BuildBoundOrPlainField(nodeElement, "_speakerKey", "Speaker Key",
-                () => node.SpeakerKey, v => node.SpeakerKey = v));
+            foldout.Add(BuildSpeakerField(node));
             foldout.Add(BuildBoundOrPlainField(nodeElement, "_expressionKey", "Expression Key",
                 () => node.ExpressionKey, v => node.ExpressionKey = v));
 
             Add(foldout);
+        }
+
+        /// <summary>
+        /// Speaker picker: a dropdown of the graph's <see cref="DialogueGraph.Speakers"/> ids (so the id is
+        /// never typed by hand). Preserves a current/foreign value not in the list, and includes a "(none)"
+        /// entry. Falls back to a plain text field when the graph has no speakers (or in unit tests).
+        /// </summary>
+        private VisualElement BuildSpeakerField(DialogueLineNodeData node)
+        {
+            const string none = "(none)";
+            var dialogueGraph = _graph as DialogueGraph;
+
+            if (dialogueGraph == null || dialogueGraph.Speakers.Count == 0)
+            {
+                var tf = new TextField("Speaker") { value = node.SpeakerKey };
+                tf.RegisterValueChangedCallback(e => { node.SpeakerKey = e.newValue; MarkGraphDirty(); });
+                return tf;
+            }
+
+            var ids = new System.Collections.Generic.List<string> { none };
+            foreach (var sp in dialogueGraph.Speakers)
+                if (sp != null && !string.IsNullOrEmpty(sp.SpeakerId) && !ids.Contains(sp.SpeakerId))
+                    ids.Add(sp.SpeakerId);
+            if (!string.IsNullOrEmpty(node.SpeakerKey) && !ids.Contains(node.SpeakerKey))
+                ids.Add(node.SpeakerKey); // keep a legacy/foreign id selectable
+
+            var current = string.IsNullOrEmpty(node.SpeakerKey) ? none : node.SpeakerKey;
+            var dropdown = new DropdownField("Speaker", ids, ids.IndexOf(current));
+            dropdown.RegisterValueChangedCallback(e =>
+            {
+                node.SpeakerKey = e.newValue == none ? string.Empty : e.newValue;
+                MarkGraphDirty();
+            });
+            return dropdown;
         }
 
         private VisualElement BuildBoundOrPlainField(
@@ -299,6 +335,30 @@ namespace Faolline.GraphDialogue.Editor
             Add(foldout);
         }
 
+        // ── Speaker panel ─────────────────────────────────────────────────────
+
+        /// <summary>
+        /// No-selection panel section that edits the graph's <see cref="DialogueGraph.Speakers"/> list via a
+        /// standard reorderable PropertyField, so the graph owns its speakers (the DialogueDriver reads them).
+        /// </summary>
+        private void BuildSpeakerPanel()
+        {
+            if (!(_graph is DialogueGraph)) return;
+
+            if (_serializedGraph == null || _serializedGraph.targetObject == null)
+                _serializedGraph = new SerializedObject(_graph);
+            _serializedGraph.Update();
+
+            var prop = _serializedGraph.FindProperty("_speakers");
+            if (prop == null) return;
+
+            var foldout = new Foldout { text = "Speakers", value = true };
+            var field = new PropertyField(prop, "Speakers");
+            field.Bind(_serializedGraph);
+            foldout.Add(field);
+            Add(foldout);
+        }
+
         // ── Parameter panel ───────────────────────────────────────────────────
 
         public void AddParameter(string key, ParameterType type, string defaultValue)
@@ -366,7 +426,11 @@ namespace Faolline.GraphDialogue.Editor
         private void RebuildParameterPanel()
         {
             Clear();
-            if (_graph != null) BuildParameterPanel();
+            if (_graph != null)
+            {
+                BuildSpeakerPanel();
+                BuildParameterPanel();
+            }
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────

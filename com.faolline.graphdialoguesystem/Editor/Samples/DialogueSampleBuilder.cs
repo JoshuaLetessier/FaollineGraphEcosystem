@@ -46,6 +46,7 @@ namespace Faolline.GraphDialogue.Editor
             var cLine  = new DialogueLineNodeData { Id = "town", NodeType = DialogueLineNodeData.NodeTypeId, Title = "It is a quiet place.", SpeakerKey = "npc_mayor", Position = new Vector2(240, 0) };
             var cEnd   = new EndNodeData { Id = Guid(), NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed, Position = new Vector2(480, 0) };
             child.AddNode(cStart); child.AddNode(cLine); child.AddNode(cEnd);
+            child.AddSpeaker(mayor);
             child.EntryNodeId = cStart.Id;
             child.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = cStart.Id, ToNodeId = cLine.Id, PortName = "out" });
             child.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = cLine.Id,  ToNodeId = cEnd.Id,  PortName = "out" });
@@ -62,6 +63,7 @@ namespace Faolline.GraphDialogue.Editor
 
             // ── Parent dialogue ──────────────────────────────────────────────────────────
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
+            graph.AddSpeaker(mayor);
             graph.AddParameter(new ParameterData { Key = DialogueContextKeys.Flag, Type = ParameterType.Bool, DefaultValue = "false" });
 
             var start  = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
