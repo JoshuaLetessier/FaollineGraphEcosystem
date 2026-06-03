@@ -24,6 +24,11 @@ namespace Faolline.GraphDialogue.UI
         [SerializeField] private bool autoStart = true;
         [SerializeField] private string locale = "en";
 
+        [Header("Debug")]
+        [SerializeField, Tooltip("Draws an on-screen OnGUI overlay (state, current node, line/choices) for dev.")]
+        private bool showDebugOverlay;
+        [SerializeField] private Vector2 overlayPosition = new Vector2(10, 10);
+
         // Resolved/injected collaborators (settable for tests before StartDialogue).
         private IDialogueView _view;
         private ILocalizationProvider _provider;
@@ -31,6 +36,9 @@ namespace Faolline.GraphDialogue.UI
         private IReadOnlyList<Speaker> _speakersOverride;
         private DialoguePlayer _player;
         private bool _awaitingChoice;
+        // Last emitted steps, tracked only for the debug overlay.
+        private LineStep _lastLine;
+        private bool _ended;
         private ChoiceStep _lastChoices;
 
         /// <summary>
@@ -178,6 +186,8 @@ namespace Faolline.GraphDialogue.UI
         {
             _awaitingChoice = false;
             _lastChoices = null;
+            _lastLine = step;
+            _ended = false;
             View?.ShowLine(step);
         }
 
@@ -185,6 +195,8 @@ namespace Faolline.GraphDialogue.UI
         {
             _awaitingChoice = true;
             _lastChoices = step;
+            _lastLine = null;
+            _ended = false;
             View?.ShowChoices(step);
         }
 
@@ -192,7 +204,44 @@ namespace Faolline.GraphDialogue.UI
         {
             _awaitingChoice = false;
             _lastChoices = null;
+            _lastLine = null;
+            _ended = true;
             View?.HideAll();
+        }
+
+        // ── Debug overlay (optional dev aid) ───────────────────────────────────────────
+
+        private void OnGUI()
+        {
+            if (!showDebugOverlay || _player == null) return;
+
+            const float w = 560f, h = 20f;
+            float x = overlayPosition.x, y = overlayPosition.y;
+            var title = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Bold };
+
+            string state = _ended ? "Ended" : _awaitingChoice ? "ChoiceReady" : "LineReady";
+            GUI.Label(new Rect(x, y, w, h), "DialogueDriver (debug)", title); y += h;
+            GUI.Label(new Rect(x, y, w, h), $"State: {state}  |  Node: {_player.CurrentStep?.NodeId}"); y += h;
+
+            if (_lastLine != null)
+            {
+                GUI.Label(new Rect(x, y, w, h), $"LINE — {_lastLine.ResolvedSpeakerName}: \"{_lastLine.ResolvedText}\""); y += h;
+                GUI.Label(new Rect(x, y, w, h), "[Space]/click to advance"); y += h;
+            }
+            else if (_awaitingChoice && _lastChoices != null)
+            {
+                GUI.Label(new Rect(x, y, w, h), "CHOICES — press [1..9] or click:"); y += h;
+                for (int i = 0; i < _lastChoices.Options.Count; i++)
+                {
+                    var o = _lastChoices.Options[i];
+                    var tag = o.Available ? "" : "  [blocked]";
+                    GUI.Label(new Rect(x + 12, y, w, h), $"{i + 1}) {o.ResolvedLabel}{tag}"); y += h;
+                }
+            }
+            else if (_ended)
+            {
+                GUI.Label(new Rect(x, y, w, h), "END"); y += h;
+            }
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────────────

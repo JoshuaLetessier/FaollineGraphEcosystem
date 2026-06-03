@@ -297,3 +297,27 @@ void Pick(string id)=> driver.Choose(id);   // or driver.ChooseByIndex(1..9)
 
 **Avatars**: assign each `Speaker`'s expression prefabs (+ optional fallback); the view spawns the
 current speaker's avatar and demotes the previous one. Assign an `AvatarTransition` to animate swaps.
+
+**Debug overlay**: tick `DialogueDriver ▸ Show Debug Overlay` to draw the current state / node / line /
+choices on screen at play time (dev aid; no UI required).
+
+---
+
+## 12. Validating a graph
+
+Select a graph asset and run **Faolline ▸ Graph ▸ Validate Selected Graph** (reusable `GraphValidator`
+in graphcore). It reports structural mistakes the runtime cannot recover from gracefully:
+
+| Severity | Check |
+|----------|-------|
+| Error | No Start node, or more than one |
+| Error | `EntryNodeId` set but matching no node |
+| Error | Edge from/to a non-existent node |
+| Error | Choice node with no options |
+| Error | Choice option with no outgoing edge |
+| Warning | `EntryNodeId` not set |
+| Warning | No End node (only ends by running out of edges) |
+| Warning | Isolated node (no connection) |
+
+Cycle detection is separate (`CycleDetector`, enforced on sub-graph wiring). Missing translations are
+reported by the localization build (coverage), not the graph validator.
