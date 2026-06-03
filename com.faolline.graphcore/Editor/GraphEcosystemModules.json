@@ -1,0 +1,25 @@
+{
+  "repository": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git",
+  "branch": "master",
+  "basePath": "Assets/FaollineGraphEcosystem",
+  "modules": [
+    {
+      "displayName": "Graph Core (base)",
+      "package": "com.faolline.graphcore",
+      "required": true,
+      "dependsOn": []
+    },
+    {
+      "displayName": "Graph Localization",
+      "package": "com.faolline.graphlocalization",
+      "required": false,
+      "dependsOn": []
+    },
+    {
+      "displayName": "Graph Dialogue System",
+      "package": "com.faolline.graphdialoguesystem",
+      "required": false,
+      "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphlocalization" ]
+    }
+  ]
+}
