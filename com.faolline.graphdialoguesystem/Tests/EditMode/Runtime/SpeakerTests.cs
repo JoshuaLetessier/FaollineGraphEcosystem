@@ -46,5 +46,23 @@ namespace Faolline.GraphDialogue.Tests
             }
             finally { Object.DestroyImmediate(speaker); }
         }
+
+        [Test]
+        public void AddExpression_AppendsKeys_IgnoresEmpty()
+        {
+            var speaker = ScriptableObject.CreateInstance<Speaker>();
+            try
+            {
+                speaker.AddExpression("neutral");
+                speaker.AddExpression("happy");
+                speaker.AddExpression("");      // ignored
+                speaker.AddExpression(null);    // ignored
+
+                Assert.AreEqual(2, speaker.Expressions.Count);
+                Assert.AreEqual("neutral", speaker.Expressions[0].Key);
+                Assert.AreEqual("happy", speaker.Expressions[1].Key);
+            }
+            finally { Object.DestroyImmediate(speaker); }
+        }
     }
 }

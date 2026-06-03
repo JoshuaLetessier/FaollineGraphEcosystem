@@ -125,9 +125,9 @@ namespace Faolline.GraphDialogue.Editor
         }
 
         /// <summary>
-        /// Expression picker: a dropdown of the selected speaker's expression keys (so the key is not typed
-        /// by hand). Preserves a current/foreign value, and falls back to a plain text field when the
-        /// speaker is unknown or has no expressions.
+        /// Expression picker: always a dropdown sourced from the selected speaker's expressions (never a
+        /// free-text field). The node's current value stays selectable even if not on the speaker. When the
+        /// speaker has no expressions, shows a disabled dropdown guiding the author to add them.
         /// </summary>
         private VisualElement BuildExpressionField(DialogueLineNodeData node)
         {
@@ -139,15 +139,19 @@ namespace Faolline.GraphDialogue.Editor
                 foreach (var e in speaker.Expressions)
                     if (e != null && !string.IsNullOrEmpty(e.Key) && !keys.Contains(e.Key)) keys.Add(e.Key);
 
+            if (!string.IsNullOrEmpty(node.ExpressionKey) && !keys.Contains(node.ExpressionKey))
+                keys.Add(node.ExpressionKey); // keep the node's current/foreign value selectable
+
             if (keys.Count == 0)
             {
-                var tf = new TextField("Expression") { value = node.ExpressionKey };
-                tf.RegisterValueChangedCallback(e => { node.ExpressionKey = e.newValue; MarkGraphDirty(); });
-                return tf;
+                // No expressions to choose from — disabled dropdown that points to the fix (no free text).
+                var empty = new DropdownField("Expression", new System.Collections.Generic.List<string> { "(define on speaker)" }, 0);
+                empty.SetEnabled(false);
+                empty.tooltip = speaker == null
+                    ? "Select a Speaker first, then add expressions on that Speaker asset."
+                    : $"Speaker '{speaker.SpeakerId}' has no expressions — add some on the Speaker asset.";
+                return empty;
             }
-
-            if (!string.IsNullOrEmpty(node.ExpressionKey) && !keys.Contains(node.ExpressionKey))
-                keys.Add(node.ExpressionKey); // keep a current/foreign expression selectable
 
             var current = string.IsNullOrEmpty(node.ExpressionKey) ? keys[0] : node.ExpressionKey;
             var dropdown = new DropdownField("Expression", keys, Mathf.Max(0, keys.IndexOf(current)));
@@ -185,6 +189,7 @@ namespace Faolline.GraphDialogue.Editor
             {
                 node.SpeakerKey = e.newValue == none ? string.Empty : e.newValue;
                 MarkGraphDirty();
+                RefreshIfBound(node); // rebuild so the Expression dropdown reflects the new speaker
             });
             return dropdown;
         }

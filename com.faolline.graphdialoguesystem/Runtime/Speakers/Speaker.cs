@@ -34,6 +34,13 @@ namespace Faolline.GraphDialogue
         /// <summary>Read-only list of named expressions.</summary>
         public IReadOnlyList<SpeakerExpression> Expressions => _expressions;
 
+        /// <summary>Adds an expression (key → presentation asset). No-op for an empty key.</summary>
+        public void AddExpression(string key, UnityEngine.Object asset = null)
+        {
+            if (string.IsNullOrEmpty(key)) return;
+            _expressions.Add(new SpeakerExpression { Key = key, Asset = asset });
+        }
+
         /// <summary>Asset used when a requested expression key is unknown.</summary>
         public UnityEngine.Object FallbackExpression { get => _fallbackExpression; set => _fallbackExpression = value; }
 

@@ -38,6 +38,8 @@ namespace Faolline.GraphDialogue.Editor
             var mayor = ScriptableObject.CreateInstance<Speaker>();
             mayor.SpeakerId = "npc_mayor";
             mayor.DisplayNameFallback = "Mayor";
+            mayor.AddExpression("neutral");   // demonstrates the node Expression dropdown
+            mayor.AddExpression("happy");
             AssetDatabase.CreateAsset(mayor, $"{Folder}/SampleSpeaker_Mayor.asset");
 
             // ── Child sub-dialogue ──────────────────────────────────────────────────────
@@ -67,7 +69,7 @@ namespace Faolline.GraphDialogue.Editor
             graph.AddParameter(new ParameterData { Key = DialogueContextKeys.Flag, Type = ParameterType.Bool, DefaultValue = "false" });
 
             var start  = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
-            var intro  = new DialogueLineNodeData { Id = "intro", NodeType = DialogueLineNodeData.NodeTypeId, Title = "Welcome traveller.", SpeakerKey = "npc_mayor", Position = new Vector2(240, 0) };
+            var intro  = new DialogueLineNodeData { Id = "intro", NodeType = DialogueLineNodeData.NodeTypeId, Title = "Welcome traveller.", SpeakerKey = "npc_mayor", ExpressionKey = "happy", Position = new Vector2(240, 0) };
             intro.IsCheckpoint = true;
             intro.OnEnterActions.Add(setVisited);
             var choice = new ChoiceNodeData { Id = Guid(), NodeType = ChoiceNodeData.NodeTypeId, Position = new Vector2(480, 0) };
