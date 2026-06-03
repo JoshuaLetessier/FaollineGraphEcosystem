@@ -33,6 +33,10 @@ namespace Faolline.GraphDialogue.UI
         [SerializeField, Min(0f), Tooltip("Seconds before the first available choice is auto-selected. 0 = disabled.")]
         private float choiceTimeout;
 
+        [Header("Audio")]
+        [SerializeField, Tooltip("Optional AudioSource used to play each line's Voice Clip.")]
+        private AudioSource voiceSource;
+
         [Header("Debug")]
         [SerializeField, Tooltip("Draws an on-screen OnGUI overlay (state, current node, line/choices) for dev.")]
         private bool showDebugOverlay;
@@ -150,6 +154,8 @@ namespace Faolline.GraphDialogue.UI
             choiceTimeout = timeout;
         }
 
+        internal void ConfigureAudioForTest(AudioSource source) => voiceSource = source;
+
         // ── Control surface ─────────────────────────────────────────────────────────
 
         /// <summary>(Re)starts playback of <paramref name="dialogueGraph"/> from the beginning.</summary>
@@ -230,7 +236,24 @@ namespace Faolline.GraphDialogue.UI
             _ended = false;
             _lineShownTime = Time.time;
             _autoAdvanceArmed = autoAdvance;
+            PlayVoice(step);
             View?.ShowLine(step);
+        }
+
+        private void PlayVoice(LineStep step)
+        {
+            if (voiceSource == null) return;
+            if (voiceSource.isPlaying) voiceSource.Stop();
+            if (step?.VoiceClip != null)
+            {
+                voiceSource.clip = step.VoiceClip;
+                voiceSource.Play();
+            }
+        }
+
+        private void StopVoice()
+        {
+            if (voiceSource != null && voiceSource.isPlaying) voiceSource.Stop();
         }
 
         private void HandleChoices(ChoiceStep step)
@@ -251,6 +274,7 @@ namespace Faolline.GraphDialogue.UI
             _lastLine = null;
             _ended = true;
             _autoAdvanceArmed = false;
+            StopVoice();
             View?.HideAll();
         }
 
@@ -260,6 +284,7 @@ namespace Faolline.GraphDialogue.UI
             _lastChoices = null;
             _lastLine = null;
             _autoAdvanceArmed = false;
+            StopVoice();
             Debug.LogWarning("[GraphDialogue] DialogueDriver: dialogue is stuck (no valid branch from the " +
                 "current node). Check your edge/choice conditions.", this);
             OnStuck?.Invoke();

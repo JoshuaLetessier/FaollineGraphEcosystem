@@ -112,6 +112,15 @@ namespace Faolline.GraphDialogue.Editor
             foldout.Add(BuildSpeakerField(node));
             foldout.Add(BuildExpressionField(node));
 
+            var voiceField = new ObjectField("Voice Clip")
+            {
+                objectType = typeof(AudioClip),
+                allowSceneObjects = false,
+                value = node.VoiceClip
+            };
+            voiceField.RegisterValueChangedCallback(e => { node.VoiceClip = e.newValue as AudioClip; MarkGraphDirty(); });
+            foldout.Add(voiceField);
+
             Add(foldout);
         }
 

@@ -1,6 +1,8 @@
+using UnityEngine;
+
 namespace Faolline.GraphDialogue
 {
-    /// <summary>A spoken line ready for display: speaker + localized text + expression.</summary>
+    /// <summary>A spoken line ready for display: speaker + localized text + expression (+ optional voice).</summary>
     public sealed class LineStep : DialogueStep
     {
         /// <summary>Logical speaker id from the node (may be empty).</summary>
@@ -15,13 +17,17 @@ namespace Faolline.GraphDialogue
         /// <summary>Requested speaker expression key (e.g. "neutral").</summary>
         public string ExpressionKey { get; }
 
+        /// <summary>Optional voice/SFX clip authored on the line node (null when none).</summary>
+        public AudioClip VoiceClip { get; }
+
         public LineStep(string nodeId, string speakerId, string resolvedSpeakerName,
-                        string resolvedText, string expressionKey) : base(nodeId)
+                        string resolvedText, string expressionKey, AudioClip voiceClip = null) : base(nodeId)
         {
             SpeakerId = speakerId ?? string.Empty;
             ResolvedSpeakerName = resolvedSpeakerName ?? string.Empty;
             ResolvedText = resolvedText ?? string.Empty;
             ExpressionKey = expressionKey ?? string.Empty;
+            VoiceClip = voiceClip;
         }
     }
 }

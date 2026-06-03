@@ -278,7 +278,7 @@ namespace Faolline.GraphDialogue
             string text = ResolveChecked(DialogueLocalizationKeys.ForLine(line));
             text = DialogueTextInterpolator.Interpolate(text, _context);
             string speakerName = ResolveSpeakerName(line.SpeakerKey);
-            return new LineStep(line.Id, line.SpeakerKey, speakerName, text, line.ExpressionKey);
+            return new LineStep(line.Id, line.SpeakerKey, speakerName, text, line.ExpressionKey, line.VoiceClip);
         }
 
         private ChoiceStep BuildChoiceStep(ChoiceNodeData choiceNode)
