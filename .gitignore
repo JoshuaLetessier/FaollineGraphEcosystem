@@ -70,3 +70,7 @@ desktop.ini
 *.swp
 *.swo
 *~
+
+# UPM sample folders use the trailing-~ convention and MUST ship (re-include them).
+!Samples~/
+!Samples~/**

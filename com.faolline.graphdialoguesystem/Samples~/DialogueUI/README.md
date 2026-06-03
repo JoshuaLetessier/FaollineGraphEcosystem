@@ -50,3 +50,15 @@ Change only the `DialogueDriver.view` reference. The graph, speakers, and driver
 Give each `Speaker` expression prefabs (key → prefab) and optionally a fallback. The view spawns the
 avatar for each line's `SpeakerId` + `ExpressionKey` at the current mount and demotes the prior speaker
 to the previous mount. Assign an `AvatarTransition` subclass to animate swaps.
+
+## Optional features
+- **Typewriter**: on the view (Canvas/UI Toolkit), toggle *Typewriter* + set *Characters Per Second*.
+  The first Space/click completes the reveal; the next advances.
+- **Auto-advance / timed choices**: on the `DialogueDriver`, enable *Auto Advance* (+ delay) and/or set
+  *Choice Timeout* (auto-selects the first available option).
+- **Voice/SFX**: assign an *AudioSource* on the driver; set a line node's *Voice Clip*.
+- **Speaker name color**: set *Name Color* on a `Speaker`.
+- **Backlog**: add a `CanvasDialogueBacklog` (content container + a disabled TMP entry template), assign
+  the driver; it lists past lines (`Show`/`Hide`/`Toggle`).
+- **Variables**: embed `{paramKey}` in a line/choice Title to inject blackboard values.
+- **Validate**: *Faolline ▸ Graph ▸ Validate Selected Graph* checks the graph before play.

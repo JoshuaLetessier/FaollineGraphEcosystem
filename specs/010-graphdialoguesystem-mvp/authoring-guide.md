@@ -283,9 +283,9 @@ localization dependency in the UI).
 speakers from the graph (no scene-side list). Press Play. **Space**/click advances; choice buttons (or
 **1–9**) select.
 
-**Swap front-ends** by changing only `DialogueDriver.view`. See the step-by-step recipes in
-`com.faolline.graphdialoguesystem/UI/Samples/DialogueUI/README.md` and the feature quickstart at
-`specs/011-dialogue-ui/quickstart.md`.
+**Swap front-ends** by changing only `DialogueDriver.view`. Import the **Dialogue UI** sample via
+*Package Manager ▸ com.faolline.graphdialoguesystem ▸ Samples ▸ Import* (ships the UI Toolkit UXML/USS
+and step-by-step recipes); see also the feature quickstart at `specs/011-dialogue-ui/quickstart.md`.
 
 **Scripting**
 ```csharp
@@ -338,4 +338,32 @@ Title / table value:  "Welcome back, {playerName}! Score: {score}."
 - Use `{{` / `}}` for literal braces.
 
 Populate values via graph **Parameters** (defaults) or `SetString/SetInt/...` actions before the line.
+
+---
+
+## 14. Branching narrative patterns
+
+Recipes for larger, conditional stories built on the existing primitives.
+
+### Gate whole branches with flags
+Set a flag with an enter/exit action, then gate downstream **edges** (or choice options) with a
+`BoolCondition`. A blocked edge removes that branch; if a line ends up with no valid edge the player
+raises `OnStuck` (handle it on the `DialogueDriver`). Always leave at least one always-true edge as a
+default path so a node can't dead-end unintentionally.
+
+### Show choice consequences upfront
+Put the preview in the choice **Title** with a `{token}` (e.g. `"Buy sword ({gold}g)"`); disable it when
+unaffordable via a condition so it greys out instead of vanishing (`ChoiceOption.Available`).
+
+### Reusable scenes via sub-dialogues
+Extract shop/tutorial flows into child `DialogueGraph`s referenced by a `SubGraph` node. Use
+`InheritParentContext = false` to isolate their state, `true` to share the blackboard.
+
+### Resume long stories
+Mark each scene's first node as a **checkpoint** and save `DialoguePlayer.SaveState(...)` there; restore
+with `RestoreFrom(...)` so players resume without replaying earlier branches.
+
+### Keep it valid
+Run **✓ Validate** (or *Faolline ▸ Graph ▸ Validate Selected Graph*) before shipping: it catches
+dead-end choices, isolated nodes, and missing Start/End that branching graphs accumulate.
 
