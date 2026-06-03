@@ -182,10 +182,11 @@ namespace Faolline.GraphDialogue.UI
 
             var provider = _provider ?? LocalizationContext.Current.Provider;
             var strict = LocalizationContext.Current.StrictMode;
+            var assets = LocalizationContext.Current.AssetProvider;
 
             View?.BindSpeakers(ActiveSpeakers);
 
-            _player = new DialoguePlayer(graph, new DialogueContext(), provider, FindSpeaker, strict);
+            _player = new DialoguePlayer(graph, new DialogueContext(), provider, FindSpeaker, strict, assets);
             _player.OnLine += HandleLine;
             _player.OnChoices += HandleChoices;
             _player.OnEnded += HandleEnded;

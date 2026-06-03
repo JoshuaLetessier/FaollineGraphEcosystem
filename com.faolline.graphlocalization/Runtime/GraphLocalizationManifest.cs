@@ -22,6 +22,8 @@ namespace Faolline.GraphLocalization
             public string LibName;
             /// <summary>Unity Localization String Table collection names produced for this lib.</summary>
             public List<string> UnityCollections = new List<string>();
+            /// <summary>Unity Localization Asset Table collection names produced for this lib (localized audio, etc.).</summary>
+            public List<string> UnityAssetCollections = new List<string>();
             /// <summary>CSV files produced for this lib (asset references; loadable at runtime).</summary>
             public List<TextAsset> CsvFiles = new List<TextAsset>();
         }
@@ -47,6 +49,16 @@ namespace Faolline.GraphLocalization
             var result = new List<string>();
             foreach (var lib in _libs)
                 foreach (var c in lib.UnityCollections)
+                    if (!string.IsNullOrEmpty(c) && !result.Contains(c)) result.Add(c);
+            return result;
+        }
+
+        /// <summary>All Unity Asset Table collection names across every lib, de-duplicated.</summary>
+        public List<string> AllUnityAssetCollections()
+        {
+            var result = new List<string>();
+            foreach (var lib in _libs)
+                foreach (var c in lib.UnityAssetCollections)
                     if (!string.IsNullOrEmpty(c) && !result.Contains(c)) result.Add(c);
             return result;
         }

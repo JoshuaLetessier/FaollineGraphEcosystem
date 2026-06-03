@@ -24,6 +24,12 @@ namespace Faolline.GraphLocalization
             set => _provider = value;
         }
 
+        /// <summary>
+        /// Optional provider for localized assets (e.g. voice clips) resolved by the same key as the text.
+        /// Null when no localized-asset backend is configured (the default).
+        /// </summary>
+        public ILocalizedAssetProvider AssetProvider { get; set; }
+
         public string CurrentLocale
         {
             get => _currentLocale;

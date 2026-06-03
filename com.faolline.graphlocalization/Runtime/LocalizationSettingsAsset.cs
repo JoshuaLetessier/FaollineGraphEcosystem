@@ -18,6 +18,10 @@ namespace Faolline.GraphLocalization
         [SerializeField, Tooltip("Unity Localization String Table collection name used when Mode = UnityLocalization.")]
         private string _unityLocalizationTableName = "Dialogue";
 
+        [SerializeField, Tooltip("UnityLocalization mode: also generate Asset Table collections (mirroring the " +
+            "String Tables, same keys) so a line's audio can be localized by key. Off by default.")]
+        private bool _unityGenerateAssetTables;
+
         [Header("CSV mode")]
         [SerializeField, Tooltip("Locale codes to generate as columns in the CSV files (Csv mode). " +
             "The first locale is the source — its column is pre-filled with the node/choice/speaker " +
@@ -43,6 +47,9 @@ namespace Faolline.GraphLocalization
 
         public LocalizationMode Mode => _mode;
         public string UnityLocalizationTableName => _unityLocalizationTableName;
+
+        /// <summary>UnityLocalization mode: whether the build also generates mirror Asset Table collections.</summary>
+        public bool UnityGenerateAssetTables => _unityGenerateAssetTables;
         public LocaleValidationMode LocaleValidation => _localeValidation;
         public LocalizationStrictMode PlayerStrictMode => _playerStrictMode;
 
@@ -55,7 +62,34 @@ namespace Faolline.GraphLocalization
         public LocalizationSettings CreateSettings(string locale = "en")
         {
             var provider = CreateProviderForMode();
-            return new LocalizationSettings(provider, locale) { StrictMode = _playerStrictMode };
+            return new LocalizationSettings(provider, locale)
+            {
+                StrictMode = _playerStrictMode,
+                AssetProvider = CreateAssetProviderForMode()
+            };
+        }
+
+        /// <summary>
+        /// Builds the localized-asset provider for UnityLocalization mode (via reflection, like the string
+        /// provider). Returns null in CSV mode or when no asset collections were produced.
+        /// </summary>
+        private ILocalizedAssetProvider CreateAssetProviderForMode()
+        {
+            if (_mode != LocalizationMode.UnityLocalization) return null;
+
+            var manifest = GraphLocalizationManifest.Load();
+            var collections = manifest != null ? manifest.AllUnityAssetCollections() : null;
+            if (collections == null || collections.Count == 0) return null;
+
+            var type = Type.GetType(
+                "Faolline.GraphLocalization.Unity.UnityLocalizedAssetProvider, " +
+                "com.faolline.graphlocalization.Localization.Unity");
+            if (type == null) return null;
+
+            var ctor = type.GetConstructor(new[] { typeof(IEnumerable<string>) });
+            if (ctor == null) return null;
+
+            return ctor.Invoke(new object[] { collections }) as ILocalizedAssetProvider;
         }
 
         private ILocalizationProvider CreateProviderForMode()

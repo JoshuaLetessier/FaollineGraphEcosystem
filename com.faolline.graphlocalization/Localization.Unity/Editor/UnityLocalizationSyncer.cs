@@ -21,14 +21,19 @@ namespace Faolline.GraphLocalization.Unity.Editor
         private const string CollectionsRoot = "Assets/Localization/Collections";
         private const string GraphCollectionPrefix = "DLG_";
         private const string GlobalCollectionSuffix = "_Global";
+        /// <summary>Suffix for the mirror Asset Table collection of a String Table collection (shared with the builder).</summary>
+        public const string AssetCollectionSuffix = "_Assets";
 
         /// <summary>
         /// Entry point called via reflection from the builder core.
-        /// Signature: (string libName, LocalizationDatabase database, LocaleValidationMode validation).
+        /// Signature: (string libName, LocalizationDatabase database, LocaleValidationMode validation, bool generateAssetTables).
         /// Returns the names of the String Table collections it created/updated for this lib, so the
         /// builder can record them in the runtime manifest (the runtime provider searches across them).
+        /// When <paramref name="generateAssetTables"/> is true, a mirror Asset Table collection
+        /// (name + <see cref="AssetCollectionSuffix"/>, same keys) is created beside each String Table.
         /// </summary>
-        public static string[] SyncDatabase(string libName, LocalizationDatabase database, LocaleValidationMode validation)
+        public static string[] SyncDatabase(string libName, LocalizationDatabase database,
+            LocaleValidationMode validation, bool generateAssetTables)
         {
             if (database == null) return System.Array.Empty<string>();
 
@@ -56,6 +61,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
                 EnsureTablesForAllLocales(col, locales);
                 SyncEntries(col, graphEntry.Keys, sourceLocale, report);
                 managed.Add(col);
+                if (generateAssetTables) EnsureAssetCollection(name + AssetCollectionSuffix, folder, graphEntry.Keys, locales);
             }
 
             // Global collection (speakers, etc.) in Collections/{lib}/_Global/
@@ -69,6 +75,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
                 EnsureTablesForAllLocales(globalCol, locales);
                 SyncEntries(globalCol, database.GlobalKeys, sourceLocale, report);
                 managed.Add(globalCol);
+                if (generateAssetTables) EnsureAssetCollection(globalName + AssetCollectionSuffix, folder, database.GlobalKeys, locales);
             }
 
             ReportOrphanCollections(libFolder, desiredNames, report);
@@ -165,6 +172,40 @@ namespace Faolline.GraphLocalization.Unity.Editor
                 if (!desired.Contains(col.TableCollectionName))
                     report.OrphanCollections.Add(col.TableCollectionName);
             }
+        }
+
+        // ── Asset tables (mirror of the string collection, same keys) ──────────────
+
+        private static void EnsureAssetCollection(string name, string folder,
+            IReadOnlyList<LocalizationKeyEntry> keys, IList<Locale> locales)
+        {
+            var col = LocalizationEditorSettings.GetAssetTableCollection(name)
+                      ?? LocalizationEditorSettings.CreateAssetTableCollection(name, $"{folder}/{name}");
+            if (col == null) return;
+
+            foreach (var locale in locales)
+                if (!(col.GetTable(locale.Identifier) is AssetTable))
+                    col.AddNewTable(locale.Identifier);
+
+            var shared = col.SharedData;
+            if (shared == null) return;
+
+            var desired = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var k in keys)
+            {
+                if (k == null || string.IsNullOrWhiteSpace(k.Key)) continue;
+                desired.Add(k.Key);
+                if (shared.GetEntry(k.Key) == null) shared.AddKey(k.Key);
+            }
+
+            foreach (var orphan in shared.Entries.Where(e => e != null && !desired.Contains(e.Key)).ToList())
+            {
+                foreach (var t in col.AssetTables) if (t != null && t.GetEntry(orphan.Id) != null) t.RemoveEntry(orphan.Id);
+                shared.RemoveKey(orphan.Id);
+            }
+
+            EditorUtility.SetDirty(shared);
+            foreach (var t in col.AssetTables) if (t != null) EditorUtility.SetDirty(t);
         }
 
         // ── Entries ──────────────────────────────────────────────────────────────

@@ -367,3 +367,18 @@ with `RestoreFrom(...)` so players resume without replaying earlier branches.
 Run **✓ Validate** (or *Faolline ▸ Graph ▸ Validate Selected Graph*) before shipping: it catches
 dead-end choices, isolated nodes, and missing Start/End that branching graphs accumulate.
 
+---
+
+## 15. Voice / localized audio
+
+Two ways to give a line audio (the per-node clip wins when both are set):
+
+- **Per-node clip**: assign *Voice Clip* on the line node. Quick, not localized.
+- **Localized by key (UnityLocalization)**: enable *Generate Asset Tables* on the localization settings.
+  The build creates **Asset Table** collections mirroring the String Tables (same keys, `…_Assets`). Drop
+  a clip per key/locale; at playback the line's audio is resolved by its key (`line_<id>`) for the active
+  locale — different voices per language, no per-node wiring. CSV mode can't hold assets, so it uses only
+  the per-node clip.
+
+Assign an `AudioSource` on the `DialogueDriver` for playback.
+

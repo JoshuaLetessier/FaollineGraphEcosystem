@@ -16,6 +16,8 @@ namespace Faolline.GraphLocalization.Editor
     public static class LocalizationBuilderCore
     {
         private const string CollectionsRoot = "Assets/Localization/Collections";
+        // Must match UnityLocalizationSyncer.AssetCollectionSuffix (that type is in the gated assembly).
+        private const string AssetCollectionSuffix = "_Assets";
 
         [MenuItem("Faolline/Localization/Build All Tables")]
         public static void BuildAll()
@@ -76,13 +78,21 @@ namespace Faolline.GraphLocalization.Editor
             var mode = settingsAsset?.Mode ?? LocalizationMode.Csv;
             var libEntry = manifest.GetOrCreateLib(adapter.LibName);
             libEntry.UnityCollections.Clear();
+            libEntry.UnityAssetCollections.Clear();
             libEntry.CsvFiles.Clear();
 
             if (mode == LocalizationMode.UnityLocalization)
             {
                 // Unity Localization sync (via reflection — keeps this assembly dependency-free)
-                var collections = TrySyncToUnityLocalization(adapter.LibName, db, validation);
-                if (collections != null) libEntry.UnityCollections.AddRange(collections);
+                bool assetTables = settingsAsset != null && settingsAsset.UnityGenerateAssetTables;
+                var collections = TrySyncToUnityLocalization(adapter.LibName, db, validation, assetTables);
+                if (collections != null)
+                {
+                    libEntry.UnityCollections.AddRange(collections);
+                    if (assetTables)
+                        foreach (var c in collections)
+                            libEntry.UnityAssetCollections.Add(c + AssetCollectionSuffix); // mirror naming
+                }
             }
             else
             {
@@ -118,7 +128,8 @@ namespace Faolline.GraphLocalization.Editor
             return db;
         }
 
-        private static string[] TrySyncToUnityLocalization(string libName, LocalizationDatabase db, LocaleValidationMode validation)
+        private static string[] TrySyncToUnityLocalization(string libName, LocalizationDatabase db,
+            LocaleValidationMode validation, bool generateAssetTables)
         {
             var settingsAsset = LocalizationSettingsLoader.Load();
             if (settingsAsset == null)
@@ -152,7 +163,7 @@ namespace Faolline.GraphLocalization.Editor
                 return null;
             }
 
-            var result = method.Invoke(null, new object[] { libName, db, validation }) as string[];
+            var result = method.Invoke(null, new object[] { libName, db, validation, generateAssetTables }) as string[];
             Debug.Log($"[LocalizationBuilderCore] [{libName}] Phase 2 complete. " +
                 $"Collections: {(result != null ? string.Join(", ", result) : "(none)")}");
             return result;

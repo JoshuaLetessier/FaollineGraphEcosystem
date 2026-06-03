@@ -21,6 +21,7 @@ namespace Faolline.GraphDialogue
         private readonly DialogueGraph _graph;
         private readonly DialogueContext _context;
         private readonly ILocalizationProvider _localization;
+        private readonly ILocalizedAssetProvider _assets;
         private readonly Func<string, Speaker> _speakerLookup;
         private readonly LocalizationStrictMode _strictMode;
         private readonly List<string> _missingKeys = new List<string>();
@@ -61,11 +62,13 @@ namespace Faolline.GraphDialogue
             DialogueContext context,
             ILocalizationProvider localization,
             Func<string, Speaker> speakerLookup = null,
-            LocalizationStrictMode strictMode = LocalizationStrictMode.Permissive)
+            LocalizationStrictMode strictMode = LocalizationStrictMode.Permissive,
+            ILocalizedAssetProvider assets = null)
         {
             _graph = graph;
             _context = context ?? new DialogueContext();
             _localization = localization ?? new CsvLocalizationProvider(string.Empty, "en");
+            _assets = assets;
             _speakerLookup = speakerLookup;
             _strictMode = strictMode;
 
@@ -278,7 +281,13 @@ namespace Faolline.GraphDialogue
             string text = ResolveChecked(DialogueLocalizationKeys.ForLine(line));
             text = DialogueTextInterpolator.Interpolate(text, _context);
             string speakerName = ResolveSpeakerName(line.SpeakerKey);
-            return new LineStep(line.Id, line.SpeakerKey, speakerName, text, line.ExpressionKey, line.VoiceClip);
+
+            // Voice: the per-node clip wins; otherwise resolve a localized clip by the line's key.
+            var voice = line.VoiceClip;
+            if (voice == null && _assets != null)
+                voice = _assets.ResolveAsset<AudioClip>(DialogueLocalizationKeys.ForLine(line));
+
+            return new LineStep(line.Id, line.SpeakerKey, speakerName, text, line.ExpressionKey, voice);
         }
 
         private ChoiceStep BuildChoiceStep(ChoiceNodeData choiceNode)
