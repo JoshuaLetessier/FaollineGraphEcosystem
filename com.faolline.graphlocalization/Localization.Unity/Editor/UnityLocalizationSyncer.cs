@@ -61,7 +61,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
                 if (generateStringTables)
                 {
                     var col = GetOrCreateCollection(name, folder, report);
-                    MoveCollectionIfNeeded(col, folder, report);
+                    MoveCollectionIfNeeded(col, $"{folder}/{name}", report);
                     EnsureTablesForAllLocales(col, locales);
                     SyncEntries(col, graphEntry.Keys, sourceLocale, report);
                     managed.Add(col);
@@ -78,7 +78,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
                 if (generateStringTables)
                 {
                     var globalCol = GetOrCreateCollection(globalName, folder, report);
-                    MoveCollectionIfNeeded(globalCol, folder, report);
+                    MoveCollectionIfNeeded(globalCol, $"{folder}/{globalName}", report);
                     EnsureTablesForAllLocales(globalCol, locales);
                     SyncEntries(globalCol, database.GlobalKeys, sourceLocale, report);
                     managed.Add(globalCol);
@@ -120,8 +120,9 @@ namespace Faolline.GraphLocalization.Unity.Editor
         }
 
         /// <summary>
-        /// Relocates an existing collection (created by an earlier flat layout) into its per-graph subfolder.
-        /// GUIDs are preserved, so cross-references stay intact. No-op when already in the right folder.
+        /// Relocates an existing collection into <paramref name="desiredFolder"/> (its own per-collection
+        /// subfolder). GUIDs are preserved, so cross-references stay intact. No-op when already there.
+        /// Creates the target folder if missing.
         /// </summary>
         private static void MoveCollectionIfNeeded(StringTableCollection col, string desiredFolder, SyncReport report)
         {
@@ -130,6 +131,13 @@ namespace Faolline.GraphLocalization.Unity.Editor
             if (string.IsNullOrEmpty(colPath)) return;
             var currentFolder = System.IO.Path.GetDirectoryName(colPath)?.Replace('\\', '/');
             if (currentFolder == desiredFolder) return;
+
+            if (!AssetDatabase.IsValidFolder(desiredFolder))
+            {
+                var parent = System.IO.Path.GetDirectoryName(desiredFolder)?.Replace('\\', '/');
+                var leaf = System.IO.Path.GetFileName(desiredFolder);
+                if (!string.IsNullOrEmpty(parent) && !string.IsNullOrEmpty(leaf)) AssetDatabase.CreateFolder(parent, leaf);
+            }
 
             var assets = new List<UnityEngine.Object>();
             if (col.SharedData != null) assets.Add(col.SharedData);
