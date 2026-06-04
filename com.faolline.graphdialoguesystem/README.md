@@ -101,6 +101,40 @@ come from the foundation.
 
 ---
 
+## Showing dialogue in-game (Canvas / UI Toolkit)
+
+The `com.faolline.graphdialoguesystem.UI` assembly renders the headless player on screen. The player
+resolves text upstream, so the views display resolved strings (no localization dependency in the UI).
+A `DialogueDriver` owns the player, routes its steps to an `IDialogueView`, and handles input
+(**Space**/click = advance, **1–9**/click = choose). Swap front-ends by changing only `DialogueDriver.View`.
+
+**Common setup**
+1. Generate a sample (**Faolline ▸ GraphDialogue ▸ Generate Sample Dialogue**) or author a `DialogueGraph`.
+2. Assign the graph's **Speakers** (graph inspector → *Speakers*) — the driver reads them; no scene list.
+
+**Canvas (UGUI + TextMeshPro)**
+1. UI ▸ Canvas with TMP `Speaker` + `Line` texts, a `Choices` container (vertical layout) holding a few
+   `Button`s (each with a TMP label), and optional `AvatarCurrent`/`AvatarPrevious` roots.
+2. Add **CanvasDialogueView**; assign `lineText`, `speakerText`, `choicesContainer`, the `choiceButtons`
+   list (+ avatar roots).
+3. Add **DialogueDriver**; assign `graph`, `View` = the CanvasDialogueView, `autoStart`.
+
+**UI Toolkit (UIDocument)**
+1. UI Toolkit ▸ UI Document; assign a **PanelSettings** and a UXML defining `speaker-name`, `line-text`,
+   `choices-container` (the importable sample ships `DialogueView.uxml`/`.uss`).
+2. Add **UIToolkitDialogueView**; assign the `UIDocument`; `ChoiceDisplayMode` = *Dynamic* (runtime
+   buttons) or *Slots* (`choice-0…N` in the UXML).
+3. Add **DialogueDriver**; assign `graph`, `View` = the UIToolkitDialogueView, `autoStart`.
+
+**Options** (on the view/driver): typewriter (+ skip), auto-advance, choice timeout, per-speaker name
+color, `{key}` text variables, localized voice (Asset Tables + an `AudioSource`), backlog
+(`CanvasDialogueBacklog`).
+
+> Full step-by-step + the UXML/USS: import the **Dialogue UI** sample
+> (Package Manager ▸ this package ▸ Samples ▸ Import) — see its `README.md`.
+
+---
+
 ## Reactivity — inline only
 
 There are **no** condition/effect node types. Reactivity is attached inline (graphcore's native model):
