@@ -18,6 +18,14 @@ namespace Faolline.GraphCore
         private readonly Dictionary<string, List<Action<object>>> _subs =
             new Dictionary<string, List<Action<object>>>();
 
+        // ── Local-context overlay (0.3.0) ──────────────────────────────────────
+        // The persistent global bucket is _params. When a local context is open, _local is a
+        // transient overlay: reads resolve local-first then fall through to global; writes route
+        // to where the key resolves (local shadow → global → undeclared defaults to local).
+        // When no local context is open everything collapses to _params-only (identical to 0.2.0).
+        private Dictionary<string, object> _local;
+        private bool _localActive;
+
         // ── Supported types ────────────────────────────────────────────────────
 
         private static readonly HashSet<Type> _supportedTypes = new HashSet<Type>
@@ -38,8 +46,25 @@ namespace Faolline.GraphCore
                     $"[GraphCore] Unsupported parameter type: {typeof(T).Name}. " +
                     "Supported types: bool, int, float, string.");
 
-            _params[key] = value;
+            ResolveWriteBucket(key)[key] = value;
             FireSubscribers(key, value);
+        }
+
+        /// <summary>
+        /// Returns the bucket a write to <paramref name="key"/> must target: when a local context is
+        /// open, the local bucket if it already holds the key (shadow), else the global bucket if it
+        /// holds the key (durable global write), else the local bucket (an undeclared key defaults to
+        /// local). With no local context open, always the global bucket.
+        /// </summary>
+        private Dictionary<string, object> ResolveWriteBucket(string key)
+        {
+            if (_localActive)
+            {
+                if (_local.ContainsKey(key)) return _local;
+                if (_params.ContainsKey(key)) return _params;
+                return _local;
+            }
+            return _params;
         }
 
         /// <summary>
@@ -48,6 +73,8 @@ namespace Faolline.GraphCore
         /// </summary>
         public T Get<T>(string key)
         {
+            if (_localActive && _local.TryGetValue(key, out var localRaw))
+                return (T)localRaw;
             if (!_params.TryGetValue(key, out var raw))
                 throw new KeyNotFoundException($"[GraphCore] Parameter key not found: '{key}'.");
             return (T)raw;
@@ -59,6 +86,11 @@ namespace Faolline.GraphCore
         /// </summary>
         public bool TryGet<T>(string key, out T value)
         {
+            if (_localActive && _local.TryGetValue(key, out var localRaw))
+            {
+                value = (T)localRaw;
+                return true;
+            }
             if (_params.TryGetValue(key, out var raw))
             {
                 value = (T)raw;
@@ -68,15 +100,72 @@ namespace Faolline.GraphCore
             return false;
         }
 
-        /// <summary>Returns <c>true</c> when <paramref name="key"/> has a stored value.</summary>
-        public bool Has(string key) => _params.ContainsKey(key);
+        /// <summary>
+        /// Returns <c>true</c> when <paramref name="key"/> resolves to a stored value — in the active
+        /// local context or, failing that, in the global context.
+        /// </summary>
+        public bool Has(string key)
+            => (_localActive && _local.ContainsKey(key)) || _params.ContainsKey(key);
 
         /// <summary>
-        /// Returns a read-only snapshot of all stored parameter values (key → boxed value).
-        /// Used for serialization (e.g. save/restore). Types are limited to bool, int, float, string.
+        /// Returns a read-only snapshot of the <em>global</em> parameter values (key → boxed value).
+        /// Used for serialization (e.g. save/restore). Transient local-context values are deliberately
+        /// excluded, so a save taken while a local context is open captures durable global state only.
+        /// Types are limited to bool, int, float, string.
         /// </summary>
         public IReadOnlyDictionary<string, object> GetAllParameters()
             => new System.Collections.ObjectModel.ReadOnlyDictionary<string, object>(_params);
+
+        // ── Local-context overlay ──────────────────────────────────────────────
+
+        /// <summary>
+        /// <c>true</c> while a local context overlay is open. While open, reads resolve local-first
+        /// then fall through to global, and writes route per the resolve-and-write rule.
+        /// </summary>
+        public bool HasLocalContext => _localActive;
+
+        /// <summary>
+        /// Opens a fresh, empty local context layered over the global context. If one is already open
+        /// it is discarded and replaced (a <c>[GraphCore]</c> warning is logged — nested local contexts
+        /// are not supported).
+        /// </summary>
+        public void BeginLocalContext()
+        {
+            if (_localActive)
+                UnityEngine.Debug.LogWarning(
+                    "[GraphCore] BeginLocalContext called while a local context is already open; " +
+                    "discarding the existing one (nested local contexts are not supported).");
+            _local = new Dictionary<string, object>();
+            _localActive = true;
+        }
+
+        /// <summary>
+        /// As <see cref="BeginLocalContext()"/>, then seeds the new local context from
+        /// <paramref name="seedFrom"/>'s declared parameters (same parsing as
+        /// <see cref="InitFromGraph"/>, written into the local overlay). A <c>null</c> graph seeds nothing.
+        /// </summary>
+        public void BeginLocalContext(BaseGraph seedFrom)
+        {
+            BeginLocalContext();
+            if (seedFrom != null)
+                SeedFromGraph(seedFrom, _local);
+        }
+
+        /// <summary>
+        /// Discards the current local context and all values written into it. Global values are
+        /// untouched. No-op (with a <c>[GraphCore]</c> warning) when none is open.
+        /// </summary>
+        public void EndLocalContext()
+        {
+            if (!_localActive)
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[GraphCore] EndLocalContext called with no local context open; ignored.");
+                return;
+            }
+            _local = null;
+            _localActive = false;
+        }
 
         // ── Change notifications ───────────────────────────────────────────────
 
@@ -117,7 +206,15 @@ namespace Faolline.GraphCore
         /// converting each <see cref="ParameterData.DefaultValue"/> string to the correct type.
         /// Parse failures use <c>default(T)</c> and log a <c>[GraphCore]</c> warning.
         /// </summary>
-        public void InitFromGraph(BaseGraph graph)
+        public void InitFromGraph(BaseGraph graph) => SeedFromGraph(graph, _params);
+
+        /// <summary>
+        /// Parses <paramref name="graph"/>'s declared parameters into <paramref name="target"/>,
+        /// converting each <see cref="ParameterData.DefaultValue"/> string to the correct type.
+        /// Parse failures use <c>default(T)</c> and log a <c>[GraphCore]</c> warning. Shared by
+        /// <see cref="InitFromGraph"/> (seeds global) and local-context seeding (seeds the overlay).
+        /// </summary>
+        private static void SeedFromGraph(BaseGraph graph, Dictionary<string, object> target)
         {
             foreach (var param in graph.Parameters)
             {
@@ -125,41 +222,41 @@ namespace Faolline.GraphCore
                 {
                     case ParameterType.Bool:
                         if (bool.TryParse(param.DefaultValue, out bool b))
-                            _params[param.Key] = b;
+                            target[param.Key] = b;
                         else
                         {
                             UnityEngine.Debug.LogWarning(
                                 $"[GraphCore] Cannot parse bool default '{param.DefaultValue}' for key '{param.Key}'. Using default.");
-                            _params[param.Key] = default(bool);
+                            target[param.Key] = default(bool);
                         }
                         break;
 
                     case ParameterType.Int:
                         if (int.TryParse(param.DefaultValue, NumberStyles.Integer,
                                 CultureInfo.InvariantCulture, out int i))
-                            _params[param.Key] = i;
+                            target[param.Key] = i;
                         else
                         {
                             UnityEngine.Debug.LogWarning(
                                 $"[GraphCore] Cannot parse int default '{param.DefaultValue}' for key '{param.Key}'. Using default.");
-                            _params[param.Key] = default(int);
+                            target[param.Key] = default(int);
                         }
                         break;
 
                     case ParameterType.Float:
                         if (float.TryParse(param.DefaultValue, NumberStyles.Float,
                                 CultureInfo.InvariantCulture, out float f))
-                            _params[param.Key] = f;
+                            target[param.Key] = f;
                         else
                         {
                             UnityEngine.Debug.LogWarning(
                                 $"[GraphCore] Cannot parse float default '{param.DefaultValue}' for key '{param.Key}'. Using default.");
-                            _params[param.Key] = default(float);
+                            target[param.Key] = default(float);
                         }
                         break;
 
                     case ParameterType.String:
-                        _params[param.Key] = param.DefaultValue ?? string.Empty;
+                        target[param.Key] = param.DefaultValue ?? string.Empty;
                         break;
                 }
             }
@@ -178,6 +275,13 @@ namespace Faolline.GraphCore
             var clone = CreateCloneInstance();
             foreach (var kvp in _params)
                 clone._params[kvp.Key] = kvp.Value;
+            if (_localActive)
+            {
+                clone._local = new Dictionary<string, object>();
+                foreach (var kvp in _local)
+                    clone._local[kvp.Key] = kvp.Value;
+                clone._localActive = true;
+            }
             return clone;
         }
 
@@ -200,6 +304,21 @@ namespace Faolline.GraphCore
             _params.Clear();
             foreach (var kvp in source._params)
                 _params[kvp.Key] = kvp.Value;
+
+            // Restore the local-context overlay (and its open/closed state) in place, so step-back
+            // across a scope boundary reproduces the exact runtime state. Subscribers are preserved.
+            if (source._localActive)
+            {
+                _local = new Dictionary<string, object>();
+                foreach (var kvp in source._local)
+                    _local[kvp.Key] = kvp.Value;
+                _localActive = true;
+            }
+            else
+            {
+                _local = null;
+                _localActive = false;
+            }
         }
     }
 }

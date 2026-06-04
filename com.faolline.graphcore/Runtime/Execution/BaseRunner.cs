@@ -302,9 +302,17 @@ namespace Faolline.GraphCore
                 return;
             }
 
-            // Determine sub-graph context
+            // Determine sub-graph context. OpensScope takes precedence over InheritParentContext:
+            // a scoped sub-graph rides the parent context with a fresh local overlay.
             BaseContext subCtx;
-            if (subNode.InheritParentContext)
+            bool openedScope = false;
+            if (subNode.OpensScope)
+            {
+                subCtx = _context;
+                _context.BeginLocalContext(targetGraph);
+                openedScope = true;
+            }
+            else if (subNode.InheritParentContext)
             {
                 subCtx = _context;
             }
@@ -318,9 +326,10 @@ namespace Faolline.GraphCore
 
             var subFrame = new GraphExecutionState
             {
-                Graph         = targetGraph,
-                CurrentNodeId = targetGraph.EntryNodeId,
-                FrameContext  = subCtx
+                Graph              = targetGraph,
+                CurrentNodeId      = targetGraph.EntryNodeId,
+                FrameContext       = subCtx,
+                OpenedLocalContext = openedScope
             };
             _graphStack.Push(subFrame);
             _state = RunnerState.NodeReady;
@@ -332,7 +341,9 @@ namespace Faolline.GraphCore
             if (_graphStack.Count > 1)
             {
                 // Pop sub-graph, resume parent
-                _graphStack.Pop();
+                var endingFrame = _graphStack.Pop();
+                if (endingFrame.OpenedLocalContext)
+                    endingFrame.FrameContext.EndLocalContext();
                 var parentFrame = _graphStack.Peek();
                 _context = parentFrame.FrameContext;
 

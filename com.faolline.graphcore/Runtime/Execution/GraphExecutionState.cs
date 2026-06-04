@@ -26,16 +26,24 @@ namespace Faolline.GraphCore
         public BaseContext FrameContext { get; set; }
 
         /// <summary>
+        /// <c>true</c> when this frame's sub-graph opened a local context on the shared context
+        /// (<see cref="SubGraphNodeData.OpensScope"/>). The runner discards that local context when
+        /// this frame is popped. Default <c>false</c>.
+        /// </summary>
+        public bool OpenedLocalContext { get; set; }
+
+        /// <summary>
         /// Returns a shallow clone: same <see cref="Graph"/> reference, same
-        /// <see cref="CurrentNodeId"/> and <see cref="FrameContext"/>, but a new copy of
-        /// <see cref="AvailableEdges"/>. Used when snapshotting the graph stack for history.
+        /// <see cref="CurrentNodeId"/>, <see cref="FrameContext"/> and <see cref="OpenedLocalContext"/>,
+        /// but a new copy of <see cref="AvailableEdges"/>. Used when snapshotting the graph stack for history.
         /// </summary>
         public GraphExecutionState ShallowClone() => new GraphExecutionState
         {
-            Graph          = Graph,
-            CurrentNodeId  = CurrentNodeId,
-            AvailableEdges = new List<BaseEdgeData>(AvailableEdges),
-            FrameContext   = FrameContext
+            Graph              = Graph,
+            CurrentNodeId      = CurrentNodeId,
+            AvailableEdges     = new List<BaseEdgeData>(AvailableEdges),
+            FrameContext       = FrameContext,
+            OpenedLocalContext = OpenedLocalContext
         };
     }
 }
