@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0]
+
+### Added
+- Localized **asset** resolution: `ILocalizedAssetProvider` + `UnityLocalizedAssetProvider` over Unity
+  Localization **Asset Tables** (resolve an asset by the same key as the text, per locale).
+- Build manifest records Asset Table collections; **Tables To Generate** setting (Text / Asset / Both)
+  controls whether the build also produces mirror Asset Tables (`…_Assets`, same keys).
+- Each collection is kept in its own subfolder under `Collections/<lib>/<graph>/`.
+
 ## [0.1.0]
 
 ### Added
