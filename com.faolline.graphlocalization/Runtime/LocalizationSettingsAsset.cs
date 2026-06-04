@@ -18,9 +18,11 @@ namespace Faolline.GraphLocalization
         [SerializeField, Tooltip("Unity Localization String Table collection name used when Mode = UnityLocalization.")]
         private string _unityLocalizationTableName = "Dialogue";
 
-        [SerializeField, Tooltip("UnityLocalization mode: also generate Asset Table collections (mirroring the " +
-            "String Tables, same keys) so a line's audio can be localized by key. Off by default.")]
-        private bool _unityGenerateAssetTables;
+        [SerializeField, Tooltip("UnityLocalization mode: which tables Build All Tables generates.\n\n" +
+            "• Text: String Tables only (classic).\n" +
+            "• Asset: Asset Tables only (localized audio).\n" +
+            "• Both: String + mirror Asset Tables.")]
+        private UnityTableMode _unityTableMode = UnityTableMode.Text;
 
         [Header("CSV mode")]
         [SerializeField, Tooltip("Locale codes to generate as columns in the CSV files (Csv mode). " +
@@ -48,8 +50,14 @@ namespace Faolline.GraphLocalization
         public LocalizationMode Mode => _mode;
         public string UnityLocalizationTableName => _unityLocalizationTableName;
 
-        /// <summary>UnityLocalization mode: whether the build also generates mirror Asset Table collections.</summary>
-        public bool UnityGenerateAssetTables => _unityGenerateAssetTables;
+        /// <summary>UnityLocalization mode: which tables the build generates.</summary>
+        public UnityTableMode UnityTableMode => _unityTableMode;
+
+        /// <summary>True when the build should create/sync String Tables (Text or Both).</summary>
+        public bool GeneratesStringTables => _unityTableMode != UnityTableMode.Asset;
+
+        /// <summary>True when the build should create/sync Asset Tables (Asset or Both).</summary>
+        public bool GeneratesAssetTables => _unityTableMode != UnityTableMode.Text;
         public LocaleValidationMode LocaleValidation => _localeValidation;
         public LocalizationStrictMode PlayerStrictMode => _playerStrictMode;
 

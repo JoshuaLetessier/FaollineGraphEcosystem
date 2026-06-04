@@ -84,12 +84,15 @@ namespace Faolline.GraphLocalization.Editor
             if (mode == LocalizationMode.UnityLocalization)
             {
                 // Unity Localization sync (via reflection — keeps this assembly dependency-free)
-                bool assetTables = settingsAsset != null && settingsAsset.UnityGenerateAssetTables;
-                var collections = TrySyncToUnityLocalization(adapter.LibName, db, validation, assetTables);
+                bool genText = settingsAsset == null || settingsAsset.GeneratesStringTables;
+                bool genAsset = settingsAsset != null && settingsAsset.GeneratesAssetTables;
+                var collections = TrySyncToUnityLocalization(adapter.LibName, db, validation, genText, genAsset);
                 if (collections != null)
                 {
+                    // Always record the String Table collection names so text resolves (even in Asset-only
+                    // mode, where the tables exist from a previous Text/Both build).
                     libEntry.UnityCollections.AddRange(collections);
-                    if (assetTables)
+                    if (genAsset)
                         foreach (var c in collections)
                             libEntry.UnityAssetCollections.Add(c + AssetCollectionSuffix); // mirror naming
                 }
@@ -129,7 +132,7 @@ namespace Faolline.GraphLocalization.Editor
         }
 
         private static string[] TrySyncToUnityLocalization(string libName, LocalizationDatabase db,
-            LocaleValidationMode validation, bool generateAssetTables)
+            LocaleValidationMode validation, bool generateStringTables, bool generateAssetTables)
         {
             var settingsAsset = LocalizationSettingsLoader.Load();
             if (settingsAsset == null)
@@ -163,7 +166,7 @@ namespace Faolline.GraphLocalization.Editor
                 return null;
             }
 
-            var result = method.Invoke(null, new object[] { libName, db, validation, generateAssetTables }) as string[];
+            var result = method.Invoke(null, new object[] { libName, db, validation, generateStringTables, generateAssetTables }) as string[];
             Debug.Log($"[LocalizationBuilderCore] [{libName}] Phase 2 complete. " +
                 $"Collections: {(result != null ? string.Join(", ", result) : "(none)")}");
             return result;

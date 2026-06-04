@@ -373,9 +373,9 @@ dead-end choices, isolated nodes, and missing Start/End that branching graphs ac
 
 Line audio is **localized by key** — there is no per-node clip.
 
-1. Localization settings → Mode = **UnityLocalization**, tick **Generate Asset Tables**.
+1. Localization settings → Mode = **UnityLocalization**, **Tables To Generate** = **Both** (or **Asset**).
 2. **Build All Tables** → mirror **Asset Table** collections are created beside the String Tables
-   (`…_Assets`, same keys).
+   (`…_Assets`, same keys). String Tables are never deleted (Text/Both keep them).
 3. In each Asset Table, drop an `AudioClip` per key/locale. At playback the line's voice is resolved by
    its key (`line_<id>`) for the active locale — different voices per language, no per-node wiring.
 4. Assign an `AudioSource` on the `DialogueDriver` for playback.

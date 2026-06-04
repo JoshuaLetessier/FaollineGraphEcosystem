@@ -26,14 +26,16 @@ namespace Faolline.GraphLocalization.Unity.Editor
 
         /// <summary>
         /// Entry point called via reflection from the builder core.
-        /// Signature: (string libName, LocalizationDatabase database, LocaleValidationMode validation, bool generateAssetTables).
-        /// Returns the names of the String Table collections it created/updated for this lib, so the
-        /// builder can record them in the runtime manifest (the runtime provider searches across them).
-        /// When <paramref name="generateAssetTables"/> is true, a mirror Asset Table collection
-        /// (name + <see cref="AssetCollectionSuffix"/>, same keys) is created beside each String Table.
+        /// Signature: (string libName, LocalizationDatabase database, LocaleValidationMode validation,
+        /// bool generateStringTables, bool generateAssetTables).
+        /// Returns the String Table collection names for this lib (always — even when not regenerated — so
+        /// the builder can record them in the runtime manifest). String Tables are created/synced only when
+        /// <paramref name="generateStringTables"/> is true; a mirror Asset Table collection (name +
+        /// <see cref="AssetCollectionSuffix"/>, same keys) is created beside each when
+        /// <paramref name="generateAssetTables"/> is true. Existing collections are never deleted.
         /// </summary>
         public static string[] SyncDatabase(string libName, LocalizationDatabase database,
-            LocaleValidationMode validation, bool generateAssetTables)
+            LocaleValidationMode validation, bool generateStringTables, bool generateAssetTables)
         {
             if (database == null) return System.Array.Empty<string>();
 
@@ -56,11 +58,14 @@ namespace Faolline.GraphLocalization.Unity.Editor
                 var name = $"{GraphCollectionPrefix}{Sanitize(graphEntry.GraphName)}";
                 desiredNames.Add(name);
                 var folder = EnsureSubFolder(libFolder, Sanitize(graphEntry.GraphName));
-                var col = GetOrCreateCollection(name, folder, report);
-                MoveCollectionIfNeeded(col, folder, report);
-                EnsureTablesForAllLocales(col, locales);
-                SyncEntries(col, graphEntry.Keys, sourceLocale, report);
-                managed.Add(col);
+                if (generateStringTables)
+                {
+                    var col = GetOrCreateCollection(name, folder, report);
+                    MoveCollectionIfNeeded(col, folder, report);
+                    EnsureTablesForAllLocales(col, locales);
+                    SyncEntries(col, graphEntry.Keys, sourceLocale, report);
+                    managed.Add(col);
+                }
                 if (generateAssetTables) EnsureAssetCollection(name + AssetCollectionSuffix, folder, graphEntry.Keys, locales);
             }
 
@@ -70,11 +75,14 @@ namespace Faolline.GraphLocalization.Unity.Editor
                 var globalName = $"{Sanitize(libName)}{GlobalCollectionSuffix}";
                 desiredNames.Add(globalName);
                 var folder = EnsureSubFolder(libFolder, "_Global");
-                var globalCol = GetOrCreateCollection(globalName, folder, report);
-                MoveCollectionIfNeeded(globalCol, folder, report);
-                EnsureTablesForAllLocales(globalCol, locales);
-                SyncEntries(globalCol, database.GlobalKeys, sourceLocale, report);
-                managed.Add(globalCol);
+                if (generateStringTables)
+                {
+                    var globalCol = GetOrCreateCollection(globalName, folder, report);
+                    MoveCollectionIfNeeded(globalCol, folder, report);
+                    EnsureTablesForAllLocales(globalCol, locales);
+                    SyncEntries(globalCol, database.GlobalKeys, sourceLocale, report);
+                    managed.Add(globalCol);
+                }
                 if (generateAssetTables) EnsureAssetCollection(globalName + AssetCollectionSuffix, folder, database.GlobalKeys, locales);
             }
 

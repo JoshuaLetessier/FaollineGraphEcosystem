@@ -8,7 +8,7 @@ namespace Faolline.GraphLocalization.Editor
     {
         private SerializedProperty _mode;
         private SerializedProperty _tableName;
-        private SerializedProperty _generateAssetTables;
+        private SerializedProperty _tableMode;
         private SerializedProperty _localeValidation;
         private SerializedProperty _playerStrictMode;
 
@@ -35,7 +35,7 @@ namespace Faolline.GraphLocalization.Editor
         {
             _mode = serializedObject.FindProperty("_mode");
             _tableName = serializedObject.FindProperty("_unityLocalizationTableName");
-            _generateAssetTables = serializedObject.FindProperty("_unityGenerateAssetTables");
+            _tableMode = serializedObject.FindProperty("_unityTableMode");
             _localeValidation = serializedObject.FindProperty("_localeValidation");
             _playerStrictMode = serializedObject.FindProperty("_playerStrictMode");
             _csvLocales = serializedObject.FindProperty("_csvLocales");
@@ -51,10 +51,11 @@ namespace Faolline.GraphLocalization.Editor
             if (_mode.enumValueIndex == (int)LocalizationMode.UnityLocalization)
             {
                 EditorGUILayout.PropertyField(_tableName);
-                EditorGUILayout.PropertyField(_generateAssetTables, new GUIContent("Generate Asset Tables"));
-                EditorGUILayout.HelpBox("When on, Build All Tables also creates mirror Asset Table " +
-                    "collections (…_Assets, same keys as the String Tables) for localized line audio. " +
-                    "Drop a clip per key/locale; the player resolves a line's voice by its key.",
+                EditorGUILayout.PropertyField(_tableMode, new GUIContent("Tables To Generate"));
+                EditorGUILayout.HelpBox("Build All Tables generates:\n" +
+                    "• Text — String Tables only (classic text).\n" +
+                    "• Asset — Asset Tables only (localized audio; String Tables left untouched).\n" +
+                    "• Both — String Tables + mirror Asset Tables (…_Assets, same keys).",
                     MessageType.None);
             }
             else // Csv
