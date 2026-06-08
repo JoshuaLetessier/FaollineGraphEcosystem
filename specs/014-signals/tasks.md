@@ -31,7 +31,7 @@ repository-relative.
 
 **Purpose**: folders for the new files
 
-- [ ] T001 Create folders `com.faolline.graphcore/Runtime/Signals/` and `com.faolline.graphcore/Tests/EditMode/Signals/` (confirm `com.faolline.graphcore/Tests/EditMode/Execution/` already exists).
+- [X] T001 Create folders `com.faolline.graphcore/Runtime/Signals/` and `com.faolline.graphcore/Tests/EditMode/Signals/` (confirm `com.faolline.graphcore/Tests/EditMode/Execution/` already exists).
 
 ---
 
@@ -41,7 +41,7 @@ repository-relative.
 
 **⚠️ CRITICAL**: blocks US1 and US3.
 
-- [ ] T002 Create the `SignalArgs` readonly struct in `com.faolline.graphcore/Runtime/Signals/SignalArgs.cs`: `Name`, `HasPayload`, `PayloadBoxed`, `GetPayload<T>()` (throws `InvalidOperationException` when `!HasPayload`, `InvalidCastException` on type mismatch), internal constructor, XML docs, `[GraphCore]` namespace. No behaviour beyond accessors (its branches are asserted by US1/US3 tests).
+- [X] T002 Create the `SignalArgs` readonly struct in `com.faolline.graphcore/Runtime/Signals/SignalArgs.cs`: `Name`, `HasPayload`, `PayloadBoxed`, `GetPayload<T>()` (throws `InvalidOperationException` when `!HasPayload`, `InvalidCastException` on type mismatch), internal constructor, XML docs, `[GraphCore]` namespace. No behaviour beyond accessors (its branches are asserted by US1/US3 tests).
 
 **Checkpoint**: payload type available — US1 and US3 can begin.
 
@@ -57,11 +57,11 @@ with `HasPayload==true` and `GetPayload<string>()=="key"`; raise an unsubscribed
 
 ### Tests for User Story 1 (write FIRST, confirm FAIL) ⚠️
 
-- [ ] T003 [P] [US1] Write `SignalChannelTests` in `com.faolline.graphcore/Tests/EditMode/Signals/SignalChannelTests.cs` covering: single-subscriber delivery with payload (INV-C1, INV-SA2); broadcast to N subscribers (FR-002); zero-subscriber raise is a no-op and updates last-signal, never throws (INV-C2, SC-005); no-payload raise yields `HasPayload==false`/`PayloadBoxed==null` (INV-SA2, INV-C5); re-entrant raise / subscribe-unsubscribe during delivery iterates a snapshot (INV-C3); null/empty name on `RaiseSignal`/`OnSignal`/`OffSignal` logs `[GraphCore]` and no-ops (INV-C4); `RaiseSignal<T>` with an unsupported `T` throws `ArgumentException` (INV-C3 parity with `Set<T>`). Confirm RED.
+- [X] T003 [P] [US1] Write `SignalChannelTests` in `com.faolline.graphcore/Tests/EditMode/Signals/SignalChannelTests.cs` covering: single-subscriber delivery with payload (INV-C1, INV-SA2); broadcast to N subscribers (FR-002); zero-subscriber raise is a no-op and updates last-signal, never throws (INV-C2, SC-005); no-payload raise yields `HasPayload==false`/`PayloadBoxed==null` (INV-SA2, INV-C5); re-entrant raise / subscribe-unsubscribe during delivery iterates a snapshot (INV-C3); null/empty name on `RaiseSignal`/`OnSignal`/`OffSignal` logs `[GraphCore]` and no-ops (INV-C4); `RaiseSignal<T>` with an unsupported `T` throws `ArgumentException` (INV-C3 parity with `Set<T>`). Confirm RED.
 
 ### Implementation for User Story 1
 
-- [ ] T004 [US1] Implement the signal channel in `com.faolline.graphcore/Runtime/Graph/BaseContext.cs`: private `_signalSubs` (name→`List<Action<SignalArgs>>`) and `_lastSignals` (name→`SignalArgs`); `RaiseSignal(string)`, `RaiseSignal<T>(string,T)` (validate `T ∈ {bool,int,float,string}` like `Set<T>`; build `SignalArgs`; store into `_lastSignals`; deliver over a snapshot copy), `OnSignal`/`OffSignal` (null/empty-name guarded with `[GraphCore]` warnings). Do NOT touch `_params`, `DeepClone`, `GetAllParameters`, `CopyValuesFrom`. XML docs on all new public members. Confirm T003 GREEN.
+- [X] T004 [US1] Implement the signal channel in `com.faolline.graphcore/Runtime/Graph/BaseContext.cs`: private `_signalSubs` (name→`List<Action<SignalArgs>>`) and `_lastSignals` (name→`SignalArgs`); `RaiseSignal(string)`, `RaiseSignal<T>(string,T)` (validate `T ∈ {bool,int,float,string}` like `Set<T>`; build `SignalArgs`; store into `_lastSignals`; deliver over a snapshot copy), `OnSignal`/`OffSignal` (null/empty-name guarded with `[GraphCore]` warnings). Do NOT touch `_params`, `DeepClone`, `GetAllParameters`, `CopyValuesFrom`. XML docs on all new public members. Confirm T003 GREEN.
 
 **Checkpoint**: US1 fully functional and independently testable (pub/sub + payload, no runner needed).
 
@@ -79,13 +79,13 @@ resumes it via normal edge selection.
 
 ### Tests for User Story 2 (write FIRST, confirm FAIL) ⚠️
 
-- [ ] T005 [P] [US2] Write `AwaitSignalRunnerTests` in `com.faolline.graphcore/Tests/EditMode/Execution/AwaitSignalRunnerTests.cs` covering: entering an awaiting node sets `State==WaitingForSignal`, fires `OnWaitingForSignal(node,name)`, and does NOT fire `OnNodeCompleted` (INV-B1); matching `RaiseSignal` advances and ends (INV-B2); resume honours conditional edge selection identical to `Proceed` (INV-B1/FR-005); non-matching name delivers to subscribers but keeps waiting (INV-B3); `Proceed`/`ChooseById` are inert while waiting (INV-B4). Confirm RED.
+- [X] T005 [P] [US2] Write `AwaitSignalRunnerTests` in `com.faolline.graphcore/Tests/EditMode/Execution/AwaitSignalRunnerTests.cs` covering: entering an awaiting node sets `State==WaitingForSignal`, fires `OnWaitingForSignal(node,name)`, and does NOT fire `OnNodeCompleted` (INV-B1); matching `RaiseSignal` advances and ends (INV-B2); resume honours conditional edge selection identical to `Proceed` (INV-B1/FR-005); non-matching name delivers to subscribers but keeps waiting (INV-B3); `Proceed`/`ChooseById` are inert while waiting (INV-B4). Confirm RED.
 
 ### Implementation for User Story 2
 
-- [ ] T006 [P] [US2] Add the append-only `string AwaitSignalName` field + property to `com.faolline.graphcore/Runtime/Nodes/BaseNodeData.cs` (`[SerializeField] private string _awaitSignal = string.Empty;`, setter coerces null→`""`, XML doc). Default `""` ⇒ not awaiting (INV-N1/N2).
-- [ ] T007 [P] [US2] Append `WaitingForSignal = 4` to `com.faolline.graphcore/Runtime/Execution/RunnerState.cs` with XML doc noting `Proceed`/`ChooseById` are no-ops in this state (INV-R1/S2).
-- [ ] T008 [US2] Wire await/resume in `com.faolline.graphcore/Runtime/Execution/BaseRunner.cs` (depends on T006, T007): in `EnterCurrentNode`, after `OnNodeEntered`, branch on non-empty `AwaitSignalName` → `_state=WaitingForSignal`, fire new `OnWaitingForSignal` event, `return` (skip `OnNodeCompleted`); on the normal path set `_state=NodeReady` immediately before `OnNodeCompleted` (idempotent — R3). Add `event Action<BaseNodeData,string> OnWaitingForSignal` and `RaiseSignal(string)` / `RaiseSignal<T>(string,T)` (null/empty-name `[GraphCore]` warn; delegate delivery to `_context.RaiseSignal`; then if `State==WaitingForSignal` and `CurrentNode.AwaitSignalName==name` call `ExitAndAdvance()`). XML docs. Confirm T005 GREEN.
+- [X] T006 [P] [US2] Add the append-only `string AwaitSignalName` field + property to `com.faolline.graphcore/Runtime/Nodes/BaseNodeData.cs` (`[SerializeField] private string _awaitSignal = string.Empty;`, setter coerces null→`""`, XML doc). Default `""` ⇒ not awaiting (INV-N1/N2).
+- [X] T007 [P] [US2] Append `WaitingForSignal = 4` to `com.faolline.graphcore/Runtime/Execution/RunnerState.cs` with XML doc noting `Proceed`/`ChooseById` are no-ops in this state (INV-R1/S2).
+- [X] T008 [US2] Wire await/resume in `com.faolline.graphcore/Runtime/Execution/BaseRunner.cs` (depends on T006, T007): in `EnterCurrentNode`, after `OnNodeEntered`, branch on non-empty `AwaitSignalName` → `_state=WaitingForSignal`, fire new `OnWaitingForSignal` event, `return` (skip `OnNodeCompleted`); on the normal path set `_state=NodeReady` immediately before `OnNodeCompleted` (idempotent — R3). Add `event Action<BaseNodeData,string> OnWaitingForSignal` and `RaiseSignal(string)` / `RaiseSignal<T>(string,T)` (null/empty-name `[GraphCore]` warn; delegate delivery to `_context.RaiseSignal`; then if `State==WaitingForSignal` and `CurrentNode.AwaitSignalName==name` call `ExitAndAdvance()`). XML docs. Confirm T005 GREEN.
 
 **Checkpoint**: US1 + US2 = the MVP (external event drives graph progression).
 
@@ -102,11 +102,11 @@ and selects the matching branch; a no-payload raise is detectable.
 
 ### Tests for User Story 3 (write FIRST, confirm FAIL) ⚠️
 
-- [ ] T009 [P] [US3] Write `SignalPayloadReadTests` in `com.faolline.graphcore/Tests/EditMode/Signals/SignalPayloadReadTests.cs`: `TryGetLastSignal` returns the most recent `SignalArgs` (INV-C5); `false`+default when none seen; `HasPayload` distinguishes scalar vs none (INV-SA2); `GetPayload<T>()` typed read and mismatch throw (INV-SA3). Confirm RED.
+- [X] T009 [P] [US3] Write `SignalPayloadReadTests` in `com.faolline.graphcore/Tests/EditMode/Signals/SignalPayloadReadTests.cs`: `TryGetLastSignal` returns the most recent `SignalArgs` (INV-C5); `false`+default when none seen; `HasPayload` distinguishes scalar vs none (INV-SA2); `GetPayload<T>()` typed read and mismatch throw (INV-SA3). Confirm RED.
 
 ### Implementation for User Story 3
 
-- [ ] T010 [US3] Add `bool TryGetLastSignal(string name, out SignalArgs args)` to `com.faolline.graphcore/Runtime/Graph/BaseContext.cs` (null/empty-name guarded; reads `_lastSignals`), XML doc. Confirm T009 GREEN.
+- [X] T010 [US3] Add `bool TryGetLastSignal(string name, out SignalArgs args)` to `com.faolline.graphcore/Runtime/Graph/BaseContext.cs` (null/empty-name guarded; reads `_lastSignals`), XML doc. Confirm T009 GREEN.
 
 **Checkpoint**: all three stories independently functional.
 
@@ -116,8 +116,8 @@ and selects the matching branch; a no-payload raise is detectable.
 
 **Purpose**: prove the foundation is unbroken (SC-002, SC-003, FR-008).
 
-- [ ] T011 [P] Write `SignalBackCompatTests` in `com.faolline.graphcore/Tests/EditMode/Execution/SignalBackCompatTests.cs`: a graph with all `AwaitSignalName` empty and no `RaiseSignal` calls behaves identically to 0.3.0 (INV-B5); signals never appear in `GetAllParameters()`, `DeepClone()`, or `CopyValuesFrom()` output (INV-C6); a deep-cloned context carries parameters but no signal subscriptions/last-signals.
-- [ ] T012 Run the ENTIRE pre-existing graphcore EditMode suite UNMODIFIED via batchmode (editor closed) and confirm 100% green — this is the constitution's non-breakage gate (SC-002). Record pass count.
+- [X] T011 [P] Write `SignalBackCompatTests` in `com.faolline.graphcore/Tests/EditMode/Execution/SignalBackCompatTests.cs`: a graph with all `AwaitSignalName` empty and no `RaiseSignal` calls behaves identically to 0.3.0 (INV-B5); signals never appear in `GetAllParameters()`, `DeepClone()`, or `CopyValuesFrom()` output (INV-C6); a deep-cloned context carries parameters but no signal subscriptions/last-signals.
+- [X] T012 Run the ENTIRE pre-existing graphcore EditMode suite UNMODIFIED via batchmode (editor closed) and confirm 100% green — this is the constitution's non-breakage gate (SC-002). Record pass count.
 
 ---
 
@@ -125,8 +125,8 @@ and selects the matching branch; a no-payload raise is detectable.
 
 **Purpose**: FR-012 — returning to an awaiting node re-arms its wait.
 
-- [ ] T013 [P] Write `SignalHistoryTests` in `com.faolline.graphcore/Tests/EditMode/Execution/SignalHistoryTests.cs`: after resuming past an awaiting node, `GoBack` restores to it and `State==WaitingForSignal` again (re-armed, INV-B6); `GoBackToCheckpoint` across an await boundary; assert no signal data leaked into the snapshot.
-- [ ] T014 Make T013 GREEN. Expectation: no code change needed (re-entry re-arms via `EnterCurrentNode`); if a gap surfaces, fix WITHOUT adding signal data to `HistoryEntry`/`GraphExecutionState` snapshots (R5). Document the outcome in a one-line note.
+- [X] T013 [P] Write `SignalHistoryTests` in `com.faolline.graphcore/Tests/EditMode/Execution/SignalHistoryTests.cs`: after resuming past an awaiting node, `GoBack` restores to it and `State==WaitingForSignal` again (re-armed, INV-B6); `GoBackToCheckpoint` across an await boundary; assert no signal data leaked into the snapshot.
+- [X] T014 Make T013 GREEN. Expectation: no code change needed (re-entry re-arms via `EnterCurrentNode`); if a gap surfaces, fix WITHOUT adding signal data to `HistoryEntry`/`GraphExecutionState` snapshots (R5). Document the outcome in a one-line note.
 
 ---
 
@@ -134,17 +134,17 @@ and selects the matching branch; a no-payload raise is detectable.
 
 **Purpose**: stress the full surface in the sandbox, end-to-end.
 
-- [ ] T015 [P] In `com.faolline.graphTest/`, add a demo scenario: a graph whose node sets `AwaitSignalName`, an EditMode test that runs it, asserts it holds, then `runner.RaiseSignal(...)` resumes to End (mirrors quickstart §1–2).
-- [ ] T016 [P] In `com.faolline.graphTest/`, add a payload-reading condition (reads `TryGetLastSignal`) and an EditMode test exercising broadcast to multiple subscribers + a payload-driven branch (mirrors quickstart §3).
+- [X] T015 [P] In `com.faolline.graphTest/`, add a demo scenario: a graph whose node sets `AwaitSignalName`, an EditMode test that runs it, asserts it holds, then `runner.RaiseSignal(...)` resumes to End (mirrors quickstart §1–2).
+- [X] T016 [P] In `com.faolline.graphTest/`, add a payload-reading condition (reads `TryGetLastSignal`) and an EditMode test exercising broadcast to multiple subscribers + a payload-driven branch (mirrors quickstart §3).
 
 ---
 
 ## Phase 9: Polish & Finalize
 
-- [ ] T017 Bump `com.faolline.graphcore/package.json` version `0.3.0` → `0.4.0` (semver MINOR).
-- [ ] T018 [P] Verify XML docs on ALL new public API (`SignalArgs`, `BaseContext.RaiseSignal/OnSignal/OffSignal/TryGetLastSignal`, `BaseNodeData.AwaitSignalName`, `RunnerState.WaitingForSignal`, `BaseRunner.RaiseSignal/OnWaitingForSignal`) and that all misuse warnings carry the `[GraphCore]` prefix.
-- [ ] T019 Full batchmode EditMode run of graphcore + graphTest (editor closed), all green; record totals. Re-confirm SC-002/SC-004.
-- [ ] T020 [P] Validate `quickstart.md` snippets compile and behave as documented; fix drift if any.
+- [X] T017 Bump `com.faolline.graphcore/package.json` version `0.3.0` → `0.4.0` (semver MINOR).
+- [X] T018 [P] Verify XML docs on ALL new public API (`SignalArgs`, `BaseContext.RaiseSignal/OnSignal/OffSignal/TryGetLastSignal`, `BaseNodeData.AwaitSignalName`, `RunnerState.WaitingForSignal`, `BaseRunner.RaiseSignal/OnWaitingForSignal`) and that all misuse warnings carry the `[GraphCore]` prefix.
+- [X] T019 Full batchmode EditMode run of graphcore + graphTest (editor closed), all green; record totals. Re-confirm SC-002/SC-004.
+- [X] T020 [P] Validate `quickstart.md` snippets compile and behave as documented; fix drift if any.
 
 ---
 

@@ -20,6 +20,14 @@ namespace Faolline.GraphCore
         Paused = 2,
 
         /// <summary>An <see cref="EndNodeData"/> has been reached and processed.</summary>
-        Ended = 3
+        Ended = 3,
+
+        /// <summary>
+        /// The current node declared <see cref="BaseNodeData.AwaitSignalName"/>; the runner entered it
+        /// and is holding until that signal is raised. <see cref="BaseRunner.Proceed"/> and
+        /// <see cref="BaseRunner.ChooseById"/> are no-ops in this state — only a matching
+        /// <see cref="BaseRunner.RaiseSignal(string)"/> advances execution.
+        /// </summary>
+        WaitingForSignal = 4
     }
 }

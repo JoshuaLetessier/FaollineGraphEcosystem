@@ -23,6 +23,7 @@ namespace Faolline.GraphCore
         [SerializeField] private bool  _isCheckpoint;
         [SerializeField] private bool  _hasColorOverride;
         [SerializeField] private Color _nodeColor;
+        [SerializeField] private string _awaitSignal = string.Empty;
 
         /// <summary>Unique identifier (GUID) for this node.</summary>
         public string Id
@@ -90,6 +91,17 @@ namespace Faolline.GraphCore
         {
             get => _nodeColor;
             set => _nodeColor = value;
+        }
+
+        /// <summary>
+        /// When non-empty, entering this node holds execution (<see cref="RunnerState.WaitingForSignal"/>)
+        /// until a signal of this name is raised on the runner; the runner then advances normally. Empty
+        /// (the default) means the node does not wait. Append-only metadata, universal to every node type.
+        /// </summary>
+        public string AwaitSignalName
+        {
+            get => _awaitSignal;
+            set => _awaitSignal = value ?? string.Empty;
         }
     }
 }

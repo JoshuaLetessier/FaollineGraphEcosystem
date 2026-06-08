@@ -26,6 +26,14 @@ namespace Faolline.GraphCore
         private Dictionary<string, object> _local;
         private bool _localActive;
 
+        // ── Signal channel (0.4.0) ─────────────────────────────────────────────
+        // Signals are TRANSIENT events, kept deliberately separate from the typed-parameter store
+        // (_params): they never appear in GetAllParameters/DeepClone/CopyValuesFrom, so they never
+        // pollute saves or history snapshots. Both dictionaries are lazily allocated, so a context that
+        // never touches signals pays nothing.
+        private Dictionary<string, List<Action<SignalArgs>>> _signalSubs;
+        private Dictionary<string, SignalArgs> _lastSignals;
+
         // ── Supported types ────────────────────────────────────────────────────
 
         private static readonly HashSet<Type> _supportedTypes = new HashSet<Type>
@@ -165,6 +173,101 @@ namespace Faolline.GraphCore
             }
             _local = null;
             _localActive = false;
+        }
+
+        // ── Signal channel ─────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Raises a transient signal with no payload. Every current subscriber of <paramref name="name"/>
+        /// is notified (broadcast). Raising a name with no subscribers is a no-op (the last-signal store is
+        /// still updated). A null/empty name logs a <c>[GraphCore]</c> warning and is ignored.
+        /// </summary>
+        public void RaiseSignal(string name) => RaiseSignalInternal(name, false, null);
+
+        /// <summary>
+        /// Raises a transient signal carrying a single scalar payload. <typeparamref name="T"/> must be
+        /// <c>bool</c>, <c>int</c>, <c>float</c>, or <c>string</c> (parity with <see cref="Set{T}"/>).
+        /// Delivery and naming rules match <see cref="RaiseSignal(string)"/>.
+        /// </summary>
+        public void RaiseSignal<T>(string name, T payload)
+        {
+            if (!_supportedTypes.Contains(typeof(T)))
+                throw new ArgumentException(
+                    $"[GraphCore] Unsupported signal payload type: {typeof(T).Name}. " +
+                    "Supported types: bool, int, float, string.");
+            RaiseSignalInternal(name, true, payload);
+        }
+
+        private void RaiseSignalInternal(string name, bool hasPayload, object payload)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[GraphCore] RaiseSignal called with a null or empty name; ignored.");
+                return;
+            }
+
+            var args = new SignalArgs(name, hasPayload, payload);
+            (_lastSignals ??= new Dictionary<string, SignalArgs>())[name] = args;
+
+            if (_signalSubs != null && _signalSubs.TryGetValue(name, out var list) && list.Count > 0)
+            {
+                // Iterate a snapshot so subscribe/unsubscribe during delivery is re-entrant safe.
+                var snapshot = new List<Action<SignalArgs>>(list);
+                foreach (var handler in snapshot)
+                    handler(args);
+            }
+        }
+
+        /// <summary>
+        /// Subscribes <paramref name="handler"/> to the signal named <paramref name="name"/>. Many
+        /// handlers may listen to one name. A null/empty name (or null handler) is ignored
+        /// (<c>[GraphCore]</c> warning on a bad name).
+        /// </summary>
+        public void OnSignal(string name, Action<SignalArgs> handler)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[GraphCore] OnSignal called with a null or empty name; ignored.");
+                return;
+            }
+            if (handler == null) return;
+
+            _signalSubs ??= new Dictionary<string, List<Action<SignalArgs>>>();
+            if (!_signalSubs.TryGetValue(name, out var list))
+            {
+                list = new List<Action<SignalArgs>>();
+                _signalSubs[name] = list;
+            }
+            list.Add(handler);
+        }
+
+        /// <summary>Removes <paramref name="handler"/> from the subscriber list for <paramref name="name"/>.</summary>
+        public void OffSignal(string name, Action<SignalArgs> handler)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[GraphCore] OffSignal called with a null or empty name; ignored.");
+                return;
+            }
+            if (_signalSubs != null && _signalSubs.TryGetValue(name, out var list))
+                list.Remove(handler);
+        }
+
+        /// <summary>
+        /// Reads the last <see cref="SignalArgs"/> delivered for <paramref name="name"/>. Returns
+        /// <c>false</c> with <c>default</c> when the name has never been raised. The store is transient
+        /// (not persisted, not captured by history).
+        /// </summary>
+        public bool TryGetLastSignal(string name, out SignalArgs args)
+        {
+            if (!string.IsNullOrEmpty(name) && _lastSignals != null &&
+                _lastSignals.TryGetValue(name, out args))
+                return true;
+            args = default;
+            return false;
         }
 
         // ── Change notifications ───────────────────────────────────────────────

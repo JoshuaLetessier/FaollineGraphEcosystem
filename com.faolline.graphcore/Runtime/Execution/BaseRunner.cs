@@ -68,6 +68,13 @@ namespace Faolline.GraphCore
         /// </summary>
         public event Action OnStuck;
 
+        /// <summary>
+        /// Raised when an awaiting node (non-empty <see cref="BaseNodeData.AwaitSignalName"/>) is entered.
+        /// The runner is now in <see cref="RunnerState.WaitingForSignal"/>; call
+        /// <see cref="RaiseSignal(string)"/> with the matching name to advance. Args: the node + awaited name.
+        /// </summary>
+        public event Action<BaseNodeData, string> OnWaitingForSignal;
+
         // ── Lifecycle ──────────────────────────────────────────────────────────
 
         /// <summary>
@@ -176,6 +183,47 @@ namespace Faolline.GraphCore
             }
         }
 
+        // ── Signals ────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Raises a signal (no payload) into the active context, then — if the current node is awaiting
+        /// exactly this name — advances execution as <see cref="Proceed"/> would. Delivery to subscribers
+        /// happens even when nothing is waiting. A null/empty name logs a <c>[GraphCore]</c> warning and is ignored.
+        /// </summary>
+        public void RaiseSignal(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                UnityEngine.Debug.LogWarning("[GraphCore] RaiseSignal called with a null or empty name; ignored.");
+                return;
+            }
+            _context?.RaiseSignal(name);
+            ResumeIfAwaiting(name);
+        }
+
+        /// <summary>
+        /// As <see cref="RaiseSignal(string)"/>, carrying a scalar payload (<c>bool</c>/<c>int</c>/
+        /// <c>float</c>/<c>string</c>) readable by graph logic via <see cref="BaseContext.TryGetLastSignal"/>.
+        /// </summary>
+        public void RaiseSignal<T>(string name, T payload)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                UnityEngine.Debug.LogWarning("[GraphCore] RaiseSignal called with a null or empty name; ignored.");
+                return;
+            }
+            _context?.RaiseSignal<T>(name, payload);
+            ResumeIfAwaiting(name);
+        }
+
+        private void ResumeIfAwaiting(string name)
+        {
+            if (_state != RunnerState.WaitingForSignal) return;
+            var node = CurrentNode;
+            if (node != null && node.AwaitSignalName == name)
+                ExitAndAdvance();
+        }
+
         // ── Internal: node entry ───────────────────────────────────────────────
 
         private void EnterCurrentNode()
@@ -214,8 +262,19 @@ namespace Faolline.GraphCore
             // 3. Executor
             _registry?.GetExecutor(node.NodeType)?.Execute(node, _context);
 
-            // 4. Raise events — runner pauses here until Proceed/ChooseById
+            // 4. Raise events
             OnNodeEntered?.Invoke(node);
+
+            // Await-signal: hold here until BaseRunner.RaiseSignal delivers the named signal.
+            if (!string.IsNullOrEmpty(node.AwaitSignalName))
+            {
+                _state = RunnerState.WaitingForSignal;
+                OnWaitingForSignal?.Invoke(node, node.AwaitSignalName);
+                return;
+            }
+
+            // Runner pauses here until Proceed/ChooseById.
+            _state = RunnerState.NodeReady;
             OnNodeCompleted?.Invoke(node);
         }
 
