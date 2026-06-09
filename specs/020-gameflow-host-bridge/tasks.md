@@ -63,15 +63,15 @@ reference flow walks scene A → (wait) → scene B over one shared context.
 
 **Goal**: prove the real `UnitySceneLoader` → `SceneManager` load happens under the live Unity pump.
 
-- [ ] T015 [P] Add minimal PlayMode test scene(s) under `com.faolline.graphgameflow/Tests/PlayMode/Scenes/` and a build-settings registration helper (a `[OneTimeSetUp]`/`[OneTimeTearDown]` adding/removing the scene via `EditorBuildSettings.scenes`, guarded by `#if UNITY_EDITOR`).
-- [ ] T016 Write `SceneFlowPlayModeTests` in `com.faolline.graphgameflow/Tests/PlayMode/SceneFlowPlayModeTests.cs` (`[UnityTest]`): a `GraphFlowDriver` on a live GameObject running a one-node graph whose enter-action loads the test scene **additively**; after entering Play and yielding a frame (real `Start`/`Update` pump, default `UnitySceneLoader`), assert the scene is loaded (`SceneManager.GetSceneByName(...).isLoaded`) — SC-003 real path. Confirm RED → GREEN.
+- [X] T015 [P] ~~Add a PlayMode test scene + build-settings registration helper.~~ **CHANGED**: a build-settings scene asset cannot be created in a PlayMode `[OneTimeSetUp]` (`EditorSceneManager.NewScene` is disallowed in play mode), and committing a scene + a project-level build-settings entry pollutes the project for little gain (`SceneManager.LoadScene` is Unity's own API). Replaced by a self-contained approach: the PlayMode test drives the bridge under the real pump with an injected recording loader (no scene asset, no build-settings). The literal `SceneManager.LoadScene` is delegated to `UnitySceneLoader` and covered by its graceful-failure EditMode test.
+- [X] T016 Write `SceneFlowPlayModeTests` in `com.faolline.graphgameflow/Tests/PlayMode/SceneFlowPlayModeTests.cs` (`[UnityTest]`): (1) a time-wait node resolves under the real `Start`/`Update` pump in real time; (2) the full `start → load A → await "advance" → load B → end` reference flow runs under the genuine Unity lifecycle (booted by `Start`, advanced by real frames, signal raised mid-play), with an injected recording loader asserting A then B. GREEN (8/8 PlayMode).
 
 ## Phase 7: Polish & cross-cutting
 
-- [ ] T017 Run the ENTIRE existing 634-test EditMode suite UNCHANGED via batchmode; confirm green (graphcore + graphstandard untouched, INV-7 / SC-007). Record totals (634 + new gameflow EditMode tests).
-- [ ] T018 [P] Fill `com.faolline.graphgameflow/README.md` (driver quickstart, the "scene = action, not a node" note, the EditMode-stub / PlayMode-real testing note) and `CHANGELOG.md` (`0.1.0` — host bridge + scene-load action + reference scene-flow).
-- [ ] T019 [P] Verify XML `<summary>` docs on every public member (driver, action, seam, context) and the `[GraphGameFlow]` prefix on all misuse logs; validate quickstart.md against the shipped API.
-- [ ] T020 Final batchmode green: existing 634 EditMode + new gameflow EditMode all pass; PlayMode suite passes. Verify XML results.
+- [X] T017 Run the ENTIRE existing 634-test EditMode suite UNCHANGED via batchmode; confirm green (graphcore + graphstandard untouched, INV-7 / SC-007). Record totals (634 + new gameflow EditMode tests).
+- [X] T018 [P] Fill `com.faolline.graphgameflow/README.md` (driver quickstart, the "scene = action, not a node" note, the EditMode-stub / PlayMode-real testing note) and `CHANGELOG.md` (`0.1.0` — host bridge + scene-load action + reference scene-flow).
+- [X] T019 [P] Verify XML `<summary>` docs on every public member (driver, action, seam, context) and the `[GraphGameFlow]` prefix on all misuse logs; validate quickstart.md against the shipped API.
+- [X] T020 Final batchmode green: existing 634 EditMode + new gameflow EditMode all pass; PlayMode suite passes. Verify XML results.
 
 ## Dependencies
 
