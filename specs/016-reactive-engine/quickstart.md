@@ -24,10 +24,13 @@ graph.AddEdge(new BaseEdgeData { Id = "eB", FromNodeId = "B", ToNodeId = "C" });
 var ctx = new BaseContext();
 var eval = new ReactiveEvaluator(graph, ctx, completedSetKey: "completed");
 
-eval.OnNodeAvailable += id => Debug.Log($"available: {id}");   // fires for A and B on init
+eval.OnNodeAvailable += id => Debug.Log($"available: {id}");
 eval.OnNodeCompleted += id => Debug.Log($"completed: {id}");
 
-eval.GetState("A");   // Available  (no prerequisites)
+// Construct, subscribe, THEN Start() to receive the initial emission (here: available A, B).
+eval.Start();
+
+eval.GetState("A");   // Available  (no prerequisites — already derived at construction)
 eval.GetState("C");   // Locked     (A, B not yet completed)
 ```
 

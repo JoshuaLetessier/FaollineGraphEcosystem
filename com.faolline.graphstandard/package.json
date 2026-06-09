@@ -1,0 +1,21 @@
+{
+  "name": "com.faolline.graphstandard",
+  "version": "0.1.0",
+  "displayName": "Faolline GraphStandard",
+  "description": "Buffer library above com.faolline.graphcore: domain-neutral standard nodes and the non-linear execution engines (Reactive, later Flow). Hosts the cursor-less ReactiveEvaluator for prerequisite/progression DAGs.",
+  "unity": "6000.0",
+  "unityRelease": "0f1",
+  "dependencies": {
+    "com.faolline.graphcore": "0.0.0"
+  },
+  "keywords": [
+    "graph",
+    "reactive",
+    "progression",
+    "faolline"
+  ],
+  "author": {
+    "name": "JoshuaLetessier",
+    "email": "faolline@gmail.com"
+  }
+}

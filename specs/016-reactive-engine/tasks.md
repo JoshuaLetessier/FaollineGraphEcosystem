@@ -29,10 +29,10 @@ New lib root: `com.faolline.graphstandard/`. Repository-relative.
 
 **Purpose**: stand up the new buffer lib so the engine has a home that compiles.
 
-- [ ] T001 Create `com.faolline.graphstandard/package.json` (name `com.faolline.graphstandard`, version `0.1.0`, unity `6000.0`, displayName/description, `dependencies: { "com.faolline.graphcore": "0.0.0" }`, author).
-- [ ] T002 [P] Create `com.faolline.graphstandard/Runtime/com.faolline.graphstandard.Runtime.asmdef` (name `com.faolline.graphstandard.Runtime`, rootNamespace `Faolline.GraphStandard`, references `["com.faolline.graphcore.Runtime"]`).
-- [ ] T003 [P] Create `com.faolline.graphstandard/Tests/EditMode/com.faolline.graphstandard.Tests.EditMode.asmdef` (name `com.faolline.graphstandard.Tests.EditMode`, rootNamespace `Faolline.GraphStandard.Tests`, references Runtime + `com.faolline.graphcore.Runtime` + `UnityEngine.TestRunner` + `UnityEditor.TestRunner`, `includePlatforms:["Editor"]`, `testPlatforms:["EditMode"]`, `autoReferenced:false`, `overrideReferences:true`, `precompiledReferences:["nunit.framework.dll"]`).
-- [ ] T004 Batchmode compile pass to let Unity import the package and generate `.meta` GUIDs; confirm the assemblies compile empty (no errors in the log).
+- [X] T001 Create `com.faolline.graphstandard/package.json` (name `com.faolline.graphstandard`, version `0.1.0`, unity `6000.0`, displayName/description, `dependencies: { "com.faolline.graphcore": "0.0.0" }`, author).
+- [X] T002 [P] Create `com.faolline.graphstandard/Runtime/com.faolline.graphstandard.Runtime.asmdef` (name `com.faolline.graphstandard.Runtime`, rootNamespace `Faolline.GraphStandard`, references `["com.faolline.graphcore.Runtime"]`).
+- [X] T003 [P] Create `com.faolline.graphstandard/Tests/EditMode/com.faolline.graphstandard.Tests.EditMode.asmdef` (name `com.faolline.graphstandard.Tests.EditMode`, rootNamespace `Faolline.GraphStandard.Tests`, references Runtime + `com.faolline.graphcore.Runtime` + `UnityEngine.TestRunner` + `UnityEditor.TestRunner`, `includePlatforms:["Editor"]`, `testPlatforms:["EditMode"]`, `autoReferenced:false`, `overrideReferences:true`, `precompiledReferences:["nunit.framework.dll"]`).
+- [X] T004 Batchmode compile pass to let Unity import the package and generate `.meta` GUIDs; confirm the assemblies compile empty (no errors in the log).
 
 **Checkpoint**: graphstandard exists and compiles — engine work can begin.
 
@@ -40,7 +40,7 @@ New lib root: `com.faolline.graphstandard/`. Repository-relative.
 
 ## Phase 2: Foundational — node-state type
 
-- [ ] T005 Create `com.faolline.graphstandard/Runtime/Reactive/ReactiveNodeState.cs` — `public enum ReactiveNodeState { Locked = 0, Available = 1, Completed = 2 }` with XML docs.
+- [X] T005 Create `com.faolline.graphstandard/Runtime/Reactive/ReactiveNodeState.cs` — `public enum ReactiveNodeState { Locked = 0, Available = 1, Completed = 2 }` with XML docs.
 
 ---
 
@@ -52,11 +52,11 @@ New lib root: `com.faolline.graphstandard/`. Repository-relative.
 
 ### Tests (write FIRST) ⚠️
 
-- [ ] T006 [P] [US1] Write `ReactiveStateDerivationTests` in `com.faolline.graphstandard/Tests/EditMode/Reactive/ReactiveStateDerivationTests.cs`: no-prereq node Available (INV-1); C requiring A,B is Locked with {A}, Available with {A,B} (INV-1/INV-2); a node id in the completed-set is Completed regardless of prereqs (INV-1); GetState unknown id → Locked; AvailableNodeIds / CompletedNodeIds reflect derivation (INV-5). Confirm RED.
+- [X] T006 [P] [US1] Write `ReactiveStateDerivationTests` in `com.faolline.graphstandard/Tests/EditMode/Reactive/ReactiveStateDerivationTests.cs`: no-prereq node Available (INV-1); C requiring A,B is Locked with {A}, Available with {A,B} (INV-1/INV-2); a node id in the completed-set is Completed regardless of prereqs (INV-1); GetState unknown id → Locked; AvailableNodeIds / CompletedNodeIds reflect derivation (INV-5). Confirm RED.
 
 ### Implementation
 
-- [ ] T007 [US1] Create `com.faolline.graphstandard/Runtime/Reactive/ReactiveEvaluator.cs`: ctor `(BaseGraph, BaseContext, string completedSetKey)` builds the prerequisites map (incoming-edge sources) and runs initial evaluation; derivation rule per data-model; `GetState`, `AvailableNodeIds`, `CompletedNodeIds`. `[GraphStandard]` prefix; XML docs. Confirm T006 GREEN.
+- [X] T007 [US1] Create `com.faolline.graphstandard/Runtime/Reactive/ReactiveEvaluator.cs`: ctor `(BaseGraph, BaseContext, string completedSetKey)` builds the prerequisites map (incoming-edge sources) and runs initial evaluation; derivation rule per data-model; `GetState`, `AvailableNodeIds`, `CompletedNodeIds`. `[GraphStandard]` prefix; XML docs. Confirm T006 GREEN.
 
 **Checkpoint**: state derivation works (queries only).
 
@@ -70,11 +70,11 @@ New lib root: `com.faolline.graphstandard/`. Repository-relative.
 
 ### Tests (write FIRST) ⚠️
 
-- [ ] T008 [P] [US2] Write `ReactiveCascadeTests` in `com.faolline.graphstandard/Tests/EditMode/Reactive/ReactiveCascadeTests.cs`: marking the last missing prerequisite flips a dependent to Available (INV-2/INV-3); the completed-set contains a marked id (INV-3/INV-7); re-marking an already-completed id is a no-op (no duplicate count change) (INV-3). Confirm RED.
+- [X] T008 [P] [US2] Write `ReactiveCascadeTests` in `com.faolline.graphstandard/Tests/EditMode/Reactive/ReactiveCascadeTests.cs`: marking the last missing prerequisite flips a dependent to Available (INV-2/INV-3); the completed-set contains a marked id (INV-3/INV-7); re-marking an already-completed id is a no-op (no duplicate count change) (INV-3). Confirm RED.
 
 ### Implementation
 
-- [ ] T009 [US2] Add `MarkCompleted(string nodeId)` + `Reevaluate()` to `ReactiveEvaluator` (MarkCompleted: no-op if already in set, else AddToCollection then Reevaluate; Reevaluate recomputes all states). Confirm T008 GREEN.
+- [X] T009 [US2] Add `MarkCompleted(string nodeId)` + `Reevaluate()` to `ReactiveEvaluator` (MarkCompleted: no-op if already in set, else AddToCollection then Reevaluate; Reevaluate recomputes all states). Confirm T008 GREEN.
 
 **Checkpoint**: US1 + US2 = the MVP (derive + cascade).
 
@@ -88,11 +88,11 @@ New lib root: `com.faolline.graphstandard/`. Repository-relative.
 
 ### Tests (write FIRST) ⚠️
 
-- [ ] T010 [P] [US3] Write `ReactiveEventTests` in `com.faolline.graphstandard/Tests/EditMode/Reactive/ReactiveEventTests.cs`: init over A,B→C emits OnNodeAvailable for A and B, not C (INV-4); marking B (A already done) emits OnNodeCompleted(B) then OnNodeAvailable(C) exactly once (INV-4); re-mark emits nothing (INV-3/INV-4); a node already in the set at construction emits OnNodeCompleted at init (INV-4). Confirm RED.
+- [X] T010 [P] [US3] Write `ReactiveEventTests` in `com.faolline.graphstandard/Tests/EditMode/Reactive/ReactiveEventTests.cs`: init over A,B→C emits OnNodeAvailable for A and B, not C (INV-4); marking B (A already done) emits OnNodeCompleted(B) then OnNodeAvailable(C) exactly once (INV-4); re-mark emits nothing (INV-3/INV-4); a node already in the set at construction emits OnNodeCompleted at init (INV-4). Confirm RED.
 
 ### Implementation
 
-- [ ] T011 [US3] Add `event Action<string> OnNodeAvailable` / `OnNodeCompleted` to `ReactiveEvaluator`; emit on transitions in Initialize and Reevaluate using the `_states` cache (entry-into-Available/Completed only; no event for unchanged or →Locked). Confirm T010 GREEN.
+- [X] T011 [US3] Add `event Action<string> OnNodeAvailable` / `OnNodeCompleted` to `ReactiveEvaluator`; emit on transitions in Initialize and Reevaluate using the `_states` cache (entry-into-Available/Completed only; no event for unchanged or →Locked). Confirm T010 GREEN.
 
 **Checkpoint**: all three functional stories done.
 
@@ -106,19 +106,19 @@ New lib root: `com.faolline.graphstandard/`. Repository-relative.
 
 ### Tests (write FIRST) ⚠️
 
-- [ ] T012 [P] [US4] Write `ReactiveProgressionDagTests` in `com.faolline.graphstandard/Tests/EditMode/Reactive/ReactiveProgressionDagTests.cs`: build a game-like DAG (e.g. Crank,RepairLadder→Gate; Gate,Simon→RegionDone). Drive completions, then restore the context to a smaller completed-set (DeepClone earlier, CopyValuesFrom back via a runner GoBack OR by clearing/re-adding) and `Reevaluate`; assert the smaller satisfied set (INV-6); assert states depend only on the current set (idempotent, INV-1/INV-6). Confirm RED.
+- [X] T012 [P] [US4] Write `ReactiveProgressionDagTests` in `com.faolline.graphstandard/Tests/EditMode/Reactive/ReactiveProgressionDagTests.cs`: build a game-like DAG (e.g. Crank,RepairLadder→Gate; Gate,Simon→RegionDone). Drive completions, then restore the context to a smaller completed-set (DeepClone earlier, CopyValuesFrom back via a runner GoBack OR by clearing/re-adding) and `Reevaluate`; assert the smaller satisfied set (INV-6); assert states depend only on the current set (idempotent, INV-1/INV-6). Confirm RED.
 
 ### Implementation
 
-- [ ] T013 [US4] Ensure `Reevaluate()` is public and derives purely from the current completed-set (already from T009/T011); add any missing reversibility handling (e.g. a node Completed→Available/Locked transition updates the cache). Confirm T012 GREEN.
+- [X] T013 [US4] Ensure `Reevaluate()` is public and derives purely from the current completed-set (already from T009/T011); add any missing reversibility handling (e.g. a node Completed→Available/Locked transition updates the cache). Confirm T012 GREEN.
 
 ---
 
 ## Phase 7: Polish & Finalize
 
-- [ ] T014 [P] Verify XML docs on all public API (`ReactiveNodeState`, `ReactiveEvaluator` ctor/events/methods/queries) and `[GraphStandard]` prefix on any log.
-- [ ] T015 Full batchmode EditMode run (editor closed, no `-quit`), verify the results XML: graphcore+graphTest 586 unchanged green + graphstandard tests green. Re-confirm SC-002/SC-005 (graphcore untouched).
-- [ ] T016 [P] Validate `quickstart.md` snippets compile and behave as documented; fix drift if any.
+- [X] T014 [P] Verify XML docs on all public API (`ReactiveNodeState`, `ReactiveEvaluator` ctor/events/methods/queries) and `[GraphStandard]` prefix on any log.
+- [X] T015 Full batchmode EditMode run (editor closed, no `-quit`), verify the results XML: graphcore+graphTest 586 unchanged green + graphstandard tests green. Re-confirm SC-002/SC-005 (graphcore untouched).
+- [X] T016 [P] Validate `quickstart.md` snippets compile and behave as documented; fix drift if any.
 
 ---
 
