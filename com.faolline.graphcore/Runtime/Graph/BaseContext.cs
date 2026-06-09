@@ -34,6 +34,13 @@ namespace Faolline.GraphCore
         private Dictionary<string, List<Action<SignalArgs>>> _signalSubs;
         private Dictionary<string, SignalArgs> _lastSignals;
 
+        // ── Collections (0.5.0) ────────────────────────────────────────────────
+        // Named string-SETS, in a keyspace independent from _params. DURABLE state (unlike signals):
+        // captured by DeepClone/CopyValuesFrom and exposed via GetAllCollections for saving. Global-only:
+        // never routed through the local-context overlay. Both dictionaries are lazily allocated.
+        private Dictionary<string, HashSet<string>> _collections;
+        private Dictionary<string, List<Action<string>>> _collectionSubs;
+
         // ── Supported types ────────────────────────────────────────────────────
 
         private static readonly HashSet<Type> _supportedTypes = new HashSet<Type>
@@ -365,6 +372,147 @@ namespace Faolline.GraphCore
             }
         }
 
+        // ── Collections ────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Adds <paramref name="item"/> to the named string-set <paramref name="key"/> (created on first
+        /// add). Idempotent — adding an element already present is a no-op. Fires
+        /// <see cref="OnCollectionChanged"/> only when the element is newly added. Collections are global
+        /// state, independent of the local-context overlay.
+        /// </summary>
+        public void AddToCollection(string key, string item)
+        {
+            if (string.IsNullOrEmpty(key) || item == null)
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[GraphCore] AddToCollection called with a null/empty key or null item; ignored.");
+                return;
+            }
+            _collections ??= new Dictionary<string, HashSet<string>>();
+            if (!_collections.TryGetValue(key, out var set))
+            {
+                set = new HashSet<string>();
+                _collections[key] = set;
+            }
+            if (set.Add(item))
+                FireCollectionChanged(key);
+        }
+
+        /// <summary>
+        /// Removes <paramref name="item"/> from collection <paramref name="key"/>. No-op when the item or
+        /// the collection is absent. Fires <see cref="OnCollectionChanged"/> only when an element is
+        /// actually removed.
+        /// </summary>
+        public void RemoveFromCollection(string key, string item)
+        {
+            if (string.IsNullOrEmpty(key) || item == null)
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[GraphCore] RemoveFromCollection called with a null/empty key or null item; ignored.");
+                return;
+            }
+            if (_collections != null && _collections.TryGetValue(key, out var set) && set.Remove(item))
+                FireCollectionChanged(key);
+        }
+
+        /// <summary>Returns <c>true</c> when collection <paramref name="key"/> contains <paramref name="item"/>.</summary>
+        public bool CollectionContains(string key, string item)
+            => item != null && _collections != null &&
+               _collections.TryGetValue(key, out var set) && set.Contains(item);
+
+        /// <summary>Returns the number of elements in collection <paramref name="key"/> (0 when absent).</summary>
+        public int CollectionCount(string key)
+            => (_collections != null && _collections.TryGetValue(key, out var set)) ? set.Count : 0;
+
+        /// <summary>
+        /// Returns a read-only snapshot (copy) of the members of collection <paramref name="key"/>. Empty
+        /// (never null) when the collection is absent. Mutating the result never affects context state.
+        /// </summary>
+        public IReadOnlyCollection<string> GetCollection(string key)
+        {
+            if (_collections != null && _collections.TryGetValue(key, out var set))
+                return new List<string>(set);
+            return System.Array.Empty<string>();
+        }
+
+        /// <summary>
+        /// Empties collection <paramref name="key"/>. No-op when already empty or absent; fires
+        /// <see cref="OnCollectionChanged"/> when it had at least one member.
+        /// </summary>
+        public void ClearCollection(string key)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[GraphCore] ClearCollection called with a null or empty key; ignored.");
+                return;
+            }
+            if (_collections != null && _collections.TryGetValue(key, out var set) && set.Count > 0)
+            {
+                set.Clear();
+                FireCollectionChanged(key);
+            }
+        }
+
+        /// <summary>
+        /// Returns a read-only snapshot of all collections (key → members, as copies) for serialization.
+        /// Parallel to <see cref="GetAllParameters"/>, which remains scalar-only. Empty when none exist.
+        /// </summary>
+        public IReadOnlyDictionary<string, IReadOnlyCollection<string>> GetAllCollections()
+        {
+            var result = new Dictionary<string, IReadOnlyCollection<string>>();
+            if (_collections != null)
+                foreach (var kvp in _collections)
+                    result[kvp.Key] = new List<string>(kvp.Value);
+            return new System.Collections.ObjectModel.ReadOnlyDictionary<string, IReadOnlyCollection<string>>(result);
+        }
+
+        /// <summary>
+        /// Subscribes <paramref name="handler"/> to membership changes of collection <paramref name="key"/>.
+        /// The handler receives the collection key (re-query the set for its new state). Fires only on a real
+        /// change — idempotent add and no-op remove are silent.
+        /// </summary>
+        public void OnCollectionChanged(string key, Action<string> handler)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[GraphCore] OnCollectionChanged called with a null or empty key; ignored.");
+                return;
+            }
+            if (handler == null) return;
+
+            _collectionSubs ??= new Dictionary<string, List<Action<string>>>();
+            if (!_collectionSubs.TryGetValue(key, out var list))
+            {
+                list = new List<Action<string>>();
+                _collectionSubs[key] = list;
+            }
+            list.Add(handler);
+        }
+
+        /// <summary>Removes <paramref name="handler"/> from the change subscribers of collection <paramref name="key"/>.</summary>
+        public void OffCollectionChanged(string key, Action<string> handler)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[GraphCore] OffCollectionChanged called with a null or empty key; ignored.");
+                return;
+            }
+            if (_collectionSubs != null && _collectionSubs.TryGetValue(key, out var list))
+                list.Remove(handler);
+        }
+
+        private void FireCollectionChanged(string key)
+        {
+            if (_collectionSubs == null || !_collectionSubs.TryGetValue(key, out var list)) return;
+            // Iterate a snapshot so subscribe/unsubscribe during delivery is re-entrant safe.
+            var snapshot = new List<Action<string>>(list);
+            foreach (var handler in snapshot)
+                handler(key);
+        }
+
         // ── Cloning ────────────────────────────────────────────────────────────
 
         /// <summary>
@@ -384,6 +532,13 @@ namespace Faolline.GraphCore
                 foreach (var kvp in _local)
                     clone._local[kvp.Key] = kvp.Value;
                 clone._localActive = true;
+            }
+            // Collections are durable state — deep-copy each set (independent of the source).
+            if (_collections != null)
+            {
+                clone._collections = new Dictionary<string, HashSet<string>>();
+                foreach (var kvp in _collections)
+                    clone._collections[kvp.Key] = new HashSet<string>(kvp.Value);
             }
             return clone;
         }
@@ -421,6 +576,18 @@ namespace Faolline.GraphCore
             {
                 _local = null;
                 _localActive = false;
+            }
+
+            // Restore collections (durable state) as independent copies. Subscribers are preserved.
+            if (source._collections != null)
+            {
+                _collections = new Dictionary<string, HashSet<string>>();
+                foreach (var kvp in source._collections)
+                    _collections[kvp.Key] = new HashSet<string>(kvp.Value);
+            }
+            else
+            {
+                _collections = null;
             }
         }
     }

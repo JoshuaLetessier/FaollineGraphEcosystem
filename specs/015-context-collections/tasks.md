@@ -28,7 +28,7 @@ graphcore lib root: `com.faolline.graphcore/`. Sandbox: `com.faolline.graphTest/
 
 ## Phase 1: Setup
 
-- [ ] T001 Create folders `com.faolline.graphcore/Tests/EditMode/Collections/`, `com.faolline.graphTest/Runtime/Actions/` (exists) and confirm `com.faolline.graphTest/Runtime/Conditions/` exists.
+- [X] T001 Create folders `com.faolline.graphcore/Tests/EditMode/Collections/`, `com.faolline.graphTest/Runtime/Actions/` (exists) and confirm `com.faolline.graphTest/Runtime/Conditions/` exists.
 
 ---
 
@@ -48,11 +48,11 @@ graphcore lib root: `com.faolline.graphcore/`. Sandbox: `com.faolline.graphTest/
 
 ### Tests (write FIRST, confirm via batchmode) ⚠️
 
-- [ ] T002 [P] [US1] Write `CollectionStoreTests` in `com.faolline.graphcore/Tests/EditMode/Collections/CollectionStoreTests.cs`: idempotent add + count (INV-1); remove drops membership; absent collection → contains false / count 0 / GetCollection empty-non-null / remove+clear no-op (INV-2); independent keyspace vs a scalar of the same key (INV-3); GetCollection returns an independent snapshot (mutating it doesn't change state, INV-5); null/empty key & null item → `[GraphCore]` warn + no-op (INV-9). Confirm RED.
+- [X] T002 [P] [US1] Write `CollectionStoreTests` in `com.faolline.graphcore/Tests/EditMode/Collections/CollectionStoreTests.cs`: idempotent add + count (INV-1); remove drops membership; absent collection → contains false / count 0 / GetCollection empty-non-null / remove+clear no-op (INV-2); independent keyspace vs a scalar of the same key (INV-3); GetCollection returns an independent snapshot (mutating it doesn't change state, INV-5); null/empty key & null item → `[GraphCore]` warn + no-op (INV-9). Confirm RED.
 
 ### Implementation
 
-- [ ] T003 [US1] Implement the collection store in `com.faolline.graphcore/Runtime/Graph/BaseContext.cs`: lazy `_collections` (Dictionary<string,HashSet<string>>); `AddToCollection`/`RemoveFromCollection`/`CollectionContains`/`CollectionCount`/`GetCollection` (read-only snapshot copy)/`ClearCollection`; null/empty-key & null-item guards with `[GraphCore]` warnings. Do NOT touch `_params`/`GetAllParameters`/overlay. XML docs. Confirm T002 GREEN.
+- [X] T003 [US1] Implement the collection store in `com.faolline.graphcore/Runtime/Graph/BaseContext.cs`: lazy `_collections` (Dictionary<string,HashSet<string>>); `AddToCollection`/`RemoveFromCollection`/`CollectionContains`/`CollectionCount`/`GetCollection` (read-only snapshot copy)/`ClearCollection`; null/empty-key & null-item guards with `[GraphCore]` warnings. Do NOT touch `_params`/`GetAllParameters`/overlay. XML docs. Confirm T002 GREEN.
 
 **Checkpoint**: US1 usable — set state can be accumulated and queried.
 
@@ -68,12 +68,12 @@ graphcore lib root: `com.faolline.graphcore/`. Sandbox: `com.faolline.graphTest/
 
 ### Tests (write FIRST) ⚠️
 
-- [ ] T004 [P] [US2] Write `CollectionDurabilityTests` in `com.faolline.graphcore/Tests/EditMode/Collections/CollectionDurabilityTests.cs`: `DeepClone` produces independent copies (mutating clone ≠ source, INV-8); `GetAllCollections` snapshots all collections as read-only copies (INV-7); `GetAllParameters` excludes collections and is unchanged (INV-7); `CopyValuesFrom` (via a clone round-trip) restores collections. Confirm RED.
-- [ ] T005 [P] [US2] Write `CollectionStepBackTests` in `com.faolline.graphcore/Tests/EditMode/Execution/CollectionStepBackTests.cs`: drive a `BaseRunner` over a small graph, mutate a collection across a node boundary, `GoBack`, assert the collection holds exactly the pre-snapshot membership (INV-8 end-to-end). Confirm RED.
+- [X] T004 [P] [US2] Write `CollectionDurabilityTests` in `com.faolline.graphcore/Tests/EditMode/Collections/CollectionDurabilityTests.cs`: `DeepClone` produces independent copies (mutating clone ≠ source, INV-8); `GetAllCollections` snapshots all collections as read-only copies (INV-7); `GetAllParameters` excludes collections and is unchanged (INV-7); `CopyValuesFrom` (via a clone round-trip) restores collections. Confirm RED.
+- [X] T005 [P] [US2] Write `CollectionStepBackTests` in `com.faolline.graphcore/Tests/EditMode/Execution/CollectionStepBackTests.cs`: drive a `BaseRunner` over a small graph, mutate a collection across a node boundary, `GoBack`, assert the collection holds exactly the pre-snapshot membership (INV-8 end-to-end). Confirm RED.
 
 ### Implementation
 
-- [ ] T006 [US2] In `com.faolline.graphcore/Runtime/Graph/BaseContext.cs`: add `GetAllCollections()` (IReadOnlyDictionary<string,IReadOnlyCollection<string>> of copies); extend `DeepClone()` to deep-copy `_collections` (new HashSet per key); extend internal `CopyValuesFrom()` to clear+rebuild `_collections` from the source. `GetAllParameters` untouched. XML docs. Confirm T004 + T005 GREEN.
+- [X] T006 [US2] In `com.faolline.graphcore/Runtime/Graph/BaseContext.cs`: add `GetAllCollections()` (IReadOnlyDictionary<string,IReadOnlyCollection<string>> of copies); extend `DeepClone()` to deep-copy `_collections` (new HashSet per key); extend internal `CopyValuesFrom()` to clear+rebuild `_collections` from the source. `GetAllParameters` untouched. XML docs. Confirm T004 + T005 GREEN.
 
 **Checkpoint**: US1 + US2 = durable, persistable set state (the MVP for the Reactive engine).
 
@@ -89,11 +89,11 @@ graphcore lib root: `com.faolline.graphcore/`. Sandbox: `com.faolline.graphTest/
 
 ### Tests (write FIRST) ⚠️
 
-- [ ] T007 [P] [US3] Write `CollectionNotificationTests` in `com.faolline.graphcore/Tests/EditMode/Collections/CollectionNotificationTests.cs`: notify once on new add; silent on idempotent add; notify on present-remove; silent on absent-remove; notify on clear of a non-empty collection, silent on clear of empty; handler receives the collection key (INV-4); `OffCollectionChanged` stops delivery; re-entrant subscribe/unsubscribe during delivery is safe (INV-4). Confirm RED.
+- [X] T007 [P] [US3] Write `CollectionNotificationTests` in `com.faolline.graphcore/Tests/EditMode/Collections/CollectionNotificationTests.cs`: notify once on new add; silent on idempotent add; notify on present-remove; silent on absent-remove; notify on clear of a non-empty collection, silent on clear of empty; handler receives the collection key (INV-4); `OffCollectionChanged` stops delivery; re-entrant subscribe/unsubscribe during delivery is safe (INV-4). Confirm RED.
 
 ### Implementation
 
-- [ ] T008 [US3] In `com.faolline.graphcore/Runtime/Graph/BaseContext.cs`: add lazy `_collectionSubs`; `OnCollectionChanged`/`OffCollectionChanged` (Action<string>, null/empty-key guarded); fire from Add/Remove/Clear ONLY on real membership change, iterating a subscriber snapshot. XML docs. Confirm T007 GREEN.
+- [X] T008 [US3] In `com.faolline.graphcore/Runtime/Graph/BaseContext.cs`: add lazy `_collectionSubs`; `OnCollectionChanged`/`OffCollectionChanged` (Action<string>, null/empty-key guarded); fire from Add/Remove/Clear ONLY on real membership change, iterating a subscriber snapshot. XML docs. Confirm T007 GREEN.
 
 **Checkpoint**: all three context stories functional.
 
@@ -101,8 +101,8 @@ graphcore lib root: `com.faolline.graphcore/`. Sandbox: `com.faolline.graphTest/
 
 ## Phase 6: Back-compat + overlay-independence (the non-breakage gate)
 
-- [ ] T009 [P] Write `CollectionBackCompatTests` in `com.faolline.graphcore/Tests/EditMode/Execution/CollectionBackCompatTests.cs`: collection ops target the global store while a local context is open and survive `EndLocalContext` (INV-6); opening/ending a local context never branches/discards collections; a context using no collections is identical to 0.4.0 (INV-10). Confirm RED then GREEN.
-- [ ] T010 Run the ENTIRE pre-existing graphcore + graphTest EditMode suite (560) UNMODIFIED via batchmode and confirm 100% green — the non-breakage gate (SC-002). Record the pass count.
+- [X] T009 [P] Write `CollectionBackCompatTests` in `com.faolline.graphcore/Tests/EditMode/Execution/CollectionBackCompatTests.cs`: collection ops target the global store while a local context is open and survive `EndLocalContext` (INV-6); opening/ending a local context never branches/discards collections; a context using no collections is identical to 0.4.0 (INV-10). Confirm RED then GREEN.
+- [X] T010 Run the ENTIRE pre-existing graphcore + graphTest EditMode suite (560) UNMODIFIED via batchmode and confirm 100% green — the non-breakage gate (SC-002). Record the pass count.
 
 ---
 
@@ -116,23 +116,23 @@ graphcore lib root: `com.faolline.graphcore/`. Sandbox: `com.faolline.graphTest/
 
 ### Tests (write FIRST) ⚠️
 
-- [ ] T011 [P] [US4] Write `CollectionExerciseTests` in `com.faolline.graphTest/Tests/EditMode/Runtime/CollectionExerciseTests.cs`: a membership-gated edge selected only when the set contains the item; a count-threshold-gated edge passing at N; a recipe consuming {"x","y"} to produce "z" (and making no change when a required element is missing). Confirm RED.
+- [X] T011 [P] [US4] Write `CollectionExerciseTests` in `com.faolline.graphTest/Tests/EditMode/Runtime/CollectionExerciseTests.cs`: a membership-gated edge selected only when the set contains the item; a count-threshold-gated edge passing at N; a recipe consuming {"x","y"} to produce "z" (and making no change when a required element is missing). Confirm RED.
 
 ### Implementation
 
-- [ ] T012 [P] [US4] Create `com.faolline.graphTest/Runtime/Conditions/TestCollectionContainsCondition.cs` (Key, Item, optional Negate; reads `CollectionContains`), XML docs, `[CreateAssetMenu]`.
-- [ ] T013 [P] [US4] Create `com.faolline.graphTest/Runtime/Conditions/TestCollectionCountCondition.cs` (Key, ComparisonOperator, Value; compares `CollectionCount`), XML docs, `[CreateAssetMenu]`.
-- [ ] T014 [P] [US4] Create `com.faolline.graphTest/Runtime/Actions/TestRecipeAction.cs` (Key, Required list, Reward; if all required present → remove each + add reward), XML docs, `[CreateAssetMenu]`.
-- [ ] T015 [US4] Make T011 GREEN (depends on T012-T014).
+- [X] T012 [P] [US4] Create `com.faolline.graphTest/Runtime/Conditions/TestCollectionContainsCondition.cs` (Key, Item, optional Negate; reads `CollectionContains`), XML docs, `[CreateAssetMenu]`.
+- [X] T013 [P] [US4] Create `com.faolline.graphTest/Runtime/Conditions/TestCollectionCountCondition.cs` (Key, ComparisonOperator, Value; compares `CollectionCount`), XML docs, `[CreateAssetMenu]`.
+- [X] T014 [P] [US4] Create `com.faolline.graphTest/Runtime/Actions/TestRecipeAction.cs` (Key, Required list, Reward; if all required present → remove each + add reward), XML docs, `[CreateAssetMenu]`.
+- [X] T015 [US4] Make T011 GREEN (depends on T012-T014).
 
 ---
 
 ## Phase 8: Polish & Finalize
 
-- [ ] T016 Bump `com.faolline.graphcore/package.json` version `0.4.0` → `0.5.0` (semver MINOR).
-- [ ] T017 [P] Verify XML docs on ALL new public API (the 9 BaseContext methods) and `[GraphCore]` prefix on every misuse warning.
-- [ ] T018 Full batchmode EditMode run of graphcore + graphTest (editor closed, no `-quit`), all green; verify the results XML; record totals. Re-confirm SC-002/SC-004/SC-006.
-- [ ] T019 [P] Validate `quickstart.md` snippets compile and behave as documented; fix drift if any.
+- [X] T016 Bump `com.faolline.graphcore/package.json` version `0.4.0` → `0.5.0` (semver MINOR).
+- [X] T017 [P] Verify XML docs on ALL new public API (the 9 BaseContext methods) and `[GraphCore]` prefix on every misuse warning.
+- [X] T018 Full batchmode EditMode run of graphcore + graphTest (editor closed, no `-quit`), all green; verify the results XML; record totals. Re-confirm SC-002/SC-004/SC-006.
+- [X] T019 [P] Validate `quickstart.md` snippets compile and behave as documented; fix drift if any.
 
 ---
 
