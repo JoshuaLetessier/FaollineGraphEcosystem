@@ -1,5 +1,5 @@
 <!-- SPECKIT START -->
 For additional context about technologies to be used, project structure,
 shell commands, and other important information, read the current plan
-at specs/019-flow-engine/plan.md
+at specs/020-gameflow-host-bridge/plan.md
 <!-- SPECKIT END -->
