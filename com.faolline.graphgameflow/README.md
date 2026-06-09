@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.2.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
+**Version**: 0.3.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -66,6 +66,37 @@ public void OpenDoor()  => _flow.RaiseSignal("door");  // resume a flow parked o
 
 All logic lives in the public methods (`Boot`/`Tick`/`Advance`/`RaiseSignal`/`Stop`); the Unity hooks are
 thin wrappers, so the whole bridge is verifiable in EditMode.
+
+Re-exposed events also include **`OnWaitingForTime`** (the flow entered a timed node — node + duration),
+symmetric with `OnWaitingForSignal`. A scene that subscribes *after* a wait already fired (e.g. it loaded
+mid-flow) can recover the parked state with **`IsWaitingForSignal`** / **`CurrentAwaitSignal`**. Set
+**`BootOnStart = false`** to stop auto-boot on Play and `Boot()` explicitly after configuring the driver.
+
+---
+
+## Running a flow across scenes (important)
+
+One driver running **one graph that spans scenes** must outlive scene loads — a `LoadScene(Single)` tears the
+current scene down, and with it a driver that lives in that scene, mid-flow. Tick **Persist Across Scenes**
+(or place the driver on your own `DontDestroyOnLoad` bootstrap, e.g. shared with a save system):
+
+```csharp
+[SerializeField] private GraphFlowDriver _flow;   // PersistAcrossScenes = true in the inspector
+
+// Scene scripts in the loaded scenes reach the persistent driver without their own singleton:
+void Start()
+{
+    var flow = GraphFlowDriver.Active;
+    flow.OnWaitingForSignal += (n, sig) => { /* enable the door, etc. */ };
+    if (flow.IsWaitingForSignal && flow.CurrentAwaitSignal == "door") EnableDoor();  // recover a missed wait
+}
+```
+
+- `PersistAcrossScenes` (default off) calls `DontDestroyOnLoad` so the driver and its in-progress flow survive
+  single-mode loads. A duplicate per-scene copy self-destructs, leaving the original running.
+- `GraphFlowDriver.Active` is the current persistent driver.
+- **Bigger games**: keep the master flow lean and model a **room / dialogue / ability as a SubGraph node**
+  (graphcore's `SubGraphNodeData` → a `BaseGraph`); the substrate already nests graphs with cycle detection.
 
 ---
 

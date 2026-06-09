@@ -4,6 +4,28 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0]
+
+### Added
+- **Cross-scene persistence** on `GraphFlowDriver`: `PersistAcrossScenes` (default off) keeps the driver alive
+  across single-mode scene loads (`DontDestroyOnLoad`) so one driver runs a graph that spans scenes; a
+  duplicate per-scene copy self-destructs, leaving the original. A static `GraphFlowDriver.Active` lets scene
+  scripts reach the persistent driver without their own singleton.
+- `OnWaitingForTime` event on the driver (node + duration), symmetric with `OnWaitingForSignal`.
+- `BootOnStart` toggle (default on) — turn off to disable auto-boot on Play and `Boot()` explicitly.
+- `IsWaitingForSignal` / `CurrentAwaitSignal` read-only members to recover a wait that fired during a load.
+
+### Fixed
+- The documented multi-scene flow could not actually run: a single driver doing `LoadScene(Single)` was
+  destroyed by its own scene load. Found by dogfooding (an escape-room as one graph spanning three scenes).
+- **Added the missing real cross-scene PlayMode test** (`CrossSceneSurvivalTests`): it performs real
+  `SceneManager` single-mode loads and proves the persistent driver + flow survive and complete. The slice-1/2
+  stub loader recorded loads without tearing scenes down — which is exactly why this shipped green before.
+
+### Notes
+- Additive (MINOR): graphcore + graphstandard untouched; the slice-1/2 driver API is append-only and
+  source-compatible (persist OFF by default ⇒ unchanged behavior). EditMode 661 green; PlayMode 9 green.
+
 ## [0.2.0]
 
 ### Added

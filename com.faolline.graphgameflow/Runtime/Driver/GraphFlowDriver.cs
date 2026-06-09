@@ -19,6 +19,8 @@ namespace Faolline.GraphGameFlow
     {
         [SerializeField] private BaseGraph _graph;
         [SerializeField] private bool      _autoAdvance = true;
+        [SerializeField] private bool      _bootOnStart = true;
+        [SerializeField] private bool      _persistAcrossScenes = false;
 
         private BaseRunner      _runner;
         private GameFlowContext _context;
@@ -30,6 +32,23 @@ namespace Faolline.GraphGameFlow
 
         /// <summary>When true, the driver advances automatically as each node completes.</summary>
         public bool AutoAdvance { get => _autoAdvance; set => _autoAdvance = value; }
+
+        /// <summary>When true (default), the Unity <c>Start</c> hook boots the driver automatically on Play.</summary>
+        public bool BootOnStart { get => _bootOnStart; set => _bootOnStart = value; }
+
+        /// <summary>
+        /// When true, the driver survives scene loads (<c>DontDestroyOnLoad</c>), so a single driver can run a
+        /// graph that spans scenes (e.g. <c>LoadScene(Single)</c> transitions). Read at <c>Awake</c>: set it in
+        /// the inspector, or on an inactive GameObject before it activates. A duplicate persistent driver (a
+        /// per-scene copy) destroys itself, leaving the first one running. Default false.
+        /// </summary>
+        public bool PersistAcrossScenes { get => _persistAcrossScenes; set => _persistAcrossScenes = value; }
+
+        /// <summary>
+        /// The current persistent driver (the one that booted with <see cref="PersistAcrossScenes"/>), or
+        /// null. Lets scene scripts reach the cross-scene driver without writing their own singleton.
+        /// </summary>
+        public static GraphFlowDriver Active { get; private set; }
 
         /// <summary>The scene loader used by scene actions. Defaults to a <see cref="UnitySceneLoader"/>.</summary>
         public ISceneLoader SceneLoader
@@ -47,6 +66,18 @@ namespace Faolline.GraphGameFlow
         /// <summary>True between a successful <see cref="Boot"/> and the flow ending.</summary>
         public bool IsRunning => _running;
 
+        /// <summary>True while running and parked on an await-signal node.</summary>
+        public bool IsWaitingForSignal
+            => _running && _runner != null && _runner.State == RunnerState.WaitingForSignal;
+
+        /// <summary>
+        /// The signal name the flow is currently awaiting while <see cref="IsWaitingForSignal"/>; otherwise
+        /// the empty string. Lets a scene that subscribed late (after the wait fired during a scene load)
+        /// recover the parked state without reaching into the runner.
+        /// </summary>
+        public string CurrentAwaitSignal
+            => IsWaitingForSignal ? (_runner.CurrentNode?.AwaitSignalName ?? "") : "";
+
         /// <summary>Raised when a node is entered.</summary>
         public event Action<BaseNodeData> OnNodeEntered;
 
@@ -62,11 +93,27 @@ namespace Faolline.GraphGameFlow
         /// <summary>Raised when the flow parks awaiting a signal. Args: the node + the awaited name.</summary>
         public event Action<BaseNodeData, string> OnWaitingForSignal;
 
+        /// <summary>Raised when the flow enters a timed node. Args: the node + the wait duration (seconds).</summary>
+        public event Action<BaseNodeData, float> OnWaitingForTime;
+
         // ── Unity hooks (thin wrappers) ─────────────────────────────────────────
 
-        private void Start() => Boot();
+        private void Awake()
+        {
+            if (!_persistAcrossScenes) return;
+            if (Active != null && Active != this)
+            {
+                // A duplicate per-scene copy: the original persistent driver keeps running the flow.
+                Destroy(gameObject);
+                return;
+            }
+            Active = this;
+            DontDestroyOnLoad(gameObject);
+        }
+
+        private void Start() { if (_bootOnStart) Boot(); }
         private void Update() { if (_running) Tick(Time.deltaTime); }
-        private void OnDestroy() => Stop();
+        private void OnDestroy() { Stop(); if (Active == this) Active = null; }
 
         // ── Host bridge surface ─────────────────────────────────────────────────
 
@@ -148,6 +195,7 @@ namespace Faolline.GraphGameFlow
             _runner.OnEnded            += HandleEnded;
             _runner.OnStuck            += HandleStuck;
             _runner.OnWaitingForSignal += HandleWaitingForSignal;
+            _runner.OnWaitingForTime   += HandleWaitingForTime;
         }
 
         private void Unsubscribe()
@@ -158,6 +206,7 @@ namespace Faolline.GraphGameFlow
             _runner.OnEnded            -= HandleEnded;
             _runner.OnStuck            -= HandleStuck;
             _runner.OnWaitingForSignal -= HandleWaitingForSignal;
+            _runner.OnWaitingForTime   -= HandleWaitingForTime;
         }
 
         private void HandleNodeEntered(BaseNodeData node) => OnNodeEntered?.Invoke(node);
@@ -177,6 +226,8 @@ namespace Faolline.GraphGameFlow
         private void HandleStuck() => OnStuck?.Invoke();
 
         private void HandleWaitingForSignal(BaseNodeData node, string signal) => OnWaitingForSignal?.Invoke(node, signal);
+
+        private void HandleWaitingForTime(BaseNodeData node, float seconds) => OnWaitingForTime?.Invoke(node, seconds);
 
         private static bool HasValidStart(BaseGraph graph)
         {

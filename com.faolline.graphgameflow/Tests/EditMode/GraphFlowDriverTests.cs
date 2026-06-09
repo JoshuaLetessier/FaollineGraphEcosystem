@@ -195,5 +195,47 @@ namespace Faolline.GraphGameFlow.Tests
             Assert.DoesNotThrow(() => runner.Proceed());
             Assert.AreEqual(afterBoot, entered, "no driver callback fires after Stop().");
         }
+
+        [Test]
+        public void WaitingState_ReportsParkedAwaitSignal()
+        {
+            var g = NewGraph("start");
+            var gate = St("gate"); gate.AwaitSignalName = "go";
+            g.AddNode(Start("start")); g.AddNode(gate); g.AddNode(End("end"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "gate" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "gate", ToNodeId = "end" });
+            var d = NewDriver(g, autoAdvance: true);
+
+            Assert.IsFalse(d.IsWaitingForSignal, "not waiting before boot.");
+            Assert.AreEqual("", d.CurrentAwaitSignal);
+
+            d.Boot();   // start → gate (await "go"), parks
+            Assert.IsTrue(d.IsWaitingForSignal);
+            Assert.AreEqual("go", d.CurrentAwaitSignal);
+
+            d.RaiseSignal("go");   // gate resumes → end → OnEnded
+            Assert.IsFalse(d.IsWaitingForSignal, "not waiting after the flow ends.");
+            Assert.AreEqual("", d.CurrentAwaitSignal);
+        }
+
+        [Test]
+        public void OnWaitingForTime_FiresForTimedNode()
+        {
+            var g = NewGraph("start");
+            var wait = St("wait"); wait.WaitDuration = 1.5f;
+            g.AddNode(Start("start")); g.AddNode(wait); g.AddNode(End("end"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "wait" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "wait", ToNodeId = "end" });
+            var d = NewDriver(g, autoAdvance: true);
+
+            BaseNodeData timed = null; float secs = -1f;
+            d.OnWaitingForTime += (n, s) => { timed = n; secs = s; };
+
+            d.Boot();   // start → wait node (WaitingForTime) → OnWaitingForTime fires
+
+            Assert.IsNotNull(timed, "OnWaitingForTime must fire when a timed node is entered.");
+            Assert.AreEqual("wait", timed.Id);
+            Assert.AreEqual(1.5f, secs, 0.001f);
+        }
     }
 }
