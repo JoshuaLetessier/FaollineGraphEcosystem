@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.1.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
+**Version**: 0.2.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -88,6 +88,24 @@ someNode.OnEnterActions.Add(load);          // load on entering the node
 `UnitySceneLoader`). A missing/empty scene logs a `[GraphGameFlow]` error and the flow continues.
 
 ---
+
+## Authoring in the editor
+
+You don't have to build graphs in code. The package ships a visual editor mirroring the StarterGraph editor.
+
+- **Create a graph**: Assets ▸ Create ▸ **GraphGameFlow ▸ Game Flow Graph**.
+- **Open it**: double-click the asset → the gameflow editor window. Right-click the canvas to **Add Start /
+  Statement / Choice / SubGraph / End Node**; drag ports to connect. The first Start becomes the entry node.
+  **Save** (Ctrl+S); **Validate** checks the structure.
+- **Configure a node** in the inspector: **Node Properties** (title, checkpoint, entry conditions, and the
+  **On Enter / On Exit Actions** lists — drop a **Load Scene** action here), and a **Flow** foldout for the
+  **await-signal name** and **wait duration**.
+- **Create a Load Scene action**: Assets ▸ Create ▸ **GraphGameFlow ▸ Actions ▸ Load Scene**, set its Scene
+  Name + Mode, and drop it into a node's action list. Scene change is always an action, never a node type.
+- **One-click sample**: **Faolline ▸ GraphGameFlow ▸ Create Reference Scene-Flow Sample** generates a
+  runnable graph (start → load A → await "advance" → load B → end). Assign it to a `GraphFlowDriver` and Play.
+
+Running a flow is the `GraphFlowDriver` in Play; there is no in-editor runner in this version.
 
 ## The reference scene-flow
 

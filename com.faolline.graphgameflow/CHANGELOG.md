@@ -4,6 +4,25 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0]
+
+### Added
+- **Editor authoring** for gameflow, mirroring the StarterGraph editor:
+  - `GameFlowGraph : BaseGraph` — a creatable graph asset (Assets ▸ Create ▸ GraphGameFlow ▸ Game Flow Graph);
+    a `BaseGraph`, so the slice-1 `GraphFlowDriver` accepts it unchanged.
+  - `GameFlowGraphEditorWindow` + `GameFlowGraphView` + node views (Start/Statement/Choice/SubGraph/End) +
+    `GameFlowEdgeView`: a visual canvas to add/connect/move nodes (opens on double-click; Save + Validate
+    toolbar), reusing graphcore's editor infrastructure.
+  - `GameFlowNodeInspectorView`: edits a node's actions (drop in a Load Scene), conditions, checkpoint, and a
+    **Flow** foldout for the await-signal name and wait duration; plus End / SubGraph / Choice sections.
+  - `GameFlowSampleBuilder` (Faolline ▸ GraphGameFlow ▸ Create Reference Scene-Flow Sample): generates the
+    runnable reference flow (start → load A → await "advance" → load B → end) as a `GameFlowGraph` asset.
+- `[CreateAssetMenu]` on `LoadSceneAction` (Assets ▸ Create ▸ GraphGameFlow ▸ Actions ▸ Load Scene).
+
+### Notes
+- Additive (MINOR): graphcore + graphstandard untouched; the slice-1 runtime is unchanged and source-
+  compatible. EditMode 659 green (654 + 5 new editor/data tests); the slice-1 8 PlayMode stay green.
+
 ## [0.1.0]
 
 ### Added

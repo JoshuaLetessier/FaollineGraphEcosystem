@@ -28,6 +28,15 @@ namespace Faolline.GraphGameFlow.Tests
         }
 
         [Test]
+        public void LoadSceneAction_HasCreateAssetMenu_WithExpectedMenuName()
+        {
+            var attr = (CreateAssetMenuAttribute)System.Attribute.GetCustomAttribute(
+                typeof(LoadSceneAction), typeof(CreateAssetMenuAttribute));
+            Assert.IsNotNull(attr, "LoadSceneAction must be creatable from Assets > Create.");
+            Assert.AreEqual("GraphGameFlow/Actions/Load Scene", attr.menuName);
+        }
+
+        [Test]
         public void Execute_RecordsConfiguredScene_Single()
         {
             var stub = new StubSceneLoader();

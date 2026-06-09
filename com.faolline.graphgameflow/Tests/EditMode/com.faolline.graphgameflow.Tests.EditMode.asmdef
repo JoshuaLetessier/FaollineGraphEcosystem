@@ -3,7 +3,9 @@
     "rootNamespace": "Faolline.GraphGameFlow.Tests",
     "references": [
         "com.faolline.graphgameflow.Runtime",
+        "com.faolline.graphgameflow.Editor",
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

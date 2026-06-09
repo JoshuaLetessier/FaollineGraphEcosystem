@@ -11,6 +11,7 @@ namespace Faolline.GraphGameFlow
     /// other action. It resolves the active <see cref="ISceneLoader"/> from the running
     /// <see cref="GameFlowContext"/>, falling back to a default <see cref="UnitySceneLoader"/>.
     /// </summary>
+    [CreateAssetMenu(menuName = "GraphGameFlow/Actions/Load Scene", fileName = "NewLoadSceneAction")]
     public sealed class LoadSceneAction : BaseAction
     {
         private static readonly ISceneLoader DefaultLoader = new UnitySceneLoader();
