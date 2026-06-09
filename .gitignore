@@ -74,3 +74,5 @@ desktop.ini
 # UPM sample folders use the trailing-~ convention and MUST ship (re-include them).
 !Samples~/
 !Samples~/**
+# Generated on-demand by GameFlowSampleBuilder (Faolline > GraphGameFlow > Create Reference Scene-Flow Sample)
+com.faolline.graphgameflow/Samples/
