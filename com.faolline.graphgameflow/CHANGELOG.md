@@ -18,6 +18,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
   - `GameFlowSampleBuilder` (Faolline ▸ GraphGameFlow ▸ Create Reference Scene-Flow Sample): generates the
     runnable reference flow (start → load A → await "advance" → load B → end) as a `GameFlowGraph` asset.
 - `[CreateAssetMenu]` on `LoadSceneAction` (Assets ▸ Create ▸ GraphGameFlow ▸ Actions ▸ Load Scene).
+- `LoadSceneActionEditor`: a custom inspector for `LoadSceneAction` — pick the scene from a dropdown of the
+  project's scenes (no typing), an inline Single-vs-Additive explanation, and a Build-Settings check with a
+  one-click "Add to Build Settings". Runtime is unchanged (still stores the scene name).
 
 ### Notes
 - Additive (MINOR): graphcore + graphstandard untouched; the slice-1 runtime is unchanged and source-

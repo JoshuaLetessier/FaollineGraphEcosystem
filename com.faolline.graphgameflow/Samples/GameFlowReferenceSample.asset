@@ -1,0 +1,179 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-5931454843757856237
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfa06f2e93396454d8b030db7dcce594, type: 3}
+  m_Name: LoadSceneB
+  m_EditorClassIdentifier: com.faolline.graphgameflow.Runtime::Faolline.GraphGameFlow.LoadSceneAction
+  _sceneName: B
+  _mode: 0
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2be811b31eb82374f97369bd98f5752d, type: 3}
+  m_Name: GameFlowReferenceSample
+  m_EditorClassIdentifier: com.faolline.graphgameflow.Runtime::Faolline.GraphGameFlow.GameFlowGraph
+  _graphId: 2c728274-8d25-4bd2-8ad5-56e108c7f434
+  _nodes:
+  - rid: 2948308767965446144
+  - rid: 2948308767965446145
+  - rid: 2948308767965446146
+  - rid: 2948308767965446147
+  - rid: 2948308767965446148
+  _edges:
+  - rid: 2948308767965446149
+  - rid: 2948308767965446150
+  - rid: 2948308767965446151
+  - rid: 2948308767965446152
+  _parameters: []
+  _groups: []
+  _entryNodeId: 1c026e4d-8395-463f-a8b6-ad017cf62851
+  _historyDepth: 20
+  references:
+    version: 2
+    RefIds:
+    - rid: 2948308767965446144
+      type: {class: StartNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 1c026e4d-8395-463f-a8b6-ad017cf62851
+        _nodeType: graphcore/start
+        _title: Start
+        _position: {x: 0, y: 0}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _awaitSignal: 
+        _waitDuration: 0
+    - rid: 2948308767965446145
+      type: {class: StatementNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: fc150fa0-7937-4314-83b2-04adf615d170
+        _nodeType: graphcore/statement
+        _title: Load Scene A
+        _position: {x: 240, y: 0}
+        _entryConditions: []
+        _onEnterActions:
+        - {fileID: 7137615253379275202}
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 1
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _awaitSignal: 
+        _waitDuration: 0
+    - rid: 2948308767965446146
+      type: {class: StatementNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 0355aaee-5801-4008-8520-7a03dc0e2859
+        _nodeType: graphcore/statement
+        _title: Await advance
+        _position: {x: 480, y: 0}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 1
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _awaitSignal: advance
+        _waitDuration: 0
+    - rid: 2948308767965446147
+      type: {class: StatementNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 46d53da5-31d6-4b99-bc4a-b7f0d970ee35
+        _nodeType: graphcore/statement
+        _title: Load Scene B
+        _position: {x: 720, y: 0}
+        _entryConditions: []
+        _onEnterActions:
+        - {fileID: -5931454843757856237}
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _awaitSignal: 
+        _waitDuration: 0
+    - rid: 2948308767965446148
+      type: {class: EndNodeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 679489b9-3caa-4b1a-a224-22f4db983a6a
+        _nodeType: graphcore/end
+        _title: End
+        _position: {x: 960, y: 0}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _awaitSignal: 
+        _waitDuration: 0
+        _endReason: 0
+    - rid: 2948308767965446149
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 318522e1-e88b-4dcf-91ad-9d1d002df580
+        _fromNodeId: 1c026e4d-8395-463f-a8b6-ad017cf62851
+        _toNodeId: fc150fa0-7937-4314-83b2-04adf615d170
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308767965446150
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 47da20e9-707d-4f4d-b357-b71936b9cd7d
+        _fromNodeId: fc150fa0-7937-4314-83b2-04adf615d170
+        _toNodeId: 0355aaee-5801-4008-8520-7a03dc0e2859
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308767965446151
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 8c5774a6-a051-43da-9a83-e7760b6a5e89
+        _fromNodeId: 0355aaee-5801-4008-8520-7a03dc0e2859
+        _toNodeId: 46d53da5-31d6-4b99-bc4a-b7f0d970ee35
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+    - rid: 2948308767965446152
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 49de2413-238f-4f16-ab60-639286d4bbf0
+        _fromNodeId: 46d53da5-31d6-4b99-bc4a-b7f0d970ee35
+        _toNodeId: 679489b9-3caa-4b1a-a224-22f4db983a6a
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+--- !u!114 &7137615253379275202
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cfa06f2e93396454d8b030db7dcce594, type: 3}
+  m_Name: LoadSceneA
+  m_EditorClassIdentifier: com.faolline.graphgameflow.Runtime::Faolline.GraphGameFlow.LoadSceneAction
+  _sceneName: DialogueCanvas
+  _mode: 0

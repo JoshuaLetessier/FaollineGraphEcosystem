@@ -100,10 +100,20 @@ You don't have to build graphs in code. The package ships a visual editor mirror
 - **Configure a node** in the inspector: **Node Properties** (title, checkpoint, entry conditions, and the
   **On Enter / On Exit Actions** lists — drop a **Load Scene** action here), and a **Flow** foldout for the
   **await-signal name** and **wait duration**.
-- **Create a Load Scene action**: Assets ▸ Create ▸ **GraphGameFlow ▸ Actions ▸ Load Scene**, set its Scene
-  Name + Mode, and drop it into a node's action list. Scene change is always an action, never a node type.
-- **One-click sample**: **Faolline ▸ GraphGameFlow ▸ Create Reference Scene-Flow Sample** generates a
-  runnable graph (start → load A → await "advance" → load B → end). Assign it to a `GraphFlowDriver` and Play.
+- **Create a Load Scene action**: Assets ▸ Create ▸ **GraphGameFlow ▸ Actions ▸ Load Scene**, then drop it
+  into a node's action list. Scene change is always an action, never a node type. On the action's inspector
+  you **pick the scene from a dropdown of the project's scenes** (no typing); a hint explains **Single**
+  (replaces the current scene) vs **Additive** (loads on top). A scene must be in **Build Settings** to load
+  at runtime — the inspector warns when it isn't and offers a one-click **Add to Build Settings**.
+- **One-click sample**: **Faolline ▸ GraphGameFlow ▸ Create Reference Scene-Flow Sample** generates the flow
+  `start → load A → await "advance" → load B → end`. Assign it to a `GraphFlowDriver` and Play.
+
+> **The sample is a logic demo.** Its two Load Scene actions point at placeholder scenes named `A` / `B`,
+> which are not in your project. When you Play, the flow runs correctly (it loads-attempts A, parks on the
+> await, and on `RaiseSignal("advance")` loads-attempts B) but the scene loader logs a *graceful*
+> `[GraphGameFlow]` error and skips the missing scenes — by design, it never crashes the flow. To see real
+> scene transitions, select each Load Scene sub-asset and pick one of **your** scenes from the dropdown (and
+> add it to Build Settings if prompted).
 
 Running a flow is the `GraphFlowDriver` in Play; there is no in-editor runner in this version.
 
