@@ -1,0 +1,25 @@
+{
+    "name": "com.faolline.graphgameflow.Tests.PlayMode",
+    "rootNamespace": "Faolline.GraphGameFlow.Tests.PlayMode",
+    "references": [
+        "com.faolline.graphgameflow.Runtime",
+        "com.faolline.graphcore.Runtime",
+        "UnityEngine.TestRunner"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "testPlatforms": [
+        "PlayMode"
+    ]
+}
