@@ -1,0 +1,40 @@
+# Changelog
+
+All notable changes to **com.faolline.graphstandard** are documented here.
+The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
+[Semantic Versioning](https://semver.org/).
+
+## [0.3.0]
+
+### Added
+- **Flow engine** (`FlowRunner`) — the third execution engine: cursor-less and multi-active. Firing a node
+  runs its `OnEnterActions`, emits `OnNodeFired`, then **forks** to every condition-passing outgoing edge; a
+  node with multiple incoming edges **joins** on a k-of-N rendezvous (default = all incoming = AND).
+  Re-pass is intentional (cycles bounded by a fire-count safety cap that warns); per-node **one-shot** marks
+  fire at most once until `Reset`. Join thresholds and one-shot are constructor config — graphcore untouched.
+
+### Fixed
+- `FlowRunner` join bookkeeping now uses a stable per-edge token assigned at construction instead of
+  `BaseEdgeData.Id`. A graph built in code with empty edge ids previously collapsed distinct incoming edges
+  into one bucket, deadlocking an AND-join (or firing an OR-join too eagerly).
+- `FlowRunner` cascade is now driven by an explicit work queue instead of recursion, so a deep or wide flow
+  cannot overflow the call stack before reaching the safety cap.
+
+## [0.2.0]
+
+### Added
+- **Generic threshold join** for the Reactive engine: `ReactiveEvaluator` takes an optional
+  `requiredCounts` map (node id → k). A node becomes Available when at least *k* of its *N* prerequisites are
+  Completed. `k = N` is AND (the default for any unlisted node), `k = 1` is OR, `1 < k < N` is N-of-M,
+  `k ≤ 0` is ungated, `k > N` never auto-available. Additive and source-compatible — all 0.1.0 callers keep
+  the default AND behavior.
+
+## [0.1.0]
+
+### Added
+- Initial release of the buffer library above `com.faolline.graphcore`.
+- **Reactive engine** (`ReactiveEvaluator`, `ReactiveNodeState`): cursor-less prerequisite/progression DAG.
+  Reads each edge as a prerequisite and derives `Locked | Available | Completed` from graph topology plus a
+  completed-set collection on the shared `BaseContext`. `MarkCompleted` cascades unlocks and raises
+  `OnNodeAvailable` / `OnNodeCompleted`; `Start` emits the initial state; `Reevaluate` re-derives idempotently
+  after a host step-back.

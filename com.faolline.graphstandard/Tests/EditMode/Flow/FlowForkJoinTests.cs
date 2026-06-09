@@ -81,6 +81,26 @@ namespace Faolline.GraphStandard.Tests
         }
 
         [Test]
+        public void AndJoin_WithEmptyEdgeIds_StillFiresOnce()
+        {
+            // A graph built in code may leave edge ids empty (the editor assigns GUIDs, the data layer
+            // does not). The join must still count each distinct incoming edge — not collapse them.
+            var g = NewGraph();
+            g.AddNode(Node("a")); g.AddNode(Node("b")); g.AddNode(Node("j"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "a", ToNodeId = "j" });   // no Id
+            g.AddEdge(new BaseEdgeData { FromNodeId = "b", ToNodeId = "j" });   // no Id
+
+            var flow = new FlowRunner(g, new BaseContext());
+            int jFires = 0; flow.OnNodeFired += id => { if (id == "j") jFires++; };
+
+            flow.Fire("a");
+            Assert.IsFalse(flow.HasFired("j"), "AND-join must not fire on one branch even with empty edge ids.");
+            flow.Fire("b");
+            Assert.IsTrue(flow.HasFired("j"), "AND-join fires once both empty-id branches have delivered.");
+            Assert.AreEqual(1, jFires);
+        }
+
+        [Test]
         public void ForkReconvergingAtJoin_FiresJoinOnce()
         {
             var g = NewGraph();

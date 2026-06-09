@@ -18,19 +18,33 @@ namespace Faolline.GraphStandard
     /// cap rather than looping forever). A per-node ONE-SHOT mark fires a node at most once until
     /// <see cref="Reset"/>. graphcore is untouched — thresholds and one-shot are FlowRunner configuration.
     /// </para>
+    /// <para>
+    /// The cascade is driven by an explicit work queue (not recursion), so a deep or wide flow cannot
+    /// overflow the call stack before reaching the safety cap. Join bookkeeping uses a stable per-edge
+    /// token assigned at construction (independent of <see cref="BaseEdgeData.Id"/>), so a graph built in
+    /// code with empty edge ids still joins correctly.
+    /// </para>
     /// </summary>
     public class FlowRunner
     {
+        private readonly struct Link
+        {
+            public readonly BaseEdgeData Edge;
+            public readonly string Token;
+            public Link(BaseEdgeData edge, string token) { Edge = edge; Token = token; }
+        }
+
         private readonly BaseContext _context;
         private readonly int _maxFires;
         private readonly HashSet<string> _oneShot = new HashSet<string>();
         private readonly Dictionary<string, int> _joinThresholds = new Dictionary<string, int>();
         private readonly Dictionary<string, int> _incoming = new Dictionary<string, int>();
-        private readonly Dictionary<string, List<BaseEdgeData>> _outgoing = new Dictionary<string, List<BaseEdgeData>>();
+        private readonly Dictionary<string, List<Link>> _outgoing = new Dictionary<string, List<Link>>();
         private readonly Dictionary<string, BaseNodeData> _nodes = new Dictionary<string, BaseNodeData>();
 
         private readonly HashSet<string> _fired = new HashSet<string>();
         private readonly Dictionary<string, HashSet<string>> _arrived = new Dictionary<string, HashSet<string>>();
+        private readonly Queue<string> _pending = new Queue<string>();
         private int _fireCount;
         private bool _capWarned;
 
@@ -69,17 +83,24 @@ namespace Faolline.GraphStandard
                 if (node != null && !string.IsNullOrEmpty(node.Id))
                     _nodes[node.Id] = node;
 
+            // Assign each edge a STABLE, unique join token at construction. The token is internal to the
+            // join bookkeeping and deliberately independent of edge.Id: an author building a graph in code
+            // may leave Id empty (the editor assigns GUIDs, but the data layer does not), and keying the
+            // join on Id would collapse distinct incoming edges into one bucket — an AND-join would then
+            // deadlock (or an OR-join fire too eagerly). A monotonic sequence guarantees uniqueness.
+            int seq = 0;
             foreach (var edge in graph.Edges)
             {
                 if (edge == null || string.IsNullOrEmpty(edge.FromNodeId) || string.IsNullOrEmpty(edge.ToNodeId))
                     continue;
                 if (!_outgoing.TryGetValue(edge.FromNodeId, out var list))
                 {
-                    list = new List<BaseEdgeData>();
+                    list = new List<Link>();
                     _outgoing[edge.FromNodeId] = list;
                 }
-                list.Add(edge);
+                list.Add(new Link(edge, "#" + seq));
                 _incoming[edge.ToNodeId] = (_incoming.TryGetValue(edge.ToNodeId, out var c) ? c : 0) + 1;
+                seq++;
             }
         }
 
@@ -91,7 +112,10 @@ namespace Faolline.GraphStandard
         {
             _fireCount = 0;
             _capWarned = false;
-            FireNode(nodeId);
+            _pending.Clear();
+            _pending.Enqueue(nodeId);
+            while (_pending.Count > 0)
+                FireNode(_pending.Dequeue());
         }
 
         /// <summary>Clears all fired and token state — re-arms one-shots for a fresh pass.</summary>
@@ -132,10 +156,12 @@ namespace Faolline.GraphStandard
             if (_arrived.TryGetValue(id, out var myTokens))
                 myTokens.Clear();
 
-            // Fork: deliver a token along every condition-passing outgoing edge.
-            if (!_outgoing.TryGetValue(id, out var edges)) return;
-            foreach (var edge in edges)
+            // Fork: deliver a token along every condition-passing outgoing edge; enqueue a target the moment
+            // its join threshold is met, consuming its rendezvous so a deferred fire is enqueued only once.
+            if (!_outgoing.TryGetValue(id, out var links)) return;
+            foreach (var link in links)
             {
+                var edge = link.Edge;
                 if (edge.Condition != null && !edge.Condition.Evaluate(_context)) continue;
                 var target = edge.ToNodeId;
                 if (!_arrived.TryGetValue(target, out var set))
@@ -143,9 +169,12 @@ namespace Faolline.GraphStandard
                     set = new HashSet<string>();
                     _arrived[target] = set;
                 }
-                set.Add(edge.Id);
+                set.Add(link.Token);
                 if (set.Count >= Threshold(target))
-                    FireNode(target);
+                {
+                    set.Clear();
+                    _pending.Enqueue(target);
+                }
             }
         }
 

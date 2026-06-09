@@ -5,6 +5,6 @@
     "description": "Concrete verification package for com.faolline.graphcore. Exercises the full editor and runtime surface.",
     "unity": "6000.0",
     "dependencies": {
-        "com.faolline.graphcore": "0.0.0"
+        "com.faolline.graphcore": "0.6.0"
     }
 }
