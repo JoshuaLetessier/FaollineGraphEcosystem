@@ -28,6 +28,13 @@ namespace Faolline.GraphCore
         /// <see cref="BaseRunner.ChooseById"/> are no-ops in this state — only a matching
         /// <see cref="BaseRunner.RaiseSignal(string)"/> advances execution.
         /// </summary>
-        WaitingForSignal = 4
+        WaitingForSignal = 4,
+
+        /// <summary>
+        /// The current node declared a positive <see cref="BaseNodeData.WaitDuration"/>; the runner entered
+        /// it and is holding until enough host-fed time has elapsed via <see cref="BaseRunner.Tick"/>.
+        /// <see cref="BaseRunner.Proceed"/> and <see cref="BaseRunner.ChooseById"/> are no-ops in this state.
+        /// </summary>
+        WaitingForTime = 5
     }
 }

@@ -24,6 +24,7 @@ namespace Faolline.GraphCore
         [SerializeField] private bool  _hasColorOverride;
         [SerializeField] private Color _nodeColor;
         [SerializeField] private string _awaitSignal = string.Empty;
+        [SerializeField] private float  _waitDuration;
 
         /// <summary>Unique identifier (GUID) for this node.</summary>
         public string Id
@@ -102,6 +103,18 @@ namespace Faolline.GraphCore
         {
             get => _awaitSignal;
             set => _awaitSignal = value ?? string.Empty;
+        }
+
+        /// <summary>
+        /// When greater than zero, entering this node holds execution (<see cref="RunnerState.WaitingForTime"/>)
+        /// for this many seconds of host-fed time (via <see cref="BaseRunner.Tick"/>) before advancing. Zero
+        /// (the default) means no timed hold. If <see cref="AwaitSignalName"/> is also set, the signal wait
+        /// takes precedence and this duration is ignored. Append-only metadata.
+        /// </summary>
+        public float WaitDuration
+        {
+            get => _waitDuration;
+            set => _waitDuration = value;
         }
     }
 }

@@ -46,6 +46,7 @@ namespace Faolline.GraphCore
         private BaseContext _context;
         private NodeExecutorRegistry _registry;
         private BaseGraph _rootGraph;
+        private float _waitRemaining;
 
         // ── Events ─────────────────────────────────────────────────────────────
 
@@ -74,6 +75,13 @@ namespace Faolline.GraphCore
         /// <see cref="RaiseSignal(string)"/> with the matching name to advance. Args: the node + awaited name.
         /// </summary>
         public event Action<BaseNodeData, string> OnWaitingForSignal;
+
+        /// <summary>
+        /// Raised when a node with a positive <see cref="BaseNodeData.WaitDuration"/> is entered. The runner
+        /// is now <see cref="RunnerState.WaitingForTime"/>; feed elapsed time via <see cref="Tick"/> to
+        /// advance. Args: the node + the duration in seconds.
+        /// </summary>
+        public event Action<BaseNodeData, float> OnWaitingForTime;
 
         // ── Lifecycle ──────────────────────────────────────────────────────────
 
@@ -224,6 +232,24 @@ namespace Faolline.GraphCore
                 ExitAndAdvance();
         }
 
+        // ── Time ───────────────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Feeds <paramref name="deltaSeconds"/> of elapsed time. When the runner is holding on a node's
+        /// <see cref="BaseNodeData.WaitDuration"/> (<see cref="RunnerState.WaitingForTime"/>), the remaining
+        /// time is reduced; once it reaches zero the runner advances as <see cref="Proceed"/> would. A
+        /// non-positive <paramref name="deltaSeconds"/>, or a call while not time-waiting, is a no-op — so
+        /// pause is simply not ticking and slow-motion is a scaled dt. The runner owns no clock.
+        /// </summary>
+        public void Tick(float deltaSeconds)
+        {
+            if (_state != RunnerState.WaitingForTime) return;
+            if (deltaSeconds <= 0f) return;
+            _waitRemaining -= deltaSeconds;
+            if (_waitRemaining <= 0f)
+                ExitAndAdvance();
+        }
+
         // ── Internal: node entry ───────────────────────────────────────────────
 
         private void EnterCurrentNode()
@@ -270,6 +296,15 @@ namespace Faolline.GraphCore
             {
                 _state = RunnerState.WaitingForSignal;
                 OnWaitingForSignal?.Invoke(node, node.AwaitSignalName);
+                return;
+            }
+
+            // Time wait: hold here until enough host-fed time has elapsed (Tick).
+            if (node.WaitDuration > 0f)
+            {
+                _state = RunnerState.WaitingForTime;
+                _waitRemaining = node.WaitDuration;
+                OnWaitingForTime?.Invoke(node, node.WaitDuration);
                 return;
             }
 
