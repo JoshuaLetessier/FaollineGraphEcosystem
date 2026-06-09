@@ -1,6 +1,6 @@
 # com.faolline.graphcore
 
-**Version**: 0.2.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
+**Version**: 0.6.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
 
 Shared foundation library for graph-based systems in the Faolline ecosystem. Provides the
 **data layer** (graph structure, nodes, edges, parameters) and the **execution runtime**
@@ -103,10 +103,16 @@ All nodes derive from `BaseNodeData`. Key members:
 |--------|-------------|
 | `Id` | Unique string id within the graph |
 | `NodeType` | Constant string used for executor dispatch |
+| `Title` | Optional author-facing name (shown in the editor; falls back to the type label) |
 | `EntryConditions` | `List<BaseCondition>` — all must pass to enter the node |
 | `OnEnterActions` | `List<BaseAction>` — run after conditions pass |
 | `OnExitActions` | `List<BaseAction>` — run before advancing |
 | `IsCheckpoint` | If `true`, `GoBackToCheckpoint` can restore to this node |
+| `AwaitSignalName` | When set, entering the node **parks** the runner until `RaiseSignal(name)` is raised (0.4.0) |
+| `WaitDuration` | When `> 0`, entering the node holds for this many seconds of host-fed time via `Tick` before advancing (0.6.0) |
+
+`AwaitSignalName` and `WaitDuration` are append-only universal metadata on every node — they make graphs
+*wait*: on an external cue (a signal) or on elapsed time. See **Signals & timed waits** under the runner.
 
 Built-in node types and their `NodeTypeId` constants:
 
@@ -232,6 +238,10 @@ Idle ──Start()──► NodeReady ──Proceed() / ChooseById()──► ..
 | `OnNodeCompleted(BaseNodeData)` | Immediately after `OnNodeEntered` — runner pauses here |
 | `OnEnded(EndReason)` | When an `EndNodeData` is reached at root level |
 | `OnStuck()` | When an entry condition fails or no outgoing edge is available |
+| `OnWaitingForSignal(BaseNodeData, string)` | The node declared `AwaitSignalName`; the runner parks (0.4.0) |
+| `OnWaitingForTime(BaseNodeData, float)` | The node declared `WaitDuration`; the runner holds on time (0.6.0) |
+
+`RunnerState` is `Idle | NodeReady | Paused | Ended | WaitingForSignal | WaitingForTime`.
 
 **Node execution sequence** (per node):
 
@@ -295,6 +305,49 @@ current node before restoring.
 
 ---
 
+## Signals & timed waits
+
+graphcore graphs can **wait** — for an external cue or for elapsed time — and the host drives both. No
+`MonoBehaviour`; the host (e.g. a driver) decides when to feed signals and time.
+
+**Signals** (0.4.0): set `BaseNodeData.AwaitSignalName` to park the runner on entry. The host raises a
+signal; if the current node awaits exactly that name, the runner advances as `Proceed` would. Delivery to
+context subscribers happens whether or not anything is waiting.
+
+```csharp
+gate.AwaitSignalName = "advance";          // entering 'gate' parks the runner (State = WaitingForSignal)
+// … later, from the host:
+runner.RaiseSignal("advance");             // matches → resumes; non-matching names are ignored
+runner.RaiseSignal<int>("score", 10);      // scalar payload, readable via context.TryGetLastSignal
+
+// context-level signal channel (decoupled listeners):
+context.OnSignal("advance", args => { /* args.Name, args.GetPayload<T>() */ });
+```
+
+**Timed waits** (0.6.0): set `BaseNodeData.WaitDuration` (seconds) to hold on entry until the host feeds
+enough time. The runner owns no clock — the host calls `Tick`:
+
+```csharp
+wait.WaitDuration = 2f;                     // entering 'wait' holds (State = WaitingForTime)
+runner.Tick(Time.deltaTime);               // each frame; advances once the duration elapses. dt ≤ 0 ignored.
+```
+
+If a node sets both, the signal wait takes precedence. `StartFrom(graph, nodeId, ctx, registry)` starts at a
+given node (e.g. restoring a saved session) instead of the entry node.
+
+## Context: parameters, signals, collections, scopes
+
+`BaseContext` is more than a typed blackboard:
+
+- **Parameters** — `Set/Get/TryGet/Has` for `bool`/`int`/`float`/`string`, with `OnParameterChanged`.
+- **Signals** — `RaiseSignal(name[, payload])`, `OnSignal`/`OffSignal`, `TryGetLastSignal` (0.4.0).
+- **Collections** (0.4.0) — named string-sets for save-friendly state (inventory, visited rooms, a
+  completed-set): `AddToCollection`/`RemoveFromCollection`/`CollectionContains`/`CollectionCount`/
+  `GetCollection`/`ClearCollection`/`OnCollectionChanged`/`GetAllCollections`. Deep-copied by `DeepClone`.
+- **Scoped (global + local) contexts** (0.3.0) — a sub-graph can ride the parent context with a fresh
+  **local overlay** (`BeginLocalContext`/`EndLocalContext`); reads fall through to global, writes land local
+  and are discarded when the scope ends. Used by `SubGraphNodeData.OpensScope`.
+
 ## Assembly Definitions
 
 | Assembly | Platforms | Auto-referenced |
@@ -320,6 +373,21 @@ current node before restoring.
 ---
 
 ## Changelog
+
+### 0.6.0
+- **Timed waits**: `BaseNodeData.WaitDuration` + `BaseRunner.Tick` + `RunnerState.WaitingForTime` +
+  `OnWaitingForTime`. The host feeds elapsed time; the node holds until the duration elapses.
+
+### 0.4.0
+- **Signals**: `BaseNodeData.AwaitSignalName` + `BaseRunner.RaiseSignal`(+payload) +
+  `RunnerState.WaitingForSignal` + `OnWaitingForSignal`; a `BaseContext` signal channel
+  (`RaiseSignal`/`OnSignal`/`TryGetLastSignal`, `SignalArgs`).
+- **Collections**: named string-sets on `BaseContext` (add/remove/contains/count/clear/changed), deep-cloned.
+
+### 0.3.0
+- **Global + local execution contexts**: a sub-graph can ride the parent context with a fresh local overlay
+  (`BeginLocalContext`/`EndLocalContext`; `SubGraphNodeData.OpensScope`); local writes are discarded on scope
+  end. Append-only on `BaseContext`/`BaseRunner`.
 
 ### 0.2.0
 - Added `BaseContext` — typed parameter blackboard with subscriptions, deep clone, graph init
