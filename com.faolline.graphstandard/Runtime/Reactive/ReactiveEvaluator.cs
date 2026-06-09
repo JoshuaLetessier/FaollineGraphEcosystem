@@ -26,6 +26,9 @@ namespace Faolline.GraphStandard
         private readonly string _completedSetKey;
         private readonly Dictionary<string, List<string>> _prerequisites = new Dictionary<string, List<string>>();
         private readonly Dictionary<string, ReactiveNodeState> _states = new Dictionary<string, ReactiveNodeState>();
+        // Per-node required count k (how many prerequisites must be Completed for Available). A node not
+        // listed here defaults to its full prerequisite count N (i.e. AND). 0.2.0.
+        private readonly Dictionary<string, int> _requiredCounts;
 
         /// <summary>Raised when a node enters <see cref="ReactiveNodeState.Available"/>; the node id is passed.</summary>
         public event Action<string> OnNodeAvailable;
@@ -36,12 +39,24 @@ namespace Faolline.GraphStandard
         /// <summary>
         /// Builds the prerequisite map from <paramref name="graph"/>'s edges and computes the initial node
         /// states (silently — call <see cref="Start"/> after subscribing to receive the initial events).
+        /// <para>
+        /// <paramref name="requiredCounts"/> optionally maps a node id to the number of its prerequisites
+        /// that must be Completed for it to become Available (k-of-N): <c>k = N</c> is AND (the default for
+        /// any unlisted node), <c>k = 1</c> is OR, <c>1 &lt; k &lt; N</c> is N-of-M, <c>k ≤ 0</c> is ungated,
+        /// and <c>k &gt; N</c> never becomes Available from prerequisites. Pass <c>null</c> for all-AND.
+        /// </para>
         /// </summary>
-        public ReactiveEvaluator(BaseGraph graph, BaseContext context, string completedSetKey)
+        public ReactiveEvaluator(BaseGraph graph, BaseContext context, string completedSetKey,
+            IReadOnlyDictionary<string, int> requiredCounts = null)
         {
             _graph = graph;
             _context = context;
             _completedSetKey = completedSetKey;
+
+            _requiredCounts = new Dictionary<string, int>();
+            if (requiredCounts != null)
+                foreach (var kvp in requiredCounts)
+                    _requiredCounts[kvp.Key] = kvp.Value;
 
             if (graph == null || context == null || string.IsNullOrEmpty(completedSetKey))
             {
@@ -144,13 +159,18 @@ namespace Faolline.GraphStandard
             if (_context != null && _context.CollectionContains(_completedSetKey, nodeId))
                 return ReactiveNodeState.Completed;
 
+            int n = 0, completed = 0;
             if (_prerequisites.TryGetValue(nodeId, out var prereqs))
             {
+                n = prereqs.Count;
                 foreach (var prereq in prereqs)
-                    if (_context == null || !_context.CollectionContains(_completedSetKey, prereq))
-                        return ReactiveNodeState.Locked;
+                    if (_context != null && _context.CollectionContains(_completedSetKey, prereq))
+                        completed++;
             }
-            return ReactiveNodeState.Available;
+
+            // Required count k: configured per node, else the full prerequisite count N (AND).
+            int required = _requiredCounts.TryGetValue(nodeId, out var k) ? k : n;
+            return completed >= required ? ReactiveNodeState.Available : ReactiveNodeState.Locked;
         }
 
         private List<string> CollectByState(ReactiveNodeState state)
