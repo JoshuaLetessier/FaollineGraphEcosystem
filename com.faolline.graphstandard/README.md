@@ -1,6 +1,6 @@
 # com.faolline.graphstandard
 
-**Version**: 0.4.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
+**Version**: 0.5.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
 
 Buffer library **above** `com.faolline.graphcore`. graphcore is the universal **data substrate** (graph,
 nodes, edges, conditions, actions, context) plus the **Linear** reference runner (`BaseRunner`, single
@@ -140,6 +140,46 @@ var eval = new ReactiveEvaluator(graph, ctx, "completed",
 `MarkCompleted` records completion and cascades unlocks. After the host restores a *different* completed-set
 (a step-back / un-complete), call `Reevaluate()` to re-derive — derivation is idempotent and reversible:
 state depends only on the current set, never on history.
+
+---
+
+## Standard collection primitives
+
+Authorable standard nodes/edges over graphcore's string-set collections — attach them as assets, no scripting:
+
+| Primitive | Kind | Effect |
+|-----------|------|--------|
+| `AddToCollectionAction` | action (on-enter/on-exit) | adds a configured value to a configured collection key (idempotent; no-op on empty key/value) |
+| `CollectionContainsCondition` | condition | satisfied when the collection contains a configured value (absent key ⇒ false) |
+| `CollectionCountAtLeastCondition` | condition | satisfied when the collection's count ≥ a threshold (threshold 0 ⇒ always true; absent key ⇒ 0) |
+
+These are the universal write/read half of progression: a node *records* into a collection; an edge *gates* on it.
+
+### Hosting a reactive progression on a shared context
+
+Compose the **Linear driver** (gameflow), these **collection primitives**, and the **`ReactiveEvaluator`** into
+a live progression on one shared blackboard — no bespoke action, condition, or engine:
+
+```csharp
+// progressionGraph: edges encode prerequisites; requiredCounts gives k-of-N (2-of-3 unlocks "exit").
+var ctx  = new GameFlowContext();
+var eval = new ReactiveEvaluator(progressionGraph, ctx, "completed",
+    requiredCounts: new Dictionary<string, int> { ["exit"] = 2 });
+
+eval.OnNodeAvailable += id => Debug.Log($"available: {id}");
+
+// The two-line bridge: an AddToCollectionAction write re-derives the progression.
+ctx.OnCollectionChanged("completed", _ => eval.Reevaluate());
+
+driver.BootOnStart = false;
+driver.Boot(ctx);     // gameflow Boot(context, registry) seam — the flow runs on the SAME ctx
+eval.Start();
+```
+
+A Linear-flow node carrying `AddToCollectionAction { completed, "roomA" }` records `roomA` on entry; the bridge
+calls `Reevaluate`; once two ids are present, `exit` becomes `Available`. A Linear edge can *also* gate directly
+with `CollectionCountAtLeastCondition { completed, 2 }`. (A turnkey wrapper that owns the evaluator and
+auto-bridges is deferred until a real consumer shows the two-line bridge is a burden.)
 
 ---
 

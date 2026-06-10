@@ -4,6 +4,29 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0]
+
+### Added
+- **Universal collection primitives** (Runtime) — authorable standard nodes/edges for graphcore's string-set
+  collections, promoting what previously lived only in the `graphTest` fixtures into the real lib:
+  - **`AddToCollectionAction`** (`GraphStandard/Actions/Add To Collection`): a node enter/exit action that
+    records a configured value into a configured collection key. Idempotent; a graceful no-op on empty
+    key/value.
+  - **`CollectionContainsCondition`** (`GraphStandard/Conditions/Collection Contains`): satisfied when the
+    collection contains a configured value (absent key ⇒ false).
+  - **`CollectionCountAtLeastCondition`** (`GraphStandard/Conditions/Collection Count At Least`): satisfied
+    when the collection's count reaches a threshold — how a "k-of-N done unlocks this" gate is expressed on a
+    Linear edge (threshold 0 ⇒ always true; absent key ⇒ count 0).
+
+### Notes
+- Additive (MINOR); graphcore + gameflow + graphTest untouched (the graphTest collection fixtures remain as the
+  reactive-engine test reference). From round-3 dogfooding (the slice-5 boot-seam growth path made usable).
+- **Reactive-hosting pattern** (README): a Linear flow records completion through `AddToCollectionAction` into a
+  shared *completed-set*; a `ReactiveEvaluator` over the **same** context (k-of-N via `requiredCounts`) derives
+  the unlocks; the consumer bridges with a two-line `BaseContext.OnCollectionChanged(key, _ => evaluator.Reevaluate())`,
+  and shares the context with the driver via the gameflow `Boot(context, registry)` seam. No bespoke action,
+  condition, or engine needed. A turnkey wrapper that owns the evaluator is deferred until dogfooding justifies it.
+
 ## [0.4.0]
 
 ### Added
