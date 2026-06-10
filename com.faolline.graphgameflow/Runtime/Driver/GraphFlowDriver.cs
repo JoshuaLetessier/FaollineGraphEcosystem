@@ -135,11 +135,24 @@ namespace Faolline.GraphGameFlow
         // ── Host bridge surface ─────────────────────────────────────────────────
 
         /// <summary>
-        /// Boots the runner over <see cref="Graph"/> and a fresh shared context. Logs a
+        /// Boots the runner over <see cref="Graph"/> and a fresh shared context (its scene loader set, then
+        /// initialised from the graph's declared parameters) with an empty executor registry. Logs a
         /// <c>[GraphGameFlow]</c> warning and stays inert if there is no graph / no valid start node, or if
         /// already running.
         /// </summary>
-        public void Boot()
+        public void Boot() => BootInternal(null, null);
+
+        /// <summary>
+        /// Boots on a CALLER-SUPPLIED context and executor registry — prepare shared state (collections,
+        /// parameters, services) and register custom node executors BEFORE the flow starts. A null
+        /// <paramref name="context"/> falls back to a fresh graph-initialised one; a null
+        /// <paramref name="registry"/> to an empty one. A supplied context is used as-is (it is NOT
+        /// re-initialised from the graph, so seeded values survive); its <see cref="GameFlowContext.SceneLoader"/>
+        /// is filled with the driver's only when it is null. The same boot guards apply.
+        /// </summary>
+        public void Boot(GameFlowContext context, NodeExecutorRegistry registry) => BootInternal(context, registry);
+
+        private void BootInternal(GameFlowContext context, NodeExecutorRegistry registry)
         {
             if (_running)
             {
@@ -157,12 +170,23 @@ namespace Faolline.GraphGameFlow
                 return;
             }
 
-            _context = new GameFlowContext { SceneLoader = SceneLoader };
-            _context.InitFromGraph(_graph);
+            if (context != null)
+            {
+                // Caller owns this context (they seeded it): use it as-is, and only fill the scene loader when
+                // absent so LoadSceneAction works. Do NOT InitFromGraph — that would overwrite seeded params.
+                _context = context;
+                if (_context.SceneLoader == null) _context.SceneLoader = SceneLoader;
+            }
+            else
+            {
+                _context = new GameFlowContext { SceneLoader = SceneLoader };
+                _context.InitFromGraph(_graph);
+            }
+
             _runner = new BaseRunner();
             Subscribe();
             _running = true;
-            _runner.Start(_graph, _context, new NodeExecutorRegistry());
+            _runner.Start(_graph, _context, registry ?? new NodeExecutorRegistry());
         }
 
         /// <summary>Forwards <paramref name="deltaSeconds"/> of elapsed time to the runner. dt ≤ 0 is ignored.</summary>

@@ -37,6 +37,14 @@ namespace Faolline.GraphGameFlow.Tests
         private static StatementNodeData St(string id) => new StatementNodeData { Id = id, NodeType = StatementNodeData.NodeTypeId };
         private static EndNodeData End(string id) => new EndNodeData { Id = id, NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
 
+        private LoadSceneAction MakeLoad(string scene)
+        {
+            var a = ScriptableObject.CreateInstance<LoadSceneAction>();
+            a.SceneName = scene; a.Mode = UnityEngine.SceneManagement.LoadSceneMode.Single;
+            _so.Add(a);
+            return a;
+        }
+
         private GraphFlowDriver NewDriver(BaseGraph graph, bool autoAdvance)
         {
             var go = new GameObject("driver");
@@ -264,6 +272,119 @@ namespace Faolline.GraphGameFlow.Tests
             Assert.IsNotNull(timed, "OnWaitingForTime must fire when a timed node is entered.");
             Assert.AreEqual("wait", timed.Id);
             Assert.AreEqual(1.5f, secs, 0.001f);
+        }
+
+        // ── Boot seam: Boot(context, registry) ──────────────────────────────────
+
+        private sealed class SentinelExecutor : INodeExecutor
+        {
+            public string NodeType => StatementNodeData.NodeTypeId;
+            public void Execute(BaseNodeData node, BaseContext context) => context.Set<bool>("executorRan", true);
+            public void Undo(BaseNodeData node, BaseContext context) { }
+        }
+
+        private BaseGraph LinearGraph()   // start → s → end
+        {
+            var g = NewGraph("start");
+            g.AddNode(Start("start")); g.AddNode(St("s")); g.AddNode(End("end"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "s" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "s", ToNodeId = "end" });
+            return g;
+        }
+
+        [Test]
+        public void BootWithContext_RunsOnThatContext_AndKeepsSeededState()
+        {
+            var d = NewDriver(LinearGraph(), autoAdvance: true);
+            var ctx = new GameFlowContext();
+            ctx.Set<int>("seed", 42);
+
+            d.Boot(ctx, null);
+
+            Assert.AreSame(ctx, d.Context, "the flow runs on the provided context.");
+            Assert.AreEqual(42, d.Context.Get<int>("seed"), "seeded state survives.");
+        }
+
+        [Test]
+        public void BootWithContext_DoesNotInitFromGraph()
+        {
+            var g = LinearGraph();
+            g.AddParameter(new ParameterData { Key = "p", Type = ParameterType.Int, DefaultValue = "1" });
+            var d = NewDriver(g, autoAdvance: true);
+            var ctx = new GameFlowContext();
+            ctx.Set<int>("p", 5);   // pre-seeded; must NOT be reset to the graph default (1)
+
+            d.Boot(ctx, null);
+
+            Assert.AreEqual(5, d.Context.Get<int>("p"), "a provided context is not re-initialised from the graph.");
+        }
+
+        [Test]
+        public void BootWithContext_FillsSceneLoaderWhenAbsent_ElseKeepsIt()
+        {
+            // Absent → filled with the driver's loader.
+            var g1 = NewGraph("start");
+            var load1 = St("load"); load1.OnEnterActions.Add(MakeLoad("X"));
+            g1.AddNode(Start("start")); g1.AddNode(load1); g1.AddNode(End("end"));
+            g1.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "load" });
+            g1.AddEdge(new BaseEdgeData { FromNodeId = "load", ToNodeId = "end" });
+            var d1 = NewDriver(g1, autoAdvance: true);
+            var driverStub = new StubSceneLoader(); d1.SceneLoader = driverStub;
+            var ctxNoLoader = new GameFlowContext();   // SceneLoader == null
+
+            d1.Boot(ctxNoLoader, null);
+            Assert.AreEqual("X", driverStub.LastScene, "a context without a loader gets the driver's.");
+
+            // Present → kept.
+            var g2 = NewGraph("start");
+            var load2 = St("load"); load2.OnEnterActions.Add(MakeLoad("Y"));
+            g2.AddNode(Start("start")); g2.AddNode(load2); g2.AddNode(End("end"));
+            g2.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "load" });
+            g2.AddEdge(new BaseEdgeData { FromNodeId = "load", ToNodeId = "end" });
+            var d2 = NewDriver(g2, autoAdvance: true);
+            var driverStub2 = new StubSceneLoader(); d2.SceneLoader = driverStub2;
+            var ownStub = new StubSceneLoader();
+            var ctxOwnLoader = new GameFlowContext { SceneLoader = ownStub };
+
+            d2.Boot(ctxOwnLoader, null);
+            Assert.AreEqual("Y", ownStub.LastScene, "a context keeps its own loader.");
+            Assert.AreEqual(0, driverStub2.Calls.Count, "the driver's loader is not used when the context has one.");
+        }
+
+        [Test]
+        public void BootWithRegistry_InvokesCustomExecutor()
+        {
+            var d = NewDriver(LinearGraph(), autoAdvance: true);
+            var ctx = new GameFlowContext();
+            var registry = new NodeExecutorRegistry();
+            registry.Register(new SentinelExecutor());
+
+            d.Boot(ctx, registry);
+
+            Assert.IsTrue(ctx.TryGet<bool>("executorRan", out var ran) && ran,
+                "the provided registry's executor ran for the statement node.");
+        }
+
+        [Test]
+        public void BootNoArgs_StillInitialisesFromGraph()
+        {
+            var g = LinearGraph();
+            g.AddParameter(new ParameterData { Key = "p", Type = ParameterType.Int, DefaultValue = "7" });
+            var d = NewDriver(g, autoAdvance: true);
+
+            d.Boot();   // unchanged: fresh context + InitFromGraph
+
+            Assert.IsNotNull(d.Context);
+            Assert.AreEqual(7, d.Context.Get<int>("p"), "no-arg Boot still initialises from the graph.");
+        }
+
+        [Test]
+        public void BootWithContext_HonoursAlreadyRunningGuard()
+        {
+            var d = NewDriver(LinearGraph(), autoAdvance: false);
+            d.Boot();
+            LogAssert.Expect(LogType.Warning, "[GraphGameFlow] GraphFlowDriver.Boot: already running; ignored.");
+            d.Boot(new GameFlowContext(), null);   // same guard as Boot()
         }
     }
 }

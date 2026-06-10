@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.4.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
+**Version**: 0.5.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -73,6 +73,13 @@ mid-flow) can recover the parked state: **`IsWaitingForSignal`** / **`CurrentAwa
 and **`IsWaitingForTime`** / **`WaitRemaining`** / **`WaitTotal`** for a timed wait (drive a synced
 countdown: `if (flow.IsWaitingForTime) label.text = $"{flow.WaitRemaining:0.0}s";`). Set
 **`BootOnStart = false`** to stop auto-boot on Play and `Boot()` explicitly after configuring the driver.
+
+**Prepare the context / register executors before boot.** `Boot(GameFlowContext context, NodeExecutorRegistry
+registry)` runs the flow on a context **you** built and seeded (collections, parameters, services) and a
+registry of **your** node executors. A supplied context is used as-is (not re-initialised from the graph, so
+your seeds survive; its scene loader is filled only when absent); nulls fall back to the defaults (`Boot()` is
+`Boot(null, null)`). This is the seam for hosting a progression/ability system on the driver's shared context —
+build the context, hand it to `Boot`, then wire a `ReactiveEvaluator` or `FlowRunner` onto that same context.
 
 > **Looping game-shell**: a menu → play → win → back-to-menu shell never "ends" — model it as a cyclic Linear
 > graph with **no End node** (the runner follows the single out-edge and loops; the flow stays running, no

@@ -4,6 +4,20 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0]
+
+### Added
+- `GraphFlowDriver.Boot(GameFlowContext context, NodeExecutorRegistry registry)` — boot on a caller-prepared
+  context (pre-seeded collections/parameters/services) and registry (custom node executors). A supplied
+  context is used as-is (NOT re-initialised from the graph, so seeds survive; its scene loader is filled only
+  when absent); nulls fall back to the defaults. `Boot()` is unchanged (equivalent to `Boot(null, null)`).
+  This is the seam for hosting a progression/ability system (ReactiveEvaluator / FlowRunner) on the driver's
+  shared context. From round-3 dogfooding (the only, forward-looking finding).
+
+### Notes
+- Additive (MINOR), append-only — `Boot()` and every other member unchanged. graphcore + graphstandard
+  untouched. EditMode 673 green; PlayMode 9.
+
 ## [0.4.0]
 
 ### Added
