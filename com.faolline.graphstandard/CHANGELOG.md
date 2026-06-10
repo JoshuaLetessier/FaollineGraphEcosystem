@@ -4,6 +4,24 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.0]
+
+### Added
+- **`ReactiveEvaluator.OnNodeLocked`** — a symmetric re-lock event (`Action<string>`), the Locked-state
+  counterpart of `OnNodeAvailable`/`OnNodeCompleted`. Fires on a backward transition during `Reevaluate`
+  (step-back / replay drops the completed-set below a node's threshold) and once per initially-Locked node
+  during `Start()`, so a host can react to re-locking without inferring it. Routed through the existing
+  emission choke point — identical firing semantics to the other two events; derivation unchanged.
+
+### Changed
+- **README** — the reactive-hosting section now leads with `MarkCompleted` (own the evaluator) and states
+  explicitly that `MarkCompleted` and the `OnCollectionChanged → Reevaluate` bridge are **alternatives**, not
+  to be combined (the bridge is only for the *action-writes-the-set* path; combining double-evaluates). From
+  round-4 dogfooding (a consumer needed a re-read to see the two paths were exclusive).
+
+### Notes
+- Additive (MINOR); graphcore + gameflow untouched; existing public API append-only.
+
 ## [0.5.0]
 
 ### Added

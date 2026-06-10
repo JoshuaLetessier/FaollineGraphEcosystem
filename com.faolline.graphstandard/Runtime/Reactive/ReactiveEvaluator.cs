@@ -37,6 +37,15 @@ namespace Faolline.GraphStandard
         public event Action<string> OnNodeCompleted;
 
         /// <summary>
+        /// Raised when a node enters <see cref="ReactiveNodeState.Locked"/>; the node id is passed. The
+        /// symmetric counterpart of <see cref="OnNodeAvailable"/> / <see cref="OnNodeCompleted"/> — fires on a
+        /// backward transition during <see cref="Reevaluate"/> (e.g. a step-back drops the completed-set below
+        /// a node's threshold) and once per initially-Locked node during <see cref="Start"/>. Lets a host
+        /// react to re-locking without inferring it.
+        /// </summary>
+        public event Action<string> OnNodeLocked;
+
+        /// <summary>
         /// Builds the prerequisite map from <paramref name="graph"/>'s edges and computes the initial node
         /// states (silently — call <see cref="Start"/> after subscribing to receive the initial events).
         /// <para>
@@ -152,6 +161,7 @@ namespace Faolline.GraphStandard
         {
             if (state == ReactiveNodeState.Available) OnNodeAvailable?.Invoke(nodeId);
             else if (state == ReactiveNodeState.Completed) OnNodeCompleted?.Invoke(nodeId);
+            else if (state == ReactiveNodeState.Locked) OnNodeLocked?.Invoke(nodeId);
         }
 
         private ReactiveNodeState DeriveState(string nodeId)

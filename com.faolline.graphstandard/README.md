@@ -1,6 +1,6 @@
 # com.faolline.graphstandard
 
-**Version**: 0.5.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
+**Version**: 0.6.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
 
 Buffer library **above** `com.faolline.graphcore`. graphcore is the universal **data substrate** (graph,
 nodes, edges, conditions, actions, context) plus the **Linear** reference runner (`BaseRunner`, single
@@ -110,6 +110,7 @@ var eval = new ReactiveEvaluator(graph, ctx, completedSetKey: "completed");
 
 eval.OnNodeAvailable += id => Debug.Log($"unlocked: {id}");
 eval.OnNodeCompleted += id => Debug.Log($"done: {id}");
+eval.OnNodeLocked    += id => Debug.Log($"locked: {id}");   // symmetric re-lock (re-pass / step-back)
 eval.Start();                       // initial emission, after subscribing
 
 eval.MarkCompleted("puzzle1");      // region2 still Locked (needs both — AND default)
@@ -139,7 +140,8 @@ var eval = new ReactiveEvaluator(graph, ctx, "completed",
 
 `MarkCompleted` records completion and cascades unlocks. After the host restores a *different* completed-set
 (a step-back / un-complete), call `Reevaluate()` to re-derive — derivation is idempotent and reversible:
-state depends only on the current set, never on history.
+state depends only on the current set, never on history. A node dropping back to `Locked` on a re-pass raises
+`OnNodeLocked`, symmetric with `OnNodeAvailable`, so UI can react to a reset without a manual repaint.
 
 ---
 
@@ -157,8 +159,8 @@ These are the universal write/read half of progression: a node *records* into a 
 
 ### Hosting a reactive progression on a shared context
 
-Compose the **Linear driver** (gameflow), these **collection primitives**, and the **`ReactiveEvaluator`** into
-a live progression on one shared blackboard — no bespoke action, condition, or engine:
+Compose the **Linear driver** (gameflow), the **`ReactiveEvaluator`**, and (optionally) these **collection
+primitives** into a live progression on one shared blackboard — no bespoke action, condition, or engine:
 
 ```csharp
 // progressionGraph: edges encode prerequisites; requiredCounts gives k-of-N (2-of-3 unlocks "exit").
@@ -168,18 +170,30 @@ var eval = new ReactiveEvaluator(progressionGraph, ctx, "completed",
 
 eval.OnNodeAvailable += id => Debug.Log($"available: {id}");
 
-// The two-line bridge: an AddToCollectionAction write re-derives the progression.
-ctx.OnCollectionChanged("completed", _ => eval.Reevaluate());
-
 driver.BootOnStart = false;
-driver.Boot(ctx);     // gameflow Boot(context, registry) seam — the flow runs on the SAME ctx
+driver.Boot(ctx);            // gameflow Boot(context, registry) seam — the flow runs on the SAME ctx
 eval.Start();
+
+eval.MarkCompleted("roomA"); // records into the completed-set AND re-derives — "exit" opens on the 2nd
 ```
 
-A Linear-flow node carrying `AddToCollectionAction { completed, "roomA" }` records `roomA` on entry; the bridge
-calls `Reevaluate`; once two ids are present, `exit` becomes `Available`. A Linear edge can *also* gate directly
-with `CollectionCountAtLeastCondition { completed, 2 }`. (A turnkey wrapper that owns the evaluator and
-auto-bridges is deferred until a real consumer shows the two-line bridge is a burden.)
+#### Recording completion — pick one path, not both
+
+- **Own the evaluator (simplest, recommended):** call `eval.MarkCompleted(id)`. It writes the completed-set
+  **and** re-derives for you — this is all you need when your own code drives completion.
+- **A Linear flow writes the set:** put an `AddToCollectionAction { completed, id }` on a node and bridge the
+  write to re-derivation:
+
+  ```csharp
+  ctx.OnCollectionChanged("completed", _ => eval.Reevaluate());   // only for the action-writes-the-set path
+  ```
+
+> **Do not combine them.** `MarkCompleted` already re-derives, so also wiring the `OnCollectionChanged` bridge
+> would double-evaluate. Use `MarkCompleted` **or** the action+bridge — never both.
+
+A Linear edge can *also* gate directly on the same set with `CollectionCountAtLeastCondition { completed, 2 }`.
+(A turnkey wrapper that owns the evaluator and auto-bridges is deferred until a real consumer shows it is a
+burden — owning the evaluator above is already a few lines.)
 
 ---
 
