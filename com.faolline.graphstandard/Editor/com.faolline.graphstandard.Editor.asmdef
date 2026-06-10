@@ -1,0 +1,19 @@
+{
+    "name": "com.faolline.graphstandard.Editor",
+    "rootNamespace": "Faolline.GraphStandard.Editor",
+    "references": [
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphstandard.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

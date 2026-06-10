@@ -4,6 +4,20 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0]
+
+### Added
+- Driver **timed-wait query**, symmetric with the slice-3 signal query: `IsWaitingForTime`, `WaitRemaining`
+  (never negative), `WaitTotal` — so a scene that loads during a timed node can drive a synced countdown.
+  Computed driver-side from `OnWaitingForTime` + accumulated `Tick`; graphcore untouched.
+
+### Docs
+- Documented the cyclic no-End **game-shell** pattern (a looping Linear graph never ends; bound history with a
+  small `HistoryDepth`). From round-2 dogfooding.
+
+### Notes
+- Additive (MINOR), append-only. graphcore + graphstandard runtime untouched. EditMode 667 green; PlayMode 9.
+
 ## [0.3.0]
 
 ### Added

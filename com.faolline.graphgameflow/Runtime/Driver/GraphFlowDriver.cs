@@ -26,6 +26,8 @@ namespace Faolline.GraphGameFlow
         private GameFlowContext _context;
         private ISceneLoader    _sceneLoader;
         private bool            _running;
+        private float           _waitTotal;
+        private float           _waitElapsed;
 
         /// <summary>The flow to run (assignable in the inspector or by code before <see cref="Boot"/>).</summary>
         public BaseGraph Graph { get => _graph; set => _graph = value; }
@@ -77,6 +79,21 @@ namespace Faolline.GraphGameFlow
         /// </summary>
         public string CurrentAwaitSignal
             => IsWaitingForSignal ? (_runner.CurrentNode?.AwaitSignalName ?? "") : "";
+
+        /// <summary>True while running and parked on a timed node.</summary>
+        public bool IsWaitingForTime
+            => _running && _runner != null && _runner.State == RunnerState.WaitingForTime;
+
+        /// <summary>
+        /// Seconds left on the current timed wait while <see cref="IsWaitingForTime"/> (never negative);
+        /// otherwise 0. Symmetric with <see cref="CurrentAwaitSignal"/> — lets a late-loading scene drive a
+        /// synced countdown. Computed driver-side from the wait duration minus the host-fed ticks.
+        /// </summary>
+        public float WaitRemaining
+            => IsWaitingForTime ? Mathf.Max(0f, _waitTotal - _waitElapsed) : 0f;
+
+        /// <summary>The current timed node's total duration while <see cref="IsWaitingForTime"/>; else 0.</summary>
+        public float WaitTotal => IsWaitingForTime ? _waitTotal : 0f;
 
         /// <summary>Raised when a node is entered.</summary>
         public event Action<BaseNodeData> OnNodeEntered;
@@ -152,6 +169,7 @@ namespace Faolline.GraphGameFlow
         public void Tick(float deltaSeconds)
         {
             if (!_running || deltaSeconds <= 0f) return;
+            if (_runner.State == RunnerState.WaitingForTime) _waitElapsed += deltaSeconds;
             _runner.Tick(deltaSeconds);
         }
 
@@ -227,7 +245,12 @@ namespace Faolline.GraphGameFlow
 
         private void HandleWaitingForSignal(BaseNodeData node, string signal) => OnWaitingForSignal?.Invoke(node, signal);
 
-        private void HandleWaitingForTime(BaseNodeData node, float seconds) => OnWaitingForTime?.Invoke(node, seconds);
+        private void HandleWaitingForTime(BaseNodeData node, float seconds)
+        {
+            _waitTotal   = seconds;
+            _waitElapsed = 0f;
+            OnWaitingForTime?.Invoke(node, seconds);
+        }
 
         private static bool HasValidStart(BaseGraph graph)
         {

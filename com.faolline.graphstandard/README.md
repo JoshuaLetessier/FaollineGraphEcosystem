@@ -1,6 +1,6 @@
 # com.faolline.graphstandard
 
-**Version**: 0.3.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
+**Version**: 0.4.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
 
 Buffer library **above** `com.faolline.graphcore`. graphcore is the universal **data substrate** (graph,
 nodes, edges, conditions, actions, context) plus the **Linear** reference runner (`BaseRunner`, single
@@ -34,6 +34,44 @@ Rules of thumb:
 
 The three are composable: a Linear scene-flow can host a Reactive progression for its objectives and fire a
 Flow ability — all sharing one `BaseContext`. Cross-library nesting still goes through graphcore's SubGraph.
+
+---
+
+## Building graphs in code (`GraphBuilder`)
+
+Construct any `BaseGraph` subclass fluently — no GUID ids, no `AddNode`/`AddEdge` boilerplate:
+
+```csharp
+using Faolline.GraphStandard;
+
+var b = new GraphBuilder<GameFlowGraph>();
+var start = b.AddStart().AsEntry();
+var room  = b.AddStatement("Load Room").OnEnter(loadRoom).Wait(2f);   // a timed intro
+var lever = b.AddStatement("Await lever").Await("lever");
+var end   = b.AddEnd("Done");
+start.To(room); room.To(lever); lever.To(end);
+GameFlowGraph graph = b.Build();
+```
+
+`AddStart/AddStatement/AddChoice/AddSubGraph/AddEnd` return a node handle; `Title/At/OnEnter/OnExit/When/
+Await/Wait/Checkpoint/Choice/AsEntry/To` configure it (each returns the handle); `Edge`/`To` wire nodes;
+`Build()` returns the typed graph. Ids are auto-GUID, positions auto-column. Choice edges route by the choice
+**title**: `c.Choice("Win", cond); b.Edge(c, winNode, "Win");`. The builder adds **no** runtime behavior — a
+built graph runs exactly like a hand-assembled one. Wiring a node from another builder throws.
+
+**Persist it as an asset** (editor) with its actions/conditions stored as sub-assets, self-contained:
+
+```csharp
+using Faolline.GraphStandard.Editor;
+GraphAssetBuilder.Save(graph, "Assets/MyGame/Flow.asset");
+```
+
+### A looping game-shell is a supported pattern
+
+A game shell (menu → play → win → back to menu → replay) never "ends" — model it as a **cyclic Linear graph
+with no End node**: the runner follows the single outgoing edge on each advance and loops forever. The flow
+stays running (no `OnEnded`); history is bounded by `BaseGraph.HistoryDepth`, so set a small depth for a
+forever-looping shell (`GoBack` across the loop isn't meaningful).
 
 ---
 

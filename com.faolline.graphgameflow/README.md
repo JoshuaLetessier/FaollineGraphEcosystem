@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.3.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
+**Version**: 0.4.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -69,8 +69,15 @@ thin wrappers, so the whole bridge is verifiable in EditMode.
 
 Re-exposed events also include **`OnWaitingForTime`** (the flow entered a timed node — node + duration),
 symmetric with `OnWaitingForSignal`. A scene that subscribes *after* a wait already fired (e.g. it loaded
-mid-flow) can recover the parked state with **`IsWaitingForSignal`** / **`CurrentAwaitSignal`**. Set
+mid-flow) can recover the parked state: **`IsWaitingForSignal`** / **`CurrentAwaitSignal`** for a signal wait,
+and **`IsWaitingForTime`** / **`WaitRemaining`** / **`WaitTotal`** for a timed wait (drive a synced
+countdown: `if (flow.IsWaitingForTime) label.text = $"{flow.WaitRemaining:0.0}s";`). Set
 **`BootOnStart = false`** to stop auto-boot on Play and `Boot()` explicitly after configuring the driver.
+
+> **Looping game-shell**: a menu → play → win → back-to-menu shell never "ends" — model it as a cyclic Linear
+> graph with **no End node** (the runner follows the single out-edge and loops; the flow stays running, no
+> `OnEnded`). Set a small `BaseGraph.HistoryDepth` for a forever-looping shell. Build it fluently with
+> graphstandard's `GraphBuilder`.
 
 ---
 

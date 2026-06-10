@@ -3,6 +3,7 @@
     "rootNamespace": "Faolline.GraphStandard.Tests",
     "references": [
         "com.faolline.graphstandard.Runtime",
+        "com.faolline.graphstandard.Editor",
         "com.faolline.graphcore.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

@@ -4,6 +4,22 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0]
+
+### Added
+- **`GraphBuilder<TGraph>`** (Runtime): a public fluent, code-first builder for any `BaseGraph` subclass over
+  graphcore's universal types — `AddStart/AddStatement/AddChoice/AddSubGraph/AddEnd` return a node handle
+  (`Title/At/OnEnter/OnExit/When/Await/Wait/Checkpoint/Choice/AsEntry/To`); `Edge`/`Build`. Auto-GUID ids,
+  auto-column positions; choice edges route by choice title. Adds no runtime behavior. Replaces the
+  GUID/`AddNode`/`AddEdge` boilerplate consumers previously copied from an internal sample.
+- **`GraphAssetBuilder.Save(graph, path)`** (new Editor assembly `com.faolline.graphstandard.Editor`):
+  persists a graph as an asset with its attached actions/conditions as sub-assets (only objects not already
+  persisted), self-contained and reloadable.
+
+### Notes
+- Additive (MINOR); graphcore untouched. From round-2 dogfooding — code-first graph construction was the
+  remaining ergonomic gap (hit in both rounds).
+
 ## [0.3.0]
 
 ### Added

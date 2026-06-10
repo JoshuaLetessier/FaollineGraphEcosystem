@@ -219,6 +219,34 @@ namespace Faolline.GraphGameFlow.Tests
         }
 
         [Test]
+        public void TimeWaitQuery_ReportsAndCountsDown()
+        {
+            var g = NewGraph("start");
+            var wait = St("wait"); wait.WaitDuration = 1.0f;
+            g.AddNode(Start("start")); g.AddNode(wait); g.AddNode(End("end"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "wait" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "wait", ToNodeId = "end" });
+            var d = NewDriver(g, autoAdvance: true);
+
+            Assert.IsFalse(d.IsWaitingForTime, "not time-waiting before boot.");
+            Assert.AreEqual(0f, d.WaitRemaining);
+            Assert.AreEqual(0f, d.WaitTotal);
+
+            d.Boot();   // start → wait node (WaitingForTime)
+            Assert.IsTrue(d.IsWaitingForTime);
+            Assert.AreEqual(1.0f, d.WaitTotal, 0.001f);
+            Assert.AreEqual(1.0f, d.WaitRemaining, 0.001f);
+
+            d.Tick(0.4f);
+            Assert.AreEqual(0.6f, d.WaitRemaining, 0.001f);
+
+            d.Tick(0.7f);   // total 1.1 ≥ 1.0 → resolves → end → OnEnded
+            Assert.IsFalse(d.IsWaitingForTime, "no longer time-waiting after the node resolves.");
+            Assert.AreEqual(0f, d.WaitRemaining);
+            Assert.AreEqual(0f, d.WaitTotal);
+        }
+
+        [Test]
         public void OnWaitingForTime_FiresForTimedNode()
         {
             var g = NewGraph("start");
