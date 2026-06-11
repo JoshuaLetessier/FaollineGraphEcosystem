@@ -13,6 +13,7 @@ namespace Faolline.GraphStandard.Tests
     {
         private sealed class NoOpAction : BaseAction { public override void Execute(BaseContext c) { } }
         private sealed class AlwaysCondition : BaseCondition { public override bool Evaluate(BaseContext c) => true; }
+        private sealed class Gate : BaseCondition { public bool Open; public override bool Evaluate(BaseContext c) => Open; }
 
         private readonly List<Object> _so = new List<Object>();
         [TearDown] public void TearDown() { foreach (var o in _so) if (o) Object.DestroyImmediate(o); _so.Clear(); }
@@ -79,6 +80,35 @@ namespace Faolline.GraphStandard.Tests
             runner.Start(g, new BaseContext(), new NodeExecutorRegistry());
 
             Assert.AreEqual(EndReason.Completed, ended);
+        }
+
+        [Test]
+        public void ResumeWhen_AttachesGate_AndReArmsResume()
+        {
+            var gate = Track(ScriptableObject.CreateInstance<Gate>());   // starts closed
+            var b = new GraphBuilder<BaseGraph>();
+            var start = b.AddStart().AsEntry();
+            var room  = b.AddStatement("room").Await("exit").ResumeWhen(gate);
+            var end   = b.AddEnd();
+            start.To(room); room.To(end);
+            var g = Track(b.Build());
+
+            Assert.Contains(gate, g.Nodes.First(n => n.Title == "room").ResumeConditions,
+                "ResumeWhen appends to the node's ResumeConditions.");
+
+            var runner = new BaseRunner();
+            runner.Start(g, new BaseContext(), new NodeExecutorRegistry());
+            runner.Proceed();                                   // start → room, parks (await "exit")
+            Assert.AreEqual(RunnerState.WaitingForSignal, runner.State);
+
+            runner.RaiseSignal("exit");                         // gate closed → ignored, stays parked
+            Assert.AreEqual(RunnerState.WaitingForSignal, runner.State);
+            Assert.AreEqual(room.Node.Id, runner.CurrentNode.Id);
+
+            gate.Open = true;
+            runner.RaiseSignal("exit");                         // gate open → resumes off room
+            Assert.AreNotEqual(RunnerState.WaitingForSignal, runner.State);
+            Assert.AreNotEqual(room.Node.Id, runner.CurrentNode?.Id);
         }
 
         [Test]

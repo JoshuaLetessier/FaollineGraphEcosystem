@@ -1,6 +1,6 @@
 # com.faolline.graphcore
 
-**Version**: 0.6.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
+**Version**: 0.7.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
 
 Shared foundation library for graph-based systems in the Faolline ecosystem. Provides the
 **data layer** (graph structure, nodes, edges, parameters) and the **execution runtime**
@@ -109,6 +109,7 @@ All nodes derive from `BaseNodeData`. Key members:
 | `OnExitActions` | `List<BaseAction>` — run before advancing |
 | `IsCheckpoint` | If `true`, `GoBackToCheckpoint` can restore to this node |
 | `AwaitSignalName` | When set, entering the node **parks** the runner until `RaiseSignal(name)` is raised (0.4.0) |
+| `ResumeConditions` | `List<BaseCondition>` — optional gate a matching await-signal must pass to resume; empty = none. A failing gate ignores the raise and keeps the node parked (re-armable) (0.7.0) |
 | `WaitDuration` | When `> 0`, entering the node holds for this many seconds of host-fed time via `Tick` before advancing (0.6.0) |
 
 `AwaitSignalName` and `WaitDuration` are append-only universal metadata on every node — they make graphs
@@ -322,6 +323,20 @@ runner.RaiseSignal<int>("score", 10);      // scalar payload, readable via conte
 
 // context-level signal channel (decoupled listeners):
 context.OnSignal("advance", args => { /* args.Name, args.GetPayload<T>() */ });
+```
+
+**Guarded await — re-armable resume gate** (0.7.0): an await node may carry optional `ResumeConditions`
+(universal `BaseCondition`s, AND, null entries skipped). A matching signal resumes the node **only if the gate
+passes**; if it fails, the raise is **ignored and the node stays parked** — re-armable, so the actor can raise
+again once the world is ready. Empty (the default) = resume on name match alone (unchanged). This expresses
+"press the button anytime, it only acts when the world is ready" *in the graph*, with no host glue — the key
+difference from gating an outgoing edge (which would consume the signal and leave the node stuck on a false
+gate). A direct host `Advance`/GoTo override is **not** gated.
+
+```csharp
+exitNode.AwaitSignalName = "exit";
+exitNode.ResumeConditions.Add(twoOfThreeDone);   // any BaseCondition over the context
+runner.RaiseSignal("exit");                       // ignored until the gate passes; then resumes
 ```
 
 **Timed waits** (0.6.0): set `BaseNodeData.WaitDuration` (seconds) to hold on entry until the host feeds

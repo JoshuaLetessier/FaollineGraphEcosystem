@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.0]
+
+### Added
+- **`GraphNodeBuilder.ResumeWhen(params BaseCondition[])`** — fluent authoring of an await node's resume gate
+  (graphcore 0.7.0): `AddStatement(...).Await("exit").ResumeWhen(cond)`. Appends to the node's
+  `ResumeConditions` (all must pass for a matching signal to resume; a failing gate keeps the node parked,
+  re-armable). Mirrors `When` (entry conditions).
+
+### Changed
+- Dependency: `com.faolline.graphcore` `0.6.0 → 0.7.0` (the guarded-await capability the sugar targets).
+
+### Notes
+- Additive (MINOR); append-only. From round-4 dogfooding (option ii — gate a Linear signal on context state,
+  in-graph).
+
 ## [0.6.0]
 
 ### Added

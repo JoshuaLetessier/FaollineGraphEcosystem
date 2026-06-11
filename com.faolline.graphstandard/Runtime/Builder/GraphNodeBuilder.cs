@@ -54,6 +54,17 @@ namespace Faolline.GraphStandard
         /// <summary>Parks the runner on this node until the named signal is raised.</summary>
         public GraphNodeBuilder Await(string signalName) { Node.AwaitSignalName = signalName; return this; }
 
+        /// <summary>
+        /// Appends resume conditions to this await node: a matching signal resumes the node only if all pass
+        /// (AND). A raise that fails the gate is ignored and the node stays parked (re-armable). Pair with
+        /// <see cref="Await(string)"/>.
+        /// </summary>
+        public GraphNodeBuilder ResumeWhen(params BaseCondition[] conditions)
+        {
+            if (conditions != null) foreach (var c in conditions) if (c != null) Node.ResumeConditions.Add(c);
+            return this;
+        }
+
         /// <summary>Holds on this node for the given seconds of host-fed time before advancing.</summary>
         public GraphNodeBuilder Wait(float seconds) { Node.WaitDuration = seconds; return this; }
 

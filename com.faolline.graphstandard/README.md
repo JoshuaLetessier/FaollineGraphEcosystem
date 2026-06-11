@@ -1,6 +1,6 @@
 # com.faolline.graphstandard
 
-**Version**: 0.6.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
+**Version**: 0.7.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.7.0
 
 Buffer library **above** `com.faolline.graphcore`. graphcore is the universal **data substrate** (graph,
 nodes, edges, conditions, actions, context) plus the **Linear** reference runner (`BaseRunner`, single
@@ -47,14 +47,14 @@ using Faolline.GraphStandard;
 var b = new GraphBuilder<GameFlowGraph>();
 var start = b.AddStart().AsEntry();
 var room  = b.AddStatement("Load Room").OnEnter(loadRoom).Wait(2f);   // a timed intro
-var lever = b.AddStatement("Await lever").Await("lever");
+var lever = b.AddStatement("Await lever").Await("lever").ResumeWhen(hasKey);   // gated, re-armable
 var end   = b.AddEnd("Done");
 start.To(room); room.To(lever); lever.To(end);
 GameFlowGraph graph = b.Build();
 ```
 
 `AddStart/AddStatement/AddChoice/AddSubGraph/AddEnd` return a node handle; `Title/At/OnEnter/OnExit/When/
-Await/Wait/Checkpoint/Choice/AsEntry/To` configure it (each returns the handle); `Edge`/`To` wire nodes;
+Await/ResumeWhen/Wait/Checkpoint/Choice/AsEntry/To` configure it (each returns the handle); `Edge`/`To` wire nodes;
 `Build()` returns the typed graph. Ids are auto-GUID, positions auto-column. Choice edges route by the choice
 **title**: `c.Choice("Win", cond); b.Edge(c, winNode, "Win");`. The builder adds **no** runtime behavior — a
 built graph runs exactly like a hand-assembled one. Wiring a node from another builder throws.

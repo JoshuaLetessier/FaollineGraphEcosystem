@@ -228,8 +228,24 @@ namespace Faolline.GraphCore
         {
             if (_state != RunnerState.WaitingForSignal) return;
             var node = CurrentNode;
-            if (node != null && node.AwaitSignalName == name)
+            // Resume only when the name matches AND the node's resume-gate passes. A name match with a failing
+            // gate is ignored — the node stays parked and re-armable (the actor may raise again once ready).
+            if (node != null && node.AwaitSignalName == name && ResumeConditionsPass(node))
                 ExitAndAdvance();
+        }
+
+        private bool ResumeConditionsPass(BaseNodeData node)
+        {
+            foreach (var condition in node.ResumeConditions)
+            {
+                if (condition == null)
+                {
+                    UnityEngine.Debug.LogWarning($"[GraphCore] Null resume condition skipped on node '{node.Id}'.");
+                    continue;
+                }
+                if (!condition.Evaluate(_context)) return false;
+            }
+            return true;
         }
 
         // ── Time ───────────────────────────────────────────────────────────────

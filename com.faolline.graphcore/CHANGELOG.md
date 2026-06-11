@@ -4,6 +4,22 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.0]
+
+### Added
+- **Guarded await — re-armable resume gate.** `BaseNodeData.ResumeConditions` (optional `List<BaseCondition>`,
+  default empty): a parked await node now resumes on a matching `RaiseSignal` **only if all resume conditions
+  pass** (AND; null entries skipped). A name match with a failing gate is **ignored and the node stays parked**
+  (re-armable) — the actor can raise again once the context satisfies the gate. This expresses "press the button
+  anytime, it only acts when the world is ready" *in the graph*, the re-arm semantics that gating an outgoing
+  edge cannot give (the edge consumes the signal and gets stuck on a false gate). A direct host `Advance`/GoTo
+  override is not gated.
+
+### Notes
+- Additive (MINOR); append-only. `AwaitSignalName`/`EntryConditions`/`RaiseSignal` and all other members
+  unchanged; an await node with no resume conditions behaves byte-for-byte as before. From round-4 dogfooding
+  (a consumer had to hand-wire `if (IsExitOpen) RaiseSignal("exit")` — now expressible as a resume gate).
+
 ## [0.6.0]
 
 ### Added

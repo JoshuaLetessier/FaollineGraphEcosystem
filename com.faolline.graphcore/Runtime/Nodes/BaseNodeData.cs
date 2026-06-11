@@ -24,6 +24,7 @@ namespace Faolline.GraphCore
         [SerializeField] private bool  _hasColorOverride;
         [SerializeField] private Color _nodeColor;
         [SerializeField] private string _awaitSignal = string.Empty;
+        [SerializeField] private List<BaseCondition> _resumeConditions = new List<BaseCondition>();
         [SerializeField] private float  _waitDuration;
 
         /// <summary>Unique identifier (GUID) for this node.</summary>
@@ -64,6 +65,15 @@ namespace Faolline.GraphCore
         /// Conditions evaluated before the runtime enters this node. Never null.
         /// </summary>
         public List<BaseCondition> EntryConditions => _entryConditions;
+
+        /// <summary>
+        /// Optional gate a matching await-signal (<see cref="AwaitSignalName"/>) must pass to resume this
+        /// parked node. All must pass (AND); a null entry is skipped. Empty (the default) means no gate — the
+        /// node resumes on a name match alone, as before. A raise that fails the gate is ignored and the node
+        /// stays parked (re-armable): the actor can raise the signal again once the context satisfies the
+        /// conditions. Never null.
+        /// </summary>
+        public List<BaseCondition> ResumeConditions => _resumeConditions;
 
         /// <summary>Actions executed when the runtime enters this node. Never null.</summary>
         public List<BaseAction> OnEnterActions => _onEnterActions;
