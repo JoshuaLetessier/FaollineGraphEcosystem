@@ -258,6 +258,47 @@ namespace Faolline.GraphCore.Editor
             if (_graph == null)
                 return;
 
+            SyncCanvasToData();
+
+            EditorUtility.SetDirty(_graph);
+            AssetDatabase.SaveAssets();
+            _isDirty = false;
+
+            // Reload the canvas after saving so every edge re-renders cleanly from the saved data — notably
+            // malleable-edge waypoints, whose live repaint can lag behind the data. Preserve the viewport so
+            // the save doesn't jump the camera.
+            var viewPos = viewTransform.position;
+            var viewScale = viewTransform.scale;
+            LoadGraph(_graph);
+            UpdateViewTransform(viewPos, viewScale);
+        }
+
+        /// <summary>
+        /// Persists the canvas without reloading it — for auto-save on window/editor close or before a domain
+        /// reload (entering Play, recompile). Syncs node/group positions into the data (which otherwise only
+        /// happens on <see cref="SaveGraph"/>) and marks the asset dirty; when <paramref name="writeToDisk"/> is
+        /// true it also flushes to disk via <c>AssetDatabase.SaveAssets</c>. No canvas rebuild (the caller is
+        /// tearing the view down), so it is safe to call from lifecycle teardown. No-op if no graph is loaded.
+        /// </summary>
+        public void AutoSave(bool writeToDisk)
+        {
+            if (_graph == null)
+                return;
+
+            SyncCanvasToData();
+            EditorUtility.SetDirty(_graph);
+            if (writeToDisk)
+                AssetDatabase.SaveAssets();
+            _isDirty = false;
+        }
+
+        /// <summary>
+        /// Copies the live canvas layout (node positions, group positions/sizes and member node IDs) back into
+        /// the graph data. Positions are captured here rather than tracked live, so this must run before any
+        /// persist. Does not mark dirty / save — callers decide.
+        /// </summary>
+        private void SyncCanvasToData()
+        {
             foreach (var kvp in _nodeViews)
             {
                 var rect = kvp.Value.GetPosition();
@@ -279,18 +320,6 @@ namespace Faolline.GraphCore.Editor
                     if (child is BaseNodeView nv && nv.NodeData != null)
                         data.NodeIds.Add(nv.NodeData.Id);
             }
-
-            EditorUtility.SetDirty(_graph);
-            AssetDatabase.SaveAssets();
-            _isDirty = false;
-
-            // Reload the canvas after saving so every edge re-renders cleanly from the saved data — notably
-            // malleable-edge waypoints, whose live repaint can lag behind the data. Preserve the viewport so
-            // the save doesn't jump the camera.
-            var viewPos = viewTransform.position;
-            var viewScale = viewTransform.scale;
-            LoadGraph(_graph);
-            UpdateViewTransform(viewPos, viewScale);
         }
 
         /// <summary>

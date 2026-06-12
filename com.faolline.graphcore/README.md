@@ -148,6 +148,11 @@ the data while editing; **Save (Ctrl+S)** fully refreshes the routing (a toolbar
 layers (longest-path layering, crossing reduction, cycle-safe) and routes column-skipping edges through a lane
 below the rows so they don't pass under nodes. It clears manual bends (a fresh layout) and frames the result.
 
+**Window persistence & auto-save (editor, 0.9.0)**: the open graph survives a domain reload (entering Play, a
+recompile, or reopening Unity) — the window reloads it into the rebuilt view instead of coming back blank. The
+canvas auto-saves before the window/editor closes and before a reload, so node/group moves (synced into the data
+only on save) aren't lost. The viewport (zoom/pan) is not yet persisted.
+
 ---
 
 ## Execution Runtime

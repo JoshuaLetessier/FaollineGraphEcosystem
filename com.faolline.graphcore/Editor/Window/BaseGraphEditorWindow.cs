@@ -18,6 +18,12 @@ namespace Faolline.GraphCore.Editor
         private BaseGraph _pendingGraph;
         private BaseGraph _loadedGraph;
 
+        // Serialized so the open graph survives a domain reload (entering Play, a script recompile, or reopening
+        // Unity with the window docked): Unity tears the window down (OnDisable) and rebuilds it (OnEnable) with
+        // the plain fields reset to null, which is why the canvas would otherwise come back blank. Asset
+        // references serialize across reloads, so OnEnable can reload the graph into the freshly built view.
+        [SerializeField] private BaseGraph _persistedGraph;
+
         /// <summary>The canvas hosted in this window. Available after OnEnable.</summary>
         protected BaseGraphView GraphView => _graphView;
 
@@ -50,6 +56,7 @@ namespace Faolline.GraphCore.Editor
         protected void LoadGraph(BaseGraph graph)
         {
             _loadedGraph = graph;
+            _persistedGraph = graph;   // remember it across domain reloads (see field doc)
             if (_graphView != null)
             {
                 _graphView.LoadGraph(graph);
@@ -102,14 +109,30 @@ namespace Faolline.GraphCore.Editor
 
             if (_pendingGraph != null)
             {
-                _graphView.LoadGraph(_pendingGraph);
-                OnGraphLoaded(_pendingGraph);
+                LoadGraph(_pendingGraph);
                 _pendingGraph = null;
             }
+            else if (_persistedGraph != null)
+            {
+                // Coming back from a domain reload (Play / recompile / reopened Unity): the view was rebuilt
+                // empty; reload the graph that was open so the canvas isn't blank.
+                LoadGraph(_persistedGraph);
+            }
+
+            EditorApplication.quitting += OnEditorQuitting;
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
 
         private void OnDisable()
         {
+            EditorApplication.quitting -= OnEditorQuitting;
+            EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+
+            // Persist before teardown so a domain reload (Play / recompile) or a window close never drops the
+            // canvas layout (node/group positions are only synced into the data on save). Mark dirty here; the
+            // disk flush happens on the genuine close paths (OnDestroy / editor quit).
+            _graphView?.AutoSave(writeToDisk: false);
+
             if (_inspector != null && _graphView != null)
             {
                 _graphView.NodeSelected -= _inspector.BindNode;
@@ -123,6 +146,29 @@ namespace Faolline.GraphCore.Editor
             }
 
             _graphView = null;
+        }
+
+        private void OnDestroy()
+        {
+            // Genuine window close: flush the (already-synced, dirty) graph to disk so manual closes don't lose
+            // work. OnDisable ran first and synced the canvas into the data.
+            if (_persistedGraph != null)
+                AssetDatabase.SaveAssets();
+        }
+
+        private void OnEditorQuitting()
+        {
+            // Editor shutting down: sync the live canvas and flush to disk while the view is still alive
+            // (teardown runs after this).
+            _graphView?.AutoSave(writeToDisk: true);
+        }
+
+        private void OnPlayModeStateChanged(PlayModeStateChange change)
+        {
+            // Safety net for when "Enter Play Mode Options" disables the domain reload (no OnDisable fires):
+            // persist the canvas into the data as we leave edit mode.
+            if (change == PlayModeStateChange.ExitingEditMode)
+                _graphView?.AutoSave(writeToDisk: false);
         }
 
         /// <summary>

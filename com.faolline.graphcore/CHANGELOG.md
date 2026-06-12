@@ -4,6 +4,24 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.9.0]
+
+### Added
+- **Editor window survives domain reloads** — the open graph is now remembered across a domain reload (entering
+  Play, a script recompile, or reopening Unity with the window docked). Previously the canvas came back **blank**
+  and you had to close and reopen the window; the window now reloads the graph into the rebuilt view via a
+  serialized reference (`BaseGraphEditorWindow._persistedGraph`).
+- **Auto-save (editor)** — the canvas is persisted automatically before the window or editor closes and before a
+  domain reload, so node/group moves (which are only synced into the data on save) are no longer lost. New
+  `BaseGraphView.AutoSave(bool writeToDisk)` syncs the live layout into the data and marks it dirty; the window
+  flushes it to disk on a genuine close (`OnDestroy`) and on editor quit (`EditorApplication.quitting`), and
+  syncs (dirty-only) on teardown / `ExitingEditMode` so nothing is dropped across a reload.
+
+### Notes
+- Additive (MINOR). Runtime untouched; the lifecycle wiring lives entirely in `BaseGraphEditorWindow` /
+  `BaseGraphView`, so every package's window (gameflow, dialogue, …) gets both behaviors for free.
+- The viewport (zoom/pan) is not yet persisted across a reload — the graph reloads but the camera may reset.
+
 ## [0.8.0]
 
 ### Added
