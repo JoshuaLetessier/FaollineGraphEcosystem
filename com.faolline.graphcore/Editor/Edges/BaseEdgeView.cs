@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
@@ -45,14 +46,140 @@ namespace Faolline.GraphCore.Editor
             return GraphCoreDefaults.NodeGrey;
         }
 
+        private OrthogonalEdgeControl _orthoControl;
+
+        /// <summary>
+        /// Uses an <see cref="OrthogonalEdgeControl"/> so the edge renders as a right-angle polyline (through
+        /// its data's waypoints) instead of the default bezier that passes under nodes — replacing the control's
+        /// render points keeps the native coordinate handling, hit-testing, and connection preview intact.
+        /// </summary>
+        protected override EdgeControl CreateEdgeControl()
+        {
+            _orthoControl = new OrthogonalEdgeControl();
+            return _orthoControl;
+        }
+
         /// <summary>
         /// Initializes the view with the given edge data. Call from subclass constructors.
         /// </summary>
         protected void Initialize(BaseEdgeData edgeData)
         {
             EdgeData = edgeData;
+            if (_orthoControl != null) _orthoControl.EdgeData = edgeData;
             LoadStyleSheet();
             ApplyEdgeColor();
+            RegisterCallback<MouseDownEvent>(OnEdgeMouseDown);          // double-click on the line adds a bend point
+            RegisterCallback<AttachToPanelEvent>(_ => { RefreshVisual(); RebuildWaypointHandles(); });
+            RegisterCallback<DetachFromPanelEvent>(_ => ClearWaypointHandles());
+        }
+
+        // ── Malleable waypoints (editor interaction) ──────────────────────────────
+
+        /// <summary>Raised when the edge's waypoints change, so the host graph view can mark itself dirty.</summary>
+        public System.Action DataChanged;
+
+        // Handles are tied to the edge's panel lifetime + its waypoints, NOT to selection — clicking a handle
+        // (which can deselect the edge) must not tear down the handle mid-drag.
+        private readonly List<WaypointHandle> _waypointHandles = new List<WaypointHandle>();
+
+        private GraphView GraphView => GetFirstAncestorOfType<GraphView>();
+        private VisualElement ContentLayer => GraphView?.contentViewContainer;
+
+        private void OnEdgeMouseDown(MouseDownEvent e)
+        {
+            if (e.button != 0 || e.clickCount != 2 || EdgeData == null) return;
+            var content = ContentLayer;
+            if (content == null) return;
+
+            Vector2 graphPos = content.WorldToLocal(e.mousePosition);
+            int index = BestInsertIndex(graphPos);
+            EdgeData.Waypoints.Insert(index, graphPos);
+            CommitWaypoints();
+            RebuildWaypointHandles();
+            e.StopPropagation();
+        }
+
+        /// <summary>Where a new bend point clicked at <paramref name="graphPos"/> should be inserted, so it
+        /// lands on the nearest existing segment rather than always at the end.</summary>
+        private int BestInsertIndex(Vector2 graphPos)
+        {
+            var content = ContentLayer;
+            if (content == null || output == null || input == null) return EdgeData.Waypoints.Count;
+
+            var anchors = new List<Vector2> { content.WorldToLocal((Vector2)output.GetGlobalCenter()) };
+            anchors.AddRange(EdgeData.Waypoints);
+            anchors.Add(content.WorldToLocal((Vector2)input.GetGlobalCenter()));
+
+            int best = 0;
+            float bestDist = float.MaxValue;
+            for (int i = 0; i < anchors.Count - 1; i++)
+            {
+                float d = DistanceToSegment(graphPos, anchors[i], anchors[i + 1]);
+                if (d < bestDist) { bestDist = d; best = i; }
+            }
+            return best;   // segment i sits between anchor[i] and anchor[i+1] ⇒ Waypoints.Insert(i)
+        }
+
+        private static float DistanceToSegment(Vector2 p, Vector2 a, Vector2 b)
+        {
+            var ab = b - a;
+            float len2 = ab.sqrMagnitude;
+            float t = len2 > 1e-5f ? Mathf.Clamp01(Vector2.Dot(p - a, ab) / len2) : 0f;
+            return Vector2.Distance(p, a + t * ab);
+        }
+
+        private void RebuildWaypointHandles()
+        {
+            ClearWaypointHandles();
+            var content = ContentLayer;
+            if (content == null || EdgeData == null) return;
+            for (int i = 0; i < EdgeData.Waypoints.Count; i++)
+            {
+                var handle = new WaypointHandle(this, i);
+                content.Add(handle);
+                handle.SetGraphPosition(EdgeData.Waypoints[i]);
+                _waypointHandles.Add(handle);
+            }
+        }
+
+        private void ClearWaypointHandles()
+        {
+            foreach (var h in _waypointHandles) h.RemoveFromHierarchy();
+            _waypointHandles.Clear();
+        }
+
+        /// <summary>Live-moves the waypoint at <paramref name="index"/> (called during a handle drag).</summary>
+        internal void MoveWaypoint(int index, Vector2 graphPos)
+        {
+            if (EdgeData == null || index < 0 || index >= EdgeData.Waypoints.Count) return;
+            EdgeData.Waypoints[index] = graphPos;
+            RefreshVisual();
+        }
+
+        /// <summary>Removes the waypoint at <paramref name="index"/> (right-click on its handle).</summary>
+        internal void RemoveWaypoint(int index)
+        {
+            if (EdgeData == null || index < 0 || index >= EdgeData.Waypoints.Count) return;
+            EdgeData.Waypoints.RemoveAt(index);
+            CommitWaypoints();
+            RebuildWaypointHandles();   // indices shifted → rebuild
+        }
+
+        /// <summary>Repaints the edge and flags the graph dirty after a waypoint edit settles.</summary>
+        internal void CommitWaypoints()
+        {
+            RefreshVisual();
+            DataChanged?.Invoke();
+        }
+
+        /// <summary>
+        /// Forces the edge to re-route AND repaint live after a waypoint change. The endpoints didn't move, so
+        /// the control would otherwise keep its cached render points + the GraphView wouldn't repaint the edge.
+        /// </summary>
+        private void RefreshVisual()
+        {
+            _orthoControl?.ForceRerender();
+            MarkDirtyRepaint();   // invalidate the edge view itself, not only its control
         }
 
         private void LoadStyleSheet()

@@ -4,6 +4,30 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.8.0]
+
+### Added
+- **Malleable edges (editor)** — graph edges now render as right-angle (orthogonal) polylines you can shape:
+  **double-click** an edge to add a bend point, **drag** the white dots to move them, **right-click** a dot to
+  remove it. Backed by `BaseEdgeData.Waypoints` (`List<Vector2>`, additive editor-metadata like
+  `BaseNodeData.Position`; persisted with the graph; no runtime effect). Implemented entirely in the shared
+  `BaseEdgeView`/`OrthogonalEdgeControl` + `OrthogonalEdgeRouter` (pure, unit-tested), so every package's graph
+  window (gameflow, dialogue, …) gets it for free. Edge routing reuses Unity's `EdgeControl` coordinate handling
+  (render points replaced, not drawn over) and extends the pick bbox to keep bent edges selectable.
+
+- **Auto-arrange (editor)** — a **Arrange** toolbar button tidies the whole graph into a left-to-right layered
+  layout: longest-path layering on the cycle-broken DAG (looping shells don't hang), a barycenter pass to reduce
+  edge crossings, and columns centered vertically. Column-skipping edges are routed through a lane **below** the
+  rows (auto-generated bend points) so they don't pass under intermediate nodes. Backed by the pure, unit-tested
+  `GraphAutoLayout` (`Arrange` + `RouteLongEdges`); applied by `BaseGraphView.ArrangeGraph` (rebuilds + frames).
+
+### Notes
+- Additive (MINOR). Runtime untouched except the additive `Waypoints` field; existing suites stay green.
+- **Known limitation**: the live preview while editing waypoints can lag the data; a **Save (Ctrl+S)** fully
+  refreshes the routing (the graph view reloads, preserving the viewport). A toolbar hint documents this.
+- Auto-arrange routes column-skipping edges below the rows; full obstacle-avoidance (weaving *around* arbitrary
+  nodes) is still out of scope — edges between far columns use the lane, not a per-node detour.
+
 ## [0.7.0]
 
 ### Added

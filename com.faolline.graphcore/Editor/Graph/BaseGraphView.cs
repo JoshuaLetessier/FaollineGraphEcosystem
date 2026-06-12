@@ -139,6 +139,8 @@ namespace Faolline.GraphCore.Editor
                     var view = CreateEdgeView(edgeData);
                     if (view == null) continue;
                     ConnectEdgeView(view, edgeData);
+                    if (view is BaseEdgeView bev)
+                        bev.DataChanged = () => { _isDirty = true; EditorUtility.SetDirty(_graph); };
                     AddElement(view);
                 }
 
@@ -281,6 +283,42 @@ namespace Faolline.GraphCore.Editor
             EditorUtility.SetDirty(_graph);
             AssetDatabase.SaveAssets();
             _isDirty = false;
+
+            // Reload the canvas after saving so every edge re-renders cleanly from the saved data — notably
+            // malleable-edge waypoints, whose live repaint can lag behind the data. Preserve the viewport so
+            // the save doesn't jump the camera.
+            var viewPos = viewTransform.position;
+            var viewScale = viewTransform.scale;
+            LoadGraph(_graph);
+            UpdateViewTransform(viewPos, viewScale);
+        }
+
+        /// <summary>
+        /// Auto-arranges the graph into a tidy left-to-right layered layout (longest-path layering + crossing
+        /// reduction). Clears manual edge bend points (a fresh layout makes them meaningless), rebuilds the
+        /// canvas, and frames the result. The graph is marked dirty; the new positions persist on the next Save.
+        /// </summary>
+        public void ArrangeGraph()
+        {
+            if (_graph == null) return;
+
+            var positions = GraphAutoLayout.Arrange(_graph.Nodes, _graph.Edges, _graph.EntryNodeId);
+            foreach (var node in _graph.Nodes)
+                if (node != null && positions.TryGetValue(node.Id, out var p)) node.Position = p;
+
+            // Route column-skipping edges through a lane below the rows so they don't pass under nodes.
+            var routes = GraphAutoLayout.RouteLongEdges(positions, _graph.Edges);
+            foreach (var edge in _graph.Edges)
+            {
+                if (edge == null) continue;
+                edge.Waypoints.Clear();
+                if (routes.TryGetValue(edge.Id, out var wps)) edge.Waypoints.AddRange(wps);
+            }
+
+            _isDirty = true;
+            EditorUtility.SetDirty(_graph);
+            LoadGraph(_graph);   // rebuild from the new positions
+            FrameAll();          // fit the arranged graph to the view
         }
 
         /// <summary>

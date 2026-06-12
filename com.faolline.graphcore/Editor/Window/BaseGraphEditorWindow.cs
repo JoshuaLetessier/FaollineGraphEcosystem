@@ -142,7 +142,30 @@ namespace Faolline.GraphCore.Editor
             };
             toolbar.Add(saveButton);
 
+            var arrangeButton = new UnityEditor.UIElements.ToolbarButton(() => _graphView?.ArrangeGraph())
+            {
+                text = "Arrange",
+                tooltip = "Auto-arrange the graph into a tidy left-to-right layered layout (clears manual edge bends)."
+            };
+            toolbar.Add(arrangeButton);
+
             PopulateToolbar(toolbar);
+
+            // Right-aligned info on the malleable edges (their routing fully refreshes on Save).
+            var spacer = new UnityEngine.UIElements.VisualElement();
+            spacer.style.flexGrow = 1f;
+            toolbar.Add(spacer);
+
+            var edgeHint = new UnityEngine.UIElements.Label("ⓘ edges")
+            {
+                tooltip = "Malleable edges — double-click an edge to add a bend point, drag the dots to shape it, "
+                        + "right-click a dot to remove it. Live preview can lag; the routing fully refreshes on "
+                        + "Save (Ctrl+S)."
+            };
+            edgeHint.style.unityTextAlign = UnityEngine.TextAnchor.MiddleRight;
+            edgeHint.style.opacity = 0.6f;
+            edgeHint.style.marginRight = 6f;
+            toolbar.Add(edgeHint);
 
             rootVisualElement.Add(toolbar);
         }

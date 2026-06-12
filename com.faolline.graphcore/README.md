@@ -1,6 +1,6 @@
 # com.faolline.graphcore
 
-**Version**: 0.7.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
+**Version**: 0.8.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
 
 Shared foundation library for graph-based systems in the Faolline ecosystem. Provides the
 **data layer** (graph structure, nodes, edges, parameters) and the **execution runtime**
@@ -133,10 +133,20 @@ public class BaseEdgeData
     public string Id;
     public string FromNodeId;
     public string ToNodeId;
-    public string PortName;       // used with ChooseById for named choices
-    public BaseCondition Condition; // null = unconditional
+    public string PortName;          // used with ChooseById for named choices
+    public BaseCondition Condition;  // null = unconditional
+    public List<Vector2> Waypoints;  // editor-only bend points (orthogonal routing); no runtime effect (0.8.0)
 }
 ```
+
+**Malleable edges (editor, 0.8.0)**: edges render as right-angle polylines you can shape — **double-click** an
+edge to add a bend point, **drag** the dots to move them, **right-click** a dot to remove it. Bends live in
+`Waypoints` (editor metadata, like a node's `Position`; persisted, no runtime effect). The live preview can lag
+the data while editing; **Save (Ctrl+S)** fully refreshes the routing (a toolbar hint notes this).
+
+**Auto-arrange (editor, 0.8.0)**: the toolbar **Arrange** button lays the graph out left-to-right in tidy
+layers (longest-path layering, crossing reduction, cycle-safe) and routes column-skipping edges through a lane
+below the rows so they don't pass under nodes. It clears manual bends (a fresh layout) and frames the result.
 
 ---
 

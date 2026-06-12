@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Faolline.GraphCore
@@ -17,6 +18,7 @@ namespace Faolline.GraphCore
         [SerializeField] private BaseCondition _condition;
         [SerializeField] private bool          _hasColorOverride;
         [SerializeField] private Color         _edgeColor;
+        [SerializeField, HideInInspector] private List<Vector2> _waypoints = new List<Vector2>();
 
         /// <summary>Unique identifier (GUID) for this edge.</summary>
         public string Id
@@ -68,5 +70,12 @@ namespace Faolline.GraphCore
             get => _edgeColor;
             set => _edgeColor = value;
         }
+
+        /// <summary>
+        /// Optional editor-only bend points (graph-space) the edge routes through, in order from source to
+        /// target. Empty = a direct (auto-routed) edge. Purely visual metadata — like <see cref="BaseNodeData.Position"/>,
+        /// it has no runtime effect and is persisted with the graph. Never null.
+        /// </summary>
+        public List<Vector2> Waypoints => _waypoints;
     }
 }
