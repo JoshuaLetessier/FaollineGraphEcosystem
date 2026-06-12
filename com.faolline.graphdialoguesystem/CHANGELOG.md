@@ -4,6 +4,18 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0]
+
+### Added
+- **`DialoguePresenter` opt-in `titleFallback`** (ctor, default `false`) — when a localization key is missing,
+  fall back to the node/choice authored `Title` (the source text the localization pipeline derives its source
+  column from) instead of the bare `#key` marker. Useful before a table is exported or for an incomplete locale.
+  Strict mode still throws; Audit still records the key. `DialoguePlayer` keeps the default (no behavior change).
+
+### Notes
+- Additive (MINOR); graphcore untouched. Round-7 refinement (restores the Title fallback the round-6 hand-rolled
+  resolution had, which the presenter had dropped).
+
 ## [0.3.0]
 
 ### Added

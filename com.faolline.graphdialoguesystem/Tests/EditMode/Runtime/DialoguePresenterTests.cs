@@ -68,6 +68,25 @@ namespace Faolline.GraphDialogue.Tests
         }
 
         [Test]
+        public void ResolveLine_TitleFallback_UsesAuthoredTitleWhenKeyMissing()
+        {
+            var line = new DialogueLineNodeData
+            {
+                Id = "l", NodeType = DialogueLineNodeData.NodeTypeId, Title = "Bonjour aventurier"
+            };
+            var ctx = new BaseContext();
+            var emptyProvider = new CsvLocalizationProvider("Key,en\n", "en");   // no line_l key
+
+            // opt-in: missing key falls back to the authored Title
+            var withFallback = new DialoguePresenter(emptyProvider, titleFallback: true);
+            Assert.AreEqual("Bonjour aventurier", withFallback.ResolveLine(line, ctx).ResolvedText);
+
+            // default: no fallback (the bare #key marker, not the Title)
+            var noFallback = new DialoguePresenter(emptyProvider);
+            Assert.AreNotEqual("Bonjour aventurier", noFallback.ResolveLine(line, ctx).ResolvedText);
+        }
+
+        [Test]
         public void Resolve_NonDialogueNode_ReturnsNull()
         {
             var g = DialoguePlayerTestGraphs.Linear();

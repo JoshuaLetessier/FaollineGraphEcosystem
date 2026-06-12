@@ -112,6 +112,22 @@ namespace Faolline.GraphStandard.Tests
         }
 
         [Test]
+        public void Id_SetsStableNodeId_UsedByEdges()
+        {
+            var b = new GraphBuilder<BaseGraph>();
+            var start = b.AddStart().AsEntry();
+            var hub   = b.AddStatement("Hub").Id("room_hub");
+            var end   = b.AddEnd();
+            start.To(hub); hub.To(end);
+            var g = Track(b.Build());
+
+            Assert.AreEqual("room_hub", hub.Node.Id, "Id() overrides the auto-GUID.");
+            Assert.IsTrue(g.Nodes.Any(n => n.Id == "room_hub"), "the stable id is addressable on the built graph.");
+            Assert.IsTrue(g.Edges.Any(e => e.FromNodeId == "room_hub"), "edges wired after Id() use the stable id.");
+            Assert.IsTrue(g.Edges.Any(e => e.ToNodeId == "room_hub"));
+        }
+
+        [Test]
         public void Edge_ToForeignNode_Throws()
         {
             var b = new GraphBuilder<BaseGraph>();

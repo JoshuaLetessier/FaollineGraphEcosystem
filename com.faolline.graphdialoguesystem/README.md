@@ -1,6 +1,6 @@
 # com.faolline.graphdialoguesystem
 
-**Version**: 0.3.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore`
+**Version**: 0.4.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore`
 
 A graph-based dialogue library built **entirely on top of** `com.faolline.graphcore` (zero core
 changes), following the `com.faolline.starterGraph` package shape. Author branching, multi-speaker,
@@ -117,6 +117,20 @@ driver.OnNodeEntered += node =>
         default:              driver.AutoAdvance = true;           break;
     }
 };
+```
+
+**Pacing lines** is driven by the **resolved step type, not the node type**: in the `LineStep` case set
+`driver.AutoAdvance = false` (the host already knows it is rendering a line — no need to inspect
+`DialogueLineNodeData`); your "continue" button calls `driver.Advance()`. A **choice** pauses on its own (the
+driver does not auto-resolve a `ChoiceNodeData`); pick with `driver.ChooseById(optionId)`.
+
+**Missing-key fallback to the authored `Title`**: pass `titleFallback: true` to the presenter so a missing
+localization key shows the node/choice authored `Title` (the source text the table is derived from) instead of
+the bare `#key` marker — handy before a table is exported or for an incomplete locale (Strict still throws,
+Audit still records the key):
+
+```csharp
+var presenter = new DialoguePresenter(localization, speakerLookup: lookup, titleFallback: true);
 ```
 
 `DialoguePlayer` itself now resolves through this presenter internally (unchanged for standalone dialogues).

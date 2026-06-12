@@ -4,6 +4,20 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0]
+
+### Added
+- **Configurable `ResourcesRoot`** on `LocalizationSettingsAsset` (default `Assets/Resources`) — the build
+  (`Faolline ▸ Localization ▸ Build All Tables`) now writes the `GraphLocalizationManifest` and per-lib
+  `LocalizationDatabase` assets under this root instead of a hardcoded `Assets/Resources`, so a consumer can
+  keep them inside their own game folder (e.g. `Assets/MyGame/Resources`). Must be (or be under) a `Resources`
+  folder — the runtime loads these by name via `Resources.Load`; the build warns if it is not, and creates the
+  folder hierarchy as needed. (CSV output folder was already configurable.)
+
+### Notes
+- Additive (MINOR). From round-6 dogfooding (the build forced two infra assets outside the consumer's game
+  folder). Round-7 refinement branch.
+
 ## [0.2.0]
 
 ### Added

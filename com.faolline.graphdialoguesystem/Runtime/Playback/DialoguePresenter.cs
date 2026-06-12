@@ -19,6 +19,7 @@ namespace Faolline.GraphDialogue
         private readonly ILocalizedAssetProvider _assets;
         private readonly Func<string, Speaker> _speakerLookup;
         private readonly LocalizationStrictMode _strictMode;
+        private readonly bool _titleFallback;
         private readonly List<string> _missingKeys = new List<string>();
 
         /// <summary>Keys the provider could not resolve (recorded in Audit/Strict modes).</summary>
@@ -30,16 +31,24 @@ namespace Faolline.GraphDialogue
         /// <summary>Clears the recorded missing keys (e.g. on a session restore), re-arming Audit reporting.</summary>
         public void ClearMissingKeys() => _missingKeys.Clear();
 
+        /// <param name="titleFallback">
+        /// When <c>true</c>, a missing localization key falls back to the node/choice authored <c>Title</c>
+        /// (the source text the localization pipeline derives its source column from) instead of the bare
+        /// <c>#key</c> marker — useful before a table is exported or for an incomplete locale. Strict mode still
+        /// throws; Audit still records the missing key. Default <c>false</c> (the bare <c>#key</c> behavior).
+        /// </param>
         public DialoguePresenter(
             ILocalizationProvider localization,
             ILocalizedAssetProvider assets = null,
             Func<string, Speaker> speakerLookup = null,
-            LocalizationStrictMode strictMode = LocalizationStrictMode.Permissive)
+            LocalizationStrictMode strictMode = LocalizationStrictMode.Permissive,
+            bool titleFallback = false)
         {
             _localization = localization ?? new CsvLocalizationProvider(string.Empty, "en");
             _assets = assets;
             _speakerLookup = speakerLookup;
             _strictMode = strictMode;
+            _titleFallback = titleFallback;
         }
 
         /// <summary>
@@ -57,7 +66,7 @@ namespace Faolline.GraphDialogue
         public LineStep ResolveLine(DialogueLineNodeData line, BaseContext context)
         {
             if (line == null) return null;
-            string text = ResolveChecked(DialogueLocalizationKeys.ForLine(line));
+            string text = ResolveChecked(DialogueLocalizationKeys.ForLine(line), line.Title);
             text = DialogueTextInterpolator.Interpolate(text, context);
             string speakerName = ResolveSpeakerName(line.SpeakerKey);
 
@@ -80,7 +89,7 @@ namespace Faolline.GraphDialogue
                 string labelKey = DialogueLocalizationKeys.ForChoice(baseChoice);
                 string label = string.IsNullOrEmpty(labelKey)
                     ? baseChoice.Id
-                    : ResolveChecked(labelKey);
+                    : ResolveChecked(labelKey, baseChoice.Title);
                 label = DialogueTextInterpolator.Interpolate(label, context);
                 bool available = baseChoice.Condition == null || baseChoice.Condition.Evaluate(context);
                 options.Add(new ChoiceOption(baseChoice.Id, label, available));
@@ -109,7 +118,7 @@ namespace Faolline.GraphDialogue
         /// when the key is missing: Permissive returns the <c>#key</c> fallback silently; Audit warns + records
         /// it (and raises <see cref="OnMissingKey"/>); Strict throws.
         /// </summary>
-        private string ResolveChecked(string key)
+        private string ResolveChecked(string key, string fallbackTitle = null)
         {
             var locale = _localization.CurrentLocale;
             var value = _localization.Resolve(key, locale);
@@ -131,6 +140,8 @@ namespace Faolline.GraphDialogue
                     break;
                 // Permissive: return the fallback silently.
             }
+            // Opt-in: prefer the authored source Title over the bare #key marker.
+            if (_titleFallback && !string.IsNullOrEmpty(fallbackTitle)) return fallbackTitle;
             return value;
         }
     }

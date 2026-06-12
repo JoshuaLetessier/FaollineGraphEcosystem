@@ -1,6 +1,6 @@
 # com.faolline.graphstandard
 
-**Version**: 0.7.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.7.0
+**Version**: 0.8.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.7.0
 
 Buffer library **above** `com.faolline.graphcore`. graphcore is the universal **data substrate** (graph,
 nodes, edges, conditions, actions, context) plus the **Linear** reference runner (`BaseRunner`, single
@@ -142,6 +142,14 @@ var eval = new ReactiveEvaluator(graph, ctx, "completed",
 (a step-back / un-complete), call `Reevaluate()` to re-derive — derivation is idempotent and reversible:
 state depends only on the current set, never on history. A node dropping back to `Locked` on a re-pass raises
 `OnNodeLocked`, symmetric with `OnNodeAvailable`, so UI can react to a reset without a manual repaint.
+
+> **Gating a Linear flow on progression?** Gate on the **completed-set** directly — a
+> `CollectionCountAtLeastCondition { completed, k }` on an await's `ResumeConditions` or a choice branch is the
+> "k-of-N done unlocks this" gate, and it needs no evaluator. You only need the evaluator's *derived* `Available`
+> state (cascades, per-node `requiredCounts`) for UI/eventing. If a future case ever needs to gate a Linear
+> await/edge on that derived availability, mirror `AvailableNodeIds` into a context collection (e.g. on
+> `OnNodeAvailable`/`OnNodeLocked`) so a `CollectionContainsCondition` can read it — not built in, by design
+> (no real case yet).
 
 ---
 

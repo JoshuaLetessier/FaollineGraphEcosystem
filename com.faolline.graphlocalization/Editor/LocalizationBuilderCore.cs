@@ -116,19 +116,50 @@ namespace Faolline.GraphLocalization.Editor
         private static LocalizationDatabase GetOrCreateDatabase(string libName)
         {
             var safeName = SanitizeFileName(libName);
-            var path = $"Assets/Resources/GraphLocalization_{safeName}.asset";
+            var root = ResolveResourcesRoot();
+            var path = $"{root}/GraphLocalization_{safeName}.asset";
 
             var existing = AssetDatabase.LoadAssetAtPath<LocalizationDatabase>(path);
             if (existing != null) return existing;
-
-            if (!AssetDatabase.IsValidFolder("Assets/Resources"))
-                AssetDatabase.CreateFolder("Assets", "Resources");
 
             var db = ScriptableObject.CreateInstance<LocalizationDatabase>();
             AssetDatabase.CreateAsset(db, path);
             AssetDatabase.SaveAssets();
             Debug.Log($"[LocalizationBuilderCore] Created database at {path}");
             return db;
+        }
+
+        /// <summary>
+        /// The configured Resources root for the manifest + databases (settings asset, default
+        /// <c>Assets/Resources</c>), ensured to exist. Warns when it is not under a <c>Resources</c> folder
+        /// (the runtime loads these by name via <c>Resources.Load</c>).
+        /// </summary>
+        private static string ResolveResourcesRoot()
+        {
+            var settings = LocalizationSettingsLoader.Load();
+            var root = settings != null && !string.IsNullOrEmpty(settings.ResourcesRoot)
+                ? settings.ResourcesRoot : "Assets/Resources";
+
+            bool underResources = false;
+            foreach (var seg in root.Replace('\\', '/').Split('/')) if (seg == "Resources") { underResources = true; break; }
+            if (!underResources)
+                Debug.LogWarning($"[LocalizationBuilderCore] ResourcesRoot '{root}' is not under a 'Resources' " +
+                    "folder; the runtime loads the manifest/databases via Resources.Load and won't find them. " +
+                    "Use e.g. 'Assets/MyGame/Resources'.");
+
+            EnsureFolder(root);
+            return root;
+        }
+
+        private static void EnsureFolder(string path)
+        {
+            path = path.Replace('\\', '/').TrimEnd('/');
+            if (string.IsNullOrEmpty(path) || AssetDatabase.IsValidFolder(path)) return;
+            var parent = System.IO.Path.GetDirectoryName(path)?.Replace('\\', '/');
+            var leaf = System.IO.Path.GetFileName(path);
+            if (string.IsNullOrEmpty(parent) || string.IsNullOrEmpty(leaf)) return;
+            if (!AssetDatabase.IsValidFolder(parent)) EnsureFolder(parent);
+            AssetDatabase.CreateFolder(parent, leaf);
         }
 
         private static string[] TrySyncToUnityLocalization(string libName, LocalizationDatabase db,
@@ -174,12 +205,15 @@ namespace Faolline.GraphLocalization.Editor
 
         private static GraphLocalizationManifest GetOrCreateManifest()
         {
-            var path = $"Assets/Resources/{GraphLocalizationManifest.ResourceName}.asset";
+            // Prefer an existing manifest anywhere (it is loaded by name at runtime); else create under the root.
+            var existingDefault = AssetDatabase.LoadAssetAtPath<GraphLocalizationManifest>(
+                $"Assets/Resources/{GraphLocalizationManifest.ResourceName}.asset");
+            if (existingDefault != null) return existingDefault;
+
+            var root = ResolveResourcesRoot();
+            var path = $"{root}/{GraphLocalizationManifest.ResourceName}.asset";
             var existing = AssetDatabase.LoadAssetAtPath<GraphLocalizationManifest>(path);
             if (existing != null) return existing;
-
-            if (!AssetDatabase.IsValidFolder("Assets/Resources"))
-                AssetDatabase.CreateFolder("Assets", "Resources");
 
             var manifest = ScriptableObject.CreateInstance<GraphLocalizationManifest>();
             AssetDatabase.CreateAsset(manifest, path);

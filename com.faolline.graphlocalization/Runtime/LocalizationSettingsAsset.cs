@@ -33,6 +33,11 @@ namespace Faolline.GraphLocalization
         [SerializeField, Tooltip("Folder where per-lib CSV files are written (Csv mode).")]
         private string _csvOutputFolder = "Assets/Localization/Csv";
 
+        [SerializeField, Tooltip("Folder where the build writes the GraphLocalizationManifest and per-lib " +
+            "LocalizationDatabase assets. MUST be (or be under) a 'Resources' folder so the runtime can load " +
+            "them by name — e.g. 'Assets/Resources' (default) or 'Assets/MyGame/Resources'.")]
+        private string _resourcesRoot = "Assets/Resources";
+
         [Header("Build-time validation")]
         [SerializeField, Tooltip("How the table builder reports per-locale translation gaps.\n\n" +
             "• Permissive: accept gaps silently.\n" +
@@ -66,6 +71,12 @@ namespace Faolline.GraphLocalization
 
         /// <summary>Folder where per-lib CSV files are written (Csv mode).</summary>
         public string CsvOutputFolder => string.IsNullOrEmpty(_csvOutputFolder) ? "Assets/Localization/Csv" : _csvOutputFolder;
+
+        /// <summary>
+        /// Folder where the build writes the manifest + per-lib databases. Must be (or be under) a
+        /// <c>Resources</c> folder so the runtime can load them by name. Defaults to <c>Assets/Resources</c>.
+        /// </summary>
+        public string ResourcesRoot => string.IsNullOrEmpty(_resourcesRoot) ? "Assets/Resources" : _resourcesRoot.TrimEnd('/');
 
         public LocalizationSettings CreateSettings(string locale = "en")
         {

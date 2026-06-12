@@ -24,6 +24,20 @@ namespace Faolline.GraphStandard
         /// <summary>Sets the node's title.</summary>
         public GraphNodeBuilder Title(string title) { Node.Title = title; return this; }
 
+        /// <summary>
+        /// Overrides the node's auto-GUID id with a stable, readable one (e.g. <c>"room_hub"</c>), so runtime
+        /// code can address this exact node of the built/authored graph by a known id. Call before wiring edges
+        /// (edges read the id when created). Empty/whitespace is ignored (keeps the GUID).
+        /// </summary>
+        public GraphNodeBuilder Id(string id)
+        {
+            if (string.IsNullOrWhiteSpace(id))
+                Debug.LogWarning("[GraphStandard] GraphNodeBuilder.Id: empty id ignored; keeping the auto-GUID.");
+            else
+                Node.Id = id;
+            return this;
+        }
+
         /// <summary>Sets the node's canvas position.</summary>
         public GraphNodeBuilder At(float x, float y) { Node.Position = new Vector2(x, y); return this; }
 

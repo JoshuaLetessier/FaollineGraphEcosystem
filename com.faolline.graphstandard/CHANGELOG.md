@@ -4,6 +4,17 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.8.0]
+
+### Added
+- **`GraphNodeBuilder.Id(string)`** — override a node's auto-GUID with a stable, readable id (e.g. `"room_hub"`)
+  so runtime code can address that exact node of a built/authored graph by a known id. Call before wiring edges
+  (edges read the id when created); empty is ignored. From round-6 dogfooding (authoring assets in code needed
+  stable ids to address the hub / subgraph nodes; the consumer had to hand-assemble to control them).
+
+### Notes
+- Additive (MINOR); graphcore untouched. Round-7 refinement branch.
+
 ## [0.7.0]
 
 ### Added
