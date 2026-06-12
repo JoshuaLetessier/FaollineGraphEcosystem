@@ -20,11 +20,7 @@ namespace Faolline.GraphDialogue
 
         private readonly DialogueGraph _graph;
         private readonly DialogueContext _context;
-        private readonly ILocalizationProvider _localization;
-        private readonly ILocalizedAssetProvider _assets;
-        private readonly Func<string, Speaker> _speakerLookup;
-        private readonly LocalizationStrictMode _strictMode;
-        private readonly List<string> _missingKeys = new List<string>();
+        private readonly DialoguePresenter _presenter;
 
         private readonly BaseRunner _runner = new BaseRunner();
         private NodeExecutorRegistry _registry;
@@ -49,7 +45,7 @@ namespace Faolline.GraphDialogue
         public event Action<string> OnMissingKey;
 
         /// <summary>Distinct localization keys that failed to resolve during this session (audit log).</summary>
-        public IReadOnlyList<string> MissingKeys => _missingKeys;
+        public IReadOnlyList<string> MissingKeys => _presenter.MissingKeys;
 
         /// <summary>The most recently emitted step, or null before <see cref="Start"/>.</summary>
         public DialogueStep CurrentStep { get; private set; }
@@ -67,10 +63,8 @@ namespace Faolline.GraphDialogue
         {
             _graph = graph;
             _context = context ?? new DialogueContext();
-            _localization = localization ?? new CsvLocalizationProvider(string.Empty, "en");
-            _assets = assets;
-            _speakerLookup = speakerLookup;
-            _strictMode = strictMode;
+            _presenter = new DialoguePresenter(localization, assets, speakerLookup, strictMode);
+            _presenter.OnMissingKey += key => OnMissingKey?.Invoke(key);
 
             _runner.OnEnded += reason =>
             {
@@ -150,7 +144,7 @@ namespace Faolline.GraphDialogue
 
             _stuck = false;
             _ended = false;
-            _missingKeys.Clear();
+            _presenter.ClearMissingKeys();
 
             // Apply saved context BEFORE entering the node so enter-actions see restored values.
             state.ApplyContext(_context);
@@ -276,82 +270,10 @@ namespace Faolline.GraphDialogue
             }
         }
 
-        private LineStep BuildLineStep(DialogueLineNodeData line)
-        {
-            string text = ResolveChecked(DialogueLocalizationKeys.ForLine(line));
-            text = DialogueTextInterpolator.Interpolate(text, _context);
-            string speakerName = ResolveSpeakerName(line.SpeakerKey);
+        // Resolution is delegated to the runner-agnostic DialoguePresenter (built in the ctor).
+        private LineStep BuildLineStep(DialogueLineNodeData line) => _presenter.ResolveLine(line, _context);
 
-            // Voice is resolved by the line's key from the localized asset tables (no per-node clip).
-            var voice = _assets != null
-                ? _assets.ResolveAsset<AudioClip>(DialogueLocalizationKeys.ForLine(line))
-                : null;
-
-            return new LineStep(line.Id, line.SpeakerKey, speakerName, text, line.ExpressionKey, voice);
-        }
-
-        private ChoiceStep BuildChoiceStep(ChoiceNodeData choiceNode)
-        {
-            var options = new List<ChoiceOption>();
-            foreach (var baseChoice in choiceNode.Choices)
-            {
-                if (baseChoice == null) continue;
-                string labelKey = DialogueLocalizationKeys.ForChoice(baseChoice);
-                string label = string.IsNullOrEmpty(labelKey)
-                    ? baseChoice.Id
-                    : ResolveChecked(labelKey);
-                label = DialogueTextInterpolator.Interpolate(label, _context);
-                bool available = baseChoice.Condition == null || baseChoice.Condition.Evaluate(_context);
-                options.Add(new ChoiceOption(baseChoice.Id, label, available));
-            }
-            return new ChoiceStep(choiceNode.Id, options);
-        }
-
-        /// <summary>
-        /// Resolves a key through the provider and applies the configured <see cref="LocalizationStrictMode"/>
-        /// when the key is missing (provider returns the <c>#key</c> fallback or empty):
-        /// Permissive returns the fallback silently; Audit warns + records it; Strict throws.
-        /// </summary>
-        private string ResolveChecked(string key)
-        {
-            var locale = _localization.CurrentLocale;
-            var value = _localization.Resolve(key, locale);
-
-            bool missing = string.IsNullOrEmpty(value) || value == $"#{key}";
-            if (!missing) return value;
-
-            switch (_strictMode)
-            {
-                case LocalizationStrictMode.Strict:
-                    throw new LocalizationException(key, locale);
-                case LocalizationStrictMode.Audit:
-                    if (!_missingKeys.Contains(key))
-                    {
-                        _missingKeys.Add(key);
-                        Debug.LogWarning($"[GraphDialogue] Missing localization key '{key}' for locale '{locale}'.");
-                        OnMissingKey?.Invoke(key);
-                    }
-                    break;
-                // Permissive: return the fallback silently.
-            }
-            return value;
-        }
-
-        private string ResolveSpeakerName(string speakerKey)
-        {
-            if (string.IsNullOrEmpty(speakerKey)) return string.Empty;
-            var speaker = _speakerLookup?.Invoke(speakerKey);
-            if (speaker == null) return speakerKey;
-
-            var nameKey = DialogueLocalizationKeys.ForSpeaker(speaker);
-            if (!string.IsNullOrEmpty(nameKey))
-            {
-                var resolved = _localization.Resolve(nameKey, _localization.CurrentLocale);
-                if (!string.IsNullOrEmpty(resolved) && resolved != $"#{nameKey}")
-                    return resolved;
-            }
-            return string.IsNullOrEmpty(speaker.DisplayNameFallback) ? speakerKey : speaker.DisplayNameFallback;
-        }
+        private ChoiceStep BuildChoiceStep(ChoiceNodeData choiceNode) => _presenter.ResolveChoice(choiceNode, _context);
 
         private bool IsChoiceAvailable(ChoiceNodeData node, string choiceId)
         {

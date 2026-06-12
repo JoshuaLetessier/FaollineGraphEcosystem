@@ -1,6 +1,6 @@
 # com.faolline.graphdialoguesystem
 
-**Version**: 0.1.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore`
+**Version**: 0.3.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore`
 
 A graph-based dialogue library built **entirely on top of** `com.faolline.graphcore` (zero core
 changes), following the `com.faolline.starterGraph` package shape. Author branching, multi-speaker,
@@ -98,6 +98,30 @@ player.Start();
 
 `DialoguePlayer` wraps graphcore's `BaseRunner` — sub-dialogue nesting, cycle detection, and history
 come from the foundation.
+
+### Rendering a dialogue owned by another runner (`DialoguePresenter`)
+
+When a **host** runs the dialogue — e.g. a gameflow `GraphFlowDriver` that embeds a `DialogueGraph` as a
+**SubGraph** of its host flow — the host's runner owns the cursor, so a `DialoguePlayer` cannot drive it. Use a
+runner-agnostic **`DialoguePresenter`** to resolve the host runner's current node into the same steps:
+
+```csharp
+var presenter = new DialoguePresenter(localization, assets, speakerLookup);
+
+driver.OnNodeEntered += node =>
+{
+    switch (presenter.Resolve(node, driver.Context))   // null for non-dialogue nodes
+    {
+        case LineStep line:   driver.AutoAdvance = false; Show(line); break;   // "continue" → driver.Advance()
+        case ChoiceStep step: Present(step.Options);              break;       // pick → driver.ChooseById(optionId)
+        default:              driver.AutoAdvance = true;           break;
+    }
+};
+```
+
+`DialoguePlayer` itself now resolves through this presenter internally (unchanged for standalone dialogues).
+The dialogue's outcome already flows through the **shared context** (SubGraph + `InheritParentContext`), so an
+authored action on a line writes straight into the host's state — no bridge code.
 
 ---
 

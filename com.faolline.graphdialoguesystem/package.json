@@ -1,6 +1,6 @@
 {
     "name": "com.faolline.graphdialoguesystem",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "displayName": "Faolline GraphDialogue System",
     "description": "Graph-based dialogue library built on com.faolline.graphcore. Spoken lines, speakers, localized text, branching choices, inline conditions/effects, and a headless playback engine.",
     "unity": "6000.0",

@@ -4,6 +4,25 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0]
+
+### Added
+- **`DialoguePresenter`** (Runtime/Playback) — runner-agnostic resolution of dialogue nodes into displayable
+  steps. Given a `DialogueLineNodeData`/`ChoiceNodeData` + a `BaseContext` + the providers, it produces the
+  same `LineStep`/`ChoiceStep` the player emits, for a node owned by **any** runner. This lets a host (e.g. a
+  gameflow `GraphFlowDriver` that embeds a dialogue **subgraph**) *render* dialogue without owning a
+  `DialoguePlayer` — removing the ~40-line resolution rewrite a round-6 consumer hit. `Resolve(node, ctx)`
+  returns `null` for a non-dialogue node; `MissingKeys`/`OnMissingKey` and strict modes work as in the player.
+
+### Changed
+- `DialoguePlayer` now resolves through an internal `DialoguePresenter` — **public API and behavior unchanged**
+  (the existing playback suite is the regression guard).
+- README version header corrected (was stale at `0.1.0`).
+
+### Notes
+- Additive (MINOR); graphcore untouched; no dependency on gameflow (the consumer composes the host runner +
+  the presenter, per Constitution VII).
+
 ## [0.2.0]
 
 ### Added

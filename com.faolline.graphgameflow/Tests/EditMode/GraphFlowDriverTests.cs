@@ -113,6 +113,36 @@ namespace Faolline.GraphGameFlow.Tests
         }
 
         [Test]
+        public void AutoAdvance_PausesOnChoice_AndChooseByIdSelectsBranch()
+        {
+            var g = NewGraph("start");
+            var choice = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
+            choice.Choices.Add(new BaseChoice { Id = "a" });
+            choice.Choices.Add(new BaseChoice { Id = "b" });
+            g.AddNode(Start("start")); g.AddNode(choice); g.AddNode(End("endA")); g.AddNode(End("endB"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "c" });
+            g.AddEdge(new BaseEdgeData { Id = "ea", FromNodeId = "c", ToNodeId = "endA", PortName = "a" });
+            g.AddEdge(new BaseEdgeData { Id = "eb", FromNodeId = "c", ToNodeId = "endB", PortName = "b" });
+            var d = NewDriver(g, autoAdvance: true);
+
+            var entered = new List<string>();
+            EndReason? ended = null;
+            d.OnNodeEntered += n => entered.Add(n.Id);
+            d.OnEnded += r => ended = r;
+            d.Boot();
+
+            // Auto-advanced start → choice, then PAUSED (a choice is not auto-resolved under AutoAdvance).
+            Assert.AreEqual(new[] { "start", "c" }, entered.ToArray());
+            Assert.IsNull(ended, "a choice must not auto-resolve under AutoAdvance");
+            Assert.IsTrue(d.IsRunning);
+
+            d.ChooseById("b");   // deliberate pick → endB
+            CollectionAssert.Contains(entered, "endB");
+            CollectionAssert.DoesNotContain(entered, "endA");
+            Assert.AreEqual(EndReason.Completed, ended);
+        }
+
+        [Test]
         public void ManualAdvance_OnlyAdvancesOnCall()
         {
             var g = NewGraph("start");

@@ -4,6 +4,23 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.0]
+
+### Added
+- **`GraphFlowDriver.ChooseById(id)`** — selects a choice branch on the running flow (no-op when not running),
+  mirroring `Advance`/`RaiseSignal`; a host no longer needs to reach into `Runner` to pick a choice.
+
+### Changed
+- **`AutoAdvance` no longer auto-resolves a choice.** A `ChoiceNodeData` now **pauses** for a deliberate
+  `ChooseById` instead of being auto-advanced by "first passing edge" (a round-6 footgun). Non-choice nodes
+  auto-advance exactly as before. (Verified safe: no prior flow/test relied on choice auto-resolution.)
+- Dependency `com.faolline.graphcore` `0.6.0 → 0.7.0` (coherence; gameflow uses no 0.7.0-only API).
+
+### Notes
+- Additive MINOR (plus the choice-pause behavior fix). Pairs with graphdialoguesystem `0.3.0`'s
+  `DialoguePresenter` to host a *rendered* dialogue subgraph in ~10 lines (the consumer composes; no dependency
+  is added between gameflow and the dialogue lib). From round-6 dogfooding.
+
 ## [0.5.0]
 
 ### Added

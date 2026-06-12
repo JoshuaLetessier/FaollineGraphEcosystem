@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.5.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.6.0
+**Version**: 0.6.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.7.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -59,7 +59,11 @@ public void OpenDoor()  => _flow.RaiseSignal("door");  // resume a flow parked o
   warning and it stays inert (never throws).
 - **Pumps time**: `Update` forwards `Time.deltaTime` to the runner, so time-wait nodes resolve. Pausing is
   simply not ticking (disable the component); `dt ≤ 0` is ignored.
-- **AutoAdvance** (default on) walks the flow node-to-node; turn it off to advance only on `Advance()`.
+- **AutoAdvance** (default on) walks the flow node-to-node; turn it off to advance only on `Advance()`. A
+  **choice** node is never auto-resolved — it pauses for a deliberate `ChooseById(id)` (re-exposed like
+  `Advance`), so a host can present options and pick a branch. This makes "render an embedded dialogue
+  subgraph" a ~10-line composition: resolve the host runner's current node with graphdialoguesystem's
+  `DialoguePresenter`, then drive `Advance()` (lines, with AutoAdvance off) / `ChooseById(id)` (choices).
 - **Re-exposes** the runner's lifecycle as C# events (no `UnityEvent`): `OnNodeEntered`, `OnNodeCompleted`,
   `OnEnded`, `OnStuck`, `OnWaitingForSignal`.
 - **Stop()** detaches from the runner (called by `OnDestroy`); also callable to halt a flow.

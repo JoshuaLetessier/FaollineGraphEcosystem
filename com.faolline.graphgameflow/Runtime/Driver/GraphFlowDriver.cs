@@ -204,6 +204,17 @@ namespace Faolline.GraphGameFlow
             _runner.Proceed();
         }
 
+        /// <summary>
+        /// Selects a choice branch by its id (or port name) on the running flow — the deliberate pick a
+        /// <see cref="GraphCore.ChoiceNodeData"/> waits for (it is not auto-advanced even under
+        /// <see cref="AutoAdvance"/>). No-op when not running. Mirrors <see cref="Advance"/>.
+        /// </summary>
+        public void ChooseById(string id)
+        {
+            if (!_running) return;
+            _runner.ChooseById(id);
+        }
+
         /// <summary>Raises a named signal into the running flow, resuming a matching await. No-op when not running.</summary>
         public void RaiseSignal(string name)
         {
@@ -256,7 +267,8 @@ namespace Faolline.GraphGameFlow
         private void HandleNodeCompleted(BaseNodeData node)
         {
             OnNodeCompleted?.Invoke(node);
-            if (_autoAdvance) _runner.Proceed();
+            // A choice requires a deliberate pick (ChooseById); never auto-resolve it by first-passing-edge.
+            if (_autoAdvance && !(node is ChoiceNodeData)) _runner.Proceed();
         }
 
         private void HandleEnded(EndReason reason)
