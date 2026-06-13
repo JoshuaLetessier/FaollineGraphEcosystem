@@ -12,6 +12,24 @@ namespace Faolline.GraphCore.Editor
         public static readonly Color RunningBright = new Color(0.35f, 0.70f, 1.00f);
         public static readonly Color RunningDim    = new Color(0.15f, 0.40f, 0.75f);
 
+        /// <summary>The two ends the Waiting border lerps between as it pulses (amber).</summary>
+        public static readonly Color WaitingBright = new Color(1.00f, 0.80f, 0.30f);
+        public static readonly Color WaitingDim    = new Color(0.65f, 0.48f, 0.12f);
+
+        /// <summary>
+        /// The (dim, bright) endpoints a live status pulses between, or <c>false</c> when the status is static.
+        /// Both the live cursor (Running) and a parked node (Waiting) pulse; everything else holds.
+        /// </summary>
+        public static bool TryPulse(GraphRunNodeStatus status, out Color dim, out Color bright)
+        {
+            switch (status)
+            {
+                case GraphRunNodeStatus.Running: dim = RunningDim; bright = RunningBright; return true;
+                case GraphRunNodeStatus.Waiting: dim = WaitingDim; bright = WaitingBright; return true;
+                default: dim = default; bright = default; return false;
+            }
+        }
+
         public static Color For(GraphRunNodeStatus status)
         {
             switch (status)

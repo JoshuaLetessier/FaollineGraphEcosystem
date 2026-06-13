@@ -4,6 +4,22 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.11.0]
+
+### Added
+- **Edges route around nodes (editor)** — orthogonal edges now weave AROUND node boxes instead of passing under
+  them, live: the obstacle-avoiding routing recomputes every repaint (incl. while you drag a node). A leg stays a
+  clean elbow when it already clears everything; otherwise it is routed on the grid of the nodes' margin-inflated
+  boundary lines with a shortest-path search that prefers few turns. The edge's own endpoint nodes are excluded
+  (it legitimately touches them). New pure `OrthogonalEdgeRouter.RouteAvoiding(...)` (unit-tested);
+  `OrthogonalEdgeControl` feeds it the sibling node boxes.
+- **Run cursor pulses on Waiting too** — a node parked on a signal/timer now pulses (amber), like the live
+  cursor (blue); other statuses stay static. `RunCursorColors.TryPulse`.
+
+### Notes
+- Additive (MINOR), editor-only. Live avoidance trades CPU per repaint for always-clean routing (the user's
+  choice over a baked-on-Arrange variant). Tests green (EditMode 712 / PlayMode 9).
+
 ## [0.10.0]
 
 ### Added

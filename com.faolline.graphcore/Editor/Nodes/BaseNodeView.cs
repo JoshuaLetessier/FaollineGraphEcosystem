@@ -70,14 +70,15 @@ namespace Faolline.GraphCore.Editor
         }
 
         /// <summary>
-        /// Animates the border of a <see cref="GraphRunNodeStatus.Running"/> node — called each tick by the
-        /// canvas pulser with <paramref name="k"/> in 0..1. No-op for any other status (they stay static).
+        /// Animates the border of a pulsing node (the live cursor — Running — or a parked node — Waiting),
+        /// called each tick by the canvas pulser with <paramref name="k"/> in 0..1. No-op for any other status
+        /// (they stay static).
         /// </summary>
         public void PulseRunCursor(float k)
         {
-            if (_runStatus != GraphRunNodeStatus.Running) return;
+            if (!RunCursorColors.TryPulse(_runStatus, out var dim, out var bright)) return;
             var border = this.Q("node-border") ?? (VisualElement)this;
-            var c = Color.Lerp(RunCursorColors.RunningDim, RunCursorColors.RunningBright, k);
+            var c = Color.Lerp(dim, bright, k);
             border.style.borderTopColor = c;
             border.style.borderRightColor = c;
             border.style.borderBottomColor = c;

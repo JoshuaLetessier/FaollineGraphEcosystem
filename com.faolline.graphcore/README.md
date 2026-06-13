@@ -142,7 +142,8 @@ public class BaseEdgeData
 **Malleable edges (editor, 0.8.0)**: edges render as right-angle polylines you can shape — **double-click** an
 edge to add a bend point, **drag** the dots to move them, **right-click** a dot to remove it. Bends live in
 `Waypoints` (editor metadata, like a node's `Position`; persisted, no runtime effect). The live preview can lag
-the data while editing; **Save (Ctrl+S)** fully refreshes the routing (a toolbar hint notes this).
+the data while editing; **Save (Ctrl+S)** fully refreshes the routing (a toolbar hint notes this). Since 0.11.0
+edges also **route around node boxes** (live, recomputed each repaint) instead of passing under them.
 
 **Auto-arrange (editor, 0.8.0)**: the toolbar **Arrange** button lays the graph out left-to-right in tidy
 layers (longest-path layering, crossing reduction, cycle-safe) and routes column-skipping edges through a lane

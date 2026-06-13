@@ -79,5 +79,73 @@ namespace Faolline.GraphCore.Tests
             var b = OrthogonalEdgeRouter.Route(new Vector2(0, 0), new Vector2(100, 40), null, R, R);
             CollectionAssert.AreEqual(b, a);
         }
+
+        // ── Obstacle avoidance (#2) ─────────────────────────────────────────────────
+
+        // Fails if any segment passes strictly through a raw obstacle's interior (touching an edge is allowed).
+        private static void AssertClearsObstacles(List<Vector2> pts, params Rect[] obstacles)
+        {
+            const float e = 0.6f;
+            for (int i = 1; i < pts.Count; i++)
+            {
+                Vector2 p = pts[i - 1], q = pts[i];
+                foreach (var r in obstacles)
+                {
+                    bool inside;
+                    if (Mathf.Approximately(p.y, q.y))
+                    {
+                        float y = p.y, x1 = Mathf.Min(p.x, q.x), x2 = Mathf.Max(p.x, q.x);
+                        inside = y > r.yMin + e && y < r.yMax - e && x2 > r.xMin + e && x1 < r.xMax - e;
+                    }
+                    else
+                    {
+                        float x = p.x, y1 = Mathf.Min(p.y, q.y), y2 = Mathf.Max(p.y, q.y);
+                        inside = x > r.xMin + e && x < r.xMax - e && y2 > r.yMin + e && y1 < r.yMax - e;
+                    }
+                    Assert.IsFalse(inside, $"segment {p}->{q} crosses obstacle {r}.");
+                }
+            }
+        }
+
+        [Test]
+        public void RouteAvoiding_NoObstacles_EqualsPlainRoute()
+        {
+            var with = OrthogonalEdgeRouter.RouteAvoiding(new Vector2(0, 0), new Vector2(200, 40), null, R, R,
+                new List<Rect>());
+            var plain = OrthogonalEdgeRouter.Route(new Vector2(0, 0), new Vector2(200, 40), null, R, R);
+            CollectionAssert.AreEqual(plain, with, "no obstacles → identical to the plain orthogonal route.");
+        }
+
+        [Test]
+        public void RouteAvoiding_BoxOnTheLine_DetoursAround_AndStaysAxisAligned()
+        {
+            // A box straddling the straight y=0 path between the ports.
+            var box = new Rect(120, -40, 60, 80);   // x 120..180, y -40..40
+            var pts = OrthogonalEdgeRouter.RouteAvoiding(new Vector2(0, 0), new Vector2(300, 0), null, R, R,
+                new List<Rect> { box });
+
+            Assert.AreEqual(new Vector2(0, 0), pts[0]);
+            Assert.AreEqual(new Vector2(300, 0), pts[pts.Count - 1]);
+            AssertAllSegmentsAxisAligned(pts);
+            AssertClearsObstacles(pts, box);
+
+            float maxAbsY = 0f;
+            foreach (var p in pts) maxAbsY = Mathf.Max(maxAbsY, Mathf.Abs(p.y));
+            Assert.Greater(maxAbsY, 40f, "the route bends past the box instead of crossing it.");
+        }
+
+        [Test]
+        public void RouteAvoiding_BoxOffToTheSide_KeepsSimpleRoute()
+        {
+            // A box well below the path: nothing to avoid, the clean elbow is kept.
+            var box = new Rect(120, 300, 60, 80);
+            var pts = OrthogonalEdgeRouter.RouteAvoiding(new Vector2(0, 0), new Vector2(300, 0), null, R, R,
+                new List<Rect> { box });
+
+            Assert.AreEqual(new Vector2(0, 0), pts[0]);
+            Assert.AreEqual(new Vector2(300, 0), pts[pts.Count - 1]);
+            AssertClearsObstacles(pts, box);
+            foreach (var p in pts) Assert.LessOrEqual(Mathf.Abs(p.y), 1f, "an out-of-the-way box leaves the straight route untouched.");
+        }
     }
 }

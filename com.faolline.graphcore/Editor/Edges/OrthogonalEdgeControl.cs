@@ -88,6 +88,32 @@ namespace Faolline.GraphCore.Editor
             });
         }
 
+        // Every node box (in the control's parent space) except this edge's source/target nodes — the obstacles
+        // the router weaves around. Returns null when there is nothing to avoid (fast path keeps simple elbows).
+        private List<Rect> CollectObstacles(GraphView graphView, VisualElement parentEl)
+        {
+            if (graphView == null) return null;
+
+            var edge = GetFirstAncestorOfType<Edge>();
+            var srcNode = edge?.output?.node;
+            var dstNode = edge?.input?.node;
+
+            List<Rect> obstacles = null;
+            graphView.nodes.ForEach(node =>
+            {
+                if (node == srcNode || node == dstNode) return;
+                var size = node.layout.size;
+                if (float.IsNaN(size.x) || float.IsNaN(size.y) || size.x <= 0f || size.y <= 0f) return;
+
+                var tl = node.ChangeCoordinatesTo(parentEl, Vector2.zero);
+                var br = node.ChangeCoordinatesTo(parentEl, size);
+                var rect = Rect.MinMaxRect(Mathf.Min(tl.x, br.x), Mathf.Min(tl.y, br.y),
+                                           Mathf.Max(tl.x, br.x), Mathf.Max(tl.y, br.y));
+                (obstacles ??= new List<Rect>()).Add(rect);
+            });
+            return obstacles;
+        }
+
         protected override void UpdateRenderPoints()
         {
             base.UpdateRenderPoints();   // computes the default render points + clears the dirty flag
@@ -97,25 +123,28 @@ namespace Faolline.GraphCore.Editor
             var parentEl = parent;
             if (parentEl == null) return;
 
-            // EdgeControl.from/to are expressed in the control's PARENT space; route there. Waypoints are stored
-            // in graph/content space → convert them into that same parent space.
+            // EdgeControl.from/to are expressed in the control's PARENT space; route there.
+            var graphView = GetFirstAncestorOfType<GraphView>();
+
+            // Waypoints are stored in graph/content space → convert into that same parent space.
             List<Vector2> waypointsInParent = null;
             var wps = EdgeData?.Waypoints;
-            if (wps != null && wps.Count > 0)
+            if (wps != null && wps.Count > 0 && graphView?.contentViewContainer != null)
             {
-                var content = GetFirstAncestorOfType<GraphView>()?.contentViewContainer;
-                if (content != null)
-                {
-                    waypointsInParent = new List<Vector2>(wps.Count);
-                    foreach (var wp in wps)
-                        waypointsInParent.Add(content.ChangeCoordinatesTo(parentEl, wp));
-                }
+                var content = graphView.contentViewContainer;
+                waypointsInParent = new List<Vector2>(wps.Count);
+                foreach (var wp in wps)
+                    waypointsInParent.Add(content.ChangeCoordinatesTo(parentEl, wp));
             }
+
+            // Obstacles: every other node's box in parent space, EXCLUDING this edge's own endpoint nodes (the
+            // line legitimately touches them). The router routes around these instead of passing under them.
+            var obstacles = CollectObstacles(graphView, parentEl);
 
             // Leave/enter the ports head-on per their orientation (right for horizontal, down for vertical).
             Vector2 fromDir = outputOrientation == Orientation.Horizontal ? Vector2.right : Vector2.up;
             Vector2 toDir   = inputOrientation  == Orientation.Horizontal ? Vector2.right : Vector2.up;
-            var routed = OrthogonalEdgeRouter.Route(from, to, waypointsInParent, fromDir, toDir);
+            var routed = OrthogonalEdgeRouter.RouteAvoiding(from, to, waypointsInParent, fromDir, toDir, obstacles);
 
             // Render points live in the EdgeControl's LOCAL space — convert parent → this, exactly as the base
             // does for its control points (EdgeControl.UpdateRenderPoints: parent.ChangeCoordinatesTo(this, cp)).
