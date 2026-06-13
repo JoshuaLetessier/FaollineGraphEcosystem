@@ -53,6 +53,28 @@ namespace Faolline.GraphSave.Tests
         }
 
         [Test]
+        public void ApplyTo_ReplaceCollections_DoesNotDoubleOntoPopulatedContext()
+        {
+            var snap = new GraphRunSnapshot();
+            snap.Collections.Add(new GraphRunSnapshot.Collection { Key = "completed", Items = { "p1" } });
+
+            // A context that already holds the item (e.g. a previous run / replay).
+            var ctx = new BaseContext();
+            ctx.AddToCollection("completed", "p1");
+
+            // Default merge re-adds (the collection is a set, so still just one — but counts must be 1).
+            snap.ApplyTo(ctx);
+            Assert.AreEqual(1, ctx.CollectionCount("completed"), "a set collection stays deduped under merge.");
+
+            // Replace clears first, so the snapshot is authoritative even with extra pre-existing items.
+            ctx.AddToCollection("completed", "stale");
+            snap.ApplyTo(ctx, replaceCollections: true);
+            Assert.IsTrue(ctx.CollectionContains("completed", "p1"));
+            Assert.IsFalse(ctx.CollectionContains("completed", "stale"), "replace drops items not in the snapshot.");
+            Assert.AreEqual(1, ctx.CollectionCount("completed"));
+        }
+
+        [Test]
         public void Store_Save_Load_Exists_Delete()
         {
             var store = new MemoryStore();

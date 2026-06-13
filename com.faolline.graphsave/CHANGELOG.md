@@ -4,6 +4,22 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0]
+
+### Changed
+- **`ApplyTo` can now replace collections.** New `ApplyTo(context, bool replaceCollections = false)`: when true,
+  each captured collection key is cleared before its items are re-added, so the snapshot is authoritative
+  (avoids the silent doubling you get applying onto an already-populated context). `Restore` now uses this
+  (`replaceCollections: true`). Default stays additive — existing callers are unaffected. From FaollineMiniGame
+  dogfooding (the consumer had to `ClearCollection` by hand before `ApplyTo`).
+
+### Notes
+- **Top-level only (documented).** A snapshot's `CurrentNodeId` is the TOP frame's node and the stack is not
+  captured, so a node saved mid-sub-graph (e.g. mid-dialogue) cannot be restored via `Restore`. Capture/restore
+  at top-level checkpoints — pair with `BaseNodeData.IsCheckpoint` nodes (a checkpoint just before a long,
+  non-replayable sequence doubles as the save point). `Capture`/`Restore` XML docs now spell this out. Additive
+  (MINOR); graphcore untouched. +1 EditMode test.
+
 ## [0.1.0]
 
 ### Added

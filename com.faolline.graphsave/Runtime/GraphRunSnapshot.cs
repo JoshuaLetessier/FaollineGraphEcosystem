@@ -64,31 +64,54 @@ namespace Faolline.GraphSave
             return snapshot;
         }
 
-        /// <summary>Convenience capture reading the live cursor (graph id + current node) off a runner.</summary>
+        /// <summary>
+        /// Convenience capture reading the live cursor (graph id + current node) off a runner. Note this records
+        /// the TOP frame's node only — capture at TOP-LEVEL checkpoints, not while the run has descended into a
+        /// sub-graph (see <see cref="Restore"/> for why a mid-sub-graph node cannot be restored).
+        /// </summary>
         public static GraphRunSnapshot Capture(BaseRunner runner, BaseContext context)
             => Capture(context, runner?.CurrentGraph?.GraphId, runner?.CurrentNode?.Id);
 
-        /// <summary>Writes this snapshot's parameters and collections back into <paramref name="context"/>.</summary>
-        public void ApplyTo(BaseContext context)
+        /// <summary>
+        /// Writes this snapshot's parameters and collections back into <paramref name="context"/>. Parameters
+        /// overwrite (a <c>Set</c>); collections, by default, are MERGED (items are added) — so applying onto an
+        /// already-populated context can double entries. Pass <paramref name="replaceCollections"/> = <c>true</c>
+        /// to clear each captured collection key first, making the snapshot authoritative (what <see cref="Restore"/>
+        /// does). Default <c>false</c> keeps the additive behavior.
+        /// </summary>
+        public void ApplyTo(BaseContext context, bool replaceCollections = false)
         {
             if (context == null) return;
 
             foreach (var p in Parameters) ApplyParam(context, p);
 
             foreach (var c in Collections)
-                if (c?.Items != null)
+            {
+                if (c == null) continue;
+                if (replaceCollections) context.ClearCollection(c.Key);
+                if (c.Items != null)
                     foreach (var item in c.Items)
                         context.AddToCollection(c.Key, item);
+            }
         }
 
         /// <summary>
-        /// Restores a run: applies this snapshot to <paramref name="context"/>, then re-enters
-        /// <paramref name="runner"/> at the saved node (or the graph entry when none) via <c>StartFrom</c>.
+        /// Restores a run: applies this snapshot to <paramref name="context"/> (collections replaced, so the
+        /// snapshot is authoritative), then re-enters <paramref name="runner"/> at the saved node (or the graph
+        /// entry when none) via <c>StartFrom</c>.
+        /// <para>
+        /// <b>Top-level only.</b> <see cref="CurrentNodeId"/> is the TOP frame's node, and the snapshot does NOT
+        /// capture the execution stack. So restoring works for a node in <paramref name="graph"/> itself; a node
+        /// saved while the run had descended into a SUB-GRAPH (e.g. mid-dialogue) is not in <paramref name="graph"/>
+        /// and cannot be re-entered this way. Capture/restore at TOP-LEVEL checkpoints — pair this with
+        /// <c>BaseNodeData.IsCheckpoint</c> nodes (a checkpoint placed just before a long, non-replayable sequence
+        /// doubles as the save point: on load the run re-enters the checkpoint and the sequence simply replays).
+        /// </para>
         /// </summary>
         public void Restore(BaseRunner runner, BaseGraph graph, BaseContext context, NodeExecutorRegistry registry = null)
         {
             if (runner == null || graph == null || context == null) return;
-            ApplyTo(context);
+            ApplyTo(context, replaceCollections: true);
             var nodeId = string.IsNullOrEmpty(CurrentNodeId) ? graph.EntryNodeId : CurrentNodeId;
             runner.StartFrom(graph, nodeId, context, registry ?? new NodeExecutorRegistry());
         }
