@@ -1,7 +1,7 @@
 {
   "repository": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git",
   "branch": "master",
-  "basePath": "Assets/FaollineGraphEcosystem",
+  "basePath": "",
   "modules": [
     {
       "displayName": "Graph Core (base)",
