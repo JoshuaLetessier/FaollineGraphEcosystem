@@ -26,7 +26,7 @@ namespace Faolline.StarterGraph.Editor
             AssetDatabase.CreateAsset(g, SamplePath);
 
             // Typed parameter: seeded into the StarterContext on run (InitFromGraph) — gates the Left option.
-            g.AddParameter(new ParameterData { Key = StarterContextKeys.Flag, Type = ParameterType.Bool, DefaultValue = "true" });
+            g.AddParameter(ParameterData.Bool(StarterContextKeys.Flag, true));
 
             // Example action (BaseAction) + example condition (BaseCondition), stored as sub-assets.
             var introLog = Sub<StarterLogAction>(g, "IntroLog"); introLog.Message = "Intro";

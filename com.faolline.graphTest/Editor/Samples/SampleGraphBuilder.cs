@@ -27,8 +27,8 @@ namespace Faolline.GraphTest.Editor
             AssetDatabase.CreateAsset(graph, AssetPath);
 
             // ── Parameters (seed the context so conditions can read them) ─────────
-            graph.AddParameter(new ParameterData { Key = TestContextKeys.DoorOpen, Type = ParameterType.Bool, DefaultValue = "false" });
-            graph.AddParameter(new ParameterData { Key = TestContextKeys.FlagA,    Type = ParameterType.Bool, DefaultValue = "false" });
+            graph.AddParameter(ParameterData.Bool(TestContextKeys.DoorOpen, false));
+            graph.AddParameter(ParameterData.Bool(TestContextKeys.FlagA,    false));
 
             // ── Sub-assets: actions & conditions ─────────────────────────────────
             var logIntro     = Sub<TestLogAction>(graph, "LogIntro");        logIntro.Message = "Entrée intro";
@@ -132,9 +132,9 @@ namespace Faolline.GraphTest.Editor
             AssetDatabase.CreateAsset(parent, AuthoringPath);
 
             // Typed parameters (US3)
-            parent.AddParameter(new ParameterData { Key = score, Type = ParameterType.Int,    DefaultValue = "0" });
-            parent.AddParameter(new ParameterData { Key = hp,    Type = ParameterType.Float,  DefaultValue = "1" });
-            parent.AddParameter(new ParameterData { Key = pname, Type = ParameterType.String, DefaultValue = "" });
+            parent.AddParameter(ParameterData.Int(score, 0));
+            parent.AddParameter(ParameterData.Float(hp, 1f));
+            parent.AddParameter(ParameterData.String(pname, ""));
 
             // Typed actions (US3)
             var logSetup = Sub<TestLogAction>(parent, "LogSetup"); logSetup.Message = "Setup: score=5, hp=0.3, name=hero";

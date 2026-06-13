@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 
 namespace Faolline.GraphCore
 {
@@ -328,47 +327,9 @@ namespace Faolline.GraphCore
         {
             foreach (var param in graph.Parameters)
             {
-                switch (param.Type)
-                {
-                    case ParameterType.Bool:
-                        if (bool.TryParse(param.DefaultValue, out bool b))
-                            target[param.Key] = b;
-                        else
-                        {
-                            UnityEngine.Debug.LogWarning(
-                                $"[GraphCore] Cannot parse bool default '{param.DefaultValue}' for key '{param.Key}'. Using default.");
-                            target[param.Key] = default(bool);
-                        }
-                        break;
-
-                    case ParameterType.Int:
-                        if (int.TryParse(param.DefaultValue, NumberStyles.Integer,
-                                CultureInfo.InvariantCulture, out int i))
-                            target[param.Key] = i;
-                        else
-                        {
-                            UnityEngine.Debug.LogWarning(
-                                $"[GraphCore] Cannot parse int default '{param.DefaultValue}' for key '{param.Key}'. Using default.");
-                            target[param.Key] = default(int);
-                        }
-                        break;
-
-                    case ParameterType.Float:
-                        if (float.TryParse(param.DefaultValue, NumberStyles.Float,
-                                CultureInfo.InvariantCulture, out float f))
-                            target[param.Key] = f;
-                        else
-                        {
-                            UnityEngine.Debug.LogWarning(
-                                $"[GraphCore] Cannot parse float default '{param.DefaultValue}' for key '{param.Key}'. Using default.");
-                            target[param.Key] = default(float);
-                        }
-                        break;
-
-                    case ParameterType.String:
-                        target[param.Key] = param.DefaultValue ?? string.Empty;
-                        break;
-                }
+                if (param == null || string.IsNullOrEmpty(param.Key)) continue;
+                // The default is already stored in the field matching the parameter's type — no parsing.
+                target[param.Key] = param.DefaultValueBoxed;
             }
         }
 

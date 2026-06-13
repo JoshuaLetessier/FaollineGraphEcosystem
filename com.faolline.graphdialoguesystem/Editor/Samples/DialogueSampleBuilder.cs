@@ -66,7 +66,7 @@ namespace Faolline.GraphDialogue.Editor
             // ── Parent dialogue ──────────────────────────────────────────────────────────
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
             graph.AddSpeaker(mayor);
-            graph.AddParameter(new ParameterData { Key = DialogueContextKeys.Flag, Type = ParameterType.Bool, DefaultValue = "false" });
+            graph.AddParameter(ParameterData.Bool(DialogueContextKeys.Flag, false));
 
             var start  = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
             var intro  = new DialogueLineNodeData { Id = "intro", NodeType = DialogueLineNodeData.NodeTypeId, Title = "Welcome traveller.", SpeakerKey = "npc_mayor", ExpressionKey = "happy", Position = new Vector2(240, 0) };
