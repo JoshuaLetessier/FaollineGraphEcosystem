@@ -4,6 +4,25 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0]
+
+### Added
+- **Fluent code-first dialogue builder** (`DialogueGraphBuilder`) — the dialogue counterpart of graphstandard's
+  `GraphBuilder` (which only makes universal nodes, so a plain statement is silently drained instead of spoken).
+  Build dialogues directly: `AddLine(speaker).Say(text)`, `AddChoice()` + `.Option(label).To(target)`, `AddEnd`,
+  `To`/`AsEntry`/`Id`/`When`/`WithSpeaker`, then `Build()` → a `DialogueGraph`. The right node types
+  (`DialogueLineNodeData`, `ChoiceNodeData` + `DialogueChoice`) and their `NodeType` ids are set for you, so a
+  built dialogue plays with no hand-assembly (round-5 findings #1 + #5).
+- **Table-less rendering** (`DialogueTitleProvider.FromGraph(graph)`) — an `ILocalizationProvider` that resolves
+  a dialogue's derived line/choice keys to their authored `Title`, so a code-built dialogue renders its actual
+  text with NO CSV / localization table (otherwise a key with no table entry shows the bare `#line_<guid>`
+  marker). The "just show what I authored" path for prototyping/tests (round-5 finding #2).
+
+### Notes
+- Additive (MINOR); graphcore untouched. Resolves the round-5 "code-first dialogue is heavy" friction. 3 EditMode
+  tests. `DialogueDriver`'s serialized `graph` field stays — it is the standalone path (the host-embedded path
+  uses a SubGraph + `DialoguePresenter`, no driver), so no removal.
+
 ## [0.4.0]
 
 ### Added
