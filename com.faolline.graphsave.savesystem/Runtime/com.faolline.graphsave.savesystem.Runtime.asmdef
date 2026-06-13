@@ -1,0 +1,17 @@
+{
+    "name": "com.faolline.graphsave.savesystem.Runtime",
+    "rootNamespace": "Faolline.GraphSave.UnitySaveSystem",
+    "references": [
+        "com.faolline.graphsave.Runtime",
+        "SaveSystemCore"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

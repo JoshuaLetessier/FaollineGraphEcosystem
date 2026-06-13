@@ -1,0 +1,16 @@
+{
+    "name": "com.faolline.graphsave.Runtime",
+    "rootNamespace": "Faolline.GraphSave",
+    "references": [
+        "com.faolline.graphcore.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
