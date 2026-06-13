@@ -6,7 +6,7 @@ using Faolline.StarterGraph.Editor;
 
 namespace Faolline.StarterGraph.Tests
 {
-    /// <summary>US2 — window execution loop: pause at Choice, Choose routes, Continue, EndReason log.</summary>
+    /// <summary>Window execution loop: pause at Choice, Choose routes, Continue after GoBack, EndReason log.</summary>
     [TestFixture]
     public class StarterWindowExecutionTests
     {
@@ -15,18 +15,19 @@ namespace Faolline.StarterGraph.Tests
         [SetUp]    public void SetUp()    => _window = ScriptableObject.CreateInstance<StarterGraphEditorWindow>();
         [TearDown] public void TearDown() => Object.DestroyImmediate(_window);
 
-        // Start → Choice(Left→A, Right→B) → A/B → End ; Left gated by an int condition (score>=3)
-        private static StarterGraph BuildChoiceGraph(out StarterIntCondition cond)
+        // Start → Setup → Choice(Left gated by the Flag bool param, Right always) → A/B → End.
+        // The gating value comes from the declared Flag parameter's default (seeded via InitFromGraph), so no
+        // context-mutating action is needed.
+        private static StarterGraph BuildChoiceGraph(out StarterBoolCondition cond)
         {
-            cond = ScriptableObject.CreateInstance<StarterIntCondition>();
-            cond.ParameterKey = StarterContextKeys.Score; cond.Operator = ComparisonOperator.GreaterOrEqual; cond.ExpectedValue = 3;
-            var setScore = ScriptableObject.CreateInstance<StarterSetIntAction>(); setScore.ParameterKey = StarterContextKeys.Score; setScore.Value = 5;
+            cond = ScriptableObject.CreateInstance<StarterBoolCondition>();
+            cond.ParameterKey = StarterContextKeys.Flag; cond.ExpectedValue = true;
 
             var g = ScriptableObject.CreateInstance<StarterGraph>();
-            g.AddParameter(new ParameterData { Key = StarterContextKeys.Score, Type = ParameterType.Int, DefaultValue = "0" });
+            g.AddParameter(new ParameterData { Key = StarterContextKeys.Flag, Type = ParameterType.Bool, DefaultValue = "true" });
+
             var start  = new StartNodeData            { Id = "s", NodeType = StartNodeData.NodeTypeId };
             var setup  = new StarterStatementNodeData { Id = "u", NodeType = StarterStatementNodeData.NodeTypeId };
-            setup.OnEnterActions.Add(setScore);
             var choice = new ChoiceNodeData           { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
             choice.Choices.Add(new StarterChoice { Id = "left",  Label = "Left",  Condition = cond });
             choice.Choices.Add(new StarterChoice { Id = "right", Label = "Right" });
@@ -52,7 +53,7 @@ namespace Faolline.StarterGraph.Tests
             {
                 _window.ExecuteGraph(g);
                 Assert.IsTrue(_window.IsWaitingForChoice, "Run must pause at the Choice node");
-                Assert.AreEqual(2, _window.AvailableChoices.Count, "score=5 → Left (>=3) and Right both available");
+                Assert.AreEqual(2, _window.AvailableChoices.Count, "Flag=true → Left (gated) and Right both available");
 
                 _window.Choose("left");
                 Assert.IsFalse(_window.IsWaitingForChoice, "Choose must resume execution");
