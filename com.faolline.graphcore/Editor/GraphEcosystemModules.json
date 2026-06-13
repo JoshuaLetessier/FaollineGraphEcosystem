@@ -10,6 +10,12 @@
       "dependsOn": []
     },
     {
+      "displayName": "Graph Standard (buffer)",
+      "package": "com.faolline.graphstandard",
+      "required": true,
+      "dependsOn": [ "com.faolline.graphcore" ]
+    },
+    {
       "displayName": "Graph Localization",
       "package": "com.faolline.graphlocalization",
       "required": false,
@@ -20,6 +26,18 @@
       "package": "com.faolline.graphdialoguesystem",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphlocalization" ]
+    },
+    {
+      "displayName": "Graph Save",
+      "package": "com.faolline.graphsave",
+      "required": false,
+      "dependsOn": [ "com.faolline.graphcore" ]
+    },
+    {
+      "displayName": "Graph GameFlow",
+      "package": "com.faolline.graphgameflow",
+      "required": false,
+      "dependsOn": [ "com.faolline.graphcore" ]
     }
   ]
 }
