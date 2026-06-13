@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.10.0]
+
+### Added
+- **Domain-neutral standard nodes promoted here** — the generic set/compare/log conditions & actions that were
+  only available prefixed in starterGraph (`Starter*`) / graphTest (`Test*`) now have a single canonical home:
+  conditions `IntCondition`, `FloatCondition`, `StringCondition`, `BoolCondition`, `AlwaysTrueCondition`,
+  `AlwaysFalseCondition` (+ the `ComparisonOperator` enum), and actions `SetIntAction`, `SetFloatAction`,
+  `SetStringAction`, `SetBoolAction`, `LogAction`. All `[CreateAssetMenu]` under `GraphStandard/…`, operating
+  purely on `BaseContext` + a string key (nothing domain-specific). `[GraphStandard]` log prefix.
+
+### Notes
+- Additive (MINOR); graphcore untouched. Purely additive — starterGraph keeps its copies as the template and
+  graphTest keeps its as the sandbox fixtures; this just gives the buffer lib its canonical set/compare/log set.
+  6 EditMode tests.
+
 ## [0.9.0]
 
 ### Added
