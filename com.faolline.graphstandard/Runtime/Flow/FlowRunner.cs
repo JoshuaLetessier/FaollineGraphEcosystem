@@ -34,6 +34,7 @@ namespace Faolline.GraphStandard
             public Link(BaseEdgeData edge, string token) { Edge = edge; Token = token; }
         }
 
+        private readonly BaseGraph _graph;
         private readonly BaseContext _context;
         private readonly int _maxFires;
         private readonly HashSet<string> _oneShot = new HashSet<string>();
@@ -62,6 +63,7 @@ namespace Faolline.GraphStandard
             IReadOnlyDictionary<string, int> joinThresholds = null,
             int maxFiresPerPropagation = 10000)
         {
+            _graph = graph;
             _context = context;
             _maxFires = maxFiresPerPropagation;
 
@@ -102,6 +104,9 @@ namespace Faolline.GraphStandard
                 _incoming[edge.ToNodeId] = (_incoming.TryGetValue(edge.ToNodeId, out var c) ? c : 0) + 1;
                 seq++;
             }
+#if UNITY_EDITOR
+            EditorWireProbe();
+#endif
         }
 
         /// <summary>
@@ -130,6 +135,43 @@ namespace Faolline.GraphStandard
 
         /// <summary>A snapshot of the node ids fired since the last <see cref="Reset"/>.</summary>
         public IReadOnlyCollection<string> FiredNodeIds => new List<string>(_fired);
+
+#if UNITY_EDITOR
+        // ── Editor live-run probe ────────────────────────────────────────────────
+        // Self-registers with GraphRunMonitor while playing so the graph editor window shows the fired set
+        // (Completed) and the most-recent fire (Running) of this multi-active flow.
+        private bool _probeWired;
+        private string _lastFired;
+        private FlowProbe _runProbe;
+
+        private sealed class FlowProbe : IGraphRunProbe
+        {
+            private readonly FlowRunner _f;
+            public FlowProbe(FlowRunner f) => _f = f;
+
+            public string ActiveNodeId(BaseGraph graph) => graph == _f._graph ? _f._lastFired : null;
+
+            public GraphRunNodeStatus StatusOf(BaseGraph graph, string nodeId)
+            {
+                if (graph != _f._graph || string.IsNullOrEmpty(nodeId)) return GraphRunNodeStatus.None;
+                if (nodeId == _f._lastFired) return GraphRunNodeStatus.Running;      // most-recent fire — pulses
+                return _f._fired.Contains(nodeId) ? GraphRunNodeStatus.Completed : GraphRunNodeStatus.None;
+            }
+        }
+
+        private void EditorWireProbe()
+        {
+            if (!UnityEngine.Application.isPlaying) return;   // the live map only matters in Play
+            if (!_probeWired)
+            {
+                _probeWired = true;
+                _runProbe = new FlowProbe(this);
+                OnNodeFired += id => { _lastFired = id; GraphRunMonitor.NotifyChanged(); };
+            }
+            GraphRunMonitor.Register(_runProbe);
+            GraphRunMonitor.NotifyChanged();
+        }
+#endif
 
         // ── Internals ───────────────────────────────────────────────────────────
 

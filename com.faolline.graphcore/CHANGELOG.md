@@ -4,6 +4,28 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.10.0]
+
+### Added
+- **Live in-game run cursor** — while the game is playing, the graph editor window highlights the running graph
+  the way the Animator window highlights the active state, as a full per-node state map: the live cursor
+  (pulsing blue), the visited trail, sub-graph parents (the node whose sub-graph is currently running stays lit
+  instead of going dark), and an end marker. Engine-agnostic editor seam in graphcore Runtime, compiled out of
+  player builds (`#if UNITY_EDITOR`, zero footprint): `IGraphRunProbe` (`StatusOf(graph, nodeId)` +
+  `ActiveNodeId(graph)`), a static `GraphRunMonitor` (probe registry + `Changed` event), and the
+  `GraphRunNodeStatus` vocabulary (Running/Waiting/Active/Visited/Ended/Locked/Available/Completed).
+  `BaseRunner` self-registers a probe while playing (reading its frame stack + history), so EVERY host that
+  drives a runner — gameflow, dialogue, custom — lights the canvas up for free. The window survives Play thanks
+  to the 0.9.0 persistence fix. `BaseRunner.CurrentGraph` exposes the active frame's graph.
+- Editor: `BaseGraphView` paints the displayed graph's nodes from the probes and pulses the cursor;
+  `BaseNodeView.SetRunCursor` / `PulseRunCursor` colors the node border (palette centralised in
+  `RunCursorColors`). Reactive and Flow engines in graphstandard register their own probes (Locked/Available/
+  Completed maps), so those paradigms light up too.
+
+### Notes
+- Additive (MINOR). Runtime untouched in player builds; the whole seam is editor-only. Tests stay green
+  (EditMode 709 / PlayMode 9).
+
 ## [0.9.0]
 
 ### Added

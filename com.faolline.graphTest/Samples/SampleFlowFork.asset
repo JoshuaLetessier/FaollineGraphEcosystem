@@ -1,0 +1,174 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dd7587f0667a881468fb7220ab03ef93, type: 3}
+  m_Name: SampleFlowFork
+  m_EditorClassIdentifier: com.faolline.graphTest.Runtime::Faolline.GraphTest.TestGraph
+  _graphId: 3e468216-bfcb-48f8-a635-2eeb2194e246
+  _nodes:
+  - rid: 2948308848149266500
+  - rid: 2948308848149266501
+  - rid: 2948308848149266502
+  - rid: 2948308848149266503
+  - rid: 2948308848149266504
+  _edges:
+  - rid: 2948308848149266505
+  - rid: 2948308848149266506
+  - rid: 2948308848149266507
+  - rid: 2948308848149266508
+  - rid: 2948308848149266509
+  _parameters: []
+  _groups: []
+  _entryNodeId: 921b665f-1435-4b79-bc24-1695b299deb7
+  _historyDepth: 20
+  references:
+    version: 2
+    RefIds:
+    - rid: 2948308848149266500
+      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      data:
+        _id: 921b665f-1435-4b79-bc24-1695b299deb7
+        _nodeType: graphtest/statement
+        _title: 
+        _position: {x: 0, y: 0}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _awaitSignal: 
+        _resumeConditions: []
+        _waitDuration: 0
+        _label: Trigger
+    - rid: 2948308848149266501
+      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      data:
+        _id: dc4856f2-eb9a-4eae-8a49-a195e01b733b
+        _nodeType: graphtest/statement
+        _title: 
+        _position: {x: 300, y: -120}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _awaitSignal: 
+        _resumeConditions: []
+        _waitDuration: 0
+        _label: Left
+    - rid: 2948308848149266502
+      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      data:
+        _id: 9036240e-c8d2-4eeb-ad79-f71af8b36ed2
+        _nodeType: graphtest/statement
+        _title: 
+        _position: {x: 300, y: 120}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _awaitSignal: 
+        _resumeConditions: []
+        _waitDuration: 0
+        _label: Right
+    - rid: 2948308848149266503
+      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      data:
+        _id: e717d273-265c-44b8-ace1-34fc2f6313f0
+        _nodeType: graphtest/statement
+        _title: 
+        _position: {x: 600, y: 0}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _awaitSignal: 
+        _resumeConditions: []
+        _waitDuration: 0
+        _label: Merge
+    - rid: 2948308848149266504
+      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      data:
+        _id: 57430286-6b74-4904-bf14-1f8deabe45cb
+        _nodeType: graphtest/statement
+        _title: 
+        _position: {x: 900, y: 0}
+        _entryConditions: []
+        _onEnterActions: []
+        _onExitActions: []
+        _isCheckpoint: 0
+        _hasColorOverride: 0
+        _nodeColor: {r: 0, g: 0, b: 0, a: 0}
+        _awaitSignal: 
+        _resumeConditions: []
+        _waitDuration: 0
+        _label: Done
+    - rid: 2948308848149266505
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 9bf4630d-a576-45fe-8f11-20849ce99543
+        _fromNodeId: 921b665f-1435-4b79-bc24-1695b299deb7
+        _toNodeId: dc4856f2-eb9a-4eae-8a49-a195e01b733b
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+        _waypoints: []
+    - rid: 2948308848149266506
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 8138d88f-3919-4859-9b38-d810ae7d87a9
+        _fromNodeId: 921b665f-1435-4b79-bc24-1695b299deb7
+        _toNodeId: 9036240e-c8d2-4eeb-ad79-f71af8b36ed2
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+        _waypoints: []
+    - rid: 2948308848149266507
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 8a764342-fa5b-4b55-9fba-a6b9ee98f98c
+        _fromNodeId: dc4856f2-eb9a-4eae-8a49-a195e01b733b
+        _toNodeId: e717d273-265c-44b8-ace1-34fc2f6313f0
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+        _waypoints: []
+    - rid: 2948308848149266508
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: ab3e8e63-84f0-4109-b586-79b878816419
+        _fromNodeId: 9036240e-c8d2-4eeb-ad79-f71af8b36ed2
+        _toNodeId: e717d273-265c-44b8-ace1-34fc2f6313f0
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+        _waypoints: []
+    - rid: 2948308848149266509
+      type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
+      data:
+        _id: 4698afc8-5f20-4114-8fed-d19eb5eae18d
+        _fromNodeId: e717d273-265c-44b8-ace1-34fc2f6313f0
+        _toNodeId: 57430286-6b74-4904-bf14-1f8deabe45cb
+        _portName: out
+        _condition: {fileID: 0}
+        _hasColorOverride: 0
+        _edgeColor: {r: 0, g: 0, b: 0, a: 0}
+        _waypoints: []

@@ -35,6 +35,10 @@ Rules of thumb:
 The three are composable: a Linear scene-flow can host a Reactive progression for its objectives and fire a
 Flow ability — all sharing one `BaseContext`. Cross-library nesting still goes through graphcore's SubGraph.
 
+> **Live run-cursor (0.9.0)**: while playing, `ReactiveEvaluator` and `FlowRunner` self-register a graphcore
+> editor probe, so the graph editor window paints their live state on the open graph — reactive nodes as
+> Locked/Available/Completed, flow nodes as the fired set. Editor-only, compiled out of player builds.
+
 ---
 
 ## Building graphs in code (`GraphBuilder`)

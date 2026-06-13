@@ -106,6 +106,9 @@ namespace Faolline.GraphStandard
                 if (node == null || string.IsNullOrEmpty(node.Id)) continue;
                 EmitFor(node.Id, GetState(node.Id));
             }
+#if UNITY_EDITOR
+            EditorWireProbe();
+#endif
         }
 
         /// <summary>
@@ -148,6 +151,48 @@ namespace Faolline.GraphStandard
         /// <summary>Current derived state of <paramref name="nodeId"/> (Locked for an unknown id).</summary>
         public ReactiveNodeState GetState(string nodeId)
             => (nodeId != null && _states.TryGetValue(nodeId, out var s)) ? s : ReactiveNodeState.Locked;
+
+#if UNITY_EDITOR
+        // ── Editor live-run probe ────────────────────────────────────────────────
+        // Self-registers with GraphRunMonitor while playing so the graph editor window paints this DAG's
+        // Locked/Available/Completed state map live (the reactive, cursor-less counterpart of the Linear cursor).
+        private bool _probeWired;
+        private ReactiveProbe _runProbe;
+
+        private sealed class ReactiveProbe : IGraphRunProbe
+        {
+            private readonly ReactiveEvaluator _e;
+            public ReactiveProbe(ReactiveEvaluator e) => _e = e;
+
+            public string ActiveNodeId(BaseGraph graph) => null;   // cursor-less: no single live node
+
+            public GraphRunNodeStatus StatusOf(BaseGraph graph, string nodeId)
+            {
+                if (graph != _e._graph || string.IsNullOrEmpty(nodeId)) return GraphRunNodeStatus.None;
+                switch (_e.GetState(nodeId))
+                {
+                    case ReactiveNodeState.Available: return GraphRunNodeStatus.Available;
+                    case ReactiveNodeState.Completed: return GraphRunNodeStatus.Completed;
+                    default:                          return GraphRunNodeStatus.Locked;
+                }
+            }
+        }
+
+        private void EditorWireProbe()
+        {
+            if (!UnityEngine.Application.isPlaying) return;   // the live map only matters in Play
+            if (!_probeWired)
+            {
+                _probeWired = true;
+                _runProbe = new ReactiveProbe(this);
+                OnNodeAvailable += _ => GraphRunMonitor.NotifyChanged();
+                OnNodeCompleted += _ => GraphRunMonitor.NotifyChanged();
+                OnNodeLocked    += _ => GraphRunMonitor.NotifyChanged();
+            }
+            GraphRunMonitor.Register(_runProbe);
+            GraphRunMonitor.NotifyChanged();
+        }
+#endif
 
         /// <summary>The ids of all nodes currently <see cref="ReactiveNodeState.Available"/>.</summary>
         public IReadOnlyCollection<string> AvailableNodeIds => CollectByState(ReactiveNodeState.Available);

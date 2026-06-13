@@ -4,6 +4,19 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.9.0]
+
+### Added
+- **Live run-cursor probes (editor)** — `ReactiveEvaluator` and `FlowRunner` self-register a graphcore
+  `IGraphRunProbe` while playing, so the graph editor window paints their live state on the open graph (the
+  reactive, cursor-less counterpart of the Linear cursor): reactive nodes show Locked / Available / Completed,
+  flow nodes show the fired set (Completed) with the most-recent fire pulsing. Editor-only (`#if UNITY_EDITOR`),
+  compiled out of player builds; the engines' execution logic is untouched (they notify via their existing
+  events). `FlowRunner` now keeps its graph reference for the probe.
+
+### Notes
+- Additive (MINOR); graphcore untouched. Pairs with graphcore 0.10.0's live run-cursor seam.
+
 ## [0.8.0]
 
 ### Added

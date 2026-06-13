@@ -153,6 +153,12 @@ recompile, or reopening Unity) — the window reloads it into the rebuilt view i
 canvas auto-saves before the window/editor closes and before a reload, so node/group moves (synced into the data
 only on save) aren't lost. The viewport (zoom/pan) is not yet persisted.
 
+**Live in-game run cursor (editor, 0.10.0)**: while playing, the window highlights the running graph like the
+Animator window — a per-node state map (live cursor pulsing, visited trail, sub-graph parents, end). It reads a
+zero-footprint editor-only seam (`GraphRunMonitor` + `IGraphRunProbe`); `BaseRunner` self-registers a probe, so
+any host (gameflow, dialogue, custom) lights up for free, and the graphstandard Reactive/Flow engines register
+their own (Locked/Available/Completed). Compiled out of player builds.
+
 ---
 
 ## Execution Runtime

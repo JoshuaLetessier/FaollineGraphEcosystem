@@ -53,6 +53,8 @@ namespace Faolline.GraphCore.Editor
             graphViewChanged = OnGraphViewChanged;
             serializeGraphElements = OnSerializeGraphElements;
             unserializeAndPaste = OnUnserializeAndPaste;
+
+            InitRunCursor();
         }
 
         // ── Selection overrides ───────────────────────────────────────────────
@@ -172,6 +174,9 @@ namespace Faolline.GraphCore.Editor
             {
                 graphViewChanged = OnGraphViewChanged;
             }
+
+            // Re-apply the live-run cursor so a reload while the game is playing keeps the active node lit.
+            RefreshRunCursor();
         }
 
         /// <summary>

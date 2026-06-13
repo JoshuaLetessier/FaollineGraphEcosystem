@@ -2,7 +2,8 @@
     "name": "com.faolline.graphTest.Runtime",
     "rootNamespace": "Faolline.GraphTest",
     "references": [
-        "GUID:a4f8e6b2c3d1e5f09a7b4c8d2e6f3a1b"
+        "GUID:a4f8e6b2c3d1e5f09a7b4c8d2e6f3a1b",
+        "GUID:0863a6617046b1b4bba0acbf42c1f2a6"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

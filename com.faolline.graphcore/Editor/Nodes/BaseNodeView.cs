@@ -33,6 +33,69 @@ namespace Faolline.GraphCore.Editor
         private Label _titleLabel;
         private TextField _titleEditor;
 
+        // The live-run status currently painted on this node (None = cleared). Drives the pulse (only Running
+        // pulses) and lets the cursor layer cheaply skip unchanged nodes.
+        private GraphRunNodeStatus _runStatus = GraphRunNodeStatus.None;
+
+        /// <summary>The live-run status currently shown on this node (<see cref="GraphRunNodeStatus.None"/> if clear).</summary>
+        public GraphRunNodeStatus RunStatus => _runStatus;
+
+        /// <summary>
+        /// Paints (or clears) the live-run state on this node — a colored border showing its role in a graph
+        /// running in Play, the way the Animator window highlights state: the live cursor, the visited trail,
+        /// sub-graph parents, reactive Locked/Available/Completed. Pass <see cref="GraphRunNodeStatus.None"/> to
+        /// clear. Purely visual (editor-only); never touches the data.
+        /// </summary>
+        public void SetRunCursor(GraphRunNodeStatus status)
+        {
+            // GraphView's Node draws its visible (rounded) border on the inner "#node-border" element, not on
+            // the root — styling the root shows nothing. Target that element, falling back to the root.
+            var border = this.Q("node-border") ?? (VisualElement)this;
+            _runStatus = status;
+
+            if (status == GraphRunNodeStatus.None)
+            {
+                border.style.borderTopColor = StyleKeyword.Null;
+                border.style.borderRightColor = StyleKeyword.Null;
+                border.style.borderBottomColor = StyleKeyword.Null;
+                border.style.borderLeftColor = StyleKeyword.Null;
+                border.style.borderTopWidth = StyleKeyword.Null;
+                border.style.borderRightWidth = StyleKeyword.Null;
+                border.style.borderBottomWidth = StyleKeyword.Null;
+                border.style.borderLeftWidth = StyleKeyword.Null;
+                return;
+            }
+
+            ApplyBorder(border, RunCursorColors.For(status), RunCursorColors.WidthFor(status));
+        }
+
+        /// <summary>
+        /// Animates the border of a <see cref="GraphRunNodeStatus.Running"/> node — called each tick by the
+        /// canvas pulser with <paramref name="k"/> in 0..1. No-op for any other status (they stay static).
+        /// </summary>
+        public void PulseRunCursor(float k)
+        {
+            if (_runStatus != GraphRunNodeStatus.Running) return;
+            var border = this.Q("node-border") ?? (VisualElement)this;
+            var c = Color.Lerp(RunCursorColors.RunningDim, RunCursorColors.RunningBright, k);
+            border.style.borderTopColor = c;
+            border.style.borderRightColor = c;
+            border.style.borderBottomColor = c;
+            border.style.borderLeftColor = c;
+        }
+
+        private static void ApplyBorder(VisualElement border, Color c, float w)
+        {
+            border.style.borderTopColor = c;
+            border.style.borderRightColor = c;
+            border.style.borderBottomColor = c;
+            border.style.borderLeftColor = c;
+            border.style.borderTopWidth = w;
+            border.style.borderRightWidth = w;
+            border.style.borderBottomWidth = w;
+            border.style.borderLeftWidth = w;
+        }
+
         /// <summary>
         /// When <c>true</c>, <see cref="ColorOverride"/> is used as the node background color.
         /// Default: <c>false</c>.

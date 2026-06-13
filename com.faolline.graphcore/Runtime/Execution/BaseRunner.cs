@@ -36,6 +36,97 @@ namespace Faolline.GraphCore
             }
         }
 
+        /// <summary>
+        /// The graph the active node lives in — the top execution frame's graph, which is a sub-graph while the
+        /// run has descended into one (so a tool can match the live node against the right graph asset). Null
+        /// when the stack is empty.
+        /// </summary>
+        public BaseGraph CurrentGraph => _graphStack.Count == 0 ? null : _graphStack.Peek().Graph;
+
+#if UNITY_EDITOR
+        // ── Editor live-run cursor probe ─────────────────────────────────────────
+        // Self-registers with GraphRunMonitor while playing so the graph editor window can highlight the active
+        // node (Animator-style) for ANY host that drives a BaseRunner (gameflow, dialogue, custom). Editor- and
+        // Play-only; compiled out of player builds. Reuses the runner's own lifecycle events to notify, so the
+        // execution methods are untouched.
+        private bool _probeWired;
+        private RunnerProbe _runProbe;
+
+        private sealed class RunnerProbe : IGraphRunProbe
+        {
+            private readonly BaseRunner _r;
+            public RunnerProbe(BaseRunner r) => _r = r;
+
+            // The top-of-stack cursor on `graph` (only when that frame IS the top frame), else null.
+            public string ActiveNodeId(BaseGraph graph)
+            {
+                if (_r._graphStack.Count == 0) return null;
+                var top = _r._graphStack.Peek();
+                return top.Graph == graph ? top.CurrentNodeId : null;
+            }
+
+            public GraphRunNodeStatus StatusOf(BaseGraph graph, string nodeId)
+            {
+                if (graph == null || string.IsNullOrEmpty(nodeId) || _r._graphStack.Count == 0)
+                    return GraphRunNodeStatus.None;
+
+                // Walk the frame stack: the TOP frame's current node is the live cursor; an ANCESTOR frame's
+                // current node is a sub-graph parent (still executing, one level down) → Active.
+                bool isTop = true;
+                foreach (var frame in _r._graphStack)   // Stack enumerates top → bottom
+                {
+                    if (frame.Graph == graph && frame.CurrentNodeId == nodeId)
+                    {
+                        if (!isTop) return GraphRunNodeStatus.Active;   // parent of a running sub-graph
+                        switch (_r._state)
+                        {
+                            case RunnerState.WaitingForSignal:
+                            case RunnerState.WaitingForTime: return GraphRunNodeStatus.Waiting;
+                            case RunnerState.Ended:          return GraphRunNodeStatus.Ended;
+                            default:                         return GraphRunNodeStatus.Running;
+                        }
+                    }
+                    isTop = false;
+                }
+
+                // Otherwise it's part of the visited trail if it appears in history for this graph (the snapshot's
+                // top frame is the graph the node was left in).
+                var history = _r._history;
+                for (int i = 0; i < history.Count; i++)
+                {
+                    var entry = history[i];
+                    if (entry == null || entry.NodeId != nodeId || entry.GraphStackSnapshot == null ||
+                        entry.GraphStackSnapshot.Count == 0)
+                        continue;
+                    if (entry.GraphStackSnapshot.Peek().Graph == graph)
+                        return GraphRunNodeStatus.Visited;
+                }
+
+                return GraphRunNodeStatus.None;
+            }
+        }
+
+        private void EditorWireProbe()
+        {
+            if (!UnityEngine.Application.isPlaying) return;   // the live cursor only matters in Play
+
+            if (!_probeWired)
+            {
+                _probeWired = true;
+                _runProbe = new RunnerProbe(this);
+                // Notify on every transition that moves/recolors the cursor, via the existing events.
+                OnNodeEntered      += _      => GraphRunMonitor.NotifyChanged();
+                OnEnded            += _      => GraphRunMonitor.NotifyChanged();
+                OnStuck            += ()     => GraphRunMonitor.NotifyChanged();
+                OnWaitingForSignal += (a, b) => GraphRunMonitor.NotifyChanged();
+                OnWaitingForTime   += (a, b) => GraphRunMonitor.NotifyChanged();
+            }
+
+            GraphRunMonitor.Register(_runProbe);
+            GraphRunMonitor.NotifyChanged();
+        }
+#endif
+
         // ── Internal fields ────────────────────────────────────────────────────
 
         private readonly Stack<GraphExecutionState> _graphStack =
@@ -115,6 +206,9 @@ namespace Faolline.GraphCore
             };
             _graphStack.Push(rootFrame);
             _state = RunnerState.NodeReady;
+#if UNITY_EDITOR
+            EditorWireProbe();
+#endif
             EnterCurrentNode();
         }
 
@@ -139,6 +233,9 @@ namespace Faolline.GraphCore
             };
             _graphStack.Push(frame);
             _state = RunnerState.NodeReady;
+#if UNITY_EDITOR
+            EditorWireProbe();
+#endif
             EnterCurrentNode();
         }
 
