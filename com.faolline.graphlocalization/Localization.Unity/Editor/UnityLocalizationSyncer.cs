@@ -94,6 +94,18 @@ namespace Faolline.GraphLocalization.Unity.Editor
             return new List<string>(desiredNames).ToArray();
         }
 
+        /// <summary>
+        /// The locale codes configured in <c>Project Settings &gt; Localization</c>, in their configured order
+        /// (empty when none). Called via reflection from the core editor's locale catalog so a language picker
+        /// can list the project's real locales without the core taking a hard dependency on com.unity.localization.
+        /// </summary>
+        public static string[] GetAvailableLocaleCodes()
+        {
+            var locales = LocalizationEditorSettings.GetLocales();
+            if (locales == null) return System.Array.Empty<string>();
+            return locales.Where(l => l != null).Select(l => l.Identifier.Code).ToArray();
+        }
+
         // ── Folder ───────────────────────────────────────────────────────────────
 
         private static string EnsureLibFolder(string libName)

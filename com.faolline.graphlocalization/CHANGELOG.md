@@ -4,6 +4,17 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0]
+
+### Added
+- **Locale catalog for language pickers.** `LocalizationLocaleCatalog.AvailableLocales()` (editor) returns the
+  project's configured locale codes for the active mode — the Unity Localization locales (Project Settings ▸
+  Localization) in UnityLocalization mode, otherwise the CSV locale columns; never empty (falls back to `en`).
+  Backed by a new `UnityLocalizationSyncer.GetAvailableLocaleCodes()` in the gated Unity adapter, reached by the
+  same reflection seam the table builder uses (so the core keeps no compile-time dependency on
+  com.unity.localization). Lets editor tools offer a real language dropdown instead of a free-text locale code.
+  +3 EditMode tests.
+
 ## [0.3.0]
 
 ### Added

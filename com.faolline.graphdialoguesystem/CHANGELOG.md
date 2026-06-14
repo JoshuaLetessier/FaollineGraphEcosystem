@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.2]
+
+### Changed
+- **Dialogue editor: a language picker instead of a free-text locale field.** The toolbar's Run-locale control is
+  now a dropdown of the project's configured languages — the Unity Localization locales, or the CSV locale
+  columns — sourced from graphlocalization's `LocalizationLocaleCatalog`, instead of a free-text code you had to
+  type correctly. The list is read when the toolbar is built (reopen the window to pick up newly added locales).
+  Requires graphlocalization ≥ 0.4.0.
+
 ## [0.5.1]
 
 ### Fixed

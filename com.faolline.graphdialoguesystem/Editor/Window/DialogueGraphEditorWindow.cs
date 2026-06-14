@@ -7,6 +7,7 @@ using UnityEngine.UIElements;
 using Faolline.GraphCore;
 using Faolline.GraphCore.Editor;
 using Faolline.GraphLocalization;
+using Faolline.GraphLocalization.Editor;
 
 namespace Faolline.GraphDialogue.Editor
 {
@@ -114,9 +115,17 @@ namespace Faolline.GraphDialogue.Editor
             toolbar.Add(new ToolbarButton(BackToCheckpoint) { text = "⏮ Checkpoint", tooltip = "Jump back to the most recent checkpoint node." });
             toolbar.Add(new ToolbarButton(ValidateGraph)    { text = "✓ Validate",   tooltip = "Check this graph for structural issues (Start/End, dangling edges, empty choices…)." });
 
-            // Locale selection for a Run: switches the active language with no graph change (FR-032/SC-004).
-            var localeField = new TextField { value = _locale, tooltip = "Active locale code (e.g. en, fr). Applied on Run." };
-            localeField.style.width = 48;
+            // Locale selection for a Run: a dropdown of the project's configured languages — the Unity
+            // Localization locales, or the CSV locale columns — instead of free text (FR-032/SC-004). Applied
+            // on Run with no graph change. Read at toolbar build; reopen the window to pick up new locales.
+            var locales = new List<string>(LocalizationLocaleCatalog.AvailableLocales());
+            if (!locales.Contains(_locale)) _locale = locales.Count > 0 ? locales[0] : "en";
+            var localeField = new PopupField<string>(locales, _locale)
+            {
+                tooltip = "Active language for a Run. Sourced from your localization settings " +
+                          "(Unity Localization locales, or the CSV locale columns)."
+            };
+            localeField.style.minWidth = 56;
             localeField.RegisterValueChangedCallback(e => _locale = string.IsNullOrEmpty(e.newValue) ? "en" : e.newValue);
             toolbar.Add(localeField);
         }
