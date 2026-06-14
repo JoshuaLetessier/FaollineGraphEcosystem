@@ -125,5 +125,21 @@ namespace Faolline.GraphCore.Tests
             Assert.IsTrue(_view.IsDirty,
                 "AddNodeToCanvas must set IsDirty to true");
         }
+
+        [Test]
+        public void ReloadView_RebuildsCanvasFromData_PreservingNodes()
+        {
+            var node = new StubNodeData { Id = "n1" };
+            _view.CallAddNodeToCanvas(node, new Vector2(10f, 20f));
+            var firstView = _view.LastCreatedView;
+
+            _view.ReloadView();
+
+            Assert.AreEqual(1, _graph.Nodes.Count, "ReloadView must not change the data's node set.");
+            Assert.AreSame(node, _graph.Nodes[0]);
+            Assert.IsNotNull(_view.LastCreatedView, "ReloadView rebuilds the canvas (CreateNodeView runs again).");
+            Assert.AreNotSame(firstView, _view.LastCreatedView,
+                "ReloadView creates fresh node views from the data, so every edge re-renders cleanly.");
+        }
     }
 }

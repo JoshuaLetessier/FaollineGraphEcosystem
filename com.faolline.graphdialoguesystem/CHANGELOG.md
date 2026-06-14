@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.3]
+
+### Changed
+- **Language picker reloads on Save / ↻ Refresh.** The toolbar's language dropdown now rebuilds its list from the
+  localization settings whenever the window is saved or the new graphcore ↻ Refresh button is pressed (via an
+  `OnRefresh` override), so locales added after the window opened show up without reopening it. Requires
+  graphcore ≥ 0.13.2.
+
 ## [0.5.2]
 
 ### Changed

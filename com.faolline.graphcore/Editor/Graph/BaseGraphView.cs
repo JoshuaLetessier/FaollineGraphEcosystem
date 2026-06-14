@@ -260,18 +260,26 @@ namespace Faolline.GraphCore.Editor
         /// </summary>
         public void SaveGraph()
         {
+            // Persist the live canvas to disk, then rebuild it so every edge re-renders from the saved data.
+            AutoSave(writeToDisk: true);
+            ReloadView();
+        }
+
+        /// <summary>
+        /// Rebuilds the canvas from the graph data — recreating node and edge views and re-running edge routing —
+        /// while preserving the current layout (unsaved node/group moves) and the viewport (no camera jump). This
+        /// is the "refresh the window without closing it" path: the same canvas rebuild <see cref="SaveGraph"/>
+        /// does, minus the disk write (notably it settles malleable-edge waypoints whose live repaint can lag).
+        /// No-op when no graph is loaded.
+        /// </summary>
+        public void ReloadView()
+        {
             if (_graph == null)
                 return;
 
+            // Mirror the live layout into the data so the rebuild keeps current node/group positions (they are
+            // only synced on demand), and preserve the viewport so the reload doesn't jump the camera.
             SyncCanvasToData();
-
-            EditorUtility.SetDirty(_graph);
-            AssetDatabase.SaveAssets();
-            _isDirty = false;
-
-            // Reload the canvas after saving so every edge re-renders cleanly from the saved data — notably
-            // malleable-edge waypoints, whose live repaint can lag behind the data. Preserve the viewport so
-            // the save doesn't jump the camera.
             var viewPos = viewTransform.position;
             var viewScale = viewTransform.scale;
             LoadGraph(_graph);

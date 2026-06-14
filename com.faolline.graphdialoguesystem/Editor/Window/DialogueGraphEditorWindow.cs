@@ -104,6 +104,7 @@ namespace Faolline.GraphDialogue.Editor
         // ── Toolbar ───────────────────────────────────────────────────────────
 
         private string _locale = "en";
+        private PopupField<string> _localeField;
 
         protected override void PopulateToolbar(Toolbar toolbar)
         {
@@ -117,17 +118,28 @@ namespace Faolline.GraphDialogue.Editor
 
             // Locale selection for a Run: a dropdown of the project's configured languages — the Unity
             // Localization locales, or the CSV locale columns — instead of free text (FR-032/SC-004). Applied
-            // on Run with no graph change. Read at toolbar build; reopen the window to pick up new locales.
-            var locales = new List<string>(LocalizationLocaleCatalog.AvailableLocales());
-            if (!locales.Contains(_locale)) _locale = locales.Count > 0 ? locales[0] : "en";
-            var localeField = new PopupField<string>(locales, _locale)
+            // on Run with no graph change. The list reloads on Save / ↻ Refresh (see OnRefresh).
+            _localeField = new PopupField<string>
             {
                 tooltip = "Active language for a Run. Sourced from your localization settings " +
-                          "(Unity Localization locales, or the CSV locale columns)."
+                          "(Unity Localization locales, or the CSV locale columns). Reloads on Save / Refresh."
             };
-            localeField.style.minWidth = 56;
-            localeField.RegisterValueChangedCallback(e => _locale = string.IsNullOrEmpty(e.newValue) ? "en" : e.newValue);
-            toolbar.Add(localeField);
+            _localeField.style.minWidth = 56;
+            _localeField.RegisterValueChangedCallback(e => _locale = string.IsNullOrEmpty(e.newValue) ? "en" : e.newValue);
+            RefreshLocaleChoices();
+            toolbar.Add(_localeField);
+        }
+
+        /// <summary>Reloads the toolbar's language list from the localization settings (Save / ↻ Refresh).</summary>
+        protected override void OnRefresh() => RefreshLocaleChoices();
+
+        private void RefreshLocaleChoices()
+        {
+            if (_localeField == null) return;
+            var locales = new List<string>(LocalizationLocaleCatalog.AvailableLocales());
+            _localeField.choices = locales;
+            if (!locales.Contains(_locale)) _locale = locales.Count > 0 ? locales[0] : "en";
+            _localeField.SetValueWithoutNotify(_locale);
         }
 
         // ── Public session API (also used by tests) ───────────────────────────

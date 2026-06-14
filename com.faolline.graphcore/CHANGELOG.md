@@ -4,6 +4,18 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.13.2]
+
+### Added
+- **Refresh the window without closing it: `Refresh()` + ↻ Refresh toolbar button.** `BaseGraphEditorWindow` gains
+  a `Refresh()` method that rebuilds the canvas from the data (re-rendering nodes and re-routing edges, preserving
+  layout + viewport) and then reloads the window's dynamic data via a `protected virtual OnRefresh()` override
+  point — the "little things" read once when the toolbar/panels are built and which can go stale (a language list
+  from the localization settings, an asset dropdown, etc.). It runs on every Save and from a new ↻ Refresh toolbar
+  button shared by every graph editor. The canvas rebuild (previously buried in `SaveGraph`) now lives in the new
+  `BaseGraphView.ReloadView()`; Save is wired as *persist-then-`Refresh()`*. Default `OnRefresh` is a no-op, so
+  existing windows are unaffected. +3 EditMode tests.
+
 ## [0.13.1]
 
 ### Fixed

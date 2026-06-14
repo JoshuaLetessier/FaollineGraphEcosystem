@@ -178,11 +178,38 @@ namespace Faolline.GraphCore.Editor
         /// </summary>
         protected virtual void PopulateToolbar(UnityEditor.UIElements.Toolbar toolbar) { }
 
+        /// <summary>
+        /// Refreshes the window without closing it: rebuilds the canvas from the graph data (recreating node and
+        /// edge views and re-running edge routing, preserving layout + viewport) and reloads the window's dynamic
+        /// data — the "little things" read once when the toolbar/panels are built and which can go stale (a
+        /// language list from the localization settings, an asset dropdown, etc.). Runs on every Save (button +
+        /// Ctrl+S) and from the toolbar's ↻ Refresh button. Override <see cref="OnRefresh"/> to add a lib's own
+        /// reloads. Safe to call any time after OnEnable.
+        /// </summary>
+        public void Refresh()
+        {
+            _graphView?.ReloadView();
+            OnRefresh();
+        }
+
+        /// <summary>
+        /// Override to reload a window's dynamic data on top of the canvas rebuild (see <see cref="Refresh"/>).
+        /// Default is a no-op.
+        /// </summary>
+        protected virtual void OnRefresh() { }
+
+        // Persist the canvas to disk, then Refresh — the reload (canvas rebuild + dynamic data) lives in Refresh.
+        private void SaveAndRefresh()
+        {
+            _graphView?.AutoSave(writeToDisk: true);
+            Refresh();
+        }
+
         private void BuildToolbar()
         {
             var toolbar = new UnityEditor.UIElements.Toolbar();
 
-            var saveButton = new UnityEditor.UIElements.ToolbarButton(() => _graphView?.SaveGraph())
+            var saveButton = new UnityEditor.UIElements.ToolbarButton(SaveAndRefresh)
             {
                 text = "Save"
             };
@@ -195,6 +222,15 @@ namespace Faolline.GraphCore.Editor
             };
             toolbar.Add(arrangeButton);
 
+            var refreshButton = new UnityEditor.UIElements.ToolbarButton(Refresh)
+            {
+                text = "↻ Refresh",
+                tooltip = "Rebuild the canvas (re-render nodes + re-route edges) and reload window data that is "
+                        + "read once when the window opens (e.g. the language list from your localization "
+                        + "settings), without closing the window. Also runs on Save."
+            };
+            toolbar.Add(refreshButton);
+
             PopulateToolbar(toolbar);
 
             // Right-aligned info on the malleable edges (their routing fully refreshes on Save).
@@ -206,7 +242,7 @@ namespace Faolline.GraphCore.Editor
             {
                 tooltip = "Malleable edges — double-click an edge to add a bend point, drag the dots to shape it, "
                         + "right-click a dot to remove it. Live preview can lag; the routing fully refreshes on "
-                        + "Save (Ctrl+S)."
+                        + "Save (Ctrl+S) or ↻ Refresh."
             };
             edgeHint.style.unityTextAlign = UnityEngine.TextAnchor.MiddleRight;
             edgeHint.style.opacity = 0.6f;
@@ -220,7 +256,7 @@ namespace Faolline.GraphCore.Editor
         {
             if (evt.keyCode == KeyCode.S && evt.ctrlKey)
             {
-                _graphView?.SaveGraph();
+                SaveAndRefresh();
                 evt.StopPropagation();
             }
         }
