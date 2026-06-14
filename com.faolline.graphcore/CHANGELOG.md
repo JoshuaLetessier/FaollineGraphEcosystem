@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.14.0]
+
+### Added
+- **One Start node per graph (enforced at authoring).** A graph has a single entry point, so the editor now
+  refuses a second Start node. `BaseGraphView.AddNodeToCanvas` rejects it (warns + no-op — a safety net covering
+  menus and programmatic adds), and a new shared `AppendAddStartAction()` context-menu helper greys out the
+  "Add Start Node" item once a Start exists (plus a `HasStartNode()` query). All editor libs (dialogue / gameflow
+  / starter / test) adopt the shared action, so the rule is uniform across the ecosystem. The validator already
+  flagged >1 Start as an error; this prevents the mistake up front. +2 EditMode tests.
+
 ## [0.13.3]
 
 ### Added

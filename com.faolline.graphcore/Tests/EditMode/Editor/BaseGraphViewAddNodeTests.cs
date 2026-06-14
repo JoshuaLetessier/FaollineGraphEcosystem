@@ -1,5 +1,7 @@
+using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 using Faolline.GraphCore.Editor;
 
 namespace Faolline.GraphCore.Tests
@@ -124,6 +126,27 @@ namespace Faolline.GraphCore.Tests
 
             Assert.IsTrue(_view.IsDirty,
                 "AddNodeToCanvas must set IsDirty to true");
+        }
+
+        [Test]
+        public void AddNodeToCanvas_RefusesSecondStartNode()
+        {
+            _view.CallAddNodeToCanvas(new StartNodeData { NodeType = StartNodeData.NodeTypeId }, Vector2.zero);
+            Assert.AreEqual(1, _graph.Nodes.Count, "Precondition: the first Start node is added.");
+
+            LogAssert.Expect(LogType.Warning, new Regex("already has a Start node"));
+            _view.CallAddNodeToCanvas(new StartNodeData { NodeType = StartNodeData.NodeTypeId }, Vector2.zero);
+
+            Assert.AreEqual(1, _graph.Nodes.Count, "A second Start node must be refused (one Start per graph max).");
+        }
+
+        [Test]
+        public void AddNodeToCanvas_AllowsNonStartNode_WhenAStartExists()
+        {
+            _view.CallAddNodeToCanvas(new StartNodeData { NodeType = StartNodeData.NodeTypeId }, Vector2.zero);
+            _view.CallAddNodeToCanvas(new StubNodeData(), Vector2.zero);
+
+            Assert.AreEqual(2, _graph.Nodes.Count, "The one-Start rule must only block Start nodes, not others.");
         }
 
         [Test]

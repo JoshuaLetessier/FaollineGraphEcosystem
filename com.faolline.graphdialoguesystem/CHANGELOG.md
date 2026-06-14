@@ -4,6 +4,13 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.5]
+
+### Changed
+- **Only one Start node per dialogue.** Adopts graphcore's shared Add-Start action: the "Add Start Node"
+  context-menu item is greyed out once the graph has a Start (a graph has a single entry point), and a second
+  Start is refused even programmatically. Requires graphcore ≥ 0.14.0.
+
 ## [0.5.4]
 
 ### Changed

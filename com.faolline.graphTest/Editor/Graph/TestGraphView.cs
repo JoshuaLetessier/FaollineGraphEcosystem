@@ -91,11 +91,7 @@ namespace Faolline.GraphTest.Editor
 
             var mousePos = (Vector2)contentViewContainer.transform.matrix.inverse.MultiplyPoint(evt.localMousePosition);
 
-            evt.menu.AppendAction("Add Start Node", _ =>
-            {
-                var node = new StartNodeData { NodeType = StartNodeData.NodeTypeId };
-                AddNodeToCanvas(node, mousePos);
-            });
+            AppendAddStartAction(evt, mousePos);
 
             evt.menu.AppendAction("Add Statement Node", _ =>
             {

@@ -123,8 +123,7 @@ namespace Faolline.GraphDialogue.Editor
 
             var mousePos = (Vector2)contentViewContainer.transform.matrix.inverse.MultiplyPoint(evt.localMousePosition);
 
-            evt.menu.AppendAction("Add Start Node", _ =>
-                AddNodeToCanvas(new StartNodeData { NodeType = StartNodeData.NodeTypeId }, mousePos));
+            AppendAddStartAction(evt, mousePos);
 
             evt.menu.AppendAction("Add Line Node", _ =>
                 AddNodeToCanvas(new DialogueLineNodeData { NodeType = DialogueLineNodeData.NodeTypeId }, mousePos));

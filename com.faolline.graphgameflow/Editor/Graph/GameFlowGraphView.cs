@@ -42,8 +42,7 @@ namespace Faolline.GraphGameFlow.Editor
 
             var mousePos = (Vector2)contentViewContainer.transform.matrix.inverse.MultiplyPoint(evt.localMousePosition);
 
-            evt.menu.AppendAction("Add Start Node", _ =>
-                AddNodeToCanvas(new StartNodeData { NodeType = StartNodeData.NodeTypeId }, mousePos));
+            AppendAddStartAction(evt, mousePos);
             evt.menu.AppendAction("Add Statement Node", _ =>
                 AddNodeToCanvas(new StatementNodeData { NodeType = StatementNodeData.NodeTypeId }, mousePos));
             evt.menu.AppendAction("Add Choice Node", _ =>
