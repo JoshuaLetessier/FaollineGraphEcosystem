@@ -4,6 +4,17 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.13.1]
+
+### Fixed
+- **Node inspector no longer overlaps itself.** Two issues from the 0.12.0 shared-inspector refactor: (1) `BindNode`
+  reset the panel via `ClearInspector()`, which rebuilds the *no-selection* content (parameters / speakers) — so a
+  selected node painted that panel AND its own sections on top of each other. `BindNode` now clears WITHOUT
+  rebuilding the no-selection content (only `BindNode(null)` shows it). (2) The panel is now a `ScrollView` instead
+  of a plain `VisualElement`, so a node with more fields than the panel is tall SCROLLS instead of flex-shrinking
+  its sections into one another. `Add`/`Clear` keep targeting the content (a `ScrollView`'s `contentContainer`),
+  so call sites and `childCount` are unchanged.
+
 ## [0.13.0]
 
 ### Added

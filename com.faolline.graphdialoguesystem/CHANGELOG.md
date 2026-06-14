@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.1]
+
+### Fixed
+- **Dialogue node inspector no longer overlaps itself.** Selecting a node painted the no-selection panel (Speakers +
+  Parameters) UNDER the node's own sections (Line / Choice / SubDialogue / Node Properties). `BindNode` now clears
+  the panel without rebuilding the no-selection content (that shows only when nothing is selected). Pairs with the
+  graphcore 0.13.1 fix (the inspector panel scrolls instead of compressing when a node has many fields).
+
 ## [0.5.0]
 
 ### Added

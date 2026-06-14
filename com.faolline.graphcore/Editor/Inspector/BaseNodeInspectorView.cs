@@ -13,11 +13,15 @@ namespace Faolline.GraphCore.Editor
     /// <see cref="AddBaseNodeSection"/> to include the shared fields.
     /// Subclasses own all Undo.RecordObject / EditorUtility.SetDirty calls for their custom mutations.
     /// </summary>
-    public abstract class BaseNodeInspectorView : VisualElement
+    public abstract class BaseNodeInspectorView : ScrollView
     {
         protected BaseNodeInspectorView()
         {
             AddToClassList("graph-inspector-panel");
+            // Scroll vertically rather than letting flex-shrink compress the sections into each other when the
+            // node has more fields than the panel is tall. Add/Clear target the scroll content container.
+            mode = ScrollViewMode.Vertical;
+            horizontalScrollerVisibility = ScrollerVisibility.Hidden;
         }
 
         // ── Shared graph state ────────────────────────────────────────────────

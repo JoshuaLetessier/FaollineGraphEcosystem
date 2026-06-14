@@ -28,8 +28,10 @@ namespace Faolline.GraphDialogue.Editor
         // ── Node binding ──────────────────────────────────────────────────────
         public override void BindNode(BaseNodeData node)
         {
-            ClearInspector();
-            if (node == null) return;
+            // node == null shows the no-selection content (Speakers + Parameters); a real node shows ONLY its
+            // sections — so clear without rebuilding the no-selection panel (else they'd stack/overlap).
+            if (node == null) { ClearInspector(); return; }
+            Clear();
 
             BoundNode = node;
             RefreshSerializedGraph();
