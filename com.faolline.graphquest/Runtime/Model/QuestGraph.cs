@@ -12,12 +12,24 @@ namespace Faolline.GraphQuest
     public sealed class QuestGraph : BaseGraph
     {
         [SerializeField] private string _questId = string.Empty;
+        [SerializeField] private string _displayName = string.Empty;
+        [SerializeField, TextArea] private string _description = string.Empty;
         [SerializeField] private BaseCondition _unlockCondition;
         [SerializeField] private BaseAction _completionReward;
         [SerializeField] private QuestCompletionRule _completionRule = QuestCompletionRule.AllRequired;
 
         /// <summary>Stable logical id (scopes the quest's context collections). Set by <see cref="QuestBuilder"/>.</summary>
         public string QuestId { get => _questId; set => _questId = value ?? string.Empty; }
+
+        /// <summary>Display title for a quest journal UI. Falls back to <see cref="QuestId"/> when empty. Never null.</summary>
+        public string DisplayName
+        {
+            get => string.IsNullOrEmpty(_displayName) ? _questId : _displayName;
+            set => _displayName = value ?? string.Empty;
+        }
+
+        /// <summary>Optional longer description for a quest journal UI. Never null.</summary>
+        public string Description { get => _description; set => _description = value ?? string.Empty; }
 
         /// <summary>Optional. While non-null and unmet, the quest is Locked and surfaces no Active objectives.</summary>
         public BaseCondition UnlockCondition { get => _unlockCondition; set => _unlockCondition = value; }

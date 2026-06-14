@@ -20,6 +20,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
     "do 2 of these 3" gate needs no synthetic counter objective.
   - **`QuestEvaluator.Reset()`** clears a quest's progress for replay (its scoped completed/failed/rewarded sets
     only — other quests sharing the context are untouched), so one-shot rewards can fire again.
+  - **Journal data layer** for a consumer quest-log UI: per-objective `DisplayName` (via `.Named(...)`, backed by
+    `BaseNodeData.Title`) and `Description` (`.Describe(...)`), quest-level `DisplayName`/`Description`, and
+    `QuestEvaluator.GetObjectives()` → `ObjectiveView` snapshots (id + label + description + required + state) plus
+    `RequiredCompleted`/`RequiredTotal` progress — so the consumer needs no id→label table of its own. The library
+    ships the data; the in-game UI stays consumer territory.
   - **Quest-level** unlock condition + completion reward + `AllRequired` completion rule.
   - **Persistence for free**: all state lives in `BaseContext` collections, so a `com.faolline.graphsave` context
     snapshot round-trips quest progress with no quest-specific snapshot type and **no runtime graphsave

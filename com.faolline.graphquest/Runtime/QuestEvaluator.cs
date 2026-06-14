@@ -155,6 +155,51 @@ namespace Faolline.GraphQuest
         /// <summary>The ids of all objectives currently <see cref="QuestState.Completed"/>.</summary>
         public IReadOnlyCollection<string> CompletedObjectiveIds => CollectByState(QuestState.Completed);
 
+        // ── Journal data layer (for a consumer quest-log UI) ──────────────────
+
+        /// <summary>The quest's display title (falls back to its id). Empty when no quest is loaded.</summary>
+        public string DisplayName => _quest != null ? _quest.DisplayName : string.Empty;
+
+        /// <summary>The quest's longer description. Empty when none / no quest loaded.</summary>
+        public string Description => _quest != null ? _quest.Description : string.Empty;
+
+        /// <summary>How many required objectives are currently <see cref="QuestState.Completed"/> (a progress numerator).</summary>
+        public int RequiredCompleted => CountRequired(onlyCompleted: true);
+
+        /// <summary>The total number of required objectives (a progress denominator).</summary>
+        public int RequiredTotal => CountRequired(onlyCompleted: false);
+
+        /// <summary>
+        /// A read-only snapshot of every objective (in graph order) with its label, description, required flag, and
+        /// current state — everything a quest-log UI needs, so the consumer keeps no id→label table of its own.
+        /// </summary>
+        public IReadOnlyList<ObjectiveView> GetObjectives()
+        {
+            var list = new List<ObjectiveView>();
+            if (_quest == null) return list;
+            foreach (var obj in Objectives())
+                list.Add(new ObjectiveView(
+                    obj.Id,
+                    string.IsNullOrEmpty(obj.Title) ? obj.Id : obj.Title,
+                    obj.Description,
+                    obj.Required,
+                    GetObjectiveState(obj.Id)));
+            return list;
+        }
+
+        private int CountRequired(bool onlyCompleted)
+        {
+            if (_quest == null || _context == null) return 0;
+            int n = 0;
+            foreach (var obj in Objectives())
+            {
+                if (!obj.Required) continue;
+                if (onlyCompleted && GetObjectiveState(obj.Id) != QuestState.Completed) continue;
+                n++;
+            }
+            return n;
+        }
+
         // ── Internals ─────────────────────────────────────────────────────────
 
         private bool QuestUnlocked()

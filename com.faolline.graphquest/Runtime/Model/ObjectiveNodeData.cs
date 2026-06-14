@@ -21,6 +21,7 @@ namespace Faolline.GraphQuest
         [SerializeField] private bool _required = true;
         [SerializeField] private BaseAction _reward;
         [SerializeField] private int _requiredPrerequisiteCount = -1;
+        [SerializeField, TextArea] private string _description = string.Empty;
 
         /// <summary>When this holds against the context, the objective is recorded Completed. Null ⇒ never auto-completes.</summary>
         public BaseCondition CompletionCondition { get => _completionCondition; set => _completionCondition = value; }
@@ -40,5 +41,8 @@ namespace Faolline.GraphQuest
         /// <c>k &gt; N</c> never unlocks from prerequisites. Backs graphstandard's <c>ReactiveEvaluator</c> k-of-N.
         /// </summary>
         public int RequiredPrerequisiteCount { get => _requiredPrerequisiteCount; set => _requiredPrerequisiteCount = value; }
+
+        /// <summary>Optional longer description for a quest journal/tracker UI (the short label is the inherited <see cref="Faolline.GraphCore.BaseNodeData.Title"/>). Never null.</summary>
+        public string Description { get => _description; set => _description = value ?? string.Empty; }
     }
 }

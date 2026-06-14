@@ -18,6 +18,12 @@ namespace Faolline.GraphQuest
             _spec = spec;
         }
 
+        /// <summary>Sets the objective's short display label for a journal UI (falls back to its id when unset).</summary>
+        public ObjectiveBuilder Named(string displayName) { _spec.Title = displayName ?? string.Empty; return this; }
+
+        /// <summary>Sets the objective's longer description for a journal UI.</summary>
+        public ObjectiveBuilder Describe(string description) { _spec.Description = description ?? string.Empty; return this; }
+
         /// <summary>Sets the completion condition (when it holds, the objective is recorded Completed).</summary>
         public ObjectiveBuilder CompleteWhen(BaseCondition condition) { _spec.Completion = condition; return this; }
 

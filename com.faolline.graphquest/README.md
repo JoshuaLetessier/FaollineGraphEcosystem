@@ -24,6 +24,9 @@ smaller completed-set), never an undo.
   all-of-N (`Requires("a", "b")`) or **k-of-N** (`RequiresAtLeast(2, "a", "b", "c")` — unlocks at any two).
 - **Replay** — `QuestEvaluator.Reset()` clears a quest's scoped progress (other quests on the same context are
   untouched), so it can be played again and one-shot rewards fire anew.
+- **Journal data layer** — name/describe objectives (`.Named(...)` / `.Describe(...)`) and the quest; read
+  `QuestEvaluator.GetObjectives()` (`ObjectiveView`: id + label + description + required + state) and
+  `RequiredCompleted`/`RequiredTotal` to drive a quest-log UI without keeping your own id→label table.
 
 ## Quick example
 

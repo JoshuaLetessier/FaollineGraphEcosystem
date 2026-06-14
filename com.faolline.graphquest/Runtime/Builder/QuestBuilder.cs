@@ -14,6 +14,8 @@ namespace Faolline.GraphQuest
     public sealed class QuestBuilder
     {
         private readonly string _questId;
+        private string _displayName = string.Empty;
+        private string _description = string.Empty;
         private BaseCondition _unlock;
         private BaseAction _questReward;
         private readonly List<ObjectiveSpec> _objectives = new List<ObjectiveSpec>();
@@ -22,6 +24,12 @@ namespace Faolline.GraphQuest
 
         /// <summary>Starts a quest with a stable logical id (scopes the quest's context collections).</summary>
         public static QuestBuilder Create(string questId) => new QuestBuilder(questId);
+
+        /// <summary>Sets the quest's display title for a journal UI (falls back to the id when unset).</summary>
+        public QuestBuilder Named(string displayName) { _displayName = displayName ?? string.Empty; return this; }
+
+        /// <summary>Sets the quest's longer description for a journal UI.</summary>
+        public QuestBuilder Describe(string description) { _description = description ?? string.Empty; return this; }
 
         /// <summary>Sets the quest-level unlock condition (the whole quest stays Locked until it holds).</summary>
         public QuestBuilder UnlockWhen(BaseCondition condition) { _unlock = condition; return this; }
@@ -66,6 +74,8 @@ namespace Faolline.GraphQuest
             var quest = ScriptableObject.CreateInstance<QuestGraph>();
             quest.name = _questId;
             quest.QuestId = _questId;
+            quest.DisplayName = _displayName;
+            quest.Description = _description;
             quest.UnlockCondition = _unlock;
             quest.CompletionReward = _questReward;
             quest.CompletionRule = QuestCompletionRule.AllRequired;
@@ -76,6 +86,8 @@ namespace Faolline.GraphQuest
                 {
                     Id = o.Id,
                     NodeType = ObjectiveNodeData.NodeTypeId,
+                    Title = o.Title,
+                    Description = o.Description,
                     CompletionCondition = o.Completion,
                     FailCondition = o.Fail,
                     Required = o.Required,
@@ -145,6 +157,8 @@ namespace Faolline.GraphQuest
         internal sealed class ObjectiveSpec
         {
             public readonly string Id;
+            public string Title = string.Empty;
+            public string Description = string.Empty;
             public BaseCondition Completion;
             public BaseCondition Fail;
             public bool Required = true;
