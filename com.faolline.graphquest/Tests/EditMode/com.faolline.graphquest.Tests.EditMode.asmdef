@@ -1,0 +1,25 @@
+{
+    "name": "com.faolline.graphquest.Tests.EditMode",
+    "rootNamespace": "Faolline.GraphQuest.Tests",
+    "references": [
+        "com.faolline.graphquest.Runtime",
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphstandard.Runtime",
+        "com.faolline.graphsave.Runtime",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

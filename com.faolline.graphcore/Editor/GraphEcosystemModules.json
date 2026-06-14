@@ -38,6 +38,12 @@
       "package": "com.faolline.graphgameflow",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore" ]
+    },
+    {
+      "displayName": "Graph Quest",
+      "package": "com.faolline.graphquest",
+      "required": false,
+      "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphstandard" ]
     }
   ]
 }

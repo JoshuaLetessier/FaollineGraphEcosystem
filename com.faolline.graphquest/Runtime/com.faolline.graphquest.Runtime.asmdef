@@ -1,0 +1,17 @@
+{
+    "name": "com.faolline.graphquest.Runtime",
+    "rootNamespace": "Faolline.GraphQuest",
+    "references": [
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphstandard.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

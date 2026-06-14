@@ -1,0 +1,196 @@
+using System;
+using System.Collections.Generic;
+using Faolline.GraphCore;
+using Faolline.GraphStandard;
+
+namespace Faolline.GraphQuest
+{
+    /// <summary>
+    /// Derives a <see cref="QuestGraph"/>'s objective and quest <see cref="QuestState"/>s from a shared
+    /// <see cref="BaseContext"/>. Wraps graphstandard's <see cref="ReactiveEvaluator"/> for prerequisite gating
+    /// (Locked/Active/Completed) and overlays the quest domain: completion is driven by each objective's
+    /// <see cref="ObjectiveNodeData.CompletionCondition"/>; an optional <see cref="ObjectiveNodeData.FailCondition"/>
+    /// gives the fourth <see cref="QuestState.Failed"/> state (fail precedes complete); rewards fire exactly once;
+    /// the quest aggregates per <see cref="QuestCompletionRule"/>.
+    /// <para>
+    /// Call <see cref="Evaluate"/> after mutating the context (the same contract as
+    /// <see cref="ReactiveEvaluator.MarkCompleted"/>). All state lives in context collections, so it persists and
+    /// restores through a graphsave context snapshot, and the context may be a host's (e.g. a GameFlowContext).
+    /// </para>
+    /// </summary>
+    public sealed class QuestEvaluator
+    {
+        private readonly QuestGraph _quest;
+        private readonly BaseContext _context;
+        private readonly ReactiveEvaluator _reactive;
+        private readonly string _questId;
+        private readonly string _completedKey;
+        private readonly string _failedKey;
+        private readonly string _rewardedKey;
+
+        private readonly Dictionary<string, QuestState> _lastObjectiveStates = new Dictionary<string, QuestState>(StringComparer.Ordinal);
+        private QuestState _lastQuestState;
+        private bool _questStateKnown;
+
+        /// <summary>Raised when an objective changes state: <c>(objectiveId, newState)</c>.</summary>
+        public event Action<string, QuestState> OnObjectiveStateChanged;
+
+        /// <summary>Raised when the aggregated quest state changes.</summary>
+        public event Action<QuestState> OnQuestStateChanged;
+
+        /// <summary>Raised when a reward fires: the objective id, or the quest id for the quest completion reward.</summary>
+        public event Action<string> OnRewardFired;
+
+        /// <summary>Builds an evaluator over <paramref name="quest"/> against <paramref name="context"/> (may be a host's).</summary>
+        public QuestEvaluator(QuestGraph quest, BaseContext context)
+        {
+            _quest = quest;
+            _context = context;
+            _questId = quest != null ? quest.QuestId : string.Empty;
+            _completedKey = QuestContextKeys.CompletedSet(_questId);
+            _failedKey = QuestContextKeys.FailedSet(_questId);
+            _rewardedKey = QuestContextKeys.RewardedSet(_questId);
+            _reactive = new ReactiveEvaluator(quest, context, _completedKey);
+        }
+
+        /// <summary>
+        /// One derivation pass: records newly-failed/-completed objectives into the context, fires one-shot
+        /// rewards on completed transitions, and raises change events. Idempotent — a pass with an unchanged
+        /// context produces no transitions and no duplicate events.
+        /// </summary>
+        public void Evaluate()
+        {
+            if (_quest == null || _context == null) return;
+
+            // Quest gate: while the unlock condition is unmet, everything is Locked.
+            if (!QuestUnlocked())
+            {
+                foreach (var obj in Objectives())
+                    RaiseObjective(obj.Id, QuestState.Locked);
+                RaiseQuest(QuestState.Locked);
+                return;
+            }
+
+            // Sync the engine to the current completed-set, then record fail/completion for available objectives.
+            _reactive.Reevaluate();
+            foreach (var obj in Objectives())
+            {
+                if (_context.CollectionContains(_failedKey, obj.Id)) continue;
+                if (_context.CollectionContains(_completedKey, obj.Id)) continue;
+                if (_reactive.GetState(obj.Id) != ReactiveNodeState.Available) continue;
+
+                if (obj.FailCondition != null && obj.FailCondition.Evaluate(_context))
+                {
+                    _context.AddToCollection(_failedKey, obj.Id);
+                    continue;
+                }
+                if (obj.CompletionCondition != null && obj.CompletionCondition.Evaluate(_context))
+                    _reactive.MarkCompleted(obj.Id);
+            }
+
+            // Re-derive, emit states, fire objective rewards.
+            _reactive.Reevaluate();
+            foreach (var obj in Objectives())
+            {
+                var state = GetObjectiveState(obj.Id);
+                RaiseObjective(obj.Id, state);
+                if (state == QuestState.Completed && obj.Reward != null)
+                    FireReward(obj.Id, obj.Id, obj.Reward);
+            }
+
+            // Quest aggregate + quest reward.
+            var questState = ComputeQuestState();
+            RaiseQuest(questState);
+            if (questState == QuestState.Completed && _quest.CompletionReward != null)
+                FireReward(QuestContextKeys.QuestRewardMarker, _questId, _quest.CompletionReward);
+        }
+
+        /// <summary>The current derived state of <paramref name="objectiveId"/>.</summary>
+        public QuestState GetObjectiveState(string objectiveId)
+        {
+            if (string.IsNullOrEmpty(objectiveId) || _context == null) return QuestState.Locked;
+            if (!QuestUnlocked()) return QuestState.Locked;
+            if (_context.CollectionContains(_failedKey, objectiveId)) return QuestState.Failed;
+            switch (_reactive.GetState(objectiveId))
+            {
+                case ReactiveNodeState.Completed: return QuestState.Completed;
+                case ReactiveNodeState.Available: return QuestState.Active;
+                default: return QuestState.Locked;
+            }
+        }
+
+        /// <summary>The current aggregated quest state.</summary>
+        public QuestState State => (_quest == null || _context == null || !QuestUnlocked())
+            ? QuestState.Locked
+            : ComputeQuestState();
+
+        /// <summary>The ids of all objectives currently <see cref="QuestState.Active"/>.</summary>
+        public IReadOnlyCollection<string> ActiveObjectiveIds => CollectByState(QuestState.Active);
+
+        /// <summary>The ids of all objectives currently <see cref="QuestState.Completed"/>.</summary>
+        public IReadOnlyCollection<string> CompletedObjectiveIds => CollectByState(QuestState.Completed);
+
+        // ── Internals ─────────────────────────────────────────────────────────
+
+        private bool QuestUnlocked()
+            => _quest.UnlockCondition == null || _quest.UnlockCondition.Evaluate(_context);
+
+        private IEnumerable<ObjectiveNodeData> Objectives()
+        {
+            foreach (var node in _quest.Nodes)
+                if (node is ObjectiveNodeData obj && !string.IsNullOrEmpty(obj.Id))
+                    yield return obj;
+        }
+
+        private QuestState ComputeQuestState()
+        {
+            bool anyRequiredFailed = false;
+            bool allRequiredCompleted = true;
+            int requiredCount = 0;
+            foreach (var obj in Objectives())
+            {
+                if (!obj.Required) continue;
+                requiredCount++;
+                var s = GetObjectiveState(obj.Id);
+                if (s == QuestState.Failed) anyRequiredFailed = true;
+                if (s != QuestState.Completed) allRequiredCompleted = false;
+            }
+            if (anyRequiredFailed) return QuestState.Failed;
+            if (requiredCount > 0 && allRequiredCompleted) return QuestState.Completed;
+            return QuestState.Active;
+        }
+
+        private List<string> CollectByState(QuestState state)
+        {
+            var result = new List<string>();
+            if (_quest == null || _context == null) return result;
+            foreach (var obj in Objectives())
+                if (GetObjectiveState(obj.Id) == state) result.Add(obj.Id);
+            return result;
+        }
+
+        private void RaiseObjective(string id, QuestState state)
+        {
+            if (_lastObjectiveStates.TryGetValue(id, out var prev) && prev == state) return;
+            _lastObjectiveStates[id] = state;
+            OnObjectiveStateChanged?.Invoke(id, state);
+        }
+
+        private void RaiseQuest(QuestState state)
+        {
+            if (_questStateKnown && _lastQuestState == state) return;
+            _lastQuestState = state;
+            _questStateKnown = true;
+            OnQuestStateChanged?.Invoke(state);
+        }
+
+        // Fires exactly once per guard key: guarded by the rewarded-set (persisted, so restore never re-fires).
+        private void FireReward(string guardKey, string eventId, BaseAction reward)
+        {
+            if (reward == null || _context.CollectionContains(_rewardedKey, guardKey)) return;
+            reward.Execute(_context);
+            _context.AddToCollection(_rewardedKey, guardKey);
+            OnRewardFired?.Invoke(eventId);
+        }
+    }
+}
