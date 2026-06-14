@@ -29,7 +29,9 @@ namespace Faolline.GraphCore.Tests
         private class WindowWithPopulateToolbarSpy : BaseGraphEditorWindow
         {
             public bool PopulateToolbarCalled;
+            public bool PopulateToolbarRightCalled;
             public Toolbar ReceivedToolbar;
+            public Toolbar ReceivedRightToolbar;
 
             protected override BaseGraphView CreateGraphView() => new StubGraphView();
 
@@ -37,6 +39,12 @@ namespace Faolline.GraphCore.Tests
             {
                 PopulateToolbarCalled = true;
                 ReceivedToolbar = toolbar;
+            }
+
+            protected override void PopulateToolbarRight(Toolbar toolbar)
+            {
+                PopulateToolbarRightCalled = true;
+                ReceivedRightToolbar = toolbar;
             }
         }
 
@@ -63,6 +71,33 @@ namespace Faolline.GraphCore.Tests
                     "PopulateToolbar must receive a non-null Toolbar instance");
             }
             finally { Object.DestroyImmediate(window); }
+        }
+
+        [Test]
+        public void PopulateToolbarRight_CalledWithNonNullToolbar()
+        {
+            var window = ScriptableObject.CreateInstance<WindowWithPopulateToolbarSpy>();
+            try
+            {
+                Assert.IsTrue(window.PopulateToolbarRightCalled,
+                    "PopulateToolbarRight must be called during OnEnable/BuildToolbar");
+                Assert.IsNotNull(window.ReceivedRightToolbar,
+                    "PopulateToolbarRight must receive a non-null Toolbar instance");
+            }
+            finally { Object.DestroyImmediate(window); }
+        }
+
+        [Test]
+        public void ToolbarSeparator_IsANonNullVisualElement()
+        {
+            Assert.IsNotNull(ToolbarSeparatorProbe.Make(), "ToolbarSeparator must produce a divider element.");
+        }
+
+        // Exposes the protected static helper for assertion.
+        private class ToolbarSeparatorProbe : BaseGraphEditorWindow
+        {
+            protected override BaseGraphView CreateGraphView() => new StubGraphView();
+            public static UnityEngine.UIElements.VisualElement Make() => ToolbarSeparator();
         }
 
         [Test]

@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.4]
+
+### Changed
+- **Toolbar grouped by usage.** The dialogue editor toolbar no longer crams every control into one row — it now
+  reads as groups separated by thin dividers: document tools (Save / Arrange / ↻ Refresh) │ playback (Run / Choose
+  / ▶ Continue / ← GoBack / ⏮ Checkpoint) │ ✓ Validate, with the Run-language picker moved to the right as a
+  setting (via the new graphcore `PopulateToolbarRight` hook + `ToolbarSeparator`). Requires graphcore ≥ 0.13.3.
+
 ## [0.5.3]
 
 ### Changed

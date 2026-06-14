@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.13.3]
+
+### Added
+- **Toolbar grouping helpers.** `BaseGraphEditorWindow` gains a `PopulateToolbarRight(toolbar)` hook — for
+  right-aligned *settings* (a language picker, etc.), called after the flexible spacer — alongside the existing
+  left-aligned `PopulateToolbar` for *actions*, plus a `protected static ToolbarSeparator()` thin divider for
+  grouping buttons by usage. The shared document tools (Save / Arrange / ↻ Refresh) are now followed by a divider
+  so a lib's buttons read as a separate group instead of one crammed row. Default hooks are no-ops. +2 EditMode
+  tests.
+
 ## [0.13.2]
 
 ### Added

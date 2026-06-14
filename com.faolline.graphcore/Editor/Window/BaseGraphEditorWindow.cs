@@ -172,11 +172,33 @@ namespace Faolline.GraphCore.Editor
         }
 
         /// <summary>
-        /// Override to add custom buttons or controls to the toolbar.
-        /// Called from <c>BuildToolbar</c> after the Save button is added.
-        /// Default implementation is a no-op.
+        /// Override to add a lib's action buttons to the toolbar. Called from <c>BuildToolbar</c> after the shared
+        /// document tools (Save / Arrange / ↻ Refresh) and the divider that follows them, so a lib's buttons form
+        /// the next group. Use <see cref="ToolbarSeparator"/> to split that group by usage. Default is a no-op.
         /// </summary>
         protected virtual void PopulateToolbar(UnityEditor.UIElements.Toolbar toolbar) { }
+
+        /// <summary>
+        /// Override to add right-aligned controls to the toolbar (settings rather than actions — e.g. a language
+        /// picker). Called from <c>BuildToolbar</c> after the flexible spacer, so these sit on the right. Default
+        /// is a no-op.
+        /// </summary>
+        protected virtual void PopulateToolbarRight(UnityEditor.UIElements.Toolbar toolbar) { }
+
+        /// <summary>
+        /// A thin vertical divider for grouping toolbar items by usage. Add between two groups of buttons.
+        /// </summary>
+        protected static VisualElement ToolbarSeparator()
+        {
+            var sep = new VisualElement();
+            sep.style.width = 1f;
+            sep.style.marginLeft = 12f;
+            sep.style.marginRight = 12f;
+            sep.style.marginTop = 3f;
+            sep.style.marginBottom = 3f;
+            sep.style.backgroundColor = new Color(1f, 1f, 1f, 0.2f);
+            return sep;
+        }
 
         /// <summary>
         /// Refreshes the window without closing it: rebuilds the canvas from the graph data (recreating node and
@@ -231,12 +253,16 @@ namespace Faolline.GraphCore.Editor
             };
             toolbar.Add(refreshButton);
 
+            // Divider: the shared document tools (above) form their own group; a lib's buttons follow as the next.
+            toolbar.Add(ToolbarSeparator());
             PopulateToolbar(toolbar);
 
-            // Right-aligned info on the malleable edges (their routing fully refreshes on Save).
+            // Flexible spacer pushes the settings + edges hint to the right.
             var spacer = new UnityEngine.UIElements.VisualElement();
             spacer.style.flexGrow = 1f;
             toolbar.Add(spacer);
+
+            PopulateToolbarRight(toolbar);
 
             var edgeHint = new UnityEngine.UIElements.Label("ⓘ edges")
             {

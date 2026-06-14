@@ -108,17 +108,23 @@ namespace Faolline.GraphDialogue.Editor
 
         protected override void PopulateToolbar(Toolbar toolbar)
         {
-            // Tooltips double as on-screen hints for the primary actions (accessibility, FR-011).
+            // Playback group — tooltips double as on-screen hints for the primary actions (accessibility, FR-011).
             toolbar.Add(new ToolbarButton(RunGraph)         { text = "Run",          tooltip = "Start playing this dialogue from its Start node." });
             toolbar.Add(new ToolbarButton(ShowChooseMenu)   { text = "Choose",       tooltip = "Pick one of the available options at a Choice node." });
             toolbar.Add(new ToolbarButton(Continue)         { text = "▶ Continue",   tooltip = "Advance past the current line." });
             toolbar.Add(new ToolbarButton(Back)             { text = "← GoBack",     tooltip = "Step back one node, restoring earlier state." });
             toolbar.Add(new ToolbarButton(BackToCheckpoint) { text = "⏮ Checkpoint", tooltip = "Jump back to the most recent checkpoint node." });
-            toolbar.Add(new ToolbarButton(ValidateGraph)    { text = "✓ Validate",   tooltip = "Check this graph for structural issues (Start/End, dangling edges, empty choices…)." });
 
-            // Locale selection for a Run: a dropdown of the project's configured languages — the Unity
-            // Localization locales, or the CSV locale columns — instead of free text (FR-032/SC-004). Applied
-            // on Run with no graph change. The list reloads on Save / ↻ Refresh (see OnRefresh).
+            // Verify group.
+            toolbar.Add(ToolbarSeparator());
+            toolbar.Add(new ToolbarButton(ValidateGraph)    { text = "✓ Validate",   tooltip = "Check this graph for structural issues (Start/End, dangling edges, empty choices…)." });
+        }
+
+        protected override void PopulateToolbarRight(Toolbar toolbar)
+        {
+            // Run language (a setting, not an action) — right-aligned. A dropdown of the project's configured
+            // languages (Unity Localization locales, or the CSV locale columns) instead of free text
+            // (FR-032/SC-004). Applied on Run with no graph change; the list reloads on Save / ↻ Refresh.
             _localeField = new PopupField<string>
             {
                 tooltip = "Active language for a Run. Sourced from your localization settings " +
