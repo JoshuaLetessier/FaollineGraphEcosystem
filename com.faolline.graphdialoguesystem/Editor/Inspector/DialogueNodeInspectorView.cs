@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
@@ -8,23 +10,15 @@ using Faolline.GraphCore.Editor;
 namespace Faolline.GraphDialogue.Editor
 {
     /// <summary>
-    /// Inspector panel for dialogue graphs. Renders type-specific sections (line speaker/text/expression,
-    /// choice add/remove/label/condition, end reason, sub-dialogue target, edge condition) plus the
-    /// shared base-node section and a typed parameter panel when nothing is selected.
+    /// Inspector panel for dialogue graphs. Adds the dialogue-specific sections (line speaker/expression, choice,
+    /// sub-dialogue target, edge condition, and a Speakers list when nothing is selected) on top of the shared
+    /// <see cref="BaseNodeInspectorView"/>, which owns the graph state, the parameter panel, and the universal
+    /// node section.
     /// </summary>
     public class DialogueNodeInspectorView : BaseNodeInspectorView
     {
-        private SerializedObject _serializedGraph;
-        private BaseGraph _graph;
         private DialogueGraphView _graphView;
         private BaseNodeData _boundNode;
-
-        /// <summary>Provides the loaded graph asset for SerializedObject binding.</summary>
-        public void SetGraph(BaseGraph graph)
-        {
-            _graph = graph;
-            _serializedGraph = graph != null ? new SerializedObject(graph) : null;
-        }
 
         /// <summary>Provides the canvas view so the inspector can rebuild choice ports and edges.</summary>
         public void SetGraphView(DialogueGraphView graphView) => _graphView = graphView;
@@ -32,53 +26,40 @@ namespace Faolline.GraphDialogue.Editor
         protected override void OnNodeVisualsChanged() => _graphView?.RefreshNodeColors();
 
         // ── Node binding ──────────────────────────────────────────────────────
-
         public override void BindNode(BaseNodeData node)
         {
             ClearInspector();
             if (node == null) return;
 
             _boundNode = node;
+            RefreshSerializedGraph();
+            var nodeElement = FindNodeProperty(SerializedGraph, node.Id);
 
-            if (_serializedGraph != null && _serializedGraph.targetObject == null)
-                _serializedGraph = _graph != null ? new SerializedObject(_graph) : null;
-            _serializedGraph?.Update();
+            if (node is DialogueLineNodeData line) BuildLineSection(nodeElement, line);
+            if (node is ChoiceNodeData choiceNode) BuildChoiceSection(choiceNode);
+            if (node is EndNodeData endNode)       BuildEndReasonSection(endNode);
+            if (node is SubGraphNodeData subNode)  BuildSubGraphSection(subNode);
 
-            var nodeElement = FindNodeProperty(_serializedGraph, node.Id);
-
-            if (node is DialogueLineNodeData)
-                BuildLineSection(nodeElement, (DialogueLineNodeData)node);
-
-            if (node is ChoiceNodeData choiceNode)
-                BuildChoiceSection(choiceNode);
-
-            if (node is EndNodeData endNode)
-                BuildEndReasonSection(endNode);
-
-            if (node is SubGraphNodeData subNode)
-                BuildSubGraphSection(subNode);
-
-            if (nodeElement != null && _serializedGraph != null)
-                AddBaseNodeSection(nodeElement, _serializedGraph);
+            if (nodeElement != null && SerializedGraph != null)
+                AddBaseNodeSection(nodeElement, SerializedGraph);
         }
 
         public override void ClearInspector()
         {
             Clear();
             _boundNode = null;
-            if (_graph != null)
-            {
-                BuildSpeakerPanel();
-                BuildParameterPanel();
-            }
+            if (Graph != null) BuildNoSelectionContent();
         }
 
-        // ── Edge binding (FR-021: condition on a connection) ──────────────────
+        /// <summary>No-selection content for dialogues: the Speakers list above the shared parameter panel.</summary>
+        protected override void BuildNoSelectionContent()
+        {
+            BuildSpeakerPanel();
+            BuildParameterPanel();
+        }
 
-        /// <summary>
-        /// Binds a single selected edge, exposing an <see cref="ObjectField"/> for its gating
-        /// <see cref="BaseEdgeData.Condition"/>. Setting a condition marks the graph dirty.
-        /// </summary>
+        // ── Edge binding (condition on a connection) ──────────────────────────
+        /// <summary>Binds a selected edge, exposing an ObjectField for its gating condition.</summary>
         public void BindEdge(BaseEdgeData edge)
         {
             Clear();
@@ -86,57 +67,41 @@ namespace Faolline.GraphDialogue.Editor
             if (edge == null) { ClearInspector(); return; }
 
             var foldout = new Foldout { text = "Edge", value = true };
-
             var conditionField = new ObjectField("Condition")
             {
-                objectType = typeof(BaseCondition),
-                allowSceneObjects = false,
-                value = edge.Condition
+                objectType = typeof(BaseCondition), allowSceneObjects = false, value = edge.Condition
             };
-            conditionField.RegisterValueChangedCallback(e =>
-            {
-                edge.Condition = e.newValue as BaseCondition;
-                MarkGraphDirty();
-            });
+            conditionField.RegisterValueChangedCallback(e => { edge.Condition = e.newValue as BaseCondition; MarkGraphDirty(); });
             foldout.Add(conditionField);
-
             Add(foldout);
         }
 
         // ── Line section ──────────────────────────────────────────────────────
-
         private void BuildLineSection(SerializedProperty nodeElement, DialogueLineNodeData node)
         {
             var foldout = new Foldout { text = "Line", value = true };
-
             foldout.Add(BuildSpeakerField(node));
             foldout.Add(BuildExpressionField(node));
-
             Add(foldout);
         }
 
-        /// <summary>
-        /// Expression picker: always a dropdown sourced from the selected speaker's expressions (never a
-        /// free-text field). The node's current value stays selectable even if not on the speaker. When the
-        /// speaker has no expressions, shows a disabled dropdown guiding the author to add them.
-        /// </summary>
+        // Expression picker: a dropdown sourced from the selected speaker's expressions (never free text).
         private VisualElement BuildExpressionField(DialogueLineNodeData node)
         {
-            var dialogueGraph = _graph as DialogueGraph;
+            var dialogueGraph = Graph as DialogueGraph;
             var speaker = dialogueGraph != null ? dialogueGraph.FindSpeaker(node.SpeakerKey) : null;
 
-            var keys = new System.Collections.Generic.List<string>();
+            var keys = new List<string>();
             if (speaker != null)
                 foreach (var e in speaker.Expressions)
                     if (e != null && !string.IsNullOrEmpty(e.Key) && !keys.Contains(e.Key)) keys.Add(e.Key);
 
             if (!string.IsNullOrEmpty(node.ExpressionKey) && !keys.Contains(node.ExpressionKey))
-                keys.Add(node.ExpressionKey); // keep the node's current/foreign value selectable
+                keys.Add(node.ExpressionKey);
 
             if (keys.Count == 0)
             {
-                // No expressions to choose from — disabled dropdown that points to the fix (no free text).
-                var empty = new DropdownField("Expression", new System.Collections.Generic.List<string> { "(define on speaker)" }, 0);
+                var empty = new DropdownField("Expression", new List<string> { "(define on speaker)" }, 0);
                 empty.SetEnabled(false);
                 empty.tooltip = speaker == null
                     ? "Select a Speaker first, then add expressions on that Speaker asset."
@@ -150,15 +115,11 @@ namespace Faolline.GraphDialogue.Editor
             return dropdown;
         }
 
-        /// <summary>
-        /// Speaker picker: a dropdown of the graph's <see cref="DialogueGraph.Speakers"/> ids (so the id is
-        /// never typed by hand). Preserves a current/foreign value not in the list, and includes a "(none)"
-        /// entry. Falls back to a plain text field when the graph has no speakers (or in unit tests).
-        /// </summary>
+        // Speaker picker: a dropdown of the graph's speaker ids (so the id is never typed by hand).
         private VisualElement BuildSpeakerField(DialogueLineNodeData node)
         {
             const string none = "(none)";
-            var dialogueGraph = _graph as DialogueGraph;
+            var dialogueGraph = Graph as DialogueGraph;
 
             if (dialogueGraph == null || dialogueGraph.Speakers.Count == 0)
             {
@@ -167,12 +128,12 @@ namespace Faolline.GraphDialogue.Editor
                 return tf;
             }
 
-            var ids = new System.Collections.Generic.List<string> { none };
+            var ids = new List<string> { none };
             foreach (var sp in dialogueGraph.Speakers)
                 if (sp != null && !string.IsNullOrEmpty(sp.SpeakerId) && !ids.Contains(sp.SpeakerId))
                     ids.Add(sp.SpeakerId);
             if (!string.IsNullOrEmpty(node.SpeakerKey) && !ids.Contains(node.SpeakerKey))
-                ids.Add(node.SpeakerKey); // keep a legacy/foreign id selectable
+                ids.Add(node.SpeakerKey);
 
             var current = string.IsNullOrEmpty(node.SpeakerKey) ? none : node.SpeakerKey;
             var dropdown = new DropdownField("Speaker", ids, ids.IndexOf(current));
@@ -180,34 +141,12 @@ namespace Faolline.GraphDialogue.Editor
             {
                 node.SpeakerKey = e.newValue == none ? string.Empty : e.newValue;
                 MarkGraphDirty();
-                RefreshIfBound(node); // rebuild so the Expression dropdown reflects the new speaker
+                RefreshIfBound(node);   // rebuild so the Expression dropdown reflects the new speaker
             });
             return dropdown;
         }
 
-        private VisualElement BuildBoundOrPlainField(
-            SerializedProperty nodeElement, string relativeProp, string label,
-            System.Func<string> getter, System.Action<string> setter)
-        {
-            if (nodeElement != null && _serializedGraph != null)
-            {
-                var prop = nodeElement.FindPropertyRelative(relativeProp);
-                if (prop != null)
-                {
-                    var field = new PropertyField(prop, label);
-                    field.Bind(_serializedGraph);
-                    return field;
-                }
-            }
-
-            // Fallback (unit tests without a SerializedObject): plain text field on the data.
-            var tf = new TextField(label) { value = getter() };
-            tf.RegisterValueChangedCallback(e => { setter(e.newValue); MarkGraphDirty(); });
-            return tf;
-        }
-
         // ── End / SubGraph sections ───────────────────────────────────────────
-
         public void SetEndReason(EndNodeData node, EndReason reason)
         {
             if (node == null) return;
@@ -220,11 +159,7 @@ namespace Faolline.GraphDialogue.Editor
         {
             var foldout = new Foldout { text = "End", value = true };
             var field = new EnumField("End Reason", node.EndReason);
-            field.RegisterValueChangedCallback(e =>
-            {
-                node.EndReason = (EndReason)e.newValue;
-                MarkGraphDirty();
-            });
+            field.RegisterValueChangedCallback(e => { node.EndReason = (EndReason)e.newValue; MarkGraphDirty(); });
             foldout.Add(field);
             Add(foldout);
         }
@@ -232,9 +167,9 @@ namespace Faolline.GraphDialogue.Editor
         public bool SetSubGraphTarget(SubGraphNodeData node, BaseGraph target)
         {
             if (node == null) return false;
-            if (target != null && _graph != null)
+            if (target != null && Graph != null)
             {
-                var result = CycleDetector.Check(_graph, target);
+                var result = CycleDetector.Check(Graph, target);
                 if (result.HasCycle)
                 {
                     var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
@@ -262,16 +197,14 @@ namespace Faolline.GraphDialogue.Editor
 
             var targetField = new ObjectField("Target Graph")
             {
-                objectType = typeof(BaseGraph),
-                allowSceneObjects = false,
-                value = node.TargetGraph
+                objectType = typeof(BaseGraph), allowSceneObjects = false, value = node.TargetGraph
             };
             targetField.RegisterValueChangedCallback(e =>
             {
                 var proposed = e.newValue as BaseGraph;
-                if (proposed != null && _graph != null && CycleDetector.Check(_graph, proposed).HasCycle)
+                if (proposed != null && Graph != null && CycleDetector.Check(Graph, proposed).HasCycle)
                 {
-                    var result = CycleDetector.Check(_graph, proposed);
+                    var result = CycleDetector.Check(Graph, proposed);
                     var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
                     Debug.LogWarning($"[GraphDialogue] Cycle refused: {path}");
                     targetField.SetValueWithoutNotify(node.TargetGraph);
@@ -283,26 +216,18 @@ namespace Faolline.GraphDialogue.Editor
             foldout.Add(targetField);
 
             var inheritToggle = new Toggle("Inherit Parent Context") { value = node.InheritParentContext };
-            inheritToggle.RegisterValueChangedCallback(e =>
-            {
-                node.InheritParentContext = e.newValue;
-                MarkGraphDirty();
-            });
+            inheritToggle.RegisterValueChangedCallback(e => { node.InheritParentContext = e.newValue; MarkGraphDirty(); });
             foldout.Add(inheritToggle);
 
             Add(foldout);
         }
 
         // ── Choice section ────────────────────────────────────────────────────
-
         /// <summary>Appends a new <see cref="DialogueChoice"/> and rebuilds the canvas ports.</summary>
         public void AddChoice(ChoiceNodeData node)
         {
             if (node == null) return;
-            node.Choices.Add(new DialogueChoice
-            {
-                Id = System.Guid.NewGuid().ToString("D")
-            });
+            node.Choices.Add(new DialogueChoice { Id = System.Guid.NewGuid().ToString("D") });
             MarkGraphDirty();
             _graphView?.GetChoiceView(node.Id)?.RebuildPorts();
             _graphView?.ReconnectNodeEdges(node.Id);
@@ -314,7 +239,6 @@ namespace Faolline.GraphDialogue.Editor
         {
             if (node == null || choice == null) return;
             if (!node.Choices.Remove(choice)) return;
-
             _graphView?.RemoveChoiceEdges(node.Id, choice.Id);
             MarkGraphDirty();
             _graphView?.GetChoiceView(node.Id)?.RebuildPorts();
@@ -331,11 +255,9 @@ namespace Faolline.GraphDialogue.Editor
                 if (baseChoice == null) continue;
                 var choice = baseChoice;
 
-                var row = new VisualElement();
-                row.style.flexDirection = FlexDirection.Row;
+                var row = new VisualElement { style = { flexDirection = FlexDirection.Row } };
 
-                // Friendly name → shown on the choice's output port and used as localization source text.
-                // The localization key itself is derived from the choice Id (no hand-typed key field).
+                // Friendly name → shown on the port and used as localization source text (key derived from Id).
                 var nameField = new TextField("Name") { value = choice.Title };
                 nameField.style.flexGrow = 1;
                 nameField.RegisterValueChangedCallback(e =>
@@ -347,22 +269,14 @@ namespace Faolline.GraphDialogue.Editor
 
                 var conditionField = new ObjectField
                 {
-                    objectType = typeof(BaseCondition),
-                    allowSceneObjects = false,
-                    value = choice.Condition
+                    objectType = typeof(BaseCondition), allowSceneObjects = false, value = choice.Condition
                 };
                 conditionField.style.flexGrow = 1;
-                conditionField.RegisterValueChangedCallback(e =>
-                {
-                    choice.Condition = e.newValue as BaseCondition;
-                    MarkGraphDirty();
-                });
-
-                var removeBtn = new Button(() => RemoveChoice(node, choice)) { text = "×" };
+                conditionField.RegisterValueChangedCallback(e => { choice.Condition = e.newValue as BaseCondition; MarkGraphDirty(); });
 
                 row.Add(nameField);
                 row.Add(conditionField);
-                row.Add(removeBtn);
+                row.Add(new Button(() => RemoveChoice(node, choice)) { text = "×" });
                 foldout.Add(row);
             }
 
@@ -370,111 +284,24 @@ namespace Faolline.GraphDialogue.Editor
             Add(foldout);
         }
 
-        // ── Speaker panel ─────────────────────────────────────────────────────
-
-        /// <summary>
-        /// No-selection panel section that edits the graph's <see cref="DialogueGraph.Speakers"/> list via a
-        /// standard reorderable PropertyField, so the graph owns its speakers (the DialogueDriver reads them).
-        /// </summary>
+        // ── Speaker panel (dialogue-specific no-selection section) ─────────────
         private void BuildSpeakerPanel()
         {
-            if (!(_graph is DialogueGraph)) return;
+            if (!(Graph is DialogueGraph)) return;
+            RefreshSerializedGraph();
+            if (SerializedGraph == null) return;
 
-            if (_serializedGraph == null || _serializedGraph.targetObject == null)
-                _serializedGraph = new SerializedObject(_graph);
-            _serializedGraph.Update();
-
-            var prop = _serializedGraph.FindProperty("_speakers");
+            var prop = SerializedGraph.FindProperty("_speakers");
             if (prop == null) return;
 
             var foldout = new Foldout { text = "Speakers", value = true };
             var field = new PropertyField(prop, "Speakers");
-            field.Bind(_serializedGraph);
+            field.Bind(SerializedGraph);
             foldout.Add(field);
             Add(foldout);
         }
 
-        // ── Parameter panel ───────────────────────────────────────────────────
-
-        public void AddParameter(string key, ParameterType type, string defaultValue)
-        {
-            if (_graph == null) return;
-            _graph.AddParameter(new ParameterData
-            {
-                Key = key,
-                Type = type,
-                DefaultValue = defaultValue ?? string.Empty
-            });
-            EditorUtility.SetDirty(_graph);
-            RebuildParameterPanel();
-        }
-
-        public void RemoveParameter(string key)
-        {
-            if (_graph == null) return;
-            for (int i = _graph.Parameters.Count - 1; i >= 0; i--)
-            {
-                if (_graph.Parameters[i].Key == key)
-                {
-                    _graph.RemoveParameter(_graph.Parameters[i]);
-                    EditorUtility.SetDirty(_graph);
-                    break;
-                }
-            }
-            RebuildParameterPanel();
-        }
-
-        private void BuildParameterPanel()
-        {
-            var foldout = new Foldout { text = "Parameters", value = true };
-
-            foreach (var param in _graph.Parameters)
-            {
-                var capturedKey = param.Key;
-                var row = new VisualElement();
-                row.style.flexDirection = FlexDirection.Row;
-                row.Add(new Label(param.Key) { style = { flexGrow = 1 } });
-                row.Add(new Label(param.Type.ToString()) { style = { width = 56 } });
-                row.Add(new Label($"= {param.DefaultValue}") { style = { flexGrow = 1 } });
-                row.Add(new Button(() => RemoveParameter(capturedKey)) { text = "×" });
-                foldout.Add(row);
-            }
-
-            var addRow = new VisualElement();
-            addRow.style.flexDirection = FlexDirection.Row;
-            var keyField = new TextField("key") { style = { flexGrow = 1 } };
-            var typeField = new EnumField(ParameterType.Bool) { style = { width = 72 } };
-            var defaultField = new TextField("default") { style = { flexGrow = 1 } };
-            addRow.Add(keyField);
-            addRow.Add(typeField);
-            addRow.Add(defaultField);
-            addRow.Add(new Button(() =>
-            {
-                if (!string.IsNullOrWhiteSpace(keyField.value))
-                    AddParameter(keyField.value.Trim(), (ParameterType)typeField.value, defaultField.value ?? string.Empty);
-            }) { text = "Add" });
-            foldout.Add(addRow);
-
-            Add(foldout);
-        }
-
-        private void RebuildParameterPanel()
-        {
-            Clear();
-            if (_graph != null)
-            {
-                BuildSpeakerPanel();
-                BuildParameterPanel();
-            }
-        }
-
         // ── Helpers ───────────────────────────────────────────────────────────
-
-        private void MarkGraphDirty()
-        {
-            if (_graph != null) EditorUtility.SetDirty(_graph);
-        }
-
         private void RefreshIfBound(BaseNodeData node)
         {
             if (_boundNode == node) BindNode(node);
