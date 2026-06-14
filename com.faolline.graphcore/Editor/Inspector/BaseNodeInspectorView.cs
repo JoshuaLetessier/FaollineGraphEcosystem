@@ -1,5 +1,6 @@
 using UnityEditor;
 using UnityEditor.UIElements;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace Faolline.GraphCore.Editor
@@ -184,6 +185,111 @@ namespace Faolline.GraphCore.Editor
                 case ParameterType.String: return ParameterData.String(key, (defaultField as TextField)?.value    ?? string.Empty);
                 default:                   return ParameterData.Bool(key,   (defaultField as Toggle)?.value        ?? false);
             }
+        }
+
+        // ── Bound node + universal node sections ──────────────────────────────
+
+        /// <summary>The node currently shown, or null. Subclasses set this in <see cref="BindNode"/>.</summary>
+        protected BaseNodeData BoundNode { get; set; }
+
+        /// <summary>Re-binds the inspector if <paramref name="node"/> is the one currently shown (after an edit).</summary>
+        protected void RefreshIfBound(BaseNodeData node)
+        {
+            if (BoundNode == node) BindNode(node);
+        }
+
+        /// <summary>Log prefix for inspector warnings (e.g. cycle refusals). Override per lib for its own tag.</summary>
+        protected virtual string LogContext => "GraphCore";
+
+        /// <summary>The foldout title for a sub-graph node (override to e.g. "SubDialogue").</summary>
+        protected virtual string SubGraphSectionTitle => "SubGraph";
+
+        /// <summary>
+        /// Appends the sections for the universal graphcore node types (End reason, SubGraph target + inherit).
+        /// Call from a subclass's <see cref="BindNode"/>; no-op for other node types.
+        /// </summary>
+        protected void BuildUniversalNodeSections(BaseNodeData node)
+        {
+            if (node is EndNodeData endNode)      BuildEndReasonSection(endNode);
+            if (node is SubGraphNodeData subNode) BuildSubGraphSection(subNode);
+        }
+
+        /// <summary>Sets the node's end reason, marks the graph dirty, refreshes if bound.</summary>
+        public void SetEndReason(EndNodeData node, EndReason reason)
+        {
+            if (node == null) return;
+            node.EndReason = reason;
+            MarkGraphDirty();
+            RefreshIfBound(node);
+        }
+
+        private void BuildEndReasonSection(EndNodeData node)
+        {
+            var foldout = new Foldout { text = "End", value = true };
+            var field = new EnumField("End Reason", node.EndReason);
+            field.RegisterValueChangedCallback(e => { node.EndReason = (EndReason)e.newValue; MarkGraphDirty(); });
+            foldout.Add(field);
+            Add(foldout);
+        }
+
+        /// <summary>Assigns the sub-graph target, refusing inter-graph cycles (returns false on refusal).</summary>
+        public bool SetSubGraphTarget(SubGraphNodeData node, BaseGraph target)
+        {
+            if (node == null) return false;
+            if (target != null && Graph != null)
+            {
+                var result = CycleDetector.Check(Graph, target);
+                if (result.HasCycle)
+                {
+                    var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
+                    Debug.LogWarning($"[{LogContext}] Cycle refused: {path}");
+                    return false;
+                }
+            }
+            node.TargetGraph = target;
+            MarkGraphDirty();
+            RefreshIfBound(node);
+            return true;
+        }
+
+        /// <summary>Sets the sub-graph's inherit-parent-context flag, marks dirty, refreshes if bound.</summary>
+        public void SetInheritParentContext(SubGraphNodeData node, bool inherit)
+        {
+            if (node == null) return;
+            node.InheritParentContext = inherit;
+            MarkGraphDirty();
+            RefreshIfBound(node);
+        }
+
+        private void BuildSubGraphSection(SubGraphNodeData node)
+        {
+            var foldout = new Foldout { text = SubGraphSectionTitle, value = true };
+
+            var targetField = new ObjectField("Target Graph")
+            {
+                objectType = typeof(BaseGraph), allowSceneObjects = false, value = node.TargetGraph
+            };
+            targetField.RegisterValueChangedCallback(e =>
+            {
+                var proposed = e.newValue as BaseGraph;
+                if (proposed != null && Graph != null && CycleDetector.Check(Graph, proposed).HasCycle)
+                {
+                    var result = CycleDetector.Check(Graph, proposed);
+                    var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
+                    Debug.LogWarning($"[{LogContext}] Cycle refused: {path}");
+                    targetField.SetValueWithoutNotify(node.TargetGraph);
+                    return;
+                }
+                node.TargetGraph = proposed;
+                MarkGraphDirty();
+            });
+            foldout.Add(targetField);
+
+            var inheritToggle = new Toggle("Inherit Parent Context") { value = node.InheritParentContext };
+            inheritToggle.RegisterValueChangedCallback(e => { node.InheritParentContext = e.newValue; MarkGraphDirty(); });
+            foldout.Add(inheritToggle);
+
+            Add(foldout);
         }
 
         /// <summary>

@@ -4,6 +4,29 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.12.0]
+
+### Changed
+- **Typed parameter defaults.** `ParameterData` stores its default in a field matching its `Type`
+  (`BoolDefault`/`IntDefault`/`FloatDefault`/`StringDefault`, plus `ParameterData.Bool/Int/Float/String(...)`
+  factories) instead of a single string parsed at run time — no parse-failure warnings, edit-time type safety.
+  Legacy assets self-migrate (the old `_defaultValue` string is parsed into the typed field lazily on first
+  read; the `DefaultValue` string property stays as a back-compat shim). `BaseContext.SeedFromGraph` reads the
+  typed default directly (no parsing).
+
+### Added
+- **Shared node-inspector base.** The parameter panel, the graph state (`Graph` / `SerializedGraph` / `SetGraph`
+  / `RefreshSerializedGraph` / `MarkGraphDirty`), the End and SubGraph node sections, and the bound-node refresh
+  now live ONCE in `BaseNodeInspectorView` instead of being copy-pasted in every lib's node inspector. The
+  parameter default is edited with a TYPED field (Toggle / Integer / Float / Text) that swaps with the chosen
+  type, and a `ParameterDataDrawer` shows only the matching default field. A `BuildNoSelectionContent()` virtual
+  (+ `LogContext` / `SubGraphSectionTitle` hooks) lets a lib add its own bits — the Dialogue inspector keeps its
+  Speakers list and "SubDialogue" title. Each lib inspector now holds only its lib-specific node fields + Choice.
+
+### Notes
+- Additive / non-breaking (the string `DefaultValue` API and all existing assets keep working). Editor
+  de-duplication; runtime 4-type cap (`BaseContext._supportedTypes`) unchanged. EditMode 724 / PlayMode 9.
+
 ## [0.11.0]
 
 ### Added

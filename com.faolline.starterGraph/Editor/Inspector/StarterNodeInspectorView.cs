@@ -1,6 +1,5 @@
 using UnityEditor;
 using UnityEditor.UIElements;
-using UnityEngine;
 using UnityEngine.UIElements;
 using Faolline.GraphCore;
 using Faolline.GraphCore.Editor;
@@ -9,14 +8,13 @@ using Faolline.StarterGraph;
 namespace Faolline.StarterGraph.Editor
 {
     /// <summary>
-    /// Inspector panel for the StarterGraph template. Adds the lib-specific bits (the statement node Label, and
+    /// Inspector panel for the StarterGraph template. Adds the lib-specific bits (the statement node Label and
     /// the Choice section wired to the canvas) on top of the shared <see cref="BaseNodeInspectorView"/>, which
-    /// owns the graph state, the parameter panel, and the universal node section.
+    /// owns the graph state, the parameter panel, the End/SubGraph sections, and the universal node section.
     /// </summary>
     public class StarterNodeInspectorView : BaseNodeInspectorView
     {
         private StarterGraphView _graphView;
-        private BaseNodeData _boundNode;
 
         /// <summary>
         /// Provides the canvas view so the inspector can rebuild a choice node's output ports and remove edges
@@ -24,15 +22,15 @@ namespace Faolline.StarterGraph.Editor
         /// </summary>
         public void SetGraphView(StarterGraphView graphView) => _graphView = graphView;
 
-        /// <summary>Refreshes node colors on the canvas when a node's color override changes in the inspector.</summary>
         protected override void OnNodeVisualsChanged() => _graphView?.RefreshNodeColors();
+        protected override string LogContext => "StarterGraph";
 
         public override void BindNode(BaseNodeData node)
         {
             ClearInspector();
             if (node == null) return;
 
-            _boundNode = node;
+            BoundNode = node;
             RefreshSerializedGraph();
             var nodeElement = FindNodeProperty(SerializedGraph, node.Id);
 
@@ -44,9 +42,8 @@ namespace Faolline.StarterGraph.Editor
                 Add(labelField);
             }
 
-            if (node is ChoiceNodeData choiceNode)  BuildChoiceSection(choiceNode);
-            if (node is EndNodeData endNode)         BuildEndReasonSection(endNode);
-            if (node is SubGraphNodeData subNode)    BuildSubGraphSection(subNode);
+            if (node is ChoiceNodeData choiceNode) BuildChoiceSection(choiceNode);
+            BuildUniversalNodeSections(node);   // End + SubGraph (shared)
 
             if (nodeElement != null && SerializedGraph != null)
                 AddBaseNodeSection(nodeElement, SerializedGraph);
@@ -55,88 +52,8 @@ namespace Faolline.StarterGraph.Editor
         public override void ClearInspector()
         {
             Clear();
-            _boundNode = null;
+            BoundNode = null;
             if (Graph != null) BuildParameterPanel();
-        }
-
-        // ── End node ──────────────────────────────────────────────────────────
-        /// <summary>Sets <paramref name="node"/>'s end reason, marks dirty, refreshes if bound.</summary>
-        public void SetEndReason(EndNodeData node, EndReason reason)
-        {
-            if (node == null) return;
-            node.EndReason = reason;
-            MarkGraphDirty();
-            RefreshIfBound(node);
-        }
-
-        private void BuildEndReasonSection(EndNodeData node)
-        {
-            var foldout = new Foldout { text = "End", value = true };
-            var field = new EnumField("End Reason", node.EndReason);
-            field.RegisterValueChangedCallback(e => { node.EndReason = (EndReason)e.newValue; MarkGraphDirty(); });
-            foldout.Add(field);
-            Add(foldout);
-        }
-
-        // ── SubGraph node ─────────────────────────────────────────────────────
-        /// <summary>Assigns the sub-graph target, refusing inter-graph cycles. Returns false on refusal.</summary>
-        public bool SetSubGraphTarget(SubGraphNodeData node, BaseGraph target)
-        {
-            if (node == null) return false;
-            if (target != null && Graph != null)
-            {
-                var result = CycleDetector.Check(Graph, target);
-                if (result.HasCycle)
-                {
-                    var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
-                    Debug.LogWarning($"[StarterGraph] Cycle refused: {path}");
-                    return false;
-                }
-            }
-            node.TargetGraph = target;
-            MarkGraphDirty();
-            RefreshIfBound(node);
-            return true;
-        }
-
-        /// <summary>Sets the sub-graph's inherit-parent-context flag, marks dirty, refreshes if bound.</summary>
-        public void SetInheritParentContext(SubGraphNodeData node, bool inherit)
-        {
-            if (node == null) return;
-            node.InheritParentContext = inherit;
-            MarkGraphDirty();
-            RefreshIfBound(node);
-        }
-
-        private void BuildSubGraphSection(SubGraphNodeData node)
-        {
-            var foldout = new Foldout { text = "SubGraph", value = true };
-
-            var targetField = new ObjectField("Target Graph")
-            {
-                objectType = typeof(BaseGraph), allowSceneObjects = false, value = node.TargetGraph
-            };
-            targetField.RegisterValueChangedCallback(e =>
-            {
-                var proposed = e.newValue as BaseGraph;
-                if (proposed != null && Graph != null && CycleDetector.Check(Graph, proposed).HasCycle)
-                {
-                    var result = CycleDetector.Check(Graph, proposed);
-                    var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
-                    Debug.LogWarning($"[StarterGraph] Cycle refused: {path}");
-                    targetField.SetValueWithoutNotify(node.TargetGraph);
-                    return;
-                }
-                node.TargetGraph = proposed;
-                MarkGraphDirty();
-            });
-            foldout.Add(targetField);
-
-            var inheritToggle = new Toggle("Inherit Parent Context") { value = node.InheritParentContext };
-            inheritToggle.RegisterValueChangedCallback(e => { node.InheritParentContext = e.newValue; MarkGraphDirty(); });
-            foldout.Add(inheritToggle);
-
-            Add(foldout);
         }
 
         // ── Choice node (lib choice type + canvas ports) ──────────────────────
@@ -203,12 +120,7 @@ namespace Faolline.StarterGraph.Editor
             Add(foldout);
         }
 
-        // ── Helpers ───────────────────────────────────────────────────────────
-        private void RefreshIfBound(BaseNodeData node)
-        {
-            if (_boundNode == node) BindNode(node);
-        }
-
+        // ── Statement node field ──────────────────────────────────────────────
         private VisualElement BuildBoundLabelField(SerializedProperty nodeElement)
         {
             var labelProp = nodeElement.FindPropertyRelative("_label");

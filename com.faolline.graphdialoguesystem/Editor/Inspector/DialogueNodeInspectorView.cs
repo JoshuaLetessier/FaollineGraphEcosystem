@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.UIElements;
@@ -11,19 +10,20 @@ namespace Faolline.GraphDialogue.Editor
 {
     /// <summary>
     /// Inspector panel for dialogue graphs. Adds the dialogue-specific sections (line speaker/expression, choice,
-    /// sub-dialogue target, edge condition, and a Speakers list when nothing is selected) on top of the shared
-    /// <see cref="BaseNodeInspectorView"/>, which owns the graph state, the parameter panel, and the universal
-    /// node section.
+    /// edge condition, and a Speakers list when nothing is selected) on top of the shared
+    /// <see cref="BaseNodeInspectorView"/>, which owns the graph state, the parameter panel, the End/SubGraph
+    /// sections, and the universal node section.
     /// </summary>
     public class DialogueNodeInspectorView : BaseNodeInspectorView
     {
         private DialogueGraphView _graphView;
-        private BaseNodeData _boundNode;
 
         /// <summary>Provides the canvas view so the inspector can rebuild choice ports and edges.</summary>
         public void SetGraphView(DialogueGraphView graphView) => _graphView = graphView;
 
         protected override void OnNodeVisualsChanged() => _graphView?.RefreshNodeColors();
+        protected override string LogContext => "GraphDialogue";
+        protected override string SubGraphSectionTitle => "SubDialogue";
 
         // ── Node binding ──────────────────────────────────────────────────────
         public override void BindNode(BaseNodeData node)
@@ -31,14 +31,13 @@ namespace Faolline.GraphDialogue.Editor
             ClearInspector();
             if (node == null) return;
 
-            _boundNode = node;
+            BoundNode = node;
             RefreshSerializedGraph();
             var nodeElement = FindNodeProperty(SerializedGraph, node.Id);
 
             if (node is DialogueLineNodeData line) BuildLineSection(nodeElement, line);
             if (node is ChoiceNodeData choiceNode) BuildChoiceSection(choiceNode);
-            if (node is EndNodeData endNode)       BuildEndReasonSection(endNode);
-            if (node is SubGraphNodeData subNode)  BuildSubGraphSection(subNode);
+            BuildUniversalNodeSections(node);   // End + SubGraph (shared)
 
             if (nodeElement != null && SerializedGraph != null)
                 AddBaseNodeSection(nodeElement, SerializedGraph);
@@ -47,7 +46,7 @@ namespace Faolline.GraphDialogue.Editor
         public override void ClearInspector()
         {
             Clear();
-            _boundNode = null;
+            BoundNode = null;
             if (Graph != null) BuildNoSelectionContent();
         }
 
@@ -63,7 +62,7 @@ namespace Faolline.GraphDialogue.Editor
         public void BindEdge(BaseEdgeData edge)
         {
             Clear();
-            _boundNode = null;
+            BoundNode = null;
             if (edge == null) { ClearInspector(); return; }
 
             var foldout = new Foldout { text = "Edge", value = true };
@@ -146,83 +145,7 @@ namespace Faolline.GraphDialogue.Editor
             return dropdown;
         }
 
-        // ── End / SubGraph sections ───────────────────────────────────────────
-        public void SetEndReason(EndNodeData node, EndReason reason)
-        {
-            if (node == null) return;
-            node.EndReason = reason;
-            MarkGraphDirty();
-            RefreshIfBound(node);
-        }
-
-        private void BuildEndReasonSection(EndNodeData node)
-        {
-            var foldout = new Foldout { text = "End", value = true };
-            var field = new EnumField("End Reason", node.EndReason);
-            field.RegisterValueChangedCallback(e => { node.EndReason = (EndReason)e.newValue; MarkGraphDirty(); });
-            foldout.Add(field);
-            Add(foldout);
-        }
-
-        public bool SetSubGraphTarget(SubGraphNodeData node, BaseGraph target)
-        {
-            if (node == null) return false;
-            if (target != null && Graph != null)
-            {
-                var result = CycleDetector.Check(Graph, target);
-                if (result.HasCycle)
-                {
-                    var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
-                    Debug.LogWarning($"[GraphDialogue] Cycle refused: {path}");
-                    return false;
-                }
-            }
-            node.TargetGraph = target;
-            MarkGraphDirty();
-            RefreshIfBound(node);
-            return true;
-        }
-
-        public void SetInheritParentContext(SubGraphNodeData node, bool inherit)
-        {
-            if (node == null) return;
-            node.InheritParentContext = inherit;
-            MarkGraphDirty();
-            RefreshIfBound(node);
-        }
-
-        private void BuildSubGraphSection(SubGraphNodeData node)
-        {
-            var foldout = new Foldout { text = "SubDialogue", value = true };
-
-            var targetField = new ObjectField("Target Graph")
-            {
-                objectType = typeof(BaseGraph), allowSceneObjects = false, value = node.TargetGraph
-            };
-            targetField.RegisterValueChangedCallback(e =>
-            {
-                var proposed = e.newValue as BaseGraph;
-                if (proposed != null && Graph != null && CycleDetector.Check(Graph, proposed).HasCycle)
-                {
-                    var result = CycleDetector.Check(Graph, proposed);
-                    var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
-                    Debug.LogWarning($"[GraphDialogue] Cycle refused: {path}");
-                    targetField.SetValueWithoutNotify(node.TargetGraph);
-                    return;
-                }
-                node.TargetGraph = proposed;
-                MarkGraphDirty();
-            });
-            foldout.Add(targetField);
-
-            var inheritToggle = new Toggle("Inherit Parent Context") { value = node.InheritParentContext };
-            inheritToggle.RegisterValueChangedCallback(e => { node.InheritParentContext = e.newValue; MarkGraphDirty(); });
-            foldout.Add(inheritToggle);
-
-            Add(foldout);
-        }
-
-        // ── Choice section ────────────────────────────────────────────────────
+        // ── Choice section (dialogue choice type + canvas ports) ──────────────
         /// <summary>Appends a new <see cref="DialogueChoice"/> and rebuilds the canvas ports.</summary>
         public void AddChoice(ChoiceNodeData node)
         {
@@ -299,12 +222,6 @@ namespace Faolline.GraphDialogue.Editor
             field.Bind(SerializedGraph);
             foldout.Add(field);
             Add(foldout);
-        }
-
-        // ── Helpers ───────────────────────────────────────────────────────────
-        private void RefreshIfBound(BaseNodeData node)
-        {
-            if (_boundNode == node) BindNode(node);
         }
     }
 }
