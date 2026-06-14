@@ -75,6 +75,24 @@ namespace Faolline.GraphSave.Tests
         }
 
         [Test]
+        public void Capture_And_ApplyTo_RoundTripsValueTypes_ThroughJson()
+        {
+            var ctx = new BaseContext();
+            ctx.Set<Vector2>("v2", new Vector2(1f, 2f));
+            ctx.Set<Vector3>("v3", new Vector3(3f, 4f, 5f));
+            ctx.Set<Color>("col", new Color(0.1f, 0.2f, 0.3f, 0.4f));
+
+            var snap = GraphRunSnapshot.Capture(ctx, "g", "n");
+            var back = JsonUtility.FromJson<GraphRunSnapshot>(JsonUtility.ToJson(snap));
+
+            var restored = new BaseContext();
+            back.ApplyTo(restored);
+            Assert.IsTrue(restored.TryGet<Vector2>("v2", out var v2) && v2 == new Vector2(1f, 2f));
+            Assert.IsTrue(restored.TryGet<Vector3>("v3", out var v3) && v3 == new Vector3(3f, 4f, 5f));
+            Assert.IsTrue(restored.TryGet<Color>("col", out var c) && c == new Color(0.1f, 0.2f, 0.3f, 0.4f));
+        }
+
+        [Test]
         public void Store_Save_Load_Exists_Delete()
         {
             var store = new MemoryStore();

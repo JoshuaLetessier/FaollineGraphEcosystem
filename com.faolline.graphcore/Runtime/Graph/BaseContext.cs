@@ -44,7 +44,8 @@ namespace Faolline.GraphCore
 
         private static readonly HashSet<Type> _supportedTypes = new HashSet<Type>
         {
-            typeof(bool), typeof(int), typeof(float), typeof(string)
+            typeof(bool), typeof(int), typeof(float), typeof(string),
+            typeof(UnityEngine.Vector2), typeof(UnityEngine.Vector3), typeof(UnityEngine.Color)
         };
 
         // ── Parameter accessors ────────────────────────────────────────────────
@@ -58,7 +59,7 @@ namespace Faolline.GraphCore
             if (!_supportedTypes.Contains(typeof(T)))
                 throw new ArgumentException(
                     $"[GraphCore] Unsupported parameter type: {typeof(T).Name}. " +
-                    "Supported types: bool, int, float, string.");
+                    "Supported types: bool, int, float, string, Vector2, Vector3, Color.");
 
             ResolveWriteBucket(key)[key] = value;
             FireSubscribers(key, value);

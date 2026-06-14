@@ -7,10 +7,12 @@ namespace Faolline.GraphCore.Tests
         // ParameterType enum (T009)
 
         [Test]
-        public void ParameterType_HasExactlyFourValues()
+        public void ParameterType_HasExactlySevenValues()
         {
-            Assert.AreEqual(4, System.Enum.GetValues(typeof(ParameterType)).Length,
-                "ParameterType must have exactly 4 values.");
+            // The four primitives plus the three serialization-friendly Unity value types.
+            // Object/GameObject references are intentionally excluded (they need a stable-id scheme).
+            Assert.AreEqual(7, System.Enum.GetValues(typeof(ParameterType)).Length,
+                "ParameterType must have exactly 7 values (bool/int/float/string + Vector2/Vector3/Color).");
         }
 
         [Test]
@@ -20,6 +22,9 @@ namespace Faolline.GraphCore.Tests
             Assert.AreEqual(1, (int)ParameterType.Int);
             Assert.AreEqual(2, (int)ParameterType.Float);
             Assert.AreEqual(3, (int)ParameterType.String);
+            Assert.AreEqual(4, (int)ParameterType.Vector2);
+            Assert.AreEqual(5, (int)ParameterType.Vector3);
+            Assert.AreEqual(6, (int)ParameterType.Color);
         }
 
         // ParameterData (T011, US4 T052-T053)

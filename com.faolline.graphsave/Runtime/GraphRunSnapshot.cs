@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using UnityEngine;
 using Faolline.GraphCore;
 
 namespace Faolline.GraphSave
@@ -33,8 +34,8 @@ namespace Faolline.GraphSave
         public class Param
         {
             public string Key;
-            public string Type;   // "bool" | "int" | "float" | "string"
-            public string Value;
+            public string Type;   // "bool" | "int" | "float" | "string" | "vector2" | "vector3" | "color"
+            public string Value;  // every value is flattened to an invariant string (vectors/color: comma-separated components)
         }
 
         /// <summary>One named string collection from the context.</summary>
@@ -121,11 +122,14 @@ namespace Faolline.GraphSave
         {
             switch (value)
             {
-                case bool b:   return new Param { Key = key, Type = "bool",   Value = b ? "1" : "0" };
-                case int i:    return new Param { Key = key, Type = "int",    Value = i.ToString(CultureInfo.InvariantCulture) };
-                case float f:  return new Param { Key = key, Type = "float",  Value = f.ToString(CultureInfo.InvariantCulture) };
-                case string s: return new Param { Key = key, Type = "string", Value = s };
-                default:       return new Param { Key = key, Type = "string", Value = value?.ToString() ?? string.Empty };
+                case bool b:    return new Param { Key = key, Type = "bool",    Value = b ? "1" : "0" };
+                case int i:     return new Param { Key = key, Type = "int",     Value = i.ToString(CultureInfo.InvariantCulture) };
+                case float f:   return new Param { Key = key, Type = "float",   Value = f.ToString(CultureInfo.InvariantCulture) };
+                case string s:  return new Param { Key = key, Type = "string",  Value = s };
+                case Vector2 v2: return new Param { Key = key, Type = "vector2", Value = Join(v2.x, v2.y) };
+                case Vector3 v3: return new Param { Key = key, Type = "vector3", Value = Join(v3.x, v3.y, v3.z) };
+                case Color c:    return new Param { Key = key, Type = "color",   Value = Join(c.r, c.g, c.b, c.a) };
+                default:        return new Param { Key = key, Type = "string",  Value = value?.ToString() ?? string.Empty };
             }
         }
 
@@ -145,10 +149,40 @@ namespace Faolline.GraphSave
                     if (float.TryParse(p.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var f))
                         context.Set<float>(p.Key, f);
                     break;
+                case "vector2":
+                    if (TryParseComponents(p.Value, 2, out var v2))
+                        context.Set<Vector2>(p.Key, new Vector2(v2[0], v2[1]));
+                    break;
+                case "vector3":
+                    if (TryParseComponents(p.Value, 3, out var v3))
+                        context.Set<Vector3>(p.Key, new Vector3(v3[0], v3[1], v3[2]));
+                    break;
+                case "color":
+                    if (TryParseComponents(p.Value, 4, out var c))
+                        context.Set<Color>(p.Key, new Color(c[0], c[1], c[2], c[3]));
+                    break;
                 default:
                     context.Set<string>(p.Key, p.Value ?? string.Empty);
                     break;
             }
+        }
+
+        // Value-type params are flattened to a comma-separated, invariant-culture component string so the snapshot
+        // stays a plain POCO that round-trips through JsonUtility AND any reflection-based JSON backend (no raw Unity
+        // structs to choke on).
+        private static string Join(params float[] components)
+            => string.Join(",", System.Array.ConvertAll(components, f => f.ToString(CultureInfo.InvariantCulture)));
+
+        private static bool TryParseComponents(string value, int expected, out float[] components)
+        {
+            components = new float[expected];
+            if (string.IsNullOrEmpty(value)) return false;
+            var parts = value.Split(',');
+            if (parts.Length != expected) return false;
+            for (int i = 0; i < expected; i++)
+                if (!float.TryParse(parts[i], NumberStyles.Float, CultureInfo.InvariantCulture, out components[i]))
+                    return false;
+            return true;
         }
     }
 }

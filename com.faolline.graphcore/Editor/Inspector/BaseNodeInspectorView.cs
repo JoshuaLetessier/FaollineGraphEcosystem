@@ -168,10 +168,13 @@ namespace Faolline.GraphCore.Editor
         {
             switch (type)
             {
-                case ParameterType.Int:    return new IntegerField { value = 0 };
-                case ParameterType.Float:  return new FloatField   { value = 0f };
-                case ParameterType.String: return new TextField    { value = string.Empty };
-                default:                   return new Toggle        { value = false };
+                case ParameterType.Int:     return new IntegerField { value = 0 };
+                case ParameterType.Float:   return new FloatField   { value = 0f };
+                case ParameterType.String:  return new TextField    { value = string.Empty };
+                case ParameterType.Vector2: return new Vector2Field { value = Vector2.zero };
+                case ParameterType.Vector3: return new Vector3Field { value = Vector3.zero };
+                case ParameterType.Color:   return new ColorField   { value = Color.white };
+                default:                    return new Toggle       { value = false };
             }
         }
 
@@ -180,10 +183,13 @@ namespace Faolline.GraphCore.Editor
         {
             switch (type)
             {
-                case ParameterType.Int:    return ParameterData.Int(key,    (defaultField as IntegerField)?.value ?? 0);
-                case ParameterType.Float:  return ParameterData.Float(key,  (defaultField as FloatField)?.value   ?? 0f);
-                case ParameterType.String: return ParameterData.String(key, (defaultField as TextField)?.value    ?? string.Empty);
-                default:                   return ParameterData.Bool(key,   (defaultField as Toggle)?.value        ?? false);
+                case ParameterType.Int:     return ParameterData.Int(key,     (defaultField as IntegerField)?.value ?? 0);
+                case ParameterType.Float:   return ParameterData.Float(key,   (defaultField as FloatField)?.value   ?? 0f);
+                case ParameterType.String:  return ParameterData.String(key,  (defaultField as TextField)?.value    ?? string.Empty);
+                case ParameterType.Vector2: return ParameterData.Vector2(key, (defaultField as Vector2Field)?.value ?? Vector2.zero);
+                case ParameterType.Vector3: return ParameterData.Vector3(key, (defaultField as Vector3Field)?.value ?? Vector3.zero);
+                case ParameterType.Color:   return ParameterData.Color(key,   (defaultField as ColorField)?.value   ?? Color.white);
+                default:                    return ParameterData.Bool(key,    (defaultField as Toggle)?.value        ?? false);
             }
         }
 

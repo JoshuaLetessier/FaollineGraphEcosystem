@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.13.0]
+
+### Added
+- **Value-type parameters.** `ParameterType` gains `Vector2`, `Vector3` and `Color` alongside the four primitives
+  (Bool/Int/Float/String). `ParameterData` carries a typed default per new type (`Vector2Default` / `Vector3Default`
+  / `ColorDefault`, plus `ParameterData.Vector2/Vector3/Color(...)` factories), the node inspector edits them with
+  the matching UI Toolkit field (`Vector2Field` / `Vector3Field` / `ColorField`, swapped by `ParameterDataDrawer`),
+  and `BaseContext` accepts them (`_supportedTypes` now allows the three Unity value types). They serialize natively
+  (JsonUtility) and round-trip through `com.faolline.graphsave`. Object/GameObject references stay out (they need a
+  stable-id scheme, deferred).
+
+### Notes
+- Additive / non-breaking. Existing assets and the string `DefaultValue` shim keep working; the runtime type set
+  simply grew from 4 to 7. EditMode 725 / PlayMode 9.
+
 ## [0.12.0]
 
 ### Changed

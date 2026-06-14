@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0]
+
+### Added
+- **Value-type parameters round-trip.** Following graphcore's new `Vector2` / `Vector3` / `Color` parameter types,
+  the snapshot now persists them. They are flattened to a comma-separated, invariant-culture component string in the
+  existing `Param.Value` (tags `"vector2"` / `"vector3"` / `"color"`) — exactly like bool/int/float already are — so
+  the snapshot stays a plain POCO with NO raw Unity structs. That keeps it round-tripping through both `JsonUtility`
+  AND any reflection-based JSON backend (a raw `Vector2`/`Vector3` field would trip Newtonsoft on its self-referencing
+  `normalized` property, breaking even unrelated params). `ApplyTo` parses the components back and restores with
+  `context.Set<Vector2/Vector3/Color>`.
+
+### Notes
+- Additive (MINOR); the on-disk shape is unchanged (same `Param` fields — value types just use the `Value` string).
+  +1 EditMode test (a Vector2/Vector3/Color context round-tripped through JSON). Requires graphcore ≥ 0.13.0.
+
 ## [0.2.0]
 
 ### Changed

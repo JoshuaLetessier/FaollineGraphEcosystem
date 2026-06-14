@@ -33,7 +33,7 @@ com.faolline.graphcore
 ├── Runtime/
 │   ├── Graph/
 │   │   ├── BaseGraph           ScriptableObject container (nodes, edges, parameters, GraphId)
-│   │   └── BaseContext         Typed parameter blackboard (bool/int/float/string)
+│   │   └── BaseContext         Typed parameter blackboard (bool/int/float/string/Vector2/Vector3/Color)
 │   ├── Nodes/
 │   │   ├── BaseNodeData        Abstract base for all nodes
 │   │   ├── StartNodeData       Graph entry point
@@ -45,7 +45,7 @@ com.faolline.graphcore
 │   │   └── BaseEdgeData        Directed connection between two nodes (optional condition)
 │   ├── Parameters/
 │   │   ├── ParameterData       Typed parameter declaration on a graph
-│   │   └── ParameterType       Enum: Bool | Int | Float | String
+│   │   └── ParameterType       Enum: Bool | Int | Float | String | Vector2 | Vector3 | Color
 │   ├── Choices/
 │   │   └── BaseChoice          Named branch target on a ChoiceNodeData
 │   ├── Actions/
@@ -177,8 +177,8 @@ int score = ctx.Get<int>("Score");        // throws KeyNotFoundException if abse
 bool ok   = ctx.TryGet<int>("Score", out int v);
 bool has  = ctx.Has("Score");
 
-// Supported types: bool, int, float, string
-// Unsupported types throw ArgumentException on Set<T>
+// Supported types: bool, int, float, string, Vector2, Vector3, Color
+// Unsupported types (object/GameObject references) throw ArgumentException on Set<T>
 
 // Change notifications (per key)
 ctx.OnParameterChanged("Score", val => Debug.Log($"Score: {val}"));
@@ -376,7 +376,7 @@ given node (e.g. restoring a saved session) instead of the entry node.
 
 `BaseContext` is more than a typed blackboard:
 
-- **Parameters** — `Set/Get/TryGet/Has` for `bool`/`int`/`float`/`string`, with `OnParameterChanged`.
+- **Parameters** — `Set/Get/TryGet/Has` for `bool`/`int`/`float`/`string`/`Vector2`/`Vector3`/`Color`, with `OnParameterChanged`.
 - **Signals** — `RaiseSignal(name[, payload])`, `OnSignal`/`OffSignal`, `TryGetLastSignal` (0.4.0).
 - **Collections** (0.4.0) — named string-sets for save-friendly state (inventory, visited rooms, a
   completed-set): `AddToCollection`/`RemoveFromCollection`/`CollectionContains`/`CollectionCount`/
