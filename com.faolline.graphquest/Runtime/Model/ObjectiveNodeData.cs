@@ -20,6 +20,7 @@ namespace Faolline.GraphQuest
         [SerializeField] private BaseCondition _failCondition;
         [SerializeField] private bool _required = true;
         [SerializeField] private BaseAction _reward;
+        [SerializeField] private int _requiredPrerequisiteCount = -1;
 
         /// <summary>When this holds against the context, the objective is recorded Completed. Null ⇒ never auto-completes.</summary>
         public BaseCondition CompletionCondition { get => _completionCondition; set => _completionCondition = value; }
@@ -32,5 +33,12 @@ namespace Faolline.GraphQuest
 
         /// <summary>Optional. Executed once when the objective enters Completed (the consumer supplies the effect).</summary>
         public BaseAction Reward { get => _reward; set => _reward = value; }
+
+        /// <summary>
+        /// How many prerequisites must be Completed for this objective to unlock (k-of-N). <c>-1</c> (the default)
+        /// means ALL of them (AND). Otherwise: <c>1</c> = OR, <c>1 &lt; k &lt; N</c> = N-of-M, <c>k ≤ 0</c> = ungated,
+        /// <c>k &gt; N</c> never unlocks from prerequisites. Backs graphstandard's <c>ReactiveEvaluator</c> k-of-N.
+        /// </summary>
+        public int RequiredPrerequisiteCount { get => _requiredPrerequisiteCount; set => _requiredPrerequisiteCount = value; }
     }
 }

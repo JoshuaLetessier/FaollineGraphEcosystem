@@ -71,5 +71,30 @@ namespace Faolline.GraphQuest.Tests
             Assert.AreEqual(QuestState.Active, ev.State);
             Assert.AreEqual(QuestState.Active, ev.GetObjectiveState("a"));
         }
+
+        [Test]
+        public void RequiresAtLeast_UnlocksAtThreshold_NotAllOfN()
+        {
+            // A "do 2 of these 3" gate, expressed directly (no synthetic counter objective).
+            var quest = TrackGraph(QuestBuilder.Create("q")
+                .AddObjective("a").CompleteWhen(Flag("a"))
+                .AddObjective("b").CompleteWhen(Flag("b"))
+                .AddObjective("c").CompleteWhen(Flag("c"))
+                .AddObjective("door").RequiresAtLeast(2, "a", "b", "c").CompleteWhen(Flag("door"))
+                .Build());
+            var ctx = new QuestContext();
+            var ev = new QuestEvaluator(quest, ctx);
+
+            ev.Evaluate();
+            Assert.AreEqual(QuestState.Locked, ev.GetObjectiveState("door"), "0 of 3 done");
+
+            ctx.Set<bool>("a", true);
+            ev.Evaluate();
+            Assert.AreEqual(QuestState.Locked, ev.GetObjectiveState("door"), "1 of 3 — below the threshold");
+
+            ctx.Set<bool>("b", true);
+            ev.Evaluate();
+            Assert.AreEqual(QuestState.Active, ev.GetObjectiveState("door"), "2 of 3 — unlocks without needing c");
+        }
     }
 }

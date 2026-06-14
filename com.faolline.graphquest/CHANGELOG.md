@@ -15,7 +15,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
   - **Completion / fail conditions** are graphcore `BaseCondition`s; **rewards** are graphcore `BaseAction`s fired
     **exactly once** on the completed transition (guarded by a context "rewarded" set). No new condition language.
   - **Code-first fluent builder** (`QuestBuilder` / `ObjectiveBuilder`); cyclic prerequisites are rejected at
-    `Build()` with a `[GraphQuest]` diagnostic.
+    `Build()` with a `[GraphQuest]` diagnostic. Prerequisites are all-of-N (`Requires`) or **k-of-N**
+    (`RequiresAtLeast(k, …)`) — the latter surfaces graphstandard's `ReactiveEvaluator` k-of-N gating, so a
+    "do 2 of these 3" gate needs no synthetic counter objective.
+  - **`QuestEvaluator.Reset()`** clears a quest's progress for replay (its scoped completed/failed/rewarded sets
+    only — other quests sharing the context are untouched), so one-shot rewards can fire again.
   - **Quest-level** unlock condition + completion reward + `AllRequired` completion rule.
   - **Persistence for free**: all state lives in `BaseContext` collections, so a `com.faolline.graphsave` context
     snapshot round-trips quest progress with no quest-specific snapshot type and **no runtime graphsave

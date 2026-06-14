@@ -30,14 +30,32 @@ namespace Faolline.GraphQuest
         /// <summary>Sets the reward fired once when this objective completes.</summary>
         public ObjectiveBuilder RewardWith(BaseAction reward) { _spec.Reward = reward; return this; }
 
-        /// <summary>Declares prerequisites: one id is a chain link; several form a DAG join (all must complete).</summary>
+        /// <summary>Declares prerequisites: one id is a chain link; several form a DAG join (ALL must complete).</summary>
         public ObjectiveBuilder Requires(params string[] prerequisiteObjectiveIds)
         {
-            if (prerequisiteObjectiveIds != null)
-                foreach (var id in prerequisiteObjectiveIds)
+            AddPrerequisites(prerequisiteObjectiveIds);
+            return this;
+        }
+
+        /// <summary>
+        /// Declares prerequisites with k-of-N gating: this objective unlocks once <paramref name="count"/> of the
+        /// listed prerequisites are Completed (vs. <see cref="Requires"/>'s all-of-N). E.g.
+        /// <c>RequiresAtLeast(2, "a", "b", "c")</c> unlocks at any two — the natural way to express a
+        /// "do 2 of these 3" gate without a synthetic counter objective.
+        /// </summary>
+        public ObjectiveBuilder RequiresAtLeast(int count, params string[] prerequisiteObjectiveIds)
+        {
+            AddPrerequisites(prerequisiteObjectiveIds);
+            _spec.RequiredPrerequisiteCount = count;
+            return this;
+        }
+
+        private void AddPrerequisites(string[] ids)
+        {
+            if (ids != null)
+                foreach (var id in ids)
                     if (!string.IsNullOrEmpty(id))
                         _spec.Requires.Add(id);
-            return this;
         }
 
         /// <summary>Declares the next objective on the owning quest.</summary>

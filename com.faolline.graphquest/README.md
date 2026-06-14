@@ -20,7 +20,10 @@ smaller completed-set), never an undo.
   "rewarded" set, so they never re-fire on re-evaluation or after a load).
 - **Quest aggregation** — a quest completes when all its *required* objectives complete; an unlock condition gates
   the whole quest; optional objectives track state + rewards without blocking completion.
-- **Code-first fluent builder** — `QuestBuilder`; cyclic prerequisites are rejected at `Build()`.
+- **Code-first fluent builder** — `QuestBuilder`; cyclic prerequisites are rejected at `Build()`. Prerequisites are
+  all-of-N (`Requires("a", "b")`) or **k-of-N** (`RequiresAtLeast(2, "a", "b", "c")` — unlocks at any two).
+- **Replay** — `QuestEvaluator.Reset()` clears a quest's scoped progress (other quests on the same context are
+  untouched), so it can be played again and one-shot rewards fire anew.
 
 ## Quick example
 

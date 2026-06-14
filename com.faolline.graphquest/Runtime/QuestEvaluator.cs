@@ -50,7 +50,15 @@ namespace Faolline.GraphQuest
             _completedKey = QuestContextKeys.CompletedSet(_questId);
             _failedKey = QuestContextKeys.FailedSet(_questId);
             _rewardedKey = QuestContextKeys.RewardedSet(_questId);
-            _reactive = new ReactiveEvaluator(quest, context, _completedKey);
+
+            // Surface each objective's k-of-N prerequisite gate to the engine (unlisted ⇒ all-of-N / AND).
+            Dictionary<string, int> requiredCounts = null;
+            if (quest != null)
+                foreach (var node in quest.Nodes)
+                    if (node is ObjectiveNodeData obj && !string.IsNullOrEmpty(obj.Id) && obj.RequiredPrerequisiteCount >= 0)
+                        (requiredCounts ??= new Dictionary<string, int>(StringComparer.Ordinal))[obj.Id] = obj.RequiredPrerequisiteCount;
+
+            _reactive = new ReactiveEvaluator(quest, context, _completedKey, requiredCounts);
         }
 
         /// <summary>
@@ -103,6 +111,23 @@ namespace Faolline.GraphQuest
             RaiseQuest(questState);
             if (questState == QuestState.Completed && _quest.CompletionReward != null)
                 FireReward(QuestContextKeys.QuestRewardMarker, _questId, _quest.CompletionReward);
+        }
+
+        /// <summary>
+        /// Clears this quest's progress for replay: empties its completed / failed / rewarded context sets (only
+        /// the keys scoped to this quest's id — other quests sharing the context are untouched) and re-derives, so
+        /// every objective returns to Locked/Active and one-shot rewards can fire again. The consumer needs no
+        /// knowledge of the internal key scoping.
+        /// </summary>
+        public void Reset()
+        {
+            if (_context == null) return;
+            _context.ClearCollection(_completedKey);
+            _context.ClearCollection(_failedKey);
+            _context.ClearCollection(_rewardedKey);
+            _lastObjectiveStates.Clear();
+            _questStateKnown = false;
+            _reactive.Reevaluate();
         }
 
         /// <summary>The current derived state of <paramref name="objectiveId"/>.</summary>

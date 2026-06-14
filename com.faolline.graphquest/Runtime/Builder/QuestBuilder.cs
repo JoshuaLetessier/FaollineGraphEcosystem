@@ -79,7 +79,8 @@ namespace Faolline.GraphQuest
                     CompletionCondition = o.Completion,
                     FailCondition = o.Fail,
                     Required = o.Required,
-                    Reward = o.Reward
+                    Reward = o.Reward,
+                    RequiredPrerequisiteCount = o.RequiredPrerequisiteCount
                 });
             }
 
@@ -149,6 +150,7 @@ namespace Faolline.GraphQuest
             public bool Required = true;
             public BaseAction Reward;
             public readonly List<string> Requires = new List<string>();
+            public int RequiredPrerequisiteCount = -1; // -1 = all (AND); k = k-of-N
             public ObjectiveSpec(string id) => Id = id;
         }
     }
