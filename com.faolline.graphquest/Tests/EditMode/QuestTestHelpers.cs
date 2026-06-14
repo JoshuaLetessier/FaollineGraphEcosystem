@@ -37,6 +37,7 @@ namespace Faolline.GraphQuest.Tests
         protected T Track<T>(T o) where T : Object { if (o != null) _created.Add(o); return o; }
         protected FlagCondition Flag(string key) => Track(FlagCondition.For(key));
         protected CountingAction Counter() => Track(CountingAction.New());
+        protected QuestCompletedCondition QuestDone(params string[] questIds) => Track(QuestCompletedCondition.For(questIds));
         protected QuestGraph TrackGraph(QuestGraph g) => Track(g);
 
         [TearDown]

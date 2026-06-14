@@ -27,6 +27,8 @@ smaller completed-set), never an undo.
 - **Journal data layer** — name/describe objectives (`.Named(...)` / `.Describe(...)`) and the quest; read
   `QuestEvaluator.GetObjectives()` (`ObjectiveView`: id + label + description + required + state) and
   `RequiredCompleted`/`RequiredTotal` to drive a quest-log UI without keeping your own id→label table.
+- **Cross-quest chaining** — `QuestBuilder.Create("B").UnlockAfter("A")` keeps quest B Locked until quest A
+  completes (synced through a shared context set, so it persists and reverts like everything else).
 
 ## Quick example
 

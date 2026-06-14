@@ -34,6 +34,14 @@ namespace Faolline.GraphQuest
         /// <summary>Sets the quest-level unlock condition (the whole quest stays Locked until it holds).</summary>
         public QuestBuilder UnlockWhen(BaseCondition condition) { _unlock = condition; return this; }
 
+        /// <summary>
+        /// Chains this quest after others: it stays Locked until ALL of <paramref name="prerequisiteQuestIds"/> are
+        /// Completed (a convenience for <c>UnlockWhen(QuestCompletedCondition.For(...))</c>). Quests evaluate against
+        /// the same shared context, so evaluate the prerequisite quests before (or alongside) this one.
+        /// </summary>
+        public QuestBuilder UnlockAfter(params string[] prerequisiteQuestIds)
+            => UnlockWhen(QuestCompletedCondition.For(prerequisiteQuestIds));
+
         /// <summary>Declares an objective and returns its sub-builder.</summary>
         public ObjectiveBuilder AddObjective(string objectiveId)
         {

@@ -19,6 +19,12 @@ namespace Faolline.GraphQuest
         /// <summary>The rewarded-set marker for a quest's own completion reward (distinct from any objective id).</summary>
         public const string QuestRewardMarker = "__quest__";
 
+        /// <summary>
+        /// Shared (NOT per-quest) collection of the ids of quests that are currently Completed. A quest's evaluator
+        /// syncs its own id in/out of this set, so another quest can gate its unlock on it (cross-quest chaining).
+        /// </summary>
+        public const string CompletedQuests = "quest_done";
+
         /// <summary>The per-quest completed-set collection key.</summary>
         public static string CompletedSet(string questId) => Scoped(Completed, questId);
 

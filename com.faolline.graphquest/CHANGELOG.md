@@ -26,6 +26,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
     `RequiredCompleted`/`RequiredTotal` progress — so the consumer needs no id→label table of its own. The library
     ships the data; the in-game UI stays consumer territory.
   - **Quest-level** unlock condition + completion reward + `AllRequired` completion rule.
+  - **Cross-quest chaining.** Each evaluator syncs its quest's id in/out of a shared `CompletedQuests` context set
+    as it completes/un-completes; a quest can gate its unlock on other quests via `UnlockAfter(...questIds)` (or
+    `QuestCompletedCondition.For(...)`). Derived from the context, so it persists through graphsave and reverts on a
+    context revert; evaluate prerequisite quests before the ones chained after them.
   - **Persistence for free**: all state lives in `BaseContext` collections, so a `com.faolline.graphsave` context
     snapshot round-trips quest progress with no quest-specific snapshot type and **no runtime graphsave
     dependency**.

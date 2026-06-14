@@ -76,6 +76,7 @@ namespace Faolline.GraphQuest
                 foreach (var obj in Objectives())
                     RaiseObjective(obj.Id, QuestState.Locked);
                 RaiseQuest(QuestState.Locked);
+                SyncQuestCompletionMarker(QuestState.Locked);
                 return;
             }
 
@@ -109,8 +110,20 @@ namespace Faolline.GraphQuest
             // Quest aggregate + quest reward.
             var questState = ComputeQuestState();
             RaiseQuest(questState);
+            SyncQuestCompletionMarker(questState);
             if (questState == QuestState.Completed && _quest.CompletionReward != null)
                 FireReward(QuestContextKeys.QuestRewardMarker, _questId, _quest.CompletionReward);
+        }
+
+        // Keeps this quest's id in/out of the shared CompletedQuests set so other quests can chain on it
+        // (cross-quest gating). Derived from the current state, so it reverts on a context revert (replay-safe).
+        private void SyncQuestCompletionMarker(QuestState state)
+        {
+            if (string.IsNullOrEmpty(_questId) || _context == null) return;
+            bool done = state == QuestState.Completed;
+            bool inSet = _context.CollectionContains(QuestContextKeys.CompletedQuests, _questId);
+            if (done && !inSet) _context.AddToCollection(QuestContextKeys.CompletedQuests, _questId);
+            else if (!done && inSet) _context.RemoveFromCollection(QuestContextKeys.CompletedQuests, _questId);
         }
 
         /// <summary>
@@ -125,6 +138,7 @@ namespace Faolline.GraphQuest
             _context.ClearCollection(_completedKey);
             _context.ClearCollection(_failedKey);
             _context.ClearCollection(_rewardedKey);
+            _context.RemoveFromCollection(QuestContextKeys.CompletedQuests, _questId);
             _lastObjectiveStates.Clear();
             _questStateKnown = false;
             _reactive.Reevaluate();
