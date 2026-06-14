@@ -4,6 +4,12 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.1]
+
+### Changed
+- **Dependency floor alignment (chore).** Bumped the `com.faolline.graphcore` floor to `0.14.0` to match the
+  current ecosystem. No code change.
+
 ## [0.3.0]
 
 ### Added
