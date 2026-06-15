@@ -31,6 +31,7 @@ namespace Faolline.GraphQuest
         private readonly Dictionary<string, QuestState> _lastObjectiveStates = new Dictionary<string, QuestState>(StringComparer.Ordinal);
         private QuestState _lastQuestState;
         private bool _questStateKnown;
+        private float _lastNow;
 
         /// <summary>Raised when an objective changes state: <c>(objectiveId, newState)</c>.</summary>
         public event Action<string, QuestState> OnObjectiveStateChanged;
@@ -64,11 +65,23 @@ namespace Faolline.GraphQuest
         /// <summary>
         /// One derivation pass: records newly-failed/-completed objectives into the context, fires one-shot
         /// rewards on completed transitions, and raises change events. Idempotent — a pass with an unchanged
-        /// context produces no transitions and no duplicate events.
+        /// context produces no transitions and no duplicate events. Objective time limits are NOT checked
+        /// (use <see cref="Evaluate(float)"/> with a clock for that).
         /// </summary>
-        public void Evaluate()
+        public void Evaluate() => Run(0f, useTime: false);
+
+        /// <summary>
+        /// Like <see cref="Evaluate()"/>, but with a game-time clock <paramref name="now"/> so time-limited
+        /// objectives are enforced: an Active objective with a <see cref="ObjectiveNodeData.TimeLimitSeconds"/>
+        /// records its deadline the first time it is seen, and Fails once <paramref name="now"/> reaches it (call
+        /// each tick with your running game time, e.g. <c>Time.time</c>). Completing before the deadline still wins.
+        /// </summary>
+        public void Evaluate(float now) => Run(now, useTime: true);
+
+        private void Run(float now, bool useTime)
         {
             if (_quest == null || _context == null) return;
+            if (useTime) _lastNow = now;
 
             // Quest gate: while the unlock condition is unmet, everything is Locked.
             if (!QuestUnlocked())
@@ -88,13 +101,30 @@ namespace Faolline.GraphQuest
                 if (_context.CollectionContains(_completedKey, obj.Id)) continue;
                 if (_reactive.GetState(obj.Id) != ReactiveNodeState.Available) continue;
 
+                // Explicit fail precedes completion.
                 if (obj.FailCondition != null && obj.FailCondition.Evaluate(_context))
                 {
                     _context.AddToCollection(_failedKey, obj.Id);
                     continue;
                 }
+                // Completion is checked before timer expiry (completing on the deadline tick still succeeds).
                 if (obj.CompletionCondition != null && obj.CompletionCondition.Evaluate(_context))
+                {
                     _reactive.MarkCompleted(obj.Id);
+                    continue;
+                }
+                // Time limit: arm a deadline the first time the objective is Active, then fail once it passes.
+                if (useTime && obj.TimeLimitSeconds > 0f)
+                {
+                    var dKey = QuestContextKeys.DeadlineKey(_questId, obj.Id);
+                    if (!_context.TryGet<float>(dKey, out var deadline) || float.IsNaN(deadline))
+                    {
+                        deadline = now + obj.TimeLimitSeconds;
+                        _context.Set<float>(dKey, deadline);
+                    }
+                    if (now >= deadline)
+                        _context.AddToCollection(_failedKey, obj.Id);
+                }
             }
 
             // Re-derive, emit states, fire objective rewards.
@@ -139,6 +169,11 @@ namespace Faolline.GraphQuest
             _context.ClearCollection(_failedKey);
             _context.ClearCollection(_rewardedKey);
             _context.RemoveFromCollection(QuestContextKeys.CompletedQuests, _questId);
+            // Disarm any timer deadlines so they re-arm fresh on the next Evaluate(now).
+            if (_quest != null)
+                foreach (var obj in Objectives())
+                    if (obj.TimeLimitSeconds > 0f)
+                        _context.Set<float>(QuestContextKeys.DeadlineKey(_questId, obj.Id), float.NaN);
             _lastObjectiveStates.Clear();
             _questStateKnown = false;
             _reactive.Reevaluate();
@@ -199,6 +234,30 @@ namespace Faolline.GraphQuest
                     obj.Required,
                     GetObjectiveState(obj.Id)));
             return list;
+        }
+
+        /// <summary>
+        /// Seconds left before <paramref name="objectiveId"/> times out, as of the last <see cref="Evaluate(float)"/>:
+        /// its full limit before the timer is armed, the live countdown while ticking, 0 once expired, and
+        /// <see cref="float.PositiveInfinity"/> for an objective with no time limit.
+        /// </summary>
+        public float GetRemainingSeconds(string objectiveId)
+        {
+            var obj = FindObjective(objectiveId);
+            if (obj == null || obj.TimeLimitSeconds <= 0f) return float.PositiveInfinity;
+            if (_context != null
+                && _context.TryGet<float>(QuestContextKeys.DeadlineKey(_questId, objectiveId), out var deadline)
+                && !float.IsNaN(deadline))
+                return Math.Max(0f, deadline - _lastNow);
+            return obj.TimeLimitSeconds;
+        }
+
+        private ObjectiveNodeData FindObjective(string id)
+        {
+            if (_quest == null || string.IsNullOrEmpty(id)) return null;
+            foreach (var obj in Objectives())
+                if (obj.Id == id) return obj;
+            return null;
         }
 
         private int CountRequired(bool onlyCompleted)

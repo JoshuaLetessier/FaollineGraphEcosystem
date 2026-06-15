@@ -26,6 +26,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
     `RequiredCompleted`/`RequiredTotal` progress — so the consumer needs no id→label table of its own. The library
     ships the data; the in-game UI stays consumer territory.
   - **Quest-level** unlock condition + completion reward + `AllRequired` completion rule.
+  - **Time-limited objectives.** `ObjectiveBuilder.WithTimeLimit(seconds)` + `ObjectiveNodeData.TimeLimitSeconds`:
+    an Active objective Fails if not Completed within the limit. Enforced only when the host ticks
+    `QuestEvaluator.Evaluate(now)` with a game clock (`Evaluate()` ignores timers); completing on the deadline tick
+    still wins. `GetRemainingSeconds(id)` powers a countdown UI; the deadline is a context param (persists/reverts;
+    `Reset()` re-arms it).
   - **Cross-quest chaining.** Each evaluator syncs its quest's id in/out of a shared `CompletedQuests` context set
     as it completes/un-completes; a quest can gate its unlock on other quests via `UnlockAfter(...questIds)` (or
     `QuestCompletedCondition.For(...)`). Derived from the context, so it persists through graphsave and reverts on a

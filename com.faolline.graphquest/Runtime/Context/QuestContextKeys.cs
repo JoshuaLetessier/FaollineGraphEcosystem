@@ -34,6 +34,13 @@ namespace Faolline.GraphQuest
         /// <summary>The per-quest rewarded-set collection key.</summary>
         public static string RewardedSet(string questId) => Scoped(Rewarded, questId);
 
+        /// <summary>Base key for a timed objective's deadline param (absolute game time at which it fails).</summary>
+        public const string Deadline = "quest_deadline";
+
+        /// <summary>The per-objective deadline param key (a <c>float</c> absolute game time).</summary>
+        public static string DeadlineKey(string questId, string objectiveId)
+            => Deadline + ":" + questId + ":" + objectiveId;
+
         private static string Scoped(string prefix, string questId)
             => string.IsNullOrEmpty(questId) ? prefix : prefix + ":" + questId;
     }

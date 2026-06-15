@@ -29,6 +29,8 @@ smaller completed-set), never an undo.
   `RequiredCompleted`/`RequiredTotal` to drive a quest-log UI without keeping your own id→label table.
 - **Cross-quest chaining** — `QuestBuilder.Create("B").UnlockAfter("A")` keeps quest B Locked until quest A
   completes (synced through a shared context set, so it persists and reverts like everything else).
+- **Time-limited objectives** — `.WithTimeLimit(seconds)`; the host ticks `Evaluate(now)` with a game clock and an
+  objective Fails if it isn't completed in time. `GetRemainingSeconds(id)` drives a countdown.
 
 ## Quick example
 

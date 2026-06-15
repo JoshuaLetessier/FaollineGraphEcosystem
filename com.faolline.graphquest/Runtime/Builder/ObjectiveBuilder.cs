@@ -36,6 +36,12 @@ namespace Faolline.GraphQuest
         /// <summary>Sets the reward fired once when this objective completes.</summary>
         public ObjectiveBuilder RewardWith(BaseAction reward) { _spec.Reward = reward; return this; }
 
+        /// <summary>
+        /// Time-limits this objective: once Active, it Fails if not Completed within <paramref name="seconds"/> of
+        /// game time. Only enforced when the host calls <c>QuestEvaluator.Evaluate(now)</c> with a clock.
+        /// </summary>
+        public ObjectiveBuilder WithTimeLimit(float seconds) { _spec.TimeLimitSeconds = seconds; return this; }
+
         /// <summary>Declares prerequisites: one id is a chain link; several form a DAG join (ALL must complete).</summary>
         public ObjectiveBuilder Requires(params string[] prerequisiteObjectiveIds)
         {

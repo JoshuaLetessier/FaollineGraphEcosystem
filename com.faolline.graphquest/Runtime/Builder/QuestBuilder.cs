@@ -100,7 +100,8 @@ namespace Faolline.GraphQuest
                     FailCondition = o.Fail,
                     Required = o.Required,
                     Reward = o.Reward,
-                    RequiredPrerequisiteCount = o.RequiredPrerequisiteCount
+                    RequiredPrerequisiteCount = o.RequiredPrerequisiteCount,
+                    TimeLimitSeconds = o.TimeLimitSeconds
                 });
             }
 
@@ -173,6 +174,7 @@ namespace Faolline.GraphQuest
             public BaseAction Reward;
             public readonly List<string> Requires = new List<string>();
             public int RequiredPrerequisiteCount = -1; // -1 = all (AND); k = k-of-N
+            public float TimeLimitSeconds; // 0 = no limit
             public ObjectiveSpec(string id) => Id = id;
         }
     }

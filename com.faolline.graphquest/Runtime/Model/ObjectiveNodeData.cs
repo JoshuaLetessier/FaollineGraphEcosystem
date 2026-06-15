@@ -21,6 +21,7 @@ namespace Faolline.GraphQuest
         [SerializeField] private bool _required = true;
         [SerializeField] private BaseAction _reward;
         [SerializeField] private int _requiredPrerequisiteCount = -1;
+        [SerializeField] private float _timeLimitSeconds;
         [SerializeField, TextArea] private string _description = string.Empty;
 
         /// <summary>When this holds against the context, the objective is recorded Completed. Null ⇒ never auto-completes.</summary>
@@ -44,5 +45,12 @@ namespace Faolline.GraphQuest
 
         /// <summary>Optional longer description for a quest journal/tracker UI (the short label is the inherited <see cref="Faolline.GraphCore.BaseNodeData.Title"/>). Never null.</summary>
         public string Description { get => _description; set => _description = value ?? string.Empty; }
+
+        /// <summary>
+        /// Optional time limit in seconds: once this objective is Active, it Fails if not Completed within this many
+        /// seconds of game time. <c>0</c> (the default) or negative means no limit. Timers are only checked when the
+        /// host calls <c>QuestEvaluator.Evaluate(now)</c> with a clock; <c>Evaluate()</c> ignores them.
+        /// </summary>
+        public float TimeLimitSeconds { get => _timeLimitSeconds; set => _timeLimitSeconds = value; }
     }
 }
