@@ -87,7 +87,11 @@ namespace Faolline.GraphQuest
         /// The deadline is stored as an ABSOLUTE time (<c>now + limit</c>) in the context, so it persists through a
         /// save snapshot — but it is tied to the clock you pass. If that clock resets between sessions (e.g.
         /// <c>Time.time</c> restarts at 0), a timer saved mid-countdown reads leniently after a reload until the
-        /// next tick. Pass a monotonic / persisted playtime if exact timed objectives must survive save/load.
+        /// next tick.
+        /// <b>Recommended pattern</b>: checkpoint BEFORE a timed objective arms — a save taken mid-countdown then
+        /// effectively restarts the timed challenge on reload (the deadline re-arms against the new clock), the same
+        /// way you would not save in the middle of a cutscene. Only pass a monotonic / persisted playtime (so the
+        /// elapsed time is preserved across the save) if a game genuinely needs faithful mid-countdown persistence.
         /// </para>
         /// </summary>
         public void Evaluate(float now) => Run(now, useTime: true);
