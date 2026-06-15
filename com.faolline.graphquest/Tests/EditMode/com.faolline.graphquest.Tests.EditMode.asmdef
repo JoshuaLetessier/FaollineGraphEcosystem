@@ -5,6 +5,7 @@
         "com.faolline.graphquest.Runtime",
         "com.faolline.graphcore.Runtime",
         "com.faolline.graphstandard.Runtime",
+        "com.faolline.graphlocalization.Runtime",
         "com.faolline.graphsave.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

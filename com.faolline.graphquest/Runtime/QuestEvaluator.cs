@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using Faolline.GraphCore;
 using Faolline.GraphStandard;
+using Faolline.GraphLocalization;
 
 namespace Faolline.GraphQuest
 {
@@ -32,6 +33,7 @@ namespace Faolline.GraphQuest
         private QuestState _lastQuestState;
         private bool _questStateKnown;
         private float _lastNow;
+        private ILocalizationProvider _localization;
 
         /// <summary>Raised when an objective changes state: <c>(objectiveId, newState)</c>.</summary>
         public event Action<string, QuestState> OnObjectiveStateChanged;
@@ -206,11 +208,22 @@ namespace Faolline.GraphQuest
 
         // ── Journal data layer (for a consumer quest-log UI) ──────────────────
 
-        /// <summary>The quest's display title (falls back to its id). Empty when no quest is loaded.</summary>
-        public string DisplayName => _quest != null ? _quest.DisplayName : string.Empty;
+        /// <summary>
+        /// Treats the journal text (objective/quest <c>DisplayName</c> + <c>Description</c>) as localization KEYS,
+        /// resolved through <paramref name="provider"/> in its current locale, instead of literal strings. Pass
+        /// null to go back to literals. When localizing, set keys for everything you display.
+        /// </summary>
+        public QuestEvaluator UseLocalization(ILocalizationProvider provider)
+        {
+            _localization = provider;
+            return this;
+        }
 
-        /// <summary>The quest's longer description. Empty when none / no quest loaded.</summary>
-        public string Description => _quest != null ? _quest.Description : string.Empty;
+        /// <summary>The quest's display title (falls back to its id), localized when a provider is set. Empty when no quest.</summary>
+        public string DisplayName => _quest != null ? Resolve(_quest.DisplayName) : string.Empty;
+
+        /// <summary>The quest's longer description, localized when a provider is set. Empty when none / no quest.</summary>
+        public string Description => _quest != null ? Resolve(_quest.Description) : string.Empty;
 
         /// <summary>How many required objectives are currently <see cref="QuestState.Completed"/> (a progress numerator).</summary>
         public int RequiredCompleted => CountRequired(onlyCompleted: true);
@@ -229,8 +242,8 @@ namespace Faolline.GraphQuest
             foreach (var obj in Objectives())
                 list.Add(new ObjectiveView(
                     obj.Id,
-                    string.IsNullOrEmpty(obj.Title) ? obj.Id : obj.Title,
-                    obj.Description,
+                    string.IsNullOrEmpty(obj.Title) ? obj.Id : Resolve(obj.Title),
+                    Resolve(obj.Description),
                     obj.Required,
                     GetObjectiveState(obj.Id)));
             return list;
@@ -251,6 +264,12 @@ namespace Faolline.GraphQuest
                 return Math.Max(0f, deadline - _lastNow);
             return obj.TimeLimitSeconds;
         }
+
+        // Resolves journal text through the localization provider (as a key) when one is set; else returns it as-is.
+        private string Resolve(string textOrKey)
+            => (_localization == null || string.IsNullOrEmpty(textOrKey))
+                ? textOrKey
+                : _localization.Resolve(textOrKey, _localization.CurrentLocale);
 
         private ObjectiveNodeData FindObjective(string id)
         {

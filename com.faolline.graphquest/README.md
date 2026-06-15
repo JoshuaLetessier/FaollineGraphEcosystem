@@ -31,6 +31,9 @@ smaller completed-set), never an undo.
   completes (synced through a shared context set, so it persists and reverts like everything else).
 - **Time-limited objectives** — `.WithTimeLimit(seconds)`; the host ticks `Evaluate(now)` with a game clock and an
   objective Fails if it isn't completed in time. `GetRemainingSeconds(id)` drives a countdown.
+- **Localized text (optional)** — `evaluator.UseLocalization(provider)` resolves objective/quest names &
+  descriptions as keys via `com.faolline.graphlocalization` (CSV or Unity Localization); without a provider the
+  text stays literal.
 
 ## Quick example
 
@@ -73,3 +76,5 @@ nor gameflow at runtime**.
 
 - `com.faolline.graphcore` 0.14.0
 - `com.faolline.graphstandard` 0.10.1
+- `com.faolline.graphlocalization` 0.4.0 (the neutral text-resolution abstraction; localization is opt-in at
+  runtime via `UseLocalization`, the CSV provider needs no Unity Localization)

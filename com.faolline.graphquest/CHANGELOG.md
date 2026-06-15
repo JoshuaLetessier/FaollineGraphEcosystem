@@ -25,6 +25,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
     `QuestEvaluator.GetObjectives()` → `ObjectiveView` snapshots (id + label + description + required + state) plus
     `RequiredCompleted`/`RequiredTotal` progress — so the consumer needs no id→label table of its own. The library
     ships the data; the in-game UI stays consumer territory.
+  - **Localized journal text.** `QuestEvaluator.UseLocalization(ILocalizationProvider)` treats objective/quest
+    `DisplayName` + `Description` as localization KEYS resolved through the provider's current locale (else they
+    stay literal). Uses graphlocalization's neutral abstraction (the CSV provider works without Unity
+    Localization). Adds a `com.faolline.graphlocalization` 0.4.0 dependency.
   - **Quest-level** unlock condition + completion reward + `AllRequired` completion rule.
   - **Time-limited objectives.** `ObjectiveBuilder.WithTimeLimit(seconds)` + `ObjectiveNodeData.TimeLimitSeconds`:
     an Active objective Fails if not Completed within the limit. Enforced only when the host ticks

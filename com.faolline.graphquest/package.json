@@ -10,7 +10,8 @@
   "licensesUrl": "",
   "dependencies": {
     "com.faolline.graphcore": "0.14.0",
-    "com.faolline.graphstandard": "0.10.1"
+    "com.faolline.graphstandard": "0.10.1",
+    "com.faolline.graphlocalization": "0.4.0"
   },
   "keywords": [
     "graph",
