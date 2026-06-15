@@ -10,6 +10,7 @@ namespace Faolline.GraphQuest
     /// keeps in sync). Use it to chain quests — e.g. gate a quest's <c>UnlockWhen</c> on a prior quest's completion.
     /// An empty list is vacuously true. Build one with <see cref="For"/> or the builder's <c>UnlockAfter</c>.
     /// </summary>
+    [CreateAssetMenu(menuName = "GraphQuest/Conditions/Quest Completed", fileName = "QuestCompletedCondition")]
     public sealed class QuestCompletedCondition : BaseCondition
     {
         [SerializeField] private List<string> _questIds = new List<string>();

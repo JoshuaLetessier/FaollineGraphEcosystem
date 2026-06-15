@@ -47,8 +47,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
   - **Visual quest editor** (`com.faolline.graphquest.Editor`): a `QuestGraphEditorWindow` (open via
     `Faolline ▸ Open Quest Graph Editor` or by double-clicking a `QuestGraph` asset) with objective nodes, drawable
     prerequisite edges (From→To = "To requires From"), and an inspector for objective fields (display name,
-    description, required, k-of-N prereqs, time limit, completion/fail conditions, reward) and quest-level metadata.
-    Authoring is still code-first-first; the editor is the asset path. `QuestGraph` has a `[CreateAssetMenu]`
+    description, required, k-of-N prereqs, time limit, completion/fail conditions, reward) and quest-level metadata
+    including the **Quest Id** (the stable id `UnlockAfter` / `QuestCompletedCondition` reference — so cross-quest
+    chaining is fully authorable in the window). `QuestCompletedCondition` has a `[CreateAssetMenu]`
+    (`Create ▸ GraphQuest ▸ Conditions ▸ Quest Completed`) so the chaining condition is creatable as an asset.
+    `QuestGraph` has a `[CreateAssetMenu]`
     (`Create ▸ GraphQuest ▸ Quest Graph`), and `Faolline ▸ GraphQuest ▸ Create Sample Quest` builds a ready-made
     "The Keep Escape" sample asset (chain + optional objective + rewards, all sub-assets). An editor-authored quest
     with no `QuestId` scopes its state by the graph's stable `GraphId`.

@@ -65,6 +65,7 @@ namespace Faolline.GraphQuest.Editor
             if (SerializedGraph == null) return;
 
             var foldout = new Foldout { text = "Quest", value = true };
+            AddGraph(foldout, "_questId", "Quest Id (stable; referenced by UnlockAfter / QuestCompletedCondition)");
             AddGraph(foldout, "_displayName", "Display Name");
             AddGraph(foldout, "_description", "Description");
             AddGraph(foldout, "_unlockCondition", "Unlock Condition");
