@@ -9,6 +9,7 @@ namespace Faolline.GraphQuest
     /// <c>ReactiveEvaluator</c>. Carries quest-level metadata: a logical id, an optional unlock condition, an
     /// optional completion reward, and a completion rule.
     /// </summary>
+    [CreateAssetMenu(menuName = "GraphQuest/Quest Graph", fileName = "NewQuest")]
     public sealed class QuestGraph : BaseGraph
     {
         [SerializeField] private string _questId = string.Empty;

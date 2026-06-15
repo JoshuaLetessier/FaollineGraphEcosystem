@@ -49,7 +49,11 @@ namespace Faolline.GraphQuest
         {
             _quest = quest;
             _context = context;
-            _questId = quest != null ? quest.QuestId : string.Empty;
+            // Scope by the explicit QuestId; fall back to the graph's stable GraphId for editor-authored quests
+            // that have no QuestId set, so their context collections never collide with an unscoped default.
+            _questId = quest == null ? string.Empty
+                     : !string.IsNullOrEmpty(quest.QuestId) ? quest.QuestId
+                     : quest.GraphId;
             _completedKey = QuestContextKeys.CompletedSet(_questId);
             _failedKey = QuestContextKeys.FailedSet(_questId);
             _rewardedKey = QuestContextKeys.RewardedSet(_questId);

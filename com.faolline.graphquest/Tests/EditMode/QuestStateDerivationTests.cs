@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEngine;
 
 namespace Faolline.GraphQuest.Tests
 {
@@ -89,6 +90,25 @@ namespace Faolline.GraphQuest.Tests
             ev.Evaluate();                 // unchanged
             Assert.AreEqual(afterFirst, objEvents, "no duplicate events on an unchanged re-evaluation");
             Assert.AreEqual(QuestState.Active, ev.GetObjectiveState("a"), "state is identical across passes");
+        }
+
+        [Test]
+        public void EmptyQuestId_ScopesByGraphId_AndStillTracks()
+        {
+            // An editor-authored QuestGraph (no QuestId set) must still scope its state and derive correctly.
+            var quest = Track(ScriptableObject.CreateInstance<QuestGraph>());
+            quest.AddNode(new ObjectiveNodeData
+            {
+                Id = "a",
+                NodeType = ObjectiveNodeData.NodeTypeId,
+                CompletionCondition = Flag("a_done")
+            });
+            var ctx = new QuestContext();
+            var ev = new QuestEvaluator(quest, ctx);
+
+            ctx.Set<bool>("a_done", true);
+            ev.Evaluate();
+            Assert.AreEqual(QuestState.Completed, ev.GetObjectiveState("a"));
         }
     }
 }
