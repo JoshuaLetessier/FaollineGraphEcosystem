@@ -81,6 +81,14 @@ namespace Faolline.GraphQuest
         /// objectives are enforced: an Active objective with a <see cref="ObjectiveNodeData.TimeLimitSeconds"/>
         /// records its deadline the first time it is seen, and Fails once <paramref name="now"/> reaches it (call
         /// each tick with your running game time, e.g. <c>Time.time</c>). Completing before the deadline still wins.
+        /// Time limits are enforced ONLY on this overload — a host that only calls <see cref="Evaluate()"/> never
+        /// times anything out.
+        /// <para>
+        /// The deadline is stored as an ABSOLUTE time (<c>now + limit</c>) in the context, so it persists through a
+        /// save snapshot — but it is tied to the clock you pass. If that clock resets between sessions (e.g.
+        /// <c>Time.time</c> restarts at 0), a timer saved mid-countdown reads leniently after a reload until the
+        /// next tick. Pass a monotonic / persisted playtime if exact timed objectives must survive save/load.
+        /// </para>
         /// </summary>
         public void Evaluate(float now) => Run(now, useTime: true);
 
@@ -167,6 +175,13 @@ namespace Faolline.GraphQuest
         /// the keys scoped to this quest's id — other quests sharing the context are untouched) and re-derives, so
         /// every objective returns to Locked/Active and one-shot rewards can fire again. The consumer needs no
         /// knowledge of the internal key scoping.
+        /// <para>
+        /// <b>Rewinds this quest's own bookkeeping ONLY.</b> It does not clear the shared context values that
+        /// completion/fail conditions READ (e.g. a <c>"boss_defeated"</c> flag set by gameplay) — the library
+        /// can't know which keys feed an arbitrary <see cref="BaseCondition"/>. So if those world values still
+        /// hold, the next <see cref="Evaluate()"/> re-completes the objective immediately. For a full replay, the
+        /// consumer must also reset its own world inputs (the keys its conditions test).
+        /// </para>
         /// </summary>
         public void Reset()
         {
@@ -256,7 +271,9 @@ namespace Faolline.GraphQuest
         /// <summary>
         /// Seconds left before <paramref name="objectiveId"/> times out, as of the last <see cref="Evaluate(float)"/>:
         /// its full limit before the timer is armed, the live countdown while ticking, 0 once expired, and
-        /// <see cref="float.PositiveInfinity"/> for an objective with no time limit.
+        /// <see cref="float.PositiveInfinity"/> for an objective with no time limit. It reads the clock from the
+        /// last <see cref="Evaluate(float)"/> call, so right after a restore (before the first tick) it is stale —
+        /// call <see cref="Evaluate(float)"/> once to refresh it.
         /// </summary>
         public float GetRemainingSeconds(string objectiveId)
         {
