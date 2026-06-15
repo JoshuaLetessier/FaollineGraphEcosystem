@@ -44,6 +44,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
     dependency**.
   - **Host seam**: `QuestEvaluator` runs against any `BaseContext` (e.g. a gameflow host's `GameFlowContext`) with
     **no dependency on gameflow**.
+  - **Visual quest editor** (`com.faolline.graphquest.Editor`): a `QuestGraphEditorWindow` (open via
+    `Faolline ▸ Open Quest Graph Editor` or by double-clicking a `QuestGraph` asset) with objective nodes, drawable
+    prerequisite edges (From→To = "To requires From"), and an inspector for objective fields (display name,
+    description, required, k-of-N prereqs, time limit, completion/fail conditions, reward) and quest-level metadata.
+    Authoring is still code-first-first; the editor is the asset path.
 - Dependencies: `com.faolline.graphcore` 0.14.0, `com.faolline.graphstandard` 0.10.1.
 
 ### Notes

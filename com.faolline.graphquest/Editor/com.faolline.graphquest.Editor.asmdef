@@ -1,0 +1,20 @@
+{
+    "name": "com.faolline.graphquest.Editor",
+    "rootNamespace": "Faolline.GraphQuest.Editor",
+    "references": [
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Editor",
+        "com.faolline.graphquest.Runtime"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

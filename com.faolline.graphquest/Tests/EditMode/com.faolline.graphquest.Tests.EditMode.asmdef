@@ -3,7 +3,9 @@
     "rootNamespace": "Faolline.GraphQuest.Tests",
     "references": [
         "com.faolline.graphquest.Runtime",
+        "com.faolline.graphquest.Editor",
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Editor",
         "com.faolline.graphstandard.Runtime",
         "com.faolline.graphlocalization.Runtime",
         "com.faolline.graphsave.Runtime",

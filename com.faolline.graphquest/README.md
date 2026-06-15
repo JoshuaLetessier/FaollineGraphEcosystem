@@ -67,9 +67,14 @@ progress with **no quest-specific snapshot type and no runtime graphsave depende
 `BaseContext`, so a gameflow host can drive quests on its own blackboard — **graphquest references neither graphsave
 nor gameflow at runtime**.
 
-## Boundaries (v1)
+## Visual editor
 
-- Authoring is code-first; the **visual quest editor is deferred**.
+Besides the code-first builder, the package ships a `QuestGraphEditorWindow` (open via
+`Faolline ▸ Open Quest Graph Editor`, or double-click a `QuestGraph` asset): objective nodes, drawable prerequisite
+edges (From→To = "To requires From"), and an inspector for the objective + quest-level fields.
+
+## Boundaries
+
 - The library ships **data + change events + reward seams only** — the in-game quest journal / tracker UI is yours.
 
 ## Dependencies
