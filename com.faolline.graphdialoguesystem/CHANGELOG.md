@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.1]
+
+### Changed
+- **`DialoguePlayer.Choose` / `Advance` now log a diagnostic instead of failing silently** when called in the
+  wrong state. The player pauses on BOTH line and choice nodes; the common mistake is calling `Choose(id)` while
+  still paused on a LINE (you must `Advance()` past the line to reach the choice first) — that used to be a silent
+  no-op with no feedback. Each ignored case (`Choose` off a choice, an unknown/unavailable option, `Advance` off a
+  line) now warns with `[GraphDialogue] …`. Behaviour is otherwise unchanged. Surfaced by a dogfood that drove
+  `Start → Choose` with no `Advance` and saw nothing happen.
+
 ## [0.7.0]
 
 ### Removed (breaking)

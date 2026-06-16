@@ -164,23 +164,47 @@ namespace Faolline.GraphDialogue
             Drain();
         }
 
-        /// <summary>Advances past the current line (linear). No-op unless paused on a line.</summary>
+        /// <summary>Advances past the current line (linear). No-op unless paused on a line; logs a diagnostic
+        /// (rather than failing silently) when called in any other state, so a mis-driven loop is debuggable.</summary>
         public void Advance()
         {
-            if (_runner.State != RunnerState.NodeReady) return;
+            if (_runner.State != RunnerState.NodeReady)
+            {
+                Debug.LogWarning($"[GraphDialogue] Advance() ignored: the dialogue is not paused on a line " +
+                                 $"(runner state {_runner.State}).");
+                return;
+            }
             _runner.Proceed();
             Drain();
         }
 
         /// <summary>
         /// Selects the choice with <paramref name="choiceId"/> and continues. No-op when not paused at a
-        /// choice or when the option is unavailable (its condition fails).
+        /// choice or when the option is unavailable (its condition fails). Each ignored case logs a diagnostic
+        /// instead of failing silently — the most common mistake is calling <see cref="Choose"/> while still
+        /// paused on a LINE: you must <see cref="Advance"/> past the line to reach the choice first.
         /// </summary>
         public void Choose(string choiceId)
         {
-            if (_runner.State != RunnerState.NodeReady) return;
-            if (!(_runner.CurrentNode is ChoiceNodeData choiceNode)) return;
-            if (!IsChoiceAvailable(choiceNode, choiceId)) return;
+            if (_runner.State != RunnerState.NodeReady)
+            {
+                Debug.LogWarning($"[GraphDialogue] Choose('{choiceId}') ignored: the dialogue is not awaiting " +
+                                 $"input (runner state {_runner.State}).");
+                return;
+            }
+            if (!(_runner.CurrentNode is ChoiceNodeData choiceNode))
+            {
+                Debug.LogWarning($"[GraphDialogue] Choose('{choiceId}') ignored: not paused at a choice (current " +
+                                 $"node '{_runner.CurrentNode?.Id}' is a line/other). Call Advance() to step past " +
+                                 $"the line to the choice point first.");
+                return;
+            }
+            if (!IsChoiceAvailable(choiceNode, choiceId))
+            {
+                Debug.LogWarning($"[GraphDialogue] Choose('{choiceId}') ignored: no available option with that id " +
+                                 $"on choice '{choiceNode.Id}' (unknown id, or its availability condition is false).");
+                return;
+            }
             // (availability uses the live _context)
 
             _runner.ChooseById(choiceId);
