@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.16.0]
+
+### Added
+- **Canonical primitive `BoolCondition` + `SetBoolAction`.** The generic bool condition (read a context bool,
+  compare to an expected value; absent key reads false, `WarnOnMissing` opt-in) and bool setter were hoisted into
+  GraphCore — they are universally true of any graph system and reference nothing downstream. Downstream libs that
+  historically shipped their own (`GraphStandard.*`, `GraphDialogue.*`) now subclass these, so there is a single
+  implementation and a collision-free type to target when a consumer imports both namespaces (the CS0104 source).
+  Existing lib-typed assets keep working; new graphs should prefer the GraphCore types.
+
 ## [0.15.3]
 
 ### Fixed
