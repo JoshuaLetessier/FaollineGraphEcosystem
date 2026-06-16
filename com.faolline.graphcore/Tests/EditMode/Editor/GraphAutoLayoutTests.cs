@@ -24,6 +24,44 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
+        public void Sizes_WideNode_DoesNotOverlapNextColumn()
+        {
+            // A wide source node (e.g. a long dialogue title) must push the next column fully past its right edge.
+            var nodes = new List<BaseNodeData> { N("A"), N("B") };
+            var edges = new List<BaseEdgeData> { E("A", "B") };
+            var sizes = new Dictionary<string, Vector2>
+            {
+                ["A"] = new Vector2(520f, 90f),   // very wide
+                ["B"] = new Vector2(180f, 90f),
+            };
+
+            var pos = GraphAutoLayout.Arrange(nodes, edges, "A", nodeSizes: sizes);
+
+            Assert.GreaterOrEqual(pos["B"].x, pos["A"].x + 520f + GraphAutoLayout.ColumnGap - 0.01f,
+                "the next column starts past the wide node's right edge + the column gap (no horizontal overlap).");
+        }
+
+        [Test]
+        public void Sizes_TallNodes_RowStepClearsTheTallest()
+        {
+            // Two stacked branch nodes that are taller than the default row step must not overlap vertically.
+            var nodes = new List<BaseNodeData> { N("A"), N("B"), N("C") };
+            var edges = new List<BaseEdgeData> { E("A", "B"), E("A", "C") };   // B and C share a column, stacked
+            var sizes = new Dictionary<string, Vector2>
+            {
+                ["A"] = new Vector2(200f, 90f),
+                ["B"] = new Vector2(200f, 260f),   // tall
+                ["C"] = new Vector2(200f, 260f),   // tall
+            };
+
+            var pos = GraphAutoLayout.Arrange(nodes, edges, "A", nodeSizes: sizes);
+
+            Assert.AreEqual(pos["B"].x, pos["C"].x, 0.01f, "B and C still share a column.");
+            Assert.GreaterOrEqual(Mathf.Abs(pos["B"].y - pos["C"].y), 260f + GraphAutoLayout.RowGap - 0.01f,
+                "stacked nodes are spaced by at least the tallest node's height + the row gap (no vertical overlap).");
+        }
+
+        [Test]
         public void Diamond_BranchesShareAColumn_JoinIsRightmost()
         {
             var nodes = new List<BaseNodeData> { N("A"), N("B"), N("C"), N("D") };

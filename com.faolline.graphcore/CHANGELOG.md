@@ -4,6 +4,17 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.15.3]
+
+### Fixed
+- **Auto-arrange no longer overlaps wide/tall nodes.** The "Arrange" layout used a fixed column width (280), so
+  wide nodes (e.g. long dialogue titles) overlapped the next column and terminal nodes stacked on their
+  predecessor. `GraphAutoLayout.Arrange` now accepts measured node sizes (the views are already on screen when
+  Arrange runs) and spaces columns by each column's ACTUAL widest node + a gap, and rows by the tallest node + a
+  gap — so nothing overlaps. `RouteLongEdges` detects column-spanning edges from the distinct column positions
+  (width-agnostic) and drops its lane past the source node's real right edge. Legacy behaviour (no sizes) is
+  unchanged. User editor feedback: "je veux pas d'un empilement de node".
+
 ## [0.15.2]
 
 ### Added

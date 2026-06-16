@@ -353,12 +353,22 @@ namespace Faolline.GraphCore.Editor
         {
             if (_graph == null) return;
 
-            var positions = GraphAutoLayout.Arrange(_graph.Nodes, _graph.Edges, _graph.EntryNodeId);
+            // The node views are already on screen, so their measured sizes are available — feed them to the
+            // layout so columns are spaced by ACTUAL node widths (long dialogue titles no longer overlap the
+            // next column) and rows by the tallest node. Nodes with an unmeasured size fall back to a default box.
+            var sizes = new Dictionary<string, Vector2>();
+            foreach (var kv in _nodeViews)
+            {
+                var s = kv.Value.layout.size;
+                if (!float.IsNaN(s.x) && !float.IsNaN(s.y) && s.x > 1f && s.y > 1f) sizes[kv.Key] = s;
+            }
+
+            var positions = GraphAutoLayout.Arrange(_graph.Nodes, _graph.Edges, _graph.EntryNodeId, nodeSizes: sizes);
             foreach (var node in _graph.Nodes)
                 if (node != null && positions.TryGetValue(node.Id, out var p)) node.Position = p;
 
             // Route column-skipping edges through a lane below the rows so they don't pass under nodes.
-            var routes = GraphAutoLayout.RouteLongEdges(positions, _graph.Edges);
+            var routes = GraphAutoLayout.RouteLongEdges(positions, _graph.Edges, nodeSizes: sizes);
             foreach (var edge in _graph.Edges)
             {
                 if (edge == null) continue;
