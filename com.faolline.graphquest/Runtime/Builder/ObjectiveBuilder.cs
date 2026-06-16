@@ -54,6 +54,14 @@ namespace Faolline.GraphQuest
         /// listed prerequisites are Completed (vs. <see cref="Requires"/>'s all-of-N). E.g.
         /// <c>RequiresAtLeast(2, "a", "b", "c")</c> unlocks at any two — the natural way to express a
         /// "do 2 of these 3" gate without a synthetic counter objective.
+        /// <para>
+        /// IMPORTANT for a "do k of N" QUEST: the quest only reaches <c>Completed</c> when ALL of its
+        /// non-optional objectives are complete. So if the N counted prerequisites are themselves regular quest
+        /// objectives, mark them <see cref="Optional"/> — otherwise the quest waits for ALL N, not k. The usual
+        /// shape is: N optional sub-objectives + one required join objective that carries
+        /// <c>RequiresAtLeast(k, …)</c> (and the quest's completion reward). With <paramref name="count"/> larger
+        /// than the number of listed prerequisites the join can never unlock (it stays Locked, silently).
+        /// </para>
         /// </summary>
         public ObjectiveBuilder RequiresAtLeast(int count, params string[] prerequisiteObjectiveIds)
         {

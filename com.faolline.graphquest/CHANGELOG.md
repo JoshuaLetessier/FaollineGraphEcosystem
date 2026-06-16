@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.3]
+
+### Changed
+- **Documented the k-of-N quest-completion trap on `ObjectiveBuilder.RequiresAtLeast`.** A quest only reaches
+  `Completed` when ALL its non-optional objectives are complete, so for a "do k of N" quest the N counted
+  sub-objectives must be marked `Optional()` (with one required join objective carrying `RequiresAtLeast(k, …)`)
+  — otherwise the quest waits for all N. Also notes that `count` greater than the prerequisite count leaves the
+  join permanently Locked. Doc-only; surfaced by a dogfood that modelled the N relics as required objectives.
+
 ## [0.1.2]
 
 ### Changed
