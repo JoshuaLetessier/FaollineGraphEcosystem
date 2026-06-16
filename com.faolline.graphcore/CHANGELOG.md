@@ -4,6 +4,17 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.17.0]
+
+### Added
+- **The rest of the primitive node set is now canonical in GraphCore.** Following the bool pair (0.16.0), the
+  remaining domain-neutral primitives were hoisted: conditions `IntCondition`, `FloatCondition`,
+  `StringCondition`, `AlwaysTrueCondition`, `AlwaysFalseCondition` (+ the `ComparisonOperator` enum used by the
+  numeric ones); actions `SetIntAction`, `SetFloatAction`, `SetStringAction`, `LogAction`. They are universally
+  true of any graph system and reference nothing downstream. `GraphStandard.*` and `GraphDialogue.*` now subclass
+  these, so there is a single implementation and a collision-free type to target when a consumer imports both
+  namespaces. Existing lib-typed assets keep working; new graphs should prefer the GraphCore types.
+
 ## [0.16.0]
 
 ### Added
