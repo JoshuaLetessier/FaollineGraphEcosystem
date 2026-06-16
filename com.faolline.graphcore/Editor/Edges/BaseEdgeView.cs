@@ -173,6 +173,15 @@ namespace Faolline.GraphCore.Editor
         }
 
         /// <summary>
+        /// Re-routes the edge around the CURRENT node boxes and repaints. The host graph view calls this once the
+        /// node geometry has settled (and after a node moves): the obstacle snapshot the router reads is taken at
+        /// render time, but the render points are only re-marked dirty on an endpoint move — so an edge laid out
+        /// before a sibling node was measured (size still NaN ⇒ ignored as an obstacle), or before that node was
+        /// dragged out of the way, would otherwise keep passing UNDER it. Cheap + idempotent.
+        /// </summary>
+        public void Reroute() => RefreshVisual();
+
+        /// <summary>
         /// Forces the edge to re-route AND repaint live after a waypoint change. The endpoints didn't move, so
         /// the control would otherwise keep its cached render points + the GraphView wouldn't repaint the edge.
         /// </summary>

@@ -37,6 +37,11 @@ namespace Faolline.GraphCore.Editor
         // Node position changes are captured on SaveGraph(), not tracked here.
         private bool _isDirty;
 
+        // Coalesces edge re-routing: many node GeometryChangedEvents can fire in one frame (initial layout pass,
+        // a drag) — we re-route every edge ONCE on the next tick instead of per-node, so the orthogonal router
+        // weaves around node boxes that were unmeasured (size NaN) or elsewhere when the edges first laid out.
+        private bool _rerouteScheduled;
+
         /// <summary>
         /// True when the canvas has unsaved structural changes. Cleared by <see cref="SaveGraph"/>.
         /// </summary>
@@ -134,6 +139,7 @@ namespace Faolline.GraphCore.Editor
                     view.TitleChanged += OnNodeTitleChanged;
                     AddElement(view);
                     _nodeViews[nodeData.Id] = view;
+                    RerouteEdgesWhenMoved(view);
                 }
 
                 foreach (var edgeData in _graph.Edges)
@@ -545,8 +551,27 @@ namespace Faolline.GraphCore.Editor
             view.TitleChanged += OnNodeTitleChanged;
             AddElement(view);
             _nodeViews[nodeData.Id] = view;
+            RerouteEdgesWhenMoved(view);
             _isDirty = true;
             OnNodeCreated(nodeData);
+        }
+
+        // Re-routes every edge whenever this node view's geometry changes — its initial measurement (so an edge
+        // that laid out before the node had a size stops cutting through it) and any later move/resize (so an
+        // edge weaves around a node dragged into its path). Coalesced to one re-route per frame via the schedule.
+        private void RerouteEdgesWhenMoved(BaseNodeView view)
+            => view.RegisterCallback<GeometryChangedEvent>(_ => ScheduleReroute());
+
+        private void ScheduleReroute()
+        {
+            if (_rerouteScheduled) return;
+            _rerouteScheduled = true;
+            schedule.Execute(() =>
+            {
+                _rerouteScheduled = false;
+                foreach (var el in edges.ToList())
+                    if (el is BaseEdgeView bev) bev.Reroute();
+            });
         }
 
         /// <summary>True when the loaded graph already holds a Start node (only one is allowed — the entry point).</summary>

@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.15.0]
+
+### Added
+- **`BaseEdgeView.Reroute()`** — re-routes an edge around the current node boxes and repaints. The orthogonal
+  router reads its obstacle snapshot at render time, but the render points were only re-marked dirty on an
+  *endpoint* move — so an edge laid out before a sibling node was measured (size still NaN ⇒ skipped as an
+  obstacle), or before that node was dragged into its path, kept passing UNDER the node. Public so a host
+  canvas can refresh edges once geometry settles.
+
+### Fixed
+- **Orthogonal edges no longer pass under nodes on a freshly opened / rearranged graph.** `BaseGraphView` now
+  re-routes every edge (coalesced to one pass per frame) whenever a node view's geometry changes — its initial
+  measurement and any later move/resize. Previously an edge could keep its first route, computed before the
+  obstacle node had a measured size, and render straight through it. Backlog: edge-routing revisit.
+
 ## [0.14.0]
 
 ### Added
