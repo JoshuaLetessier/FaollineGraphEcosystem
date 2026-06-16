@@ -4,7 +4,15 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.10.2]
+## [0.10.3]
+
+### Changed
+- **`BoolCondition` / `SetBoolAction` now subclass the canonical GraphCore types** (the implementation was hoisted
+  to `Faolline.GraphCore.BoolCondition` / `SetBoolAction`). Public surface and behaviour are unchanged
+  (`ParameterKey` / `ExpectedValue` / `WarnOnMissing` are inherited; the absent-key warning now carries a
+  `[GraphCore]` prefix). Existing `GraphStandard/…` assets and code keep working; new graphs should prefer the
+  GraphCore types. Resolves the CS0104 ambiguity with `GraphDialogue.*` for consumers importing both. Requires
+  graphcore `0.16.0`.
 
 ### Changed
 - **Scalar conditions are silent on an absent key by default.** `BoolCondition`, `IntCondition`,

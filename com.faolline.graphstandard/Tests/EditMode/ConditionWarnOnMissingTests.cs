@@ -3,6 +3,9 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Faolline.GraphCore;
+// BoolCondition now lives in BOTH Faolline.GraphCore (canonical) and Faolline.GraphStandard (back-compat subclass);
+// pin the name to the GraphStandard one this suite is meant to exercise.
+using BoolCondition = Faolline.GraphStandard.BoolCondition;
 
 namespace Faolline.GraphStandard.Tests
 {
