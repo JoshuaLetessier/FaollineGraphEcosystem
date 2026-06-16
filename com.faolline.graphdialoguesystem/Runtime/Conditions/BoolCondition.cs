@@ -1,29 +1,11 @@
-using UnityEngine;
-using Faolline.GraphCore;
-
 namespace Faolline.GraphDialogue
 {
     /// <summary>
-    /// Reads a named bool parameter from the context and compares it to an expected value.
-    /// Returns false (with a warning) when the key is absent — never throws.
+    /// Bool condition. The implementation now lives in <see cref="Faolline.GraphCore.BoolCondition"/> — hoisted to
+    /// GraphCore so a consumer using BOTH the GraphDialogue and GraphStandard namespaces no longer hits an
+    /// ambiguous-reference (CS0104). This thin subclass is kept so existing <c>GraphDialogue/…</c> assets and code
+    /// keep working; new graphs should prefer <see cref="Faolline.GraphCore.BoolCondition"/> directly. (The canonical
+    /// reads an absent key as false SILENTLY by default — set <c>WarnOnMissing</c> to restore the old warning.)
     /// </summary>
-    [CreateAssetMenu(menuName = "GraphDialogue/Conditions/Bool Condition", fileName = "BoolCondition")]
-    public class BoolCondition : BaseCondition
-    {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private bool _expectedValue;
-
-        public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }
-        public bool ExpectedValue { get => _expectedValue; set => _expectedValue = value; }
-
-        public override bool Evaluate(BaseContext context)
-        {
-            if (!context.TryGet<bool>(_parameterKey, out var value))
-            {
-                Debug.LogWarning($"[GraphDialogue] Condition: parameter key '{_parameterKey}' not found in context — evaluating to false.");
-                return false;
-            }
-            return value == _expectedValue;
-        }
-    }
+    public class BoolCondition : Faolline.GraphCore.BoolCondition { }
 }

@@ -4,7 +4,16 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.5.5]
+## [0.5.6]
+
+### Changed
+- **`BoolCondition` / `SetBoolAction` now subclass the canonical GraphCore types** (implementation hoisted to
+  `Faolline.GraphCore.BoolCondition` / `SetBoolAction`). Existing `GraphDialogue/…` assets and code keep working;
+  new graphs should prefer the GraphCore types. Resolves the CS0104 ambiguity with `GraphStandard.*` for consumers
+  importing both namespaces. Requires graphcore `0.16.0`.
+- **Behaviour note:** `BoolCondition` now reads an absent key as `false` **silently** by default (the canonical
+  GraphCore behaviour), instead of always logging a warning. Set `WarnOnMissing = true` to restore the warning.
+  (`IntCondition` and the other dialogue conditions are unchanged.)
 
 ### Changed
 - **Only one Start node per dialogue.** Adopts graphcore's shared Add-Start action: the "Add Start Node"

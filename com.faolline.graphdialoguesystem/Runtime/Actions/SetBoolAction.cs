@@ -1,18 +1,10 @@
-using UnityEngine;
-using Faolline.GraphCore;
-
 namespace Faolline.GraphDialogue
 {
-    /// <summary>Writes a named bool value into the execution context when executed.</summary>
-    [CreateAssetMenu(menuName = "GraphDialogue/Actions/Set Bool Action", fileName = "SetBoolAction")]
-    public class SetBoolAction : BaseAction
-    {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private bool _value;
-
-        public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }
-        public bool Value { get => _value; set => _value = value; }
-
-        public override void Execute(BaseContext context) => context.Set<bool>(_parameterKey, _value);
-    }
+    /// <summary>
+    /// Bool setter. The implementation now lives in <see cref="Faolline.GraphCore.SetBoolAction"/> — hoisted to
+    /// GraphCore so a consumer using BOTH the GraphDialogue and GraphStandard namespaces no longer hits an
+    /// ambiguous-reference (CS0104). This thin subclass is kept so existing <c>GraphDialogue/…</c> assets and code
+    /// keep working; new graphs should prefer <see cref="Faolline.GraphCore.SetBoolAction"/> directly.
+    /// </summary>
+    public class SetBoolAction : Faolline.GraphCore.SetBoolAction { }
 }
