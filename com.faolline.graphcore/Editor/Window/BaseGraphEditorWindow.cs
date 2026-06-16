@@ -227,6 +227,9 @@ namespace Faolline.GraphCore.Editor
             Refresh();
         }
 
+        // EditorPrefs key for the opt-in "colour edges by endpoints" toggle (shared across all graph editors).
+        private const string ColorEdgesPrefKey = "Faolline.GraphCore.Editor.ColorEdgesByEndpoints";
+
         private void BuildToolbar()
         {
             var toolbar = new UnityEditor.UIElements.Toolbar();
@@ -263,6 +266,24 @@ namespace Faolline.GraphCore.Editor
             toolbar.Add(spacer);
 
             PopulateToolbarRight(toolbar);
+
+            // Opt-in, persisted: colour each edge as a source→target gradient (each end takes its node's colour)
+            // so dense graphs stay readable. Off by default; flipping it re-colours every edge live.
+            BaseEdgeView.ColorByEndpoints = EditorPrefs.GetBool(ColorEdgesPrefKey, false);
+            var colorEdgesToggle = new UnityEditor.UIElements.ToolbarToggle
+            {
+                text = "🎨 edge colors",
+                value = BaseEdgeView.ColorByEndpoints,
+                tooltip = "Colour each edge from its source node's colour to its target node's colour, so you can "
+                        + "tell at a glance which nodes an edge links in a dense graph. Off by default."
+            };
+            colorEdgesToggle.RegisterValueChangedCallback(evt =>
+            {
+                BaseEdgeView.ColorByEndpoints = evt.newValue;
+                EditorPrefs.SetBool(ColorEdgesPrefKey, evt.newValue);
+                _graphView?.RefreshAllEdgeColors();
+            });
+            toolbar.Add(colorEdgesToggle);
 
             var edgeHint = new UnityEngine.UIElements.Label("ⓘ edges")
             {

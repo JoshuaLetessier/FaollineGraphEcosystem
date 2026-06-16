@@ -16,6 +16,14 @@ namespace Faolline.GraphCore.Editor
     {
         private static readonly string UssName = "BaseEdgeView";
 
+        /// <summary>
+        /// Opt-in (off by default): when true, every edge is drawn as a gradient from its SOURCE node's colour to
+        /// its TARGET node's colour, so a dense graph stays readable — each end shows which node it links. When
+        /// false, the edge keeps its single <see cref="ResolveColor"/> colour. Toggled from the editor toolbar;
+        /// the host canvas re-applies colours via <see cref="BaseGraphView"/> when this flips.
+        /// </summary>
+        public static bool ColorByEndpoints { get; set; }
+
         /// <summary>The data object this view represents. Null until Initialize is called.</summary>
         public BaseEdgeData EdgeData { get; internal set; }
 
@@ -57,6 +65,20 @@ namespace Faolline.GraphCore.Editor
         {
             _orthoControl = new OrthogonalEdgeControl();
             return _orthoControl;
+        }
+
+        /// <summary>
+        /// Unity's <c>Edge.UpdateEdgeControl</c> resets the control's colours from the PORT colours on every
+        /// redraw (hover, move, selection change) — which would wipe the endpoint gradient / a lib's edge colour
+        /// the moment the user mouses over a node. So re-assert our resolved colour AFTER the base ran. A selected
+        /// edge keeps the native selection highlight; a half-drawn preview (a port still loose) keeps its default.
+        /// </summary>
+        public override bool UpdateEdgeControl()
+        {
+            if (!base.UpdateEdgeControl()) return false;
+            if (!selected && output != null && input != null)
+                ApplyEdgeColor();
+            return true;
         }
 
         /// <summary>
@@ -209,8 +231,25 @@ namespace Faolline.GraphCore.Editor
             }
         }
 
+        /// <summary>
+        /// Re-applies the edge colour. Call after the <see cref="ColorByEndpoints"/> toggle flips, or once the
+        /// edge has been connected to its ports so the source→target gradient can read its endpoint nodes' colours
+        /// (at construction time the ports are not connected yet).
+        /// </summary>
+        public void RefreshColor() => ApplyEdgeColor();
+
         private void ApplyEdgeColor()
         {
+            // Endpoint-gradient mode: each end takes its connected node's colour (EdgeControl blends across the
+            // line), so a dense graph stays readable. Needs the ports connected — falls through to the single
+            // colour otherwise (e.g. during construction, or for the live connection preview).
+            if (ColorByEndpoints && output?.node is BaseNodeView sourceView && input?.node is BaseNodeView targetView)
+            {
+                edgeControl.outputColor = sourceView.ResolveColor();   // the 'out' port end = source node
+                edgeControl.inputColor  = targetView.ResolveColor();   // the 'in' port end  = target node
+                return;
+            }
+
             // Apply resolved edge color. Dynamic registry-based colors require this minimal
             // C# bridge; all layout/typography/spacing styling is in USS.
             edgeControl.inputColor = ResolveColor();

@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.15.2]
+
+### Added
+- **Opt-in "colour edges by endpoints" toggle** (toolbar, off by default, persisted in EditorPrefs and shared
+  across every graph editor). When on, each edge is drawn as a gradient from its SOURCE node's colour to its
+  TARGET node's colour, so in a dense graph you can tell at a glance which nodes an edge links. New
+  `BaseEdgeView.ColorByEndpoints` + `RefreshColor()` and `BaseGraphView.RefreshAllEdgeColors()`.
+
+### Fixed
+- **Edge colours no longer revert on hover/move.** Unity's `Edge.UpdateEdgeControl` resets the control colours
+  from the port colours on every redraw (a node hover triggers it for all edges), which wiped any custom edge
+  colour — the endpoint gradient flickered back to grey the instant the mouse touched a node. `BaseEdgeView` now
+  overrides `UpdateEdgeControl` to re-assert its resolved colour afterwards (selected edges keep the native
+  selection highlight; connection previews keep their default).
+
 ## [0.15.1]
 
 ### Changed

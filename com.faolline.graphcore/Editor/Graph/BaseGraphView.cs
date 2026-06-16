@@ -183,6 +183,9 @@ namespace Faolline.GraphCore.Editor
 
             // Re-apply the live-run cursor so a reload while the game is playing keeps the active node lit.
             RefreshRunCursor();
+
+            // Edges are now connected to their ports → resolve any source→target gradient colours.
+            RefreshAllEdgeColors();
         }
 
         /// <summary>
@@ -572,6 +575,17 @@ namespace Faolline.GraphCore.Editor
                 foreach (var el in edges.ToList())
                     if (el is BaseEdgeView bev) bev.Reroute();
             });
+        }
+
+        /// <summary>
+        /// Re-applies every edge's colour. Called once the canvas is built (so a source→target gradient can read
+        /// its now-connected endpoint nodes' colours) and whenever the <see cref="BaseEdgeView.ColorByEndpoints"/>
+        /// toolbar toggle flips.
+        /// </summary>
+        public void RefreshAllEdgeColors()
+        {
+            foreach (var el in edges.ToList())
+                if (el is BaseEdgeView bev) bev.RefreshColor();
         }
 
         /// <summary>True when the loaded graph already holds a Start node (only one is allowed — the entry point).</summary>
