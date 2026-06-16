@@ -1,13 +1,10 @@
-using UnityEngine;
-using Faolline.GraphCore;
-
 namespace Faolline.GraphStandard
 {
-    /// <summary>Condition that always evaluates to true, regardless of context state.</summary>
-    [CreateAssetMenu(menuName = "GraphStandard/Conditions/Always True", fileName = "AlwaysTrueCondition")]
-    public class AlwaysTrueCondition : BaseCondition
-    {
-        /// <inheritdoc/>
-        public override bool Evaluate(BaseContext context) => true;
-    }
+    /// <summary>
+    /// Domain-neutral AlwaysTrueCondition. The implementation now lives in <see cref="Faolline.GraphCore.AlwaysTrueCondition"/> — hoisted to
+    /// GraphCore so a consumer using both the GraphStandard and GraphDialogue namespaces no longer hits an
+    /// ambiguous-reference (CS0104). Thin back-compat subclass: existing <c>GraphStandard/…</c> assets and code keep
+    /// working; new graphs should prefer <see cref="Faolline.GraphCore.AlwaysTrueCondition"/> directly.
+    /// </summary>
+    public class AlwaysTrueCondition : Faolline.GraphCore.AlwaysTrueCondition { }
 }

@@ -1,18 +1,10 @@
-using UnityEngine;
-using Faolline.GraphCore;
-
 namespace Faolline.GraphStandard
 {
-    /// <summary>Domain-neutral action: logs a configurable message to the Unity console when executed.</summary>
-    [CreateAssetMenu(menuName = "GraphStandard/Actions/Log Action", fileName = "LogAction")]
-    public class LogAction : BaseAction
-    {
-        [SerializeField] private string _message;
-
-        /// <summary>The message logged to the console when this action executes.</summary>
-        public string Message { get => _message; set => _message = value; }
-
-        /// <inheritdoc/>
-        public override void Execute(BaseContext context) => Debug.Log($"[GraphStandard] {_message}");
-    }
+    /// <summary>
+    /// Domain-neutral LogAction. The implementation now lives in <see cref="Faolline.GraphCore.LogAction"/> — hoisted to
+    /// GraphCore so a consumer using both the GraphStandard and GraphDialogue namespaces no longer hits an
+    /// ambiguous-reference (CS0104). Thin back-compat subclass: existing <c>GraphStandard/…</c> assets and code keep
+    /// working; new graphs should prefer <see cref="Faolline.GraphCore.LogAction"/> directly.
+    /// </summary>
+    public class LogAction : Faolline.GraphCore.LogAction { }
 }

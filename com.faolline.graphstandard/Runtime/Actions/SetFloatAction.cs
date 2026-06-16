@@ -1,22 +1,10 @@
-using UnityEngine;
-using Faolline.GraphCore;
-
 namespace Faolline.GraphStandard
 {
-    /// <summary>Domain-neutral action: writes a named float value into the execution context.</summary>
-    [CreateAssetMenu(menuName = "GraphStandard/Actions/Set Float Action", fileName = "SetFloatAction")]
-    public class SetFloatAction : BaseAction
-    {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private float _value;
-
-        /// <summary>The context parameter key to write.</summary>
-        public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }
-
-        /// <summary>The float value to set on the context parameter.</summary>
-        public float Value { get => _value; set => _value = value; }
-
-        /// <inheritdoc/>
-        public override void Execute(BaseContext context) => context.Set<float>(_parameterKey, _value);
-    }
+    /// <summary>
+    /// Domain-neutral SetFloatAction. The implementation now lives in <see cref="Faolline.GraphCore.SetFloatAction"/> — hoisted to
+    /// GraphCore so a consumer using both the GraphStandard and GraphDialogue namespaces no longer hits an
+    /// ambiguous-reference (CS0104). Thin back-compat subclass: existing <c>GraphStandard/…</c> assets and code keep
+    /// working; new graphs should prefer <see cref="Faolline.GraphCore.SetFloatAction"/> directly.
+    /// </summary>
+    public class SetFloatAction : Faolline.GraphCore.SetFloatAction { }
 }

@@ -4,7 +4,20 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.10.3]
+## [0.11.0]
+
+### Changed
+- **The primitive condition/action set now subclasses the canonical GraphCore types** (following the bool pair in
+  0.10.3): `IntCondition`, `FloatCondition`, `StringCondition`, `AlwaysTrueCondition`, `AlwaysFalseCondition`,
+  `SetIntAction`, `SetFloatAction`, `SetStringAction`, `LogAction` are now thin back-compat subclasses of
+  `Faolline.GraphCore.*`. Public surface and behaviour are unchanged (fields/properties inherited; warnings now
+  carry a `[GraphCore]` prefix, `LogAction` logs `[GraphCore] …`). Existing `GraphStandard/…` assets and code keep
+  working. The domain-neutral collection nodes (`CollectionContains…`, `AddToCollectionAction`) stay here.
+
+### Removed (source-breaking)
+- **`Faolline.GraphStandard.ComparisonOperator` was removed** — it is now `Faolline.GraphCore.ComparisonOperator`
+  (same names/values, so serialized enum values in existing assets are unaffected). Source that referenced the
+  enum by its old namespace must switch to `Faolline.GraphCore.ComparisonOperator`. Requires graphcore `0.17.0`.
 
 ### Changed
 - **`BoolCondition` / `SetBoolAction` now subclass the canonical GraphCore types** (the implementation was hoisted
