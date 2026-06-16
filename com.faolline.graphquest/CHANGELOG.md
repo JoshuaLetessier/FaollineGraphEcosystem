@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.2]
+
+### Changed
+- **Sample now builds the canonical GraphCore primitive nodes.** `QuestSampleBuilder` (and the regenerated
+  `SampleQuest.asset`) use `Faolline.GraphCore.BoolCondition` / `SetBoolAction` directly, following the removal of
+  the `GraphStandard.*` back-compat subclasses. Dependency floors bumped: graphcore `0.14.0` → `0.17.0`,
+  graphstandard `0.10.1` → `0.12.0`. No runtime/API change to the quest library itself.
+
 ## [0.1.1]
 
 ### Added

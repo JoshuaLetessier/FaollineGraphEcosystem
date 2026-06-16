@@ -2,10 +2,6 @@ using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphStandard;
-// Bool* now exist in both Faolline.GraphCore (canonical) and Faolline.GraphStandard (back-compat subclass) — pin
-// to the GraphStandard ones this sample has always built.
-using BoolCondition = Faolline.GraphStandard.BoolCondition;
-using SetBoolAction = Faolline.GraphStandard.SetBoolAction;
 
 namespace Faolline.GraphQuest.Editor
 {
