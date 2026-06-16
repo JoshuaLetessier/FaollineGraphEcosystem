@@ -4,7 +4,16 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.11.0]
+## [0.12.0]
+
+### Removed (breaking)
+- **The back-compat primitive subclasses are gone.** `BoolCondition`, `IntCondition`, `FloatCondition`,
+  `StringCondition`, `AlwaysTrueCondition`, `AlwaysFalseCondition`, `SetBoolAction`, `SetIntAction`,
+  `SetFloatAction`, `SetStringAction`, `LogAction` (the thin subclasses kept in 0.10.3 / 0.11.0) were removed now
+  that the canonical implementations live in GraphCore. **Use `Faolline.GraphCore.*` directly.** This fully
+  eliminates the CS0104 ambiguity with `GraphDialogue.*`. Existing assets typed as the old `GraphStandard.*`
+  primitives must be re-pointed to the GraphCore type (the in-repo sample was regenerated). The domain-neutral
+  collection nodes (`CollectionContains…`, `CollectionCountAtLeast…`, `AddToCollectionAction`) remain here.
 
 ### Changed
 - **The primitive condition/action set now subclasses the canonical GraphCore types** (following the bool pair in

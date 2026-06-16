@@ -1,10 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
-// BoolCondition / SetBoolAction now live in BOTH Faolline.GraphCore (canonical) and Faolline.GraphStandard
-// (back-compat subclasses); pin the names to the GraphStandard ones this suite exercises.
-using BoolCondition = Faolline.GraphStandard.BoolCondition;
-using SetBoolAction = Faolline.GraphStandard.SetBoolAction;
 
 namespace Faolline.GraphStandard.Tests
 {
