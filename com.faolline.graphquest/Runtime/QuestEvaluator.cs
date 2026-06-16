@@ -63,7 +63,19 @@ namespace Faolline.GraphQuest
             if (quest != null)
                 foreach (var node in quest.Nodes)
                     if (node is ObjectiveNodeData obj && !string.IsNullOrEmpty(obj.Id) && obj.RequiredPrerequisiteCount >= 0)
+                    {
                         (requiredCounts ??= new Dictionary<string, int>(StringComparer.Ordinal))[obj.Id] = obj.RequiredPrerequisiteCount;
+
+                        // k-of-N footgun: a count larger than the number of prerequisites can NEVER be reached, so
+                        // the objective stays Locked forever. Warn instead of failing silently (dogfood finding).
+                        int prereqCount = 0;
+                        foreach (var e in quest.Edges) if (e != null && e.ToNodeId == obj.Id) prereqCount++;
+                        if (obj.RequiredPrerequisiteCount > prereqCount)
+                            UnityEngine.Debug.LogWarning(
+                                $"[GraphQuest] Objective '{obj.Id}' requires at least {obj.RequiredPrerequisiteCount} of " +
+                                $"only {prereqCount} prerequisite(s) — it can never unlock (stays Locked). Lower the " +
+                                $"count or add prerequisites.");
+                    }
 
             _reactive = new ReactiveEvaluator(quest, context, _completedKey, requiredCounts);
         }

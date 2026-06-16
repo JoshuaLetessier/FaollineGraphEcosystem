@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.4]
+
+### Changed
+- **`QuestEvaluator` now warns on an unreachable k-of-N gate.** When an objective's `RequiresAtLeast(count, …)`
+  is larger than its number of prerequisites, the objective can never unlock (stays Locked forever) — that used to
+  be a silent footgun. The evaluator now logs a `[GraphQuest]` warning at construction naming the objective and the
+  count vs prerequisite mismatch. No behaviour change otherwise. Dogfood finding.
+
 ## [0.1.3]
 
 ### Changed
