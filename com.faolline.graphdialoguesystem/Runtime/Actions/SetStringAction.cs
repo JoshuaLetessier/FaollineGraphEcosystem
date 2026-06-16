@@ -1,18 +1,10 @@
-using UnityEngine;
-using Faolline.GraphCore;
-
 namespace Faolline.GraphDialogue
 {
-    /// <summary>Writes a named string value into the execution context when executed.</summary>
-    [CreateAssetMenu(menuName = "GraphDialogue/Actions/Set String Action", fileName = "SetStringAction")]
-    public class SetStringAction : BaseAction
-    {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private string _value;
-
-        public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }
-        public string Value { get => _value; set => _value = value; }
-
-        public override void Execute(BaseContext context) => context.Set<string>(_parameterKey, _value);
-    }
+    /// <summary>
+    /// SetStringAction. The implementation now lives in <see cref="Faolline.GraphCore.SetStringAction"/> — hoisted to GraphCore so a
+    /// consumer using both the GraphDialogue and GraphStandard namespaces no longer hits an ambiguous-reference
+    /// (CS0104). Thin back-compat subclass: existing <c>GraphDialogue/…</c> assets and code keep working; new graphs
+    /// should prefer <see cref="Faolline.GraphCore.SetStringAction"/> directly.
+    /// </summary>
+    public class SetStringAction : Faolline.GraphCore.SetStringAction { }
 }

@@ -73,6 +73,7 @@ namespace Faolline.GraphDialogue.Tests
             var ctx = new DialogueContext();
             var c = Make<IntCondition>();
             c.ParameterKey = "absent"; c.ExpectedValue = 0;
+            c.WarnOnMissing = true;   // canonical reads an absent key as false SILENTLY by default; opt in to the warning
             LogAssert.Expect(LogType.Warning, new Regex("not found"));
             Assert.IsFalse(c.Evaluate(ctx));
         }

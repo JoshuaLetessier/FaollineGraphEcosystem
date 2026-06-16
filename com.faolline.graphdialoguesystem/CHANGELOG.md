@@ -4,7 +4,22 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.5.6]
+## [0.6.0]
+
+### Changed
+- **The primitive condition/action set now subclasses the canonical GraphCore types** (following the bool pair in
+  0.5.6): `IntCondition`, `FloatCondition`, `StringCondition`, `AlwaysTrueCondition`, `AlwaysFalseCondition`,
+  `SetIntAction`, `SetFloatAction`, `SetStringAction`, `LogAction` are now thin back-compat subclasses of
+  `Faolline.GraphCore.*`. Existing `GraphDialogue/…` assets and code keep working; new graphs should prefer the
+  GraphCore types. Resolves the remaining CS0104 ambiguities with `GraphStandard.*` for consumers importing both.
+- **Behaviour note:** `IntCondition`, `FloatCondition` and `StringCondition` now read an absent key as `false`
+  **silently** by default (the canonical GraphCore behaviour), instead of always warning. Set `WarnOnMissing = true`
+  to restore the warning.
+
+### Removed (source-breaking)
+- **`Faolline.GraphDialogue.ComparisonOperator` was removed** — it is now `Faolline.GraphCore.ComparisonOperator`
+  (same names/values, so serialized enum values in existing assets are unaffected). Source that referenced the
+  enum by its old namespace must switch to `Faolline.GraphCore.ComparisonOperator`. Requires graphcore `0.17.0`.
 
 ### Changed
 - **`BoolCondition` / `SetBoolAction` now subclass the canonical GraphCore types** (implementation hoisted to

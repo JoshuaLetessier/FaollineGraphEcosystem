@@ -1,41 +1,10 @@
-using UnityEngine;
-using Faolline.GraphCore;
-
 namespace Faolline.GraphDialogue
 {
     /// <summary>
-    /// Reads a named float parameter and compares it to an expected value using a
-    /// <see cref="ComparisonOperator"/>. Returns false (with a warning) when the key is absent.
+    /// FloatCondition. The implementation now lives in <see cref="Faolline.GraphCore.FloatCondition"/> — hoisted to GraphCore so a
+    /// consumer using both the GraphDialogue and GraphStandard namespaces no longer hits an ambiguous-reference
+    /// (CS0104). Thin back-compat subclass: existing <c>GraphDialogue/…</c> assets and code keep working; new graphs
+    /// should prefer <see cref="Faolline.GraphCore.FloatCondition"/> directly.
     /// </summary>
-    [CreateAssetMenu(menuName = "GraphDialogue/Conditions/Float Condition", fileName = "FloatCondition")]
-    public class FloatCondition : BaseCondition
-    {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private ComparisonOperator _operator = ComparisonOperator.Equal;
-        [SerializeField] private float _expectedValue;
-
-        public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }
-        public ComparisonOperator Operator { get => _operator; set => _operator = value; }
-        public float ExpectedValue { get => _expectedValue; set => _expectedValue = value; }
-
-        public override bool Evaluate(BaseContext context)
-        {
-            if (!context.TryGet<float>(_parameterKey, out var value))
-            {
-                Debug.LogWarning($"[GraphDialogue] Condition: parameter key '{_parameterKey}' not found in context — evaluating to false.");
-                return false;
-            }
-
-            return _operator switch
-            {
-                ComparisonOperator.Equal          => value == _expectedValue,
-                ComparisonOperator.NotEqual       => value != _expectedValue,
-                ComparisonOperator.Less           => value <  _expectedValue,
-                ComparisonOperator.LessOrEqual    => value <= _expectedValue,
-                ComparisonOperator.Greater        => value >  _expectedValue,
-                ComparisonOperator.GreaterOrEqual => value >= _expectedValue,
-                _                                 => false
-            };
-        }
-    }
+    public class FloatCondition : Faolline.GraphCore.FloatCondition { }
 }
