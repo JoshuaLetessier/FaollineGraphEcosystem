@@ -73,6 +73,13 @@ Besides the code-first builder, the package ships a `QuestGraphEditorWindow` (op
 `Faolline ▸ Open Quest Graph Editor`, or double-click a `QuestGraph` asset): objective nodes, drawable prerequisite
 edges (From→To = "To requires From"), and an inspector for the objective + quest-level fields.
 
+**No Start/End node — by design.** A quest is a *reactive objective DAG*, not a runner-walked graph: there is no
+traversal cursor, so there is no entry (Start) or exit (End) node. The "begin" is the quest's `UnlockCondition`
+plus the objectives that have **no prerequisite**; the "end" is the **completion aggregate** (all required
+objectives done). To keep that readable, the editor marks each objective that is an **entry** (no prerequisite) or
+**terminal** (nothing depends on it) right on the node — these cues refresh on Save / ↻ Refresh after you draw or
+remove a prerequisite edge.
+
 ## Boundaries
 
 - The library ships **data + change events + reward seams only** — the in-game quest journal / tracker UI is yours.

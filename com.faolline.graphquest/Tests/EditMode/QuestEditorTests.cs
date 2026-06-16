@@ -46,6 +46,27 @@ namespace Faolline.GraphQuest.Tests
         }
 
         [Test]
+        public void EntryAndTerminal_AreDerivedFromTheTopology()
+        {
+            var quest = TrackGraph(QuestBuilder.Create("q")
+                .AddObjective("a").CompleteWhen(Flag("a"))
+                .AddObjective("b").Requires("a").CompleteWhen(Flag("b"))
+                .AddObjective("c").Requires("b").CompleteWhen(Flag("c"))
+                .AddObjective("side").CompleteWhen(Flag("s"))    // standalone ⇒ entry AND terminal
+                .Build());
+
+            // a: entry (no prerequisite), not terminal (b depends on it)
+            Assert.IsFalse(QuestGraphView.HasPrerequisite(quest, "a"), "a is an entry");
+            Assert.IsTrue(QuestGraphView.HasDependent(quest, "a"), "a is not terminal");
+            // c: not entry (requires b), terminal (nothing depends on it)
+            Assert.IsTrue(QuestGraphView.HasPrerequisite(quest, "c"));
+            Assert.IsFalse(QuestGraphView.HasDependent(quest, "c"), "c is terminal");
+            // side: both entry and terminal
+            Assert.IsFalse(QuestGraphView.HasPrerequisite(quest, "side"));
+            Assert.IsFalse(QuestGraphView.HasDependent(quest, "side"));
+        }
+
+        [Test]
         public void Window_Opens_AndLoadsAQuest_WithoutError()
         {
             var quest = TrackGraph(QuestBuilder.Create("q")

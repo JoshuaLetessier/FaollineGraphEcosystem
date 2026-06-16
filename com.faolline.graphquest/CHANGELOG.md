@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1]
+
+### Added
+- **Entry / terminal objective cues in the editor.** A quest has no Start/End node (it is a reactive objective
+  DAG — no traversal cursor), so the Quest Graph editor now marks each objective that is an **entry** (no
+  prerequisite) or **terminal** (nothing depends on it) right on the node, so the begin/end of the DAG reads at a
+  glance (cues refresh on Save / ↻ Refresh after edges change). New `QuestGraphView.HasPrerequisite` /
+  `HasDependent` topology helpers; the README documents why there is no Start/End. +1 EditMode test.
+
 ## [0.1.0]
 
 ### Added
