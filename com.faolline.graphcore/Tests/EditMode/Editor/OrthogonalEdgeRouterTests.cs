@@ -40,6 +40,25 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
+        public void DefaultStub_GivesGenerousHeadOnRun_IntoBothPorts()
+        {
+            // With the default stub, a normal-length edge leaves the out-port and enters the in-port along the
+            // port axis for the full DefaultStub distance — the head-on run is long enough to read clearly
+            // (the fix for edges that "dropped into" a port from above instead of arriving from the side).
+            float s = OrthogonalEdgeRouter.DefaultStub;
+            var from = new Vector2(0, 0);
+            var to   = new Vector2(300, 120);
+            var pts  = OrthogonalEdgeRouter.Route(from, to, null);   // default overload → DefaultStub, +x ports
+
+            Assert.AreEqual(new Vector2(s, 0f), pts[1], "out-port: leaves head-on for the full stub.");
+            Assert.AreEqual(new Vector2(to.x - s, to.y), pts[pts.Count - 2],
+                "in-port: the last corner sits a full stub to the LEFT of the port, at the port height → clean horizontal entry.");
+            Assert.IsTrue(Mathf.Approximately(pts[pts.Count - 1].y, pts[pts.Count - 2].y),
+                "the final segment into the in-port is horizontal (head-on), not a vertical drop.");
+            AssertAllSegmentsAxisAligned(pts);
+        }
+
+        [Test]
         public void StubIsClampedOnShortEdges_NeverOvershoots()
         {
             // Edge shorter than 2*stub: the stub shrinks so 'from'+stub never passes 'to'.

@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.15.1]
+
+### Changed
+- **Edges now enter/leave ports with a generous head-on run.** The orthogonal router's default port stub grew
+  from 16 to 28 graph-units, so the segment touching a port follows the port axis for longer before it may bend.
+  Previously the corner sat pressed against the node edge, so an edge read as "dropping into" the in-port from
+  above/below instead of arriving cleanly from the side. Still clamped to 0.4×edge-length (short edges unaffected).
+
 ## [0.15.0]
 
 ### Added

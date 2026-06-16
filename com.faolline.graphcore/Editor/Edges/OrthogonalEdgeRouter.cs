@@ -18,8 +18,13 @@ namespace Faolline.GraphCore.Editor
     /// </summary>
     public static class OrthogonalEdgeRouter
     {
-        /// <summary>Default port stub length (graph units).</summary>
-        public const float DefaultStub = 16f;
+        /// <summary>
+        /// Default port stub length (graph units). The polyline leaves the out-port / enters the in-port along
+        /// the port axis for THIS distance before it is free to bend — so the segment touching a port is a clear,
+        /// head-on run rather than a corner pressed against the node edge (which reads as "entering from the top").
+        /// Generous on purpose; <see cref="Route"/> clamps it to 0.4×edge-length so short edges never overshoot.
+        /// </summary>
+        public const float DefaultStub = 28f;
 
         /// <summary>
         /// Routes <paramref name="from"/> → (<paramref name="waypoints"/>) → <paramref name="to"/> as an
