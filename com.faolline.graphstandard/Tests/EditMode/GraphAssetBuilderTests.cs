@@ -13,6 +13,11 @@ namespace Faolline.GraphStandard.Tests
     public class GraphAssetBuilderTests
     {
         private sealed class NoOpAction : BaseAction { public override void Execute(BaseContext c) { } }
+        private sealed class NoOpCondition : BaseCondition { public override bool Evaluate(BaseContext c) => true; }
+        // A node subclass with its OWN condition field (like a quest objective's CompletionCondition).
+        private sealed class CustomNode : BaseNodeData { public BaseCondition Completion; }
+        // A graph subclass with a graph-level action field (like a quest's CompletionReward).
+        private sealed class CustomGraph : BaseGraph { public BaseAction Reward; }
 
         private string _path;
 
@@ -43,6 +48,25 @@ namespace Faolline.GraphStandard.Tests
             var loaded = AssetDatabase.LoadAllAssetsAtPath(_path);
             Assert.IsTrue(loaded.Any(o => o is BaseGraph), "the graph asset is at the path.");
             Assert.IsTrue(loaded.Any(o => o is NoOpAction), "the attached action is a sub-asset of the graph.");
+        }
+
+        [Test]
+        public void Save_SweepsSubclassNodeFields_AndGraphLevelFields_Generically()
+        {
+            var nodeCondition = ScriptableObject.CreateInstance<NoOpCondition>(); nodeCondition.name = "NodeCond";
+            var graphReward   = ScriptableObject.CreateInstance<NoOpAction>();    graphReward.name   = "GraphReward";
+
+            var graph = ScriptableObject.CreateInstance<CustomGraph>();
+            graph.Reward = graphReward;                                   // a graph-level BaseAction field
+            graph.AddNode(new CustomNode { Id = "n", NodeType = "custom", Completion = nodeCondition }); // a node BaseCondition field
+
+            _path = "Assets/_GraphAssetBuilderCustomTest.asset";
+            GraphAssetBuilder.Save(graph, _path);
+
+            Assert.IsTrue(AssetDatabase.Contains(nodeCondition),
+                "a node subclass's own BaseCondition field is swept as a sub-asset (not just OnEnter/Exit/Entry).");
+            Assert.IsTrue(AssetDatabase.Contains(graphReward),
+                "a graph-level BaseAction field is swept as a sub-asset.");
         }
     }
 }

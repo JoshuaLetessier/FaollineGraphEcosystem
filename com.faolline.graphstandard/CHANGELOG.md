@@ -4,6 +4,22 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.10.2]
+
+### Changed
+- **Scalar conditions are silent on an absent key by default.** `BoolCondition`, `IntCondition`,
+  `FloatCondition` and `StringCondition` now read a missing parameter key as `false` *without* logging — matching
+  the collection conditions, which were already silent. An optional `WarnOnMissing` toggle (default `false`)
+  opts back into the previous warning when a configurator wants it. A *wrong-typed* value still always warns (a
+  real misconfiguration, not an absence). Backlog finding #2.
+
+### Fixed
+- **`GraphAssetBuilder.Save` now sweeps sub-asset references generically.** It reflects over every
+  `BaseCondition` / `BaseAction` field (single or `List<>`) on the graph itself and on any node subclass, so a
+  downstream lib's own node type (e.g. a quest objective's completion condition + reward) is persisted as a
+  self-contained sub-asset without the builder knowing the type. Previously only the universal
+  OnEnter/OnExit/Entry/Resume hooks (and choice conditions) were collected. Backlog finding #3.
+
 ## [0.10.1]
 
 ### Changed
