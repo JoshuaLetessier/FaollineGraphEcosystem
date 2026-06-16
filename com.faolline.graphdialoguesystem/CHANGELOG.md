@@ -4,7 +4,16 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.6.0]
+## [0.7.0]
+
+### Removed (breaking)
+- **The back-compat primitive subclasses are gone.** `BoolCondition`, `IntCondition`, `FloatCondition`,
+  `StringCondition`, `AlwaysTrueCondition`, `AlwaysFalseCondition`, `SetBoolAction`, `SetIntAction`,
+  `SetFloatAction`, `SetStringAction`, `LogAction` (the thin subclasses kept in 0.5.6 / 0.6.0) were removed now
+  that the canonical implementations live in GraphCore. **Use `Faolline.GraphCore.*` directly.** This fully
+  eliminates the CS0104 ambiguity with `GraphStandard.*`. Existing assets typed as the old `GraphDialogue.*`
+  primitives must be re-pointed to the GraphCore type. (Dialogue-specific nodes — lines, speakers, choices,
+  inline effects — are unaffected.)
 
 ### Changed
 - **The primitive condition/action set now subclasses the canonical GraphCore types** (following the bool pair in

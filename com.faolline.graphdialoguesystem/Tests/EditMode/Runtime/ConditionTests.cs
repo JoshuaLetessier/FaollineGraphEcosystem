@@ -4,7 +4,6 @@ using UnityEngine.TestTools;
 using System.Text.RegularExpressions;
 using Faolline.GraphCore;
 using Faolline.GraphDialogue;
-using BoolCondition = Faolline.GraphDialogue.BoolCondition;   // disambiguate from Faolline.GraphCore.BoolCondition
 
 namespace Faolline.GraphDialogue.Tests
 {

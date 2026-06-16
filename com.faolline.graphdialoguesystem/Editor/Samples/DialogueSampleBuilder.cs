@@ -3,10 +3,6 @@ using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphLocalization;
-// Bool* now live in both Faolline.GraphCore (canonical) and Faolline.GraphDialogue (back-compat subclass) — pin
-// to the GraphDialogue ones the sample builds.
-using BoolCondition = Faolline.GraphDialogue.BoolCondition;
-using SetBoolAction = Faolline.GraphDialogue.SetBoolAction;
 
 namespace Faolline.GraphDialogue.Editor
 {

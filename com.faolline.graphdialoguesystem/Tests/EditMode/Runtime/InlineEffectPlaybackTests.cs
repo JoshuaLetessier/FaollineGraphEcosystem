@@ -3,7 +3,6 @@ using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphDialogue;
-using SetBoolAction = Faolline.GraphDialogue.SetBoolAction;   // disambiguate from Faolline.GraphCore.SetBoolAction
 
 namespace Faolline.GraphDialogue.Tests
 {
