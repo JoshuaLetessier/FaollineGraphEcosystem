@@ -1,10 +1,10 @@
 ﻿{
     "name": "com.faolline.starterGraph",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "displayName": "Faolline StarterGraph",
     "description": "Minimal starter TEMPLATE to copy when building a new graphcore-based sub-library: a concrete graph type, a typed context + keys, and one example node / action / condition, with the editor window and a small sample. The standard set/compare/log nodes now live in com.faolline.graphstandard — reference that instead of re-copying them.",
     "unity": "6000.0",
     "dependencies": {
-        "com.faolline.graphcore": "0.14.0"
+        "com.faolline.graphcore": "0.17.0"
     }
 }

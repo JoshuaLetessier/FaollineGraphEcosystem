@@ -1,11 +1,11 @@
 {
     "name": "com.faolline.graphTest",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "displayName": "Faolline GraphTest",
     "description": "Concrete verification package for com.faolline.graphcore. Exercises the full editor and runtime surface.",
     "unity": "6000.0",
     "dependencies": {
-        "com.faolline.graphcore": "0.14.0",
-        "com.faolline.graphstandard": "0.10.1"
+        "com.faolline.graphcore": "0.17.0",
+        "com.faolline.graphstandard": "0.12.0"
     }
 }
