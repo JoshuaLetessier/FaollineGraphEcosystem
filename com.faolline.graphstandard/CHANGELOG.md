@@ -4,6 +4,13 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.12.1]
+
+### Changed
+- **Documented the auto-GUID node id on `GraphNodeBuilder`.** Clarified on the class summary that every added node
+  gets a generated GUID id and that you must call `.Id("…")` to give a stable, readable id when runtime code (or a
+  save key, or another graph) addresses the node by string — easy to forget. Doc-only. Cryptique rebuild finding.
+
 ## [0.12.0]
 
 ### Removed (breaking)

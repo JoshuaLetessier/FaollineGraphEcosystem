@@ -7,6 +7,12 @@ namespace Faolline.GraphStandard
     /// <summary>
     /// A fluent handle to a node being built by a <see cref="GraphBuilderBase"/>. Every setter returns the
     /// same handle for chaining. The underlying data is reachable via <see cref="Node"/> (an escape hatch).
+    /// <para>
+    /// By default every added node gets an auto-generated GUID id. If runtime code (or another graph) addresses
+    /// this exact node by a known string — e.g. <c>evaluator.GetState("snowman")</c> or a save key — call
+    /// <see cref="Id"/> to give it a stable, readable id (before wiring edges). Easy to forget; the GUID is fine
+    /// for nodes you only reach by reference.
+    /// </para>
     /// </summary>
     public sealed class GraphNodeBuilder
     {
