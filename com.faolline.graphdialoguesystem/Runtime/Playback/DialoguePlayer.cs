@@ -53,17 +53,22 @@ namespace Faolline.GraphDialogue
         /// <summary>The underlying runner state.</summary>
         public RunnerState State => _runner.State;
 
+        /// <param name="titleFallback">When true, a line/choice whose localization key is missing renders its
+        /// authored node Title instead of the <c>#key</c> marker — handy for code-built graphs that have no CSV yet.
+        /// Mirrors <see cref="DialoguePresenter"/>'s own option (the standalone player previously had no way to set
+        /// it, so code-built dialogues showed <c>#line_&lt;id&gt;</c>).</param>
         public DialoguePlayer(
             DialogueGraph graph,
             DialogueContext context,
             ILocalizationProvider localization,
             Func<string, Speaker> speakerLookup = null,
             LocalizationStrictMode strictMode = LocalizationStrictMode.Permissive,
-            ILocalizedAssetProvider assets = null)
+            ILocalizedAssetProvider assets = null,
+            bool titleFallback = false)
         {
             _graph = graph;
             _context = context ?? new DialogueContext();
-            _presenter = new DialoguePresenter(localization, assets, speakerLookup, strictMode);
+            _presenter = new DialoguePresenter(localization, assets, speakerLookup, strictMode, titleFallback);
             _presenter.OnMissingKey += key => OnMissingKey?.Invoke(key);
 
             _runner.OnEnded += reason =>

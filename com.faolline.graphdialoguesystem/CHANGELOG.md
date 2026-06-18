@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.2]
+
+### Added
+- **`DialoguePlayer` now accepts `titleFallback`** (optional ctor arg, default false), forwarded to its internal
+  `DialoguePresenter`. Previously only `DialoguePresenter` could opt in, so a standalone code-built dialogue with
+  no CSV rendered `#line_<id>` markers — now the standalone path can fall back to the authored node Title too.
+  Resolves the player/presenter asymmetry surfaced by the Cryptique rebuild.
+
 ## [0.7.1]
 
 ### Changed
