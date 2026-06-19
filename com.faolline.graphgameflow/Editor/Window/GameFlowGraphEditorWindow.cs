@@ -20,6 +20,17 @@ namespace Faolline.GraphGameFlow.Editor
         [MenuItem("Faolline/Open GraphGameFlow Editor")]
         public static void Open() => GetWindow<GameFlowGraphEditorWindow>("GraphGameFlow Editor");
 
+        /// <summary>Opens the editor with <paramref name="graph"/> loaded (used by GraphLink navigation).</summary>
+        public static void Open(GameFlowGraph graph)
+        {
+            var window = GetWindow<GameFlowGraphEditorWindow>("GraphGameFlow Editor");
+            window.LoadGraph(graph);
+        }
+
+        [InitializeOnLoadMethod]
+        private static void RegisterForGraphLinkNavigation() =>
+            GraphEditorWindowRegistry.Register(typeof(GameFlowGraph), g => Open((GameFlowGraph)g));
+
         [OnOpenAsset]
         private static bool OnOpenAsset(int instanceId, int line)
         {
