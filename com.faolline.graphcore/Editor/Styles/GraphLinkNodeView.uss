@@ -1,0 +1,26 @@
+/* GraphLink annotation node — visually distinct from executable nodes (dashed, cool-blue, italic). */
+
+.graphlink-node #node-border {
+    border-color: rgba(120, 170, 255, 0.9);
+    border-width: 1px;
+    border-radius: 6px;
+}
+
+.graphlink-node #title {
+    background-color: rgba(58, 86, 138, 0.55);
+    -unity-font-style: italic;
+}
+
+.graphlink-node #title-label {
+    -unity-font-style: italic;
+}
+
+.graphlink-note {
+    -unity-font-style: italic;
+    opacity: 0.7;
+    margin-left: 6px;
+    margin-right: 6px;
+    margin-top: 2px;
+    margin-bottom: 2px;
+    white-space: normal;
+}

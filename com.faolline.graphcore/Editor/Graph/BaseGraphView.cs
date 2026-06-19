@@ -133,7 +133,7 @@ namespace Faolline.GraphCore.Editor
 
                 foreach (var nodeData in _graph.Nodes)
                 {
-                    var view = CreateNodeView(nodeData);
+                    var view = ResolveNodeView(nodeData);
                     if (view == null) continue;
                     view.SetPosition(new Rect(nodeData.Position, Vector2.zero));
                     view.TitleChanged += OnNodeTitleChanged;
@@ -495,6 +495,11 @@ namespace Faolline.GraphCore.Editor
 
                 var label = hasNodeSelection ? "Group Selection" : "Add Group";
                 evt.menu.AppendAction(label, _ => GroupSelection(contentViewContainer.WorldToLocal(evt.mousePosition)));
+
+                // Universal documentary cross-reference (non-executing). Available in every lib editor.
+                evt.menu.AppendAction("Add GraphLink (reference)", _ =>
+                    AddNodeToCanvas(new GraphLinkNodeData { NodeType = GraphLinkNodeData.NodeTypeId },
+                                    contentViewContainer.WorldToLocal(evt.mousePosition)));
             }
         }
 
@@ -524,6 +529,11 @@ namespace Faolline.GraphCore.Editor
         /// Create and return a <see cref="BaseNodeView"/> for the given node data.
         /// </summary>
         protected abstract BaseNodeView CreateNodeView(BaseNodeData node);
+
+        // Universal GraphCore node types get their view here (so they render in EVERY lib editor with no per-lib
+        // code); everything else delegates to the lib's CreateNodeView. Currently: the GraphLink annotation.
+        private BaseNodeView ResolveNodeView(BaseNodeData node)
+            => node is GraphLinkNodeData link ? new GraphLinkNodeView(link) : CreateNodeView(node);
 
         /// <summary>
         /// Create and return a <see cref="BaseEdgeView"/> for the given edge data.
@@ -557,7 +567,7 @@ namespace Faolline.GraphCore.Editor
 
             _graph.AddNode(nodeData);
 
-            var view = CreateNodeView(nodeData);
+            var view = ResolveNodeView(nodeData);
             if (view == null) return;
 
             view.SetPosition(new Rect(position, Vector2.zero));

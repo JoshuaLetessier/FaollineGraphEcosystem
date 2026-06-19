@@ -4,6 +4,20 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.18.0]
+
+### Added
+- **`GraphLinkNodeData` — a non-executing, documentary cross-reference node.** It holds a `BaseGraph TargetGraph`
+  (any kind) + an optional `Note`, and is NEVER executed: the runner passes straight through it like a comment if
+  it is ever wired onto the path (no pause, no actions, no executor, no access to the target). Use it to make
+  composition visible — e.g. annotate a zone's flow with the quests that belong to it. Distinct from
+  `SubGraphNodeData` (which IS executed). Renders via a new `GraphLinkNodeView` in EVERY lib editor (handled in
+  `BaseGraphView`, no per-lib code) and there is an "Add GraphLink (reference)" canvas menu entry.
+- **`GraphEditorWindowRegistry` (Editor)** — an opt-in `graph type → opener` map (mirrors `NodeTypeColorRegistry`):
+  downstream lib editors register their window, and double-clicking a GraphLink opens its target in the right
+  editor. Falls back to selecting/pinging the asset with a `[GraphCore]` diagnostic when no editor is registered
+  (never throws). GraphCore keeps zero knowledge of any specific lib.
+
 ## [0.17.0]
 
 ### Added

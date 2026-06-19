@@ -376,6 +376,15 @@ namespace Faolline.GraphCore
                 return;
             }
 
+            // GraphLink is a NON-executing documentary reference. It normally sits OFF the path; if it is wired
+            // onto the path, pass straight through it like a comment — no conditions, actions, executor, pause,
+            // or access to its TargetGraph — so a run is unaffected by its presence.
+            if (node is GraphLinkNodeData)
+            {
+                ExitAndAdvance();
+                return;
+            }
+
             // 1. EntryConditions
             foreach (var condition in node.EntryConditions)
             {
