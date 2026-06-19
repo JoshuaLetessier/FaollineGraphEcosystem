@@ -497,9 +497,10 @@ namespace Faolline.GraphCore.Editor
                 evt.menu.AppendAction(label, _ => GroupSelection(contentViewContainer.WorldToLocal(evt.mousePosition)));
 
                 // Universal documentary cross-reference (non-executing). Available in every lib editor.
+                // Capture the canvas position NOW (the event is stale inside the deferred action lambda).
+                var graphLinkPos = contentViewContainer.WorldToLocal(evt.mousePosition);
                 evt.menu.AppendAction("Add GraphLink (reference)", _ =>
-                    AddNodeToCanvas(new GraphLinkNodeData { NodeType = GraphLinkNodeData.NodeTypeId },
-                                    contentViewContainer.WorldToLocal(evt.mousePosition)));
+                    AddNodeToCanvas(new GraphLinkNodeData { NodeType = GraphLinkNodeData.NodeTypeId }, graphLinkPos));
             }
         }
 

@@ -220,8 +220,9 @@ namespace Faolline.GraphCore.Editor
         /// </summary>
         protected void BuildUniversalNodeSections(BaseNodeData node)
         {
-            if (node is EndNodeData endNode)      BuildEndReasonSection(endNode);
-            if (node is SubGraphNodeData subNode) BuildSubGraphSection(subNode);
+            if (node is EndNodeData endNode)        BuildEndReasonSection(endNode);
+            if (node is SubGraphNodeData subNode)   BuildSubGraphSection(subNode);
+            if (node is GraphLinkNodeData linkNode) BuildGraphLinkSection(linkNode);
         }
 
         /// <summary>Sets the node's end reason, marks the graph dirty, refreshes if bound.</summary>
@@ -239,6 +240,31 @@ namespace Faolline.GraphCore.Editor
             var field = new EnumField("End Reason", node.EndReason);
             field.RegisterValueChangedCallback(e => { node.EndReason = (EndReason)e.newValue; MarkGraphDirty(); });
             foldout.Add(field);
+            Add(foldout);
+        }
+
+        // The GraphLink section: pick the referenced graph + an optional note. No cycle check — a GraphLink is a
+        // documentary reference, never executed, so referencing any graph (even the host) is harmless.
+        private void BuildGraphLinkSection(GraphLinkNodeData node)
+        {
+            var foldout = new Foldout { text = "GraphLink (reference)", value = true };
+
+            var targetField = new ObjectField("Target Graph")
+            {
+                objectType = typeof(BaseGraph), allowSceneObjects = false, value = node.TargetGraph
+            };
+            targetField.RegisterValueChangedCallback(e =>
+            {
+                node.TargetGraph = e.newValue as BaseGraph;
+                MarkGraphDirty();
+                RefreshIfBound(node);   // the canvas label re-derives from the target on the next reload (Save / ↻)
+            });
+            foldout.Add(targetField);
+
+            var noteField = new TextField("Note") { value = node.Note ?? string.Empty };
+            noteField.RegisterValueChangedCallback(e => { node.Note = e.newValue; MarkGraphDirty(); });
+            foldout.Add(noteField);
+
             Add(foldout);
         }
 
