@@ -20,10 +20,16 @@ namespace Faolline.GraphGameFlow.Editor
         [MenuItem("Faolline/Open GraphGameFlow Editor")]
         public static void Open() => GetWindow<GameFlowGraphEditorWindow>("GraphGameFlow Editor");
 
-        /// <summary>Opens the editor with <paramref name="graph"/> loaded (used by GraphLink navigation).</summary>
+        /// <summary>Opens <paramref name="graph"/> in its OWN window (used by GraphLink navigation) — reuses a
+        /// window already showing this graph, otherwise creates one; never steals another open editor (e.g. the
+        /// host flow you double-clicked the GraphLink from).</summary>
         public static void Open(GameFlowGraph graph)
         {
-            var window = GetWindow<GameFlowGraphEditorWindow>("GraphGameFlow Editor");
+            if (graph == null) return;
+            foreach (var existing in Resources.FindObjectsOfTypeAll<GameFlowGraphEditorWindow>())
+                if (existing.LoadedGraph == graph) { existing.Focus(); return; }
+            var window = CreateWindow<GameFlowGraphEditorWindow>();
+            window.titleContent = new GUIContent(graph.name);
             window.LoadGraph(graph);
         }
 
