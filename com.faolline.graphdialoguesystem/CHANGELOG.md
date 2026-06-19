@@ -4,6 +4,13 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.3]
+
+### Changed
+- **Dialogue editor registers for GraphLink navigation.** `DialogueGraphEditorWindow` now registers itself with
+  `GraphEditorWindowRegistry` (and exposes `Open(DialogueGraph)`), so double-clicking a `GraphLinkNodeData` that
+  targets a `DialogueGraph` opens it in the Dialogue editor. Dependency floor: graphcore `0.17.0` → `0.18.0`.
+
 ## [0.7.2]
 
 ### Added
