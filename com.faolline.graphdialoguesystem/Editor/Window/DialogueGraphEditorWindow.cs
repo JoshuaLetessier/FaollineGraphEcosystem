@@ -65,10 +65,15 @@ namespace Faolline.GraphDialogue.Editor
         [MenuItem("Faolline/Open Dialogue Graph Editor")]
         public static void Open() => GetWindow<DialogueGraphEditorWindow>("Dialogue Graph Editor");
 
-        /// <summary>Opens the editor with <paramref name="graph"/> loaded (used by GraphLink navigation).</summary>
+        /// <summary>Opens <paramref name="graph"/> in its OWN window (used by GraphLink navigation) — reuses a
+        /// window already showing this graph, otherwise creates one; never steals another open editor.</summary>
         public static void Open(DialogueGraph graph)
         {
-            var window = GetWindow<DialogueGraphEditorWindow>("Dialogue Graph Editor");
+            if (graph == null) return;
+            foreach (var existing in Resources.FindObjectsOfTypeAll<DialogueGraphEditorWindow>())
+                if (existing.LoadedGraph == graph) { existing.Focus(); return; }
+            var window = CreateWindow<DialogueGraphEditorWindow>();
+            window.titleContent = new GUIContent(graph.name);
             window.LoadGraph(graph);
         }
 
