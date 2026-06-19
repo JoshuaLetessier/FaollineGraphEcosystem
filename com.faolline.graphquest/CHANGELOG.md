@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.5]
+
+### Changed
+- **Quest editor registers for GraphLink navigation.** `QuestGraphEditorWindow` now registers itself with
+  `GraphEditorWindowRegistry` (and exposes `Open(QuestGraph)`), so double-clicking a `GraphLinkNodeData` that
+  targets a `QuestGraph` opens it in the Quest editor. Dependency floor: graphcore `0.17.0` → `0.18.0`. No
+  runtime/API change to the quest library itself.
+
 ## [0.1.4]
 
 ### Changed
