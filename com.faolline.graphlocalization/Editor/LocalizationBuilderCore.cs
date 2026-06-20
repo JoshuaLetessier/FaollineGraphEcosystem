@@ -31,6 +31,11 @@ namespace Faolline.GraphLocalization.Editor
             }
 
             var settingsAsset = LocalizationSettingsLoader.Load();
+            if (settingsAsset == null)
+            {
+                settingsAsset = EnsureSettingsAsset();
+                Debug.Log("[LocalizationBuilderCore] Auto-created GraphLocalizationSettings with defaults.");
+            }
             var validation = settingsAsset?.LocaleValidation ?? LocaleValidationMode.Warn;
 
             var manifest = GetOrCreateManifest();
@@ -220,6 +225,22 @@ namespace Faolline.GraphLocalization.Editor
             AssetDatabase.SaveAssets();
             Debug.Log($"[LocalizationBuilderCore] Created localization manifest at {path}");
             return manifest;
+        }
+
+        private static LocalizationSettingsAsset EnsureSettingsAsset()
+        {
+            var existing = LocalizationSettingsLoader.Load();
+            if (existing != null) return existing;
+
+            var path = LocalizationSettingsLoader.GetDefaultAssetPath();
+            var folder = System.IO.Path.GetDirectoryName(path)?.Replace('\\', '/');
+            if (!string.IsNullOrEmpty(folder) && !AssetDatabase.IsValidFolder(folder))
+                AssetDatabase.CreateFolder("Assets", "Resources");
+
+            var asset = ScriptableObject.CreateInstance<LocalizationSettingsAsset>();
+            AssetDatabase.CreateAsset(asset, path);
+            AssetDatabase.SaveAssets();
+            return asset;
         }
 
         private static string SanitizeFileName(string name)

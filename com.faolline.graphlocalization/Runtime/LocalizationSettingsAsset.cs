@@ -45,6 +45,10 @@ namespace Faolline.GraphLocalization
             "• Strict: log gaps as errors (pre-release QA gate).")]
         private LocaleValidationMode _localeValidation = LocaleValidationMode.Warn;
 
+        [Header("Editor")]
+        [SerializeField, Tooltip("When enabled, localization tables are rebuilt automatically whenever a graph asset is saved. Disable for large projects where the rebuild is slow.")]
+        private bool _autoBuild = true;
+
         [Header("Runtime playback")]
         [SerializeField, Tooltip("How the player reacts when a key cannot be resolved during playback.\n\n" +
             "• Permissive: use the #key fallback silently.\n" +
@@ -52,6 +56,7 @@ namespace Faolline.GraphLocalization
             "• Strict: throw a LocalizationException on the first missing key.")]
         private LocalizationStrictMode _playerStrictMode = LocalizationStrictMode.Audit;
 
+        public bool AutoBuild => _autoBuild;
         public LocalizationMode Mode => _mode;
         public string UnityLocalizationTableName => _unityLocalizationTableName;
 
