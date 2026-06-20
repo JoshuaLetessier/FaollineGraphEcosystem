@@ -237,16 +237,24 @@ namespace Faolline.GraphLocalization.Editor
 
         private static void DrawGraphEntry(LocalizationGraphEntry graph)
         {
-            int text = 0, choice = 0, speaker = 0;
+            int text = 0, choice = 0, speaker = 0, quest = 0, objective = 0;
             foreach (var k in graph.Keys)
             {
                 if (k.Type == LocalizationKeyType.Text) text++;
                 else if (k.Type == LocalizationKeyType.ChoiceLabel) choice++;
                 else if (k.Type == LocalizationKeyType.SpeakerName) speaker++;
+                else if (k.Type == LocalizationKeyType.QuestName) quest++;
+                else if (k.Type == LocalizationKeyType.ObjectiveName || k.Type == LocalizationKeyType.ObjectiveDescription) objective++;
             }
 
             var summary = $"{graph.GraphName}  —  {graph.Keys.Count} keys";
-            var detail = $"text:{text}  choice:{choice}  speaker:{speaker}";
+            var parts = new System.Collections.Generic.List<string>();
+            if (text > 0) parts.Add($"text:{text}");
+            if (choice > 0) parts.Add($"choice:{choice}");
+            if (speaker > 0) parts.Add($"speaker:{speaker}");
+            if (quest > 0) parts.Add($"quest:{quest}");
+            if (objective > 0) parts.Add($"objective:{objective}");
+            var detail = parts.Count > 0 ? string.Join("  ", parts) : "—";
             EditorGUILayout.BeginHorizontal();
             EditorGUILayout.LabelField(summary, _keyStyle ?? EditorStyles.label);
             EditorGUILayout.LabelField(detail, _dimStyle ?? EditorStyles.miniLabel);
