@@ -78,11 +78,13 @@ namespace Faolline.GraphLocalization
 
         public IReadOnlyList<LocalizationKeyEntry> Keys => _keys;
 
-        public void AddKey(string key, LocalizationKeyType type, string nodeId = "", string defaultHint = "")
+        public void AddKey(string key, LocalizationKeyType type, string nodeId = "", string defaultHint = "", bool hasLocalizedAsset = false)
         {
             var existing = _keys.Find(k => k.Key == key && k.Type == type);
             if (existing == null)
-                _keys.Add(new LocalizationKeyEntry { Key = key, Type = type, NodeId = nodeId, DefaultHint = defaultHint });
+                _keys.Add(new LocalizationKeyEntry { Key = key, Type = type, NodeId = nodeId, DefaultHint = defaultHint, HasLocalizedAsset = hasLocalizedAsset });
+            else if (hasLocalizedAsset && !existing.HasLocalizedAsset)
+                existing.HasLocalizedAsset = true;
         }
 
         public void Clear() => _keys.Clear();
@@ -95,6 +97,7 @@ namespace Faolline.GraphLocalization
         public LocalizationKeyType Type;
         public string NodeId;
         public string DefaultHint;
+        public bool HasLocalizedAsset;
     }
 
     [Serializable]

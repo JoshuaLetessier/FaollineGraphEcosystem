@@ -66,7 +66,11 @@ namespace Faolline.GraphLocalization.Unity.Editor
                     SyncEntries(col, graphEntry.Keys, sourceLocale, report);
                     managed.Add(col);
                 }
-                if (generateAssetTables) EnsureAssetCollection(name + AssetCollectionSuffix, folder, graphEntry.Keys, locales);
+                if (generateAssetTables)
+                {
+                    var assetKeys = FilterAssetKeys(graphEntry.Keys);
+                    if (assetKeys.Count > 0) EnsureAssetCollection(name + AssetCollectionSuffix, folder, assetKeys, locales);
+                }
             }
 
             // Global collection (speakers, etc.) in Collections/{lib}/_Global/
@@ -83,7 +87,11 @@ namespace Faolline.GraphLocalization.Unity.Editor
                     SyncEntries(globalCol, database.GlobalKeys, sourceLocale, report);
                     managed.Add(globalCol);
                 }
-                if (generateAssetTables) EnsureAssetCollection(globalName + AssetCollectionSuffix, folder, database.GlobalKeys, locales);
+                if (generateAssetTables)
+                {
+                    var assetKeys = FilterAssetKeys(database.GlobalKeys);
+                    if (assetKeys.Count > 0) EnsureAssetCollection(globalName + AssetCollectionSuffix, folder, assetKeys, locales);
+                }
             }
 
             ReportOrphanCollections(libFolder, desiredNames, report);
@@ -234,6 +242,14 @@ namespace Faolline.GraphLocalization.Unity.Editor
 
             EditorUtility.SetDirty(shared);
             foreach (var t in col.AssetTables) if (t != null) EditorUtility.SetDirty(t);
+        }
+
+        private static IReadOnlyList<LocalizationKeyEntry> FilterAssetKeys(IReadOnlyList<LocalizationKeyEntry> keys)
+        {
+            var result = new List<LocalizationKeyEntry>();
+            foreach (var k in keys)
+                if (k != null && k.HasLocalizedAsset) result.Add(k);
+            return result;
         }
 
         // ── Entries ──────────────────────────────────────────────────────────────

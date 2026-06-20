@@ -29,6 +29,9 @@ namespace Faolline.GraphCore
         private List<BaseCondition> _resumeConditions = new List<BaseCondition>();
         [SerializeField] private float  _waitDuration;
 
+        [SerializeField, Tooltip("Whether this node's text has a matching localized asset (voice clip, image, video…). None = text only. Set per-node by the content author; read by the localization pipeline to decide which keys get Asset Table entries.")]
+        private LocalizedAssetMode _localizedAssetMode = LocalizedAssetMode.None;
+
         /// <summary>Unique identifier (GUID) for this node.</summary>
         public string Id
         {
@@ -128,5 +131,29 @@ namespace Faolline.GraphCore
             get => _waitDuration;
             set => _waitDuration = value;
         }
+
+        /// <summary>
+        /// Whether this node's localization key should produce a matching localized asset entry
+        /// (voice clip, image, video). <see cref="LocalizedAssetMode.None"/> (the default) means
+        /// text only — no Asset Table entry is created. Set by the content author in the inspector.
+        /// </summary>
+        public LocalizedAssetMode LocalizedAssetMode
+        {
+            get => _localizedAssetMode;
+            set => _localizedAssetMode = value;
+        }
+    }
+
+    /// <summary>
+    /// Whether a node's text has a matching localized asset. Controls which keys get
+    /// Asset Table entries in the localization pipeline. Extensible per project needs.
+    /// </summary>
+    public enum LocalizedAssetMode
+    {
+        None = 0,
+        Audio = 1,
+        Image = 2,
+        Video = 3,
+        Custom = 4,
     }
 }

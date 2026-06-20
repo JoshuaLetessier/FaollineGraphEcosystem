@@ -38,10 +38,12 @@ namespace Faolline.GraphQuest.Editor
             {
                 if (!(node is ObjectiveNodeData obj)) continue;
                 if (string.IsNullOrEmpty(obj.Id)) continue;
+                bool hasAsset = obj.LocalizedAssetMode != Faolline.GraphCore.LocalizedAssetMode.None;
 
                 var objNameKey = QuestLocalizationKeys.ForObjective(obj.Id);
                 entry.AddKey(objNameKey, LocalizationKeyType.ObjectiveName,
-                    defaultHint: string.IsNullOrEmpty(obj.Title) ? obj.Id : obj.Title);
+                    defaultHint: string.IsNullOrEmpty(obj.Title) ? obj.Id : obj.Title,
+                    hasLocalizedAsset: hasAsset);
                 count++;
 
                 if (!string.IsNullOrEmpty(obj.Description))

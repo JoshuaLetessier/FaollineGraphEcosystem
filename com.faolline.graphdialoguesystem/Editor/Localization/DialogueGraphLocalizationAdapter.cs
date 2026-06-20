@@ -20,26 +20,18 @@ namespace Faolline.GraphDialogue.Editor
         protected override int ExtractGraphKeys(DialogueGraph graph, LocalizationGraphEntry entry)
         {
             if (graph?.Nodes == null) return 0;
-
-            var seen = new Dictionary<(string, LocalizationKeyType), string>();
-
-            void Register(string key, LocalizationKeyType type, string hint)
-            {
-                var id = (key, type);
-                if (seen.TryGetValue(id, out var existing))
-                { if (string.IsNullOrEmpty(existing) && !string.IsNullOrEmpty(hint)) seen[id] = hint; }
-                else seen[id] = hint ?? string.Empty;
-            }
+            int count = 0;
 
             foreach (var node in graph.Nodes)
             {
                 if (node == null) continue;
+                bool hasAsset = node.LocalizedAssetMode != GraphCore.LocalizedAssetMode.None;
 
                 if (node is DialogueLineNodeData lineNode)
                 {
                     var key = DialogueLocalizationKeys.ForLine(lineNode);
                     if (!string.IsNullOrEmpty(key))
-                        Register(key, LocalizationKeyType.Text, lineNode.Title);
+                    { entry.AddKey(key, LocalizationKeyType.Text, defaultHint: lineNode.Title, hasLocalizedAsset: hasAsset); count++; }
                 }
 
                 if (node is ChoiceNodeData choiceNode && choiceNode.Choices != null)
@@ -49,14 +41,12 @@ namespace Faolline.GraphDialogue.Editor
                         if (choice == null) continue;
                         var key = DialogueLocalizationKeys.ForChoice(choice);
                         if (!string.IsNullOrEmpty(key))
-                            Register(key, LocalizationKeyType.ChoiceLabel, choice.Title);
+                        { entry.AddKey(key, LocalizationKeyType.ChoiceLabel, defaultHint: choice.Title); count++; }
                     }
                 }
             }
 
-            foreach (var kvp in seen)
-                entry.AddKey(kvp.Key.Item1, kvp.Key.Item2, defaultHint: kvp.Value);
-            return seen.Count;
+            return count;
         }
 
         protected override int ExtractGlobalKeys(LocalizationDatabase database)
