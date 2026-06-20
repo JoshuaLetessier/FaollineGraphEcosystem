@@ -18,6 +18,8 @@ namespace Faolline.GraphCore
         [SerializeField]   private List<GraphGroupData> _groups     = new List<GraphGroupData>();
         [SerializeField, HideInInspector] private string             _entryNodeId;
         [SerializeField]   private int                _historyDepth = 20;
+        [SerializeField, Tooltip("Default localized asset flags applied to all nodes via 'Apply to all nodes'. Individual nodes can still be overridden after.")]
+        private LocalizedAssetFlags _defaultLocalizedAssetFlags = LocalizedAssetFlags.Text;
 
         private void OnEnable()
         {
@@ -83,5 +85,19 @@ namespace Faolline.GraphCore
 
         /// <summary>Removes a parameter from this graph. Use from editor tooling only.</summary>
         public void RemoveParameter(ParameterData parameter) => _parameters.Remove(parameter);
+
+        /// <summary>Default <see cref="LocalizedAssetFlags"/> for bulk-apply to all nodes.</summary>
+        public LocalizedAssetFlags DefaultLocalizedAssetFlags
+        {
+            get => _defaultLocalizedAssetFlags;
+            set => _defaultLocalizedAssetFlags = value;
+        }
+
+        /// <summary>Sets every node's <see cref="BaseNodeData.LocalizedAssetFlags"/> to <see cref="DefaultLocalizedAssetFlags"/>.</summary>
+        public void ApplyLocalizedAssetFlagsToAllNodes()
+        {
+            foreach (var node in _nodes)
+                if (node != null) node.LocalizedAssetFlags = _defaultLocalizedAssetFlags;
+        }
     }
 }

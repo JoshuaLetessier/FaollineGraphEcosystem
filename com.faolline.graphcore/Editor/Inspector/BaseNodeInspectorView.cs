@@ -441,6 +441,53 @@ namespace Faolline.GraphCore.Editor
         /// </summary>
         protected virtual void OnNodeVisualsChanged() { }
 
+        /// <summary>
+        /// Renders a graph-level "Localization" section with the default asset flags and an
+        /// "Apply to all nodes" button. Call from <see cref="ClearInspector"/> (when no node is selected)
+        /// to show graph-wide settings.
+        /// </summary>
+        protected void AddGraphLocalizationSection(BaseGraph graph, System.Action markDirty)
+        {
+            if (graph == null) return;
+
+            var foldout = new Foldout { text = "Localization (Graph)", value = true };
+            foldout.style.marginTop = 4;
+
+            var flagValues = new[] {
+                ("Text",    (int)LocalizedAssetFlags.Text),
+                ("Audio",   (int)LocalizedAssetFlags.Audio),
+                ("Sprite",  (int)LocalizedAssetFlags.Sprite),
+                ("Texture", (int)LocalizedAssetFlags.Texture),
+                ("Video",   (int)LocalizedAssetFlags.Video),
+                ("Font",    (int)LocalizedAssetFlags.Font),
+            };
+
+            foreach (var (label, value) in flagValues)
+            {
+                var toggle = new Toggle(label) { value = ((int)graph.DefaultLocalizedAssetFlags & value) != 0 };
+                int flagValue = value;
+                toggle.RegisterValueChangedCallback(e =>
+                {
+                    var current = (int)graph.DefaultLocalizedAssetFlags;
+                    graph.DefaultLocalizedAssetFlags = (LocalizedAssetFlags)(e.newValue ? current | flagValue : current & ~flagValue);
+                    markDirty?.Invoke();
+                });
+                foldout.Add(toggle);
+            }
+
+            var applyBtn = new Button(() =>
+            {
+                graph.ApplyLocalizedAssetFlagsToAllNodes();
+                markDirty?.Invoke();
+                UnityEngine.Debug.Log($"[GraphLocalization] Applied {graph.DefaultLocalizedAssetFlags} to {graph.Nodes.Count} nodes.");
+            })
+            { text = "Apply to all nodes" };
+            applyBtn.style.marginTop = 4;
+            foldout.Add(applyBtn);
+
+            Add(foldout);
+        }
+
         private static void AddAssetFlagsToggles(VisualElement parent, SerializedProperty nodeElement, SerializedObject so)
         {
             var prop = nodeElement.FindPropertyRelative("_localizedAssetFlags");
