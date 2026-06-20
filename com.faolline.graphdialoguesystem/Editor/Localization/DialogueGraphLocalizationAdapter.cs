@@ -25,16 +25,19 @@ namespace Faolline.GraphDialogue.Editor
             foreach (var node in graph.Nodes)
             {
                 if (node == null) continue;
-                bool hasAsset = node.HasLocalizedAssets;
+                var flags = node.LocalizedAssetFlags;
+                bool wantsText = (flags & GraphCore.LocalizedAssetFlags.Text) != 0;
+                bool hasAsset = flags != GraphCore.LocalizedAssetFlags.None
+                             && flags != GraphCore.LocalizedAssetFlags.Text;
 
-                if (node is DialogueLineNodeData lineNode)
+                if (node is DialogueLineNodeData lineNode && wantsText)
                 {
                     var key = DialogueLocalizationKeys.ForLine(lineNode);
                     if (!string.IsNullOrEmpty(key))
                     { entry.AddKey(key, LocalizationKeyType.Text, defaultHint: lineNode.Title, hasLocalizedAsset: hasAsset); count++; }
                 }
 
-                if (node is ChoiceNodeData choiceNode && choiceNode.Choices != null)
+                if (node is ChoiceNodeData choiceNode && choiceNode.Choices != null && wantsText)
                 {
                     foreach (var choice in choiceNode.Choices)
                     {

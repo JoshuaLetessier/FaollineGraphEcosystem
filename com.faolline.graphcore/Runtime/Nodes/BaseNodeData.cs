@@ -30,7 +30,7 @@ namespace Faolline.GraphCore
         [SerializeField] private float  _waitDuration;
 
         [SerializeField, Tooltip("Which localized asset types accompany this node's text (voice clip, portrait, video…). None = text only. Combinable — e.g. Audio + Sprite for a voiced line with a localized portrait.")]
-        private LocalizedAssetFlags _localizedAssetFlags = LocalizedAssetFlags.None;
+        private LocalizedAssetFlags _localizedAssetFlags = LocalizedAssetFlags.Text;
 
         /// <summary>Unique identifier (GUID) for this node.</summary>
         public string Id

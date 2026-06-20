@@ -38,20 +38,26 @@ namespace Faolline.GraphQuest.Editor
             {
                 if (!(node is ObjectiveNodeData obj)) continue;
                 if (string.IsNullOrEmpty(obj.Id)) continue;
-                bool hasAsset = obj.HasLocalizedAssets;
+                var flags = obj.LocalizedAssetFlags;
+                bool wantsText = (flags & Faolline.GraphCore.LocalizedAssetFlags.Text) != 0;
+                bool hasAsset = flags != Faolline.GraphCore.LocalizedAssetFlags.None
+                             && flags != Faolline.GraphCore.LocalizedAssetFlags.Text;
 
-                var objNameKey = QuestLocalizationKeys.ForObjective(obj.Id);
-                entry.AddKey(objNameKey, LocalizationKeyType.ObjectiveName,
-                    defaultHint: string.IsNullOrEmpty(obj.Title) ? obj.Id : obj.Title,
-                    hasLocalizedAsset: hasAsset);
-                count++;
-
-                if (!string.IsNullOrEmpty(obj.Description))
+                if (wantsText)
                 {
-                    var objDescKey = QuestLocalizationKeys.ForObjectiveDescription(obj.Id);
-                    entry.AddKey(objDescKey, LocalizationKeyType.ObjectiveDescription,
-                        defaultHint: obj.Description);
+                    var objNameKey = QuestLocalizationKeys.ForObjective(obj.Id);
+                    entry.AddKey(objNameKey, LocalizationKeyType.ObjectiveName,
+                        defaultHint: string.IsNullOrEmpty(obj.Title) ? obj.Id : obj.Title,
+                        hasLocalizedAsset: hasAsset);
                     count++;
+
+                    if (!string.IsNullOrEmpty(obj.Description))
+                    {
+                        var objDescKey = QuestLocalizationKeys.ForObjectiveDescription(obj.Id);
+                        entry.AddKey(objDescKey, LocalizationKeyType.ObjectiveDescription,
+                            defaultHint: obj.Description);
+                        count++;
+                    }
                 }
             }
 
