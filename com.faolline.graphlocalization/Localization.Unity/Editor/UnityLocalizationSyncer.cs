@@ -54,38 +54,38 @@ namespace Faolline.GraphLocalization.Unity.Editor
             // Per-graph collections, each in its own subfolder: Collections/{lib}/{graph}/
             foreach (var graphEntry in database.Graphs)
             {
-                var prefix = Sanitize(libName) + "_";
-                var name = $"{prefix}{Sanitize(graphEntry.GraphName)}";
-                desiredNames.Add(name);
-                var folder = EnsureSubFolder(libFolder, Sanitize(graphEntry.GraphName));
+                var sanitizedGraph = Sanitize(graphEntry.GraphName);
+                var graphFolder = EnsureSubFolder(libFolder, sanitizedGraph);
+                var textName = $"{sanitizedGraph}_Text";
+                desiredNames.Add(textName);
                 if (generateStringTables)
                 {
-                    var col = GetOrCreateCollection(name, folder, report);
-                    MoveCollectionIfNeeded(col, $"{folder}/{name}", report);
+                    var col = GetOrCreateCollection(textName, graphFolder, report);
+                    MoveCollectionIfNeeded(col, $"{graphFolder}/{textName}", report);
                     EnsureTablesForAllLocales(col, locales);
                     SyncEntries(col, graphEntry.Keys, sourceLocale, report);
                     managed.Add(col);
                 }
                 if (generateAssetTables)
-                    CreatePerTypeAssetCollections(name, folder, graphEntry.Keys, locales);
+                    CreatePerTypeAssetCollections(sanitizedGraph, graphFolder, graphEntry.Keys, locales);
             }
 
             // Global collection (speakers, etc.) in Collections/{lib}/_Global/
             if (database.GlobalKeys.Count > 0)
             {
-                var globalName = $"{Sanitize(libName)}{GlobalCollectionSuffix}";
-                desiredNames.Add(globalName);
-                var folder = EnsureSubFolder(libFolder, "_Global");
+                var globalFolder = EnsureSubFolder(libFolder, "_Global");
+                var globalTextName = "Global_Text";
+                desiredNames.Add(globalTextName);
                 if (generateStringTables)
                 {
-                    var globalCol = GetOrCreateCollection(globalName, folder, report);
-                    MoveCollectionIfNeeded(globalCol, $"{folder}/{globalName}", report);
+                    var globalCol = GetOrCreateCollection(globalTextName, globalFolder, report);
+                    MoveCollectionIfNeeded(globalCol, $"{globalFolder}/{globalTextName}", report);
                     EnsureTablesForAllLocales(globalCol, locales);
                     SyncEntries(globalCol, database.GlobalKeys, sourceLocale, report);
                     managed.Add(globalCol);
                 }
                 if (generateAssetTables)
-                    CreatePerTypeAssetCollections(globalName, folder, database.GlobalKeys, locales);
+                    CreatePerTypeAssetCollections("Global", globalFolder, database.GlobalKeys, locales);
             }
 
             ReportOrphanCollections(libFolder, desiredNames, report);
@@ -238,28 +238,28 @@ namespace Faolline.GraphLocalization.Unity.Editor
             foreach (var t in col.AssetTables) if (t != null) EditorUtility.SetDirty(t);
         }
 
-        private static readonly (int flag, string suffix)[] AssetTypeMap = new[]
+        private static readonly (int flag, string name)[] AssetTypeMap = new[]
         {
-            (1 << 1, "_Audio"),
-            (1 << 2, "_Sprite"),
-            (1 << 3, "_Texture"),
-            (1 << 4, "_Video"),
-            (1 << 5, "_Font"),
+            (1 << 1, "Audio"),
+            (1 << 2, "Sprite"),
+            (1 << 3, "Texture"),
+            (1 << 4, "Video"),
+            (1 << 5, "Font"),
         };
 
-        private static void CreatePerTypeAssetCollections(string baseName, string parentFolder,
+        private static void CreatePerTypeAssetCollections(string graphPrefix, string folder,
             IReadOnlyList<LocalizationKeyEntry> keys, IList<Locale> locales)
         {
-            foreach (var (flag, suffix) in AssetTypeMap)
+            foreach (var (flag, typeName) in AssetTypeMap)
             {
+                var colName = $"{graphPrefix}_{typeName}";
                 var filtered = new List<LocalizationKeyEntry>();
                 foreach (var k in keys)
                     if (k != null && (k.AssetFlags & flag) != 0) filtered.Add(k);
 
                 if (filtered.Count == 0) continue;
 
-                var colName = baseName + suffix;
-                EnsureAssetCollection(colName, parentFolder, filtered, locales);
+                EnsureAssetCollection(colName, folder, filtered, locales);
             }
         }
 
