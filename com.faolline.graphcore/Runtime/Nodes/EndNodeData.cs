@@ -15,7 +15,7 @@ namespace Faolline.GraphCore
         [SerializeField]
         private EndReason _endReason = EndReason.Completed;
 
-        [SerializeField]
+        [SerializeField, Tooltip("Optional semantic label to distinguish multiple End nodes that share the same End Reason (e.g. \"persuaded\", \"rejected\"). Surfaced in the EndStep so the consumer can branch on the outcome without reading context flags.")]
         private string _outcomeLabel = string.Empty;
 
         /// <summary>The reason this graph execution path ended.</summary>
