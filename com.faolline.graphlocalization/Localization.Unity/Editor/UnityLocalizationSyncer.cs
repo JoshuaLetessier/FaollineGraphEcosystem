@@ -259,8 +259,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
                 if (filtered.Count == 0) continue;
 
                 var colName = baseName + suffix;
-                var folder = EnsureSubFolder(parentFolder, suffix.TrimStart('_'));
-                EnsureAssetCollection(colName, folder, filtered, locales);
+                EnsureAssetCollection(colName, parentFolder, filtered, locales);
             }
         }
 
