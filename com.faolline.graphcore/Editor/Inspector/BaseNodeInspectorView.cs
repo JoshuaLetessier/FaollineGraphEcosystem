@@ -220,8 +220,11 @@ namespace Faolline.GraphCore.Editor
         /// </summary>
         protected void BuildUniversalNodeSections(BaseNodeData node)
         {
-            if (node is EndNodeData endNode)      BuildEndReasonSection(endNode);
-            if (node is SubGraphNodeData subNode) BuildSubGraphSection(subNode);
+            if (node is EndNodeData endNode)        BuildEndReasonSection(endNode);
+            if (node is SubGraphNodeData subNode)   BuildSubGraphSection(subNode);
+            // GraphLink is NOT handled here: it is a non-executing documentary node, so it gets a dedicated
+            // minimal inspector (target + note only, no execution fields) via AddGraphLinkSection, which a
+            // subclass's BindNode calls early and returns — see that method.
         }
 
         /// <summary>Sets the node's end reason, marks the graph dirty, refreshes if bound.</summary>
@@ -239,6 +242,45 @@ namespace Faolline.GraphCore.Editor
             var field = new EnumField("End Reason", node.EndReason);
             field.RegisterValueChangedCallback(e => { node.EndReason = (EndReason)e.newValue; MarkGraphDirty(); });
             foldout.Add(field);
+            Add(foldout);
+        }
+
+        /// <summary>
+        /// Renders the dedicated, MINIMAL inspector for a GraphLink: just the target-graph picker
+        /// (a real <see cref="ObjectField"/>, never a string) and an optional note. A GraphLink is a
+        /// documentary reference that is never executed, so this deliberately OMITS every execution field
+        /// (title, checkpoint, color, conditions, on-enter/exit actions, await/wait) — those would be
+        /// meaningless noise on an annotation. No cycle check either: referencing any graph (even the host)
+        /// is harmless when nothing runs. A subclass's <see cref="BindNode"/> calls this early and returns,
+        /// so it shows the same clean panel in EVERY lib editor; <paramref name="markDirty"/> flags the
+        /// owning graph asset dirty after an edit (each inspector passes its own).
+        /// </summary>
+        protected void AddGraphLinkSection(GraphLinkNodeData node, System.Action markDirty)
+        {
+            if (node == null) return;
+
+            var foldout = new Foldout { text = "GraphLink (reference)", value = true };
+            foldout.Add(new Label("Documentary reference — not executed at runtime.")
+            {
+                style = { whiteSpace = WhiteSpace.Normal, opacity = 0.7f, marginBottom = 4 }
+            });
+
+            var targetField = new ObjectField("Target Graph")
+            {
+                objectType = typeof(BaseGraph), allowSceneObjects = false, value = node.TargetGraph
+            };
+            // The canvas label re-derives from the target on the next reload (Save / ↻).
+            targetField.RegisterValueChangedCallback(e =>
+            {
+                node.TargetGraph = e.newValue as BaseGraph;
+                markDirty?.Invoke();
+            });
+            foldout.Add(targetField);
+
+            var noteField = new TextField("Note") { value = node.Note ?? string.Empty };
+            noteField.RegisterValueChangedCallback(e => { node.Note = e.newValue; markDirty?.Invoke(); });
+            foldout.Add(noteField);
+
             Add(foldout);
         }
 

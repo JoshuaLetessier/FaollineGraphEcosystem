@@ -38,6 +38,11 @@ namespace Faolline.GraphGameFlow.Editor
             if (node == null) return;
 
             _boundNode = node;
+
+            // A GraphLink is a non-executing documentary reference → dedicated minimal panel (target + note),
+            // NOT the flow/execution fields. Render it and stop.
+            if (node is GraphLinkNodeData link) { AddGraphLinkSection(link, MarkGraphDirty); return; }
+
             if (_serializedGraph != null && _serializedGraph.targetObject == null)
                 _serializedGraph = _graph != null ? new SerializedObject(_graph) : null;
             _serializedGraph?.Update();

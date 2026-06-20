@@ -124,6 +124,17 @@ Built-in node types and their `NodeTypeId` constants:
 | `ChoiceNodeData` | `"graphcore/choice"` |
 | `EndNodeData` | `"graphcore/end"` |
 | `SubGraphNodeData` | `"graphcore/subgraph"` |
+| `GraphLinkNodeData` | `"graphcore/graph-link"` |
+
+### GraphLink — documentary cross-reference (non-executing)
+
+`GraphLinkNodeData` references another `BaseGraph` (`TargetGraph`, any kind) purely as **authoring
+documentation** — e.g. annotate a zone's flow with the quests that belong to it. Unlike `SubGraphNodeData`
+(which is *executed/traversed*), a GraphLink is **never run**: if it is ever wired onto the execution path the
+runner passes straight through it (no pause, no actions, no executor, no access to the target). It renders as a
+distinct "📎 Kind: Name" node in every lib editor, and **double-clicking it opens the target** in the proper
+editor via `GraphEditorWindowRegistry` (each lib editor registers its window; missing/unregistered → the asset
+is selected/pinged with a `[GraphCore]` diagnostic). See `specs/030-graphlink-navigation/quickstart.md`.
 
 ### BaseEdgeData
 

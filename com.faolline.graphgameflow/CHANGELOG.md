@@ -4,6 +4,13 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.3]
+
+### Changed
+- **GameFlow editor registers for GraphLink navigation.** `GameFlowGraphEditorWindow` now registers itself with
+  `GraphEditorWindowRegistry` (and exposes `Open(GameFlowGraph)`), so double-clicking a `GraphLinkNodeData` that
+  targets a `GameFlowGraph` opens it in the GameFlow editor. Dependency floor: graphcore `0.17.0` → `0.18.0`.
+
 ## [0.6.2]
 
 ### Changed

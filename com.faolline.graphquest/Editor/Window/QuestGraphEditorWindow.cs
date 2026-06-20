@@ -21,6 +21,22 @@ namespace Faolline.GraphQuest.Editor
         [MenuItem("Faolline/Open Quest Graph Editor")]
         public static void Open() => GetWindow<QuestGraphEditorWindow>("Quest Graph Editor");
 
+        /// <summary>Opens <paramref name="graph"/> in its OWN window (used by GraphLink navigation) — reuses a
+        /// window already showing this graph, otherwise creates one; never steals another open editor.</summary>
+        public static void Open(QuestGraph graph)
+        {
+            if (graph == null) return;
+            foreach (var existing in Resources.FindObjectsOfTypeAll<QuestGraphEditorWindow>())
+                if (existing.LoadedGraph == graph) { existing.Focus(); return; }
+            var window = CreateWindow<QuestGraphEditorWindow>();
+            window.titleContent = new GUIContent(graph.name);
+            window.LoadGraph(graph);
+        }
+
+        [InitializeOnLoadMethod]
+        private static void RegisterForGraphLinkNavigation() =>
+            GraphEditorWindowRegistry.Register(typeof(QuestGraph), g => Open((QuestGraph)g));
+
         [OnOpenAsset]
         private static bool OnOpenAsset(int instanceId, int line)
         {
