@@ -44,11 +44,15 @@ namespace Faolline.GraphQuest
         /// <summary>Raised when a reward fires: the objective id, or the quest id for the quest completion reward.</summary>
         public event Action<string> OnRewardFired;
 
-        /// <summary>Builds an evaluator over <paramref name="quest"/> against <paramref name="context"/> (may be a host's).</summary>
+        /// <summary>Builds an evaluator over <paramref name="quest"/> against <paramref name="context"/> (may be a host's).
+        /// Localization is auto-wired from <see cref="LocalizationContext.Current"/> when available;
+        /// call <see cref="UseLocalization"/> to override or pass null to disable.</summary>
         public QuestEvaluator(QuestGraph quest, BaseContext context)
         {
             _quest = quest;
             _context = context;
+            var ctx = LocalizationContext.Current;
+            if (ctx?.Provider != null) _localization = ctx.Provider;
             // Scope by the explicit QuestId; fall back to the graph's stable GraphId for editor-authored quests
             // that have no QuestId set, so their context collections never collide with an unscoped default.
             _questId = quest == null ? string.Empty

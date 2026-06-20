@@ -53,6 +53,14 @@ namespace Faolline.GraphDialogue
         /// <summary>The underlying runner state.</summary>
         public RunnerState State => _runner.State;
 
+        /// <summary>Creates a player that auto-resolves localization from <see cref="LocalizationContext.Current"/>.</summary>
+        public DialoguePlayer(
+            DialogueGraph graph,
+            DialogueContext context = null,
+            Func<string, Speaker> speakerLookup = null,
+            bool titleFallback = false)
+            : this(graph, context, null, speakerLookup, LocalizationContext.Current.StrictMode, null, titleFallback) { }
+
         /// <param name="titleFallback">When true, a line/choice whose localization key is missing renders its
         /// authored node Title instead of the <c>#key</c> marker — handy for code-built graphs that have no CSV yet.
         /// Mirrors <see cref="DialoguePresenter"/>'s own option (the standalone player previously had no way to set
