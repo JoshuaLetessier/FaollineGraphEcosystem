@@ -399,6 +399,7 @@ namespace Faolline.GraphCore.Editor
             AddField(foldout, nodeElement, "_hasColorOverride");
             AddField(foldout, nodeElement, "_nodeColor");
             AddField(foldout, nodeElement, "_entryConditions");
+            AddField(foldout, nodeElement, "_resumeConditions");
             AddField(foldout, nodeElement, "_onEnterActions");
             AddField(foldout, nodeElement, "_onExitActions");
 
