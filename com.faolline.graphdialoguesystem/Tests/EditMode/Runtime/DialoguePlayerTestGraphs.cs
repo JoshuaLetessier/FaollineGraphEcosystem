@@ -52,5 +52,26 @@ namespace Faolline.GraphDialogue.Tests
             g.EntryNodeId = "s";
             return g;
         }
+
+        /// <summary>
+        /// Start → Choice "a"→End(Completed, "persuaded"), "b"→End(Completed, "rejected").
+        /// Both share the same EndReason; the OutcomeLabel distinguishes them.
+        /// </summary>
+        public static DialogueGraph WithOutcomeLabels()
+        {
+            var g = ScriptableObject.CreateInstance<DialogueGraph>();
+            var s = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
+            var c = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
+            c.Choices.Add(new DialogueChoice { Id = "a" });
+            c.Choices.Add(new DialogueChoice { Id = "b" });
+            var e1 = new EndNodeData { Id = "e1", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed, OutcomeLabel = "persuaded" };
+            var e2 = new EndNodeData { Id = "e2", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed, OutcomeLabel = "rejected" };
+            g.AddNode(s); g.AddNode(c); g.AddNode(e1); g.AddNode(e2);
+            g.AddEdge(new BaseEdgeData { Id = "es", FromNodeId = "s", ToNodeId = "c", PortName = "out" });
+            g.AddEdge(new BaseEdgeData { Id = "ea", FromNodeId = "c", ToNodeId = "e1", PortName = "a" });
+            g.AddEdge(new BaseEdgeData { Id = "eb", FromNodeId = "c", ToNodeId = "e2", PortName = "b" });
+            g.EntryNodeId = "s";
+            return g;
+        }
     }
 }

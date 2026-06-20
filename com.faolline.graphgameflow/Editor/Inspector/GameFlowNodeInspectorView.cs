@@ -99,6 +99,15 @@ namespace Faolline.GraphGameFlow.Editor
                 MarkGraphDirty();
             });
             foldout.Add(field);
+
+            var outcomeField = new TextField("Outcome Label") { value = node.OutcomeLabel ?? string.Empty, tooltip = "Semantic label to distinguish End nodes sharing the same End Reason (e.g. \"persuaded\", \"rejected\"). Surfaced in EndStep so the consumer can branch on the outcome." };
+            outcomeField.RegisterValueChangedCallback(e =>
+            {
+                node.OutcomeLabel = e.newValue;
+                MarkGraphDirty();
+            });
+            foldout.Add(outcomeField);
+
             Add(foldout);
         }
 

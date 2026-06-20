@@ -34,6 +34,70 @@ namespace Faolline.GraphDialogue.Tests
         }
 
         [Test]
+        public void End_OutcomeLabel_PropagatedToEndStep()
+        {
+            var graph = DialoguePlayerTestGraphs.WithOutcomeLabels();
+            try
+            {
+                var provider = new CsvLocalizationProvider(DialoguePlayerTestGraphs.Csv, "en");
+                var player = new DialoguePlayer(graph, new DialogueContext(), provider);
+
+                string outcome = null;
+                player.OnEnded += s => outcome = s.OutcomeLabel;
+
+                player.Start();
+                player.Choose("a");
+
+                Assert.AreEqual("persuaded", outcome);
+            }
+            finally { Object.DestroyImmediate(graph); }
+        }
+
+        [Test]
+        public void End_NoOutcomeLabel_DefaultsToEmpty()
+        {
+            var graph = DialoguePlayerTestGraphs.Linear();
+            try
+            {
+                var provider = new CsvLocalizationProvider(DialoguePlayerTestGraphs.Csv, "en");
+                var player = new DialoguePlayer(graph, new DialogueContext(), provider);
+
+                string outcome = null;
+                player.OnEnded += s => outcome = s.OutcomeLabel;
+
+                player.Start();
+                player.Advance();
+
+                Assert.AreEqual(string.Empty, outcome);
+            }
+            finally { Object.DestroyImmediate(graph); }
+        }
+
+        [Test]
+        public void End_OutcomeLabel_Builder_RoundTrips()
+        {
+            var b = new DialogueGraphBuilder();
+            var line = b.AddLine("npc", "Test").AsEntry();
+            var end = b.AddEnd(EndReason.Completed, "victory");
+            line.To(end);
+            var graph = b.Build();
+            try
+            {
+                var provider = new CsvLocalizationProvider(string.Empty, "en");
+                var player = new DialoguePlayer(graph, new DialogueContext(), provider, titleFallback: true);
+
+                string outcome = null;
+                player.OnEnded += s => outcome = s.OutcomeLabel;
+
+                player.Start();
+                player.Advance();
+
+                Assert.AreEqual("victory", outcome);
+            }
+            finally { Object.DestroyImmediate(graph); }
+        }
+
+        [Test]
         public void MissingEntry_LogsError_NoCrash()
         {
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();

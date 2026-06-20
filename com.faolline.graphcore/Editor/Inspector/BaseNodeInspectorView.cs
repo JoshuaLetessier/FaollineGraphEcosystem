@@ -242,6 +242,11 @@ namespace Faolline.GraphCore.Editor
             var field = new EnumField("End Reason", node.EndReason);
             field.RegisterValueChangedCallback(e => { node.EndReason = (EndReason)e.newValue; MarkGraphDirty(); });
             foldout.Add(field);
+
+            var outcomeField = new TextField("Outcome Label") { value = node.OutcomeLabel ?? string.Empty, tooltip = "Semantic label to distinguish End nodes sharing the same End Reason (e.g. \"persuaded\", \"rejected\"). Surfaced in EndStep so the consumer can branch on the outcome." };
+            outcomeField.RegisterValueChangedCallback(e => { node.OutcomeLabel = e.newValue; MarkGraphDirty(); });
+            foldout.Add(outcomeField);
+
             Add(foldout);
         }
 
@@ -399,6 +404,7 @@ namespace Faolline.GraphCore.Editor
             AddField(foldout, nodeElement, "_hasColorOverride");
             AddField(foldout, nodeElement, "_nodeColor");
             AddField(foldout, nodeElement, "_entryConditions");
+            AddField(foldout, nodeElement, "_resumeConditions");
             AddField(foldout, nodeElement, "_onEnterActions");
             AddField(foldout, nodeElement, "_onExitActions");
 

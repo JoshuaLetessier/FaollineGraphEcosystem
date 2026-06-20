@@ -16,7 +16,8 @@ namespace Faolline.GraphCore
         [SerializeField, HideInInspector] private string _nodeType;
         [SerializeField] private string _title = string.Empty;
         [SerializeField] private Vector2 _position;
-        [SerializeField] private List<BaseCondition> _entryConditions  = new List<BaseCondition>();
+        [SerializeField, Tooltip("Conditions checked before the runner enters this node. All must pass (AND). Use to gate access to a node based on context state.")]
+        private List<BaseCondition> _entryConditions  = new List<BaseCondition>();
         [SerializeField] private List<BaseAction>    _onEnterActions   = new List<BaseAction>();
         [SerializeField] private List<BaseAction>    _onExitActions    = new List<BaseAction>();
 
@@ -24,7 +25,8 @@ namespace Faolline.GraphCore
         [SerializeField] private bool  _hasColorOverride;
         [SerializeField] private Color _nodeColor;
         [SerializeField] private string _awaitSignal = string.Empty;
-        [SerializeField] private List<BaseCondition> _resumeConditions = new List<BaseCondition>();
+        [SerializeField, Tooltip("Extra conditions an await-signal must satisfy to resume this node. All must pass (AND). Unlike Entry Conditions (checked once on arrival), these are re-checked every time the signal fires — the node stays parked until the context satisfies them.")]
+        private List<BaseCondition> _resumeConditions = new List<BaseCondition>();
         [SerializeField] private float  _waitDuration;
 
         /// <summary>Unique identifier (GUID) for this node.</summary>
