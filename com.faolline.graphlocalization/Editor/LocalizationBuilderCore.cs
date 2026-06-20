@@ -94,12 +94,14 @@ namespace Faolline.GraphLocalization.Editor
                 var collections = TrySyncToUnityLocalization(adapter.LibName, db, validation, genText, genAsset);
                 if (collections != null)
                 {
-                    // Always record the String Table collection names so text resolves (even in Asset-only
-                    // mode, where the tables exist from a previous Text/Both build).
-                    libEntry.UnityCollections.AddRange(collections);
-                    if (genAsset)
-                        foreach (var c in collections)
-                            libEntry.UnityAssetCollections.Add(c + AssetCollectionSuffix); // mirror naming
+                    // The syncer returns [textNames..., "|", assetNames...].
+                    bool inAssets = false;
+                    foreach (var c in collections)
+                    {
+                        if (c == "|") { inAssets = true; continue; }
+                        if (inAssets) libEntry.UnityAssetCollections.Add(c);
+                        else libEntry.UnityCollections.Add(c);
+                    }
                 }
             }
             else

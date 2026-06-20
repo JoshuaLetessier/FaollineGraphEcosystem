@@ -18,16 +18,17 @@ namespace Faolline.GraphQuest.Editor
             int count = 0;
 
             var questId = graph.QuestId;
+            int graphFlags = (int)graph.DefaultLocalizedAssetFlags;
             if (!string.IsNullOrEmpty(questId))
             {
                 var nameKey = QuestLocalizationKeys.ForQuest(questId);
-                entry.AddKey(nameKey, LocalizationKeyType.QuestName, defaultHint: graph.DisplayName);
+                entry.AddKey(nameKey, LocalizationKeyType.QuestName, defaultHint: graph.DisplayName, assetFlags: graphFlags);
                 count++;
 
                 if (!string.IsNullOrEmpty(graph.Description))
                 {
                     var descKey = QuestLocalizationKeys.ForQuestDescription(questId);
-                    entry.AddKey(descKey, LocalizationKeyType.ObjectiveDescription, defaultHint: graph.Description);
+                    entry.AddKey(descKey, LocalizationKeyType.ObjectiveDescription, defaultHint: graph.Description, assetFlags: graphFlags);
                     count++;
                 }
             }
@@ -54,7 +55,7 @@ namespace Faolline.GraphQuest.Editor
                     {
                         var objDescKey = QuestLocalizationKeys.ForObjectiveDescription(obj.Id);
                         entry.AddKey(objDescKey, LocalizationKeyType.ObjectiveDescription,
-                            defaultHint: obj.Description);
+                            defaultHint: obj.Description, assetFlags: rawFlags);
                         count++;
                     }
                 }

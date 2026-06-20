@@ -50,6 +50,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
             var report = new SyncReport(libName);
             var managed = new List<StringTableCollection>();
             var desiredNames = new HashSet<string>(StringComparer.Ordinal);
+            var assetCollectionNames = new List<string>();
 
             // Per-graph collections, each in its own subfolder: Collections/{lib}/{graph}/
             foreach (var graphEntry in database.Graphs)
@@ -67,7 +68,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
                     managed.Add(col);
                 }
                 if (generateAssetTables)
-                    CreatePerTypeAssetCollections(sanitizedGraph, graphFolder, graphEntry.Keys, locales);
+                    CreatePerTypeAssetCollections(sanitizedGraph, graphFolder, graphEntry.Keys, locales, assetCollectionNames);
             }
 
             // Global collection (speakers, etc.) in Collections/{lib}/_Global/
@@ -85,7 +86,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
                     managed.Add(globalCol);
                 }
                 if (generateAssetTables)
-                    CreatePerTypeAssetCollections("Global", globalFolder, database.GlobalKeys, locales);
+                    CreatePerTypeAssetCollections("Global", globalFolder, database.GlobalKeys, locales, assetCollectionNames);
             }
 
             ReportOrphanCollections(libFolder, desiredNames, report);
@@ -93,7 +94,11 @@ namespace Faolline.GraphLocalization.Unity.Editor
             ReportCoverage(managed, locales, sourceLocale, validation, report);
             Debug.Log(report.Build());
 
-            return new List<string>(desiredNames).ToArray();
+            // Return text names, then a separator, then asset names — the builder splits on it.
+            var result = new List<string>(desiredNames);
+            result.Add("|");
+            result.AddRange(assetCollectionNames);
+            return result.ToArray();
         }
 
         /// <summary>
@@ -248,7 +253,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
         };
 
         private static void CreatePerTypeAssetCollections(string graphPrefix, string folder,
-            IReadOnlyList<LocalizationKeyEntry> keys, IList<Locale> locales)
+            IReadOnlyList<LocalizationKeyEntry> keys, IList<Locale> locales, List<string> outNames)
         {
             foreach (var (flag, typeName) in AssetTypeMap)
             {
@@ -260,6 +265,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
                 if (filtered.Count == 0) continue;
 
                 EnsureAssetCollection(colName, folder, filtered, locales);
+                outNames.Add(colName);
             }
         }
 
