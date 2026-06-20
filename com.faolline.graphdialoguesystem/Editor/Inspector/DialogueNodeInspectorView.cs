@@ -34,6 +34,10 @@ namespace Faolline.GraphDialogue.Editor
             Clear();
 
             BoundNode = node;
+
+            // A GraphLink is a non-executing documentary reference → dedicated minimal panel (target + note).
+            if (node is GraphLinkNodeData link) { AddGraphLinkSection(link, MarkGraphDirty); return; }
+
             RefreshSerializedGraph();
             var nodeElement = FindNodeProperty(SerializedGraph, node.Id);
 
