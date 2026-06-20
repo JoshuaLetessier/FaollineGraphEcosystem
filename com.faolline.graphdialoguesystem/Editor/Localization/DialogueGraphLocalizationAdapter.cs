@@ -3,66 +3,24 @@ using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphLocalization;
+using Faolline.GraphLocalization.Editor;
 
 namespace Faolline.GraphDialogue.Editor
 {
     /// <summary>
     /// Indexes the GraphDialogue lib for the central localization builder. Auto-discovered via
-    /// TypeCache (implements <see cref="IGraphLocalizationAdapter"/> with a parameterless ctor — no
-    /// registration needed). Scans all <see cref="DialogueGraph"/> assets and indexes their keys into a
-    /// <see cref="LocalizationDatabase"/>, then scans all <see cref="Speaker"/> assets for global keys.
-    /// Keys are derived deterministically from node/choice/speaker identity via
-    /// <see cref="DialogueLocalizationKeys"/> — no hand-typed string fields.
+    /// TypeCache (extends <see cref="BaseGraphLocalizationAdapter{TGraph}"/> with a parameterless ctor).
+    /// Scans all <see cref="DialogueGraph"/> assets for line/choice keys and all <see cref="Speaker"/>
+    /// assets for global speaker-name keys.
     /// </summary>
-    public sealed class DialogueGraphLocalizationAdapter : IGraphLocalizationAdapter
+    public sealed class DialogueGraphLocalizationAdapter : BaseGraphLocalizationAdapter<DialogueGraph>
     {
-        public string LibName => "GraphDialogue";
+        public override string LibName => "GraphDialogue";
 
-        public void ScanAndIndex(LocalizationDatabase database)
+        protected override int ExtractGraphKeys(DialogueGraph graph, LocalizationGraphEntry entry)
         {
-            int totalKeys = 0;
+            if (graph?.Nodes == null) return 0;
 
-            // Per-graph: DialogueLineNodeData (text keys) + ChoiceNodeData (choice label keys)
-            var graphGuids = AssetDatabase.FindAssets("t:DialogueGraph");
-            foreach (var guid in graphGuids)
-            {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                var graph = AssetDatabase.LoadAssetAtPath<DialogueGraph>(path);
-                if (graph == null) continue;
-
-                var entry = database.GetOrCreateGraphEntry(guid, graph.name);
-                var keys = ExtractKeysFromGraph(graph);
-                foreach (var (key, type, hint) in keys)
-                    entry.AddKey(key, type, defaultHint: hint);
-                totalKeys += keys.Count;
-            }
-
-            // Global: Speaker assets → display-name keys
-            int speakerCount = 0;
-            var speakerGuids = AssetDatabase.FindAssets("t:Speaker");
-            foreach (var guid in speakerGuids)
-            {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                var speaker = AssetDatabase.LoadAssetAtPath<Speaker>(path);
-                if (speaker == null) continue;
-
-                var key = DialogueLocalizationKeys.ForSpeaker(speaker);
-                if (!string.IsNullOrEmpty(key))
-                {
-                    database.AddGlobalKey(key, LocalizationKeyType.SpeakerName, speaker.DisplayNameFallback);
-                    speakerCount++;
-                }
-            }
-
-            totalKeys += speakerCount;
-            database.Metadata.TotalGraphsScanned = graphGuids.Length;
-            database.Metadata.TotalKeysFound = totalKeys;
-
-            Debug.Log($"[DialogueGraphLocalizationAdapter] {graphGuids.Length} graphs, {totalKeys} keys ({speakerCount} speakers).");
-        }
-
-        private static List<(string key, LocalizationKeyType type, string hint)> ExtractKeysFromGraph(DialogueGraph graph)
-        {
             var seen = new Dictionary<(string, LocalizationKeyType), string>();
 
             void Register(string key, LocalizationKeyType type, string hint)
@@ -72,8 +30,6 @@ namespace Faolline.GraphDialogue.Editor
                 { if (string.IsNullOrEmpty(existing) && !string.IsNullOrEmpty(hint)) seen[id] = hint; }
                 else seen[id] = hint ?? string.Empty;
             }
-
-            if (graph?.Nodes == null) return new List<(string, LocalizationKeyType, string)>();
 
             foreach (var node in graph.Nodes)
             {
@@ -98,10 +54,29 @@ namespace Faolline.GraphDialogue.Editor
                 }
             }
 
-            var result = new List<(string, LocalizationKeyType, string)>(seen.Count);
             foreach (var kvp in seen)
-                result.Add((kvp.Key.Item1, kvp.Key.Item2, kvp.Value));
-            return result;
+                entry.AddKey(kvp.Key.Item1, kvp.Key.Item2, defaultHint: kvp.Value);
+            return seen.Count;
+        }
+
+        protected override int ExtractGlobalKeys(LocalizationDatabase database)
+        {
+            int count = 0;
+            var speakerGuids = AssetDatabase.FindAssets("t:Speaker");
+            foreach (var guid in speakerGuids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var speaker = AssetDatabase.LoadAssetAtPath<Speaker>(path);
+                if (speaker == null) continue;
+
+                var key = DialogueLocalizationKeys.ForSpeaker(speaker);
+                if (!string.IsNullOrEmpty(key))
+                {
+                    database.AddGlobalKey(key, LocalizationKeyType.SpeakerName, speaker.DisplayNameFallback);
+                    count++;
+                }
+            }
+            return count;
         }
     }
 }

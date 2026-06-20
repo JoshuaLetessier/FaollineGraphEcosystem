@@ -244,9 +244,9 @@ namespace Faolline.GraphQuest
         // ── Journal data layer (for a consumer quest-log UI) ──────────────────
 
         /// <summary>
-        /// Treats the journal text (objective/quest <c>DisplayName</c> + <c>Description</c>) as localization KEYS,
-        /// resolved through <paramref name="provider"/> in its current locale, instead of literal strings. Pass
-        /// null to go back to literals. When localizing, set keys for everything you display.
+        /// Enables localization: journal text (quest/objective names and descriptions) is resolved through
+        /// deterministic keys (<see cref="QuestLocalizationKeys"/>) via <paramref name="provider"/>, falling
+        /// back to the authored text when a key is missing. Pass null to go back to literals.
         /// </summary>
         public QuestEvaluator UseLocalization(ILocalizationProvider provider)
         {
@@ -255,10 +255,14 @@ namespace Faolline.GraphQuest
         }
 
         /// <summary>The quest's display title (falls back to its id), localized when a provider is set. Empty when no quest.</summary>
-        public string DisplayName => _quest != null ? Resolve(_quest.DisplayName) : string.Empty;
+        public string DisplayName => _quest != null
+            ? ResolveWithFallback(QuestLocalizationKeys.ForQuest(_questId), _quest.DisplayName)
+            : string.Empty;
 
         /// <summary>The quest's longer description, localized when a provider is set. Empty when none / no quest.</summary>
-        public string Description => _quest != null ? Resolve(_quest.Description) : string.Empty;
+        public string Description => _quest != null
+            ? ResolveWithFallback(QuestLocalizationKeys.ForQuestDescription(_questId), _quest.Description)
+            : string.Empty;
 
         /// <summary>How many required objectives are currently <see cref="QuestState.Completed"/> (a progress numerator).</summary>
         public int RequiredCompleted => CountRequired(onlyCompleted: true);
@@ -277,8 +281,9 @@ namespace Faolline.GraphQuest
             foreach (var obj in Objectives())
                 list.Add(new ObjectiveView(
                     obj.Id,
-                    string.IsNullOrEmpty(obj.Title) ? obj.Id : Resolve(obj.Title),
-                    Resolve(obj.Description),
+                    ResolveWithFallback(QuestLocalizationKeys.ForObjective(obj.Id),
+                        string.IsNullOrEmpty(obj.Title) ? obj.Id : obj.Title),
+                    ResolveWithFallback(QuestLocalizationKeys.ForObjectiveDescription(obj.Id), obj.Description),
                     obj.Required,
                     GetObjectiveState(obj.Id)));
             return list;
@@ -302,11 +307,15 @@ namespace Faolline.GraphQuest
             return obj.TimeLimitSeconds;
         }
 
-        // Resolves journal text through the localization provider (as a key) when one is set; else returns it as-is.
-        private string Resolve(string textOrKey)
-            => (_localization == null || string.IsNullOrEmpty(textOrKey))
-                ? textOrKey
-                : _localization.Resolve(textOrKey, _localization.CurrentLocale);
+        // Resolves a deterministic key through the provider; falls back to the authored text when
+        // no provider is set or the key resolves to a #marker (missing translation).
+        private string ResolveWithFallback(string key, string authoredText)
+        {
+            if (_localization == null || string.IsNullOrEmpty(key)) return authoredText;
+            var resolved = _localization.Resolve(key, _localization.CurrentLocale);
+            if (string.IsNullOrEmpty(resolved) || resolved.StartsWith("#")) return authoredText;
+            return resolved;
+        }
 
         private ObjectiveNodeData FindObjective(string id)
         {

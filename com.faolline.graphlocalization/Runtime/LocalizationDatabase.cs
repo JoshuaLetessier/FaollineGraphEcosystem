@@ -111,5 +111,8 @@ namespace Faolline.GraphLocalization
         Text = 0,
         SpeakerName = 1,
         ChoiceLabel = 2,
+        QuestName = 3,
+        ObjectiveName = 4,
+        ObjectiveDescription = 5,
     }
 }
