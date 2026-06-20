@@ -407,7 +407,7 @@ namespace Faolline.GraphCore.Editor
             AddField(foldout, nodeElement, "_resumeConditions");
             AddField(foldout, nodeElement, "_onEnterActions");
             AddField(foldout, nodeElement, "_onExitActions");
-            AddField(foldout, nodeElement, "_localizedAssetFlags");
+            AddAssetFlagsToggles(foldout, nodeElement, so);
 
             // Bind all PropertyFields within the foldout in one call.
             foldout.Bind(so);
@@ -440,6 +440,39 @@ namespace Faolline.GraphCore.Editor
         /// Default is a no-op.
         /// </summary>
         protected virtual void OnNodeVisualsChanged() { }
+
+        private static void AddAssetFlagsToggles(VisualElement parent, SerializedProperty nodeElement, SerializedObject so)
+        {
+            var prop = nodeElement.FindPropertyRelative("_localizedAssetFlags");
+            if (prop == null) return;
+
+            var container = new Foldout { text = "Localized Assets", value = false };
+            container.style.marginTop = 4;
+
+            var flags = new[] {
+                ("Audio",   (int)LocalizedAssetFlags.Audio),
+                ("Sprite",  (int)LocalizedAssetFlags.Sprite),
+                ("Texture", (int)LocalizedAssetFlags.Texture),
+                ("Video",   (int)LocalizedAssetFlags.Video),
+                ("Font",    (int)LocalizedAssetFlags.Font),
+            };
+
+            foreach (var (label, value) in flags)
+            {
+                var toggle = new Toggle(label) { value = (prop.intValue & value) != 0 };
+                int flagValue = value;
+                toggle.RegisterValueChangedCallback(e =>
+                {
+                    prop.serializedObject.Update();
+                    if (e.newValue) prop.intValue |= flagValue;
+                    else prop.intValue &= ~flagValue;
+                    prop.serializedObject.ApplyModifiedProperties();
+                });
+                container.Add(toggle);
+            }
+
+            parent.Add(container);
+        }
 
         private static void AddField(VisualElement parent, SerializedProperty nodeElement, string relativePath)
         {
