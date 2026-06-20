@@ -33,7 +33,12 @@ namespace Faolline.GraphLocalization
         public string CurrentLocale
         {
             get => _currentLocale;
-            set { if (!string.IsNullOrEmpty(value)) _currentLocale = value; }
+            set
+            {
+                if (string.IsNullOrEmpty(value)) return;
+                _currentLocale = value;
+                _provider?.SetLocale(value);
+            }
         }
 
         public string Resolve(string key) => Provider.Resolve(key, _currentLocale);
