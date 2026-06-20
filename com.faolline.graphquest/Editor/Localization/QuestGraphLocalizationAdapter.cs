@@ -38,7 +38,7 @@ namespace Faolline.GraphQuest.Editor
             {
                 if (!(node is ObjectiveNodeData obj)) continue;
                 if (string.IsNullOrEmpty(obj.Id)) continue;
-                bool hasAsset = obj.LocalizedAssetMode != Faolline.GraphCore.LocalizedAssetMode.None;
+                bool hasAsset = obj.HasLocalizedAssets;
 
                 var objNameKey = QuestLocalizationKeys.ForObjective(obj.Id);
                 entry.AddKey(objNameKey, LocalizationKeyType.ObjectiveName,

@@ -29,8 +29,8 @@ namespace Faolline.GraphCore
         private List<BaseCondition> _resumeConditions = new List<BaseCondition>();
         [SerializeField] private float  _waitDuration;
 
-        [SerializeField, Tooltip("Whether this node's text has a matching localized asset (voice clip, image, video…). None = text only. Set per-node by the content author; read by the localization pipeline to decide which keys get Asset Table entries.")]
-        private LocalizedAssetMode _localizedAssetMode = LocalizedAssetMode.None;
+        [SerializeField, Tooltip("Which localized asset types accompany this node's text (voice clip, portrait, video…). None = text only. Combinable — e.g. Audio + Sprite for a voiced line with a localized portrait.")]
+        private LocalizedAssetFlags _localizedAssetFlags = LocalizedAssetFlags.None;
 
         /// <summary>Unique identifier (GUID) for this node.</summary>
         public string Id
@@ -133,27 +133,35 @@ namespace Faolline.GraphCore
         }
 
         /// <summary>
-        /// Whether this node's localization key should produce a matching localized asset entry
-        /// (voice clip, image, video). <see cref="LocalizedAssetMode.None"/> (the default) means
-        /// text only — no Asset Table entry is created. Set by the content author in the inspector.
+        /// Which localized asset types accompany this node's text. Combinable flags —
+        /// e.g. <c>Audio | Sprite</c> for a voiced line with a localized portrait.
+        /// <see cref="LocalizedAssetFlags.None"/> (the default) means text only — no Asset Table
+        /// entry is created. Set by the content author in the node inspector.
         /// </summary>
-        public LocalizedAssetMode LocalizedAssetMode
+        public LocalizedAssetFlags LocalizedAssetFlags
         {
-            get => _localizedAssetMode;
-            set => _localizedAssetMode = value;
+            get => _localizedAssetFlags;
+            set => _localizedAssetFlags = value;
         }
+
+        /// <summary>True when at least one localized asset type is set on this node.</summary>
+        public bool HasLocalizedAssets => _localizedAssetFlags != LocalizedAssetFlags.None;
     }
 
     /// <summary>
-    /// Whether a node's text has a matching localized asset. Controls which keys get
-    /// Asset Table entries in the localization pipeline. Extensible per project needs.
+    /// Flags indicating which localized asset types accompany a node's text. Combinable:
+    /// a voiced line with a localized portrait is <c>Audio | Sprite</c>. The localization
+    /// pipeline creates Asset Table entries only for nodes with at least one flag set.
+    /// New flags can be added (next power of two) without breaking existing data.
     /// </summary>
-    public enum LocalizedAssetMode
+    [System.Flags]
+    public enum LocalizedAssetFlags
     {
-        None = 0,
-        Audio = 1,
-        Image = 2,
-        Video = 3,
-        Custom = 4,
+        None    = 0,
+        Audio   = 1 << 0,
+        Sprite  = 1 << 1,
+        Texture = 1 << 2,
+        Video   = 1 << 3,
+        Font    = 1 << 4,
     }
 }

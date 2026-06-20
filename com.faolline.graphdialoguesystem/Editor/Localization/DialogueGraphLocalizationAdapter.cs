@@ -25,7 +25,7 @@ namespace Faolline.GraphDialogue.Editor
             foreach (var node in graph.Nodes)
             {
                 if (node == null) continue;
-                bool hasAsset = node.LocalizedAssetMode != GraphCore.LocalizedAssetMode.None;
+                bool hasAsset = node.HasLocalizedAssets;
 
                 if (node is DialogueLineNodeData lineNode)
                 {
