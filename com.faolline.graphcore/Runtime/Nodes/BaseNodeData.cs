@@ -158,10 +158,11 @@ namespace Faolline.GraphCore
     public enum LocalizedAssetFlags
     {
         None    = 0,
-        Audio   = 1 << 0,
-        Sprite  = 1 << 1,
-        Texture = 1 << 2,
-        Video   = 1 << 3,
-        Font    = 1 << 4,
+        Text    = 1 << 0,
+        Audio   = 1 << 1,
+        Sprite  = 1 << 2,
+        Texture = 1 << 3,
+        Video   = 1 << 4,
+        Font    = 1 << 5,
     }
 }

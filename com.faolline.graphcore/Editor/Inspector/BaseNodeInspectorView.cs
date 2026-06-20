@@ -401,13 +401,13 @@ namespace Faolline.GraphCore.Editor
 
             AddField(foldout, nodeElement, "_title");
             AddField(foldout, nodeElement, "_isCheckpoint");
+            AddAssetFlagsToggles(foldout, nodeElement, so);
             AddField(foldout, nodeElement, "_hasColorOverride");
             AddField(foldout, nodeElement, "_nodeColor");
             AddField(foldout, nodeElement, "_entryConditions");
             AddField(foldout, nodeElement, "_resumeConditions");
             AddField(foldout, nodeElement, "_onEnterActions");
             AddField(foldout, nodeElement, "_onExitActions");
-            AddAssetFlagsToggles(foldout, nodeElement, so);
 
             // Bind all PropertyFields within the foldout in one call.
             foldout.Bind(so);
@@ -450,6 +450,7 @@ namespace Faolline.GraphCore.Editor
             container.style.marginTop = 4;
 
             var flags = new[] {
+                ("Text",    (int)LocalizedAssetFlags.Text),
                 ("Audio",   (int)LocalizedAssetFlags.Audio),
                 ("Sprite",  (int)LocalizedAssetFlags.Sprite),
                 ("Texture", (int)LocalizedAssetFlags.Texture),
