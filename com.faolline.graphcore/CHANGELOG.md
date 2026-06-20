@@ -12,8 +12,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
   it is ever wired onto the path (no pause, no actions, no executor, no access to the target). Use it to make
   composition visible — e.g. annotate a zone's flow with the quests that belong to it. Distinct from
   `SubGraphNodeData` (which IS executed). Renders via a new `GraphLinkNodeView` in EVERY lib editor (handled in
-  `BaseGraphView`, no per-lib code) and there is an "Add GraphLink (reference)" canvas menu entry; its
-  `TargetGraph` and `Note` are editable from the node inspector (`BaseNodeInspectorView`).
+  `BaseGraphView`, no per-lib code) and there is an "Add GraphLink (reference)" canvas menu entry.
+- **Dedicated minimal GraphLink inspector** (`BaseNodeInspectorView.AddGraphLinkSection`). A selected GraphLink
+  shows ONLY a real `BaseGraph` object picker for its target (never a fragile string) plus a `Note` — and NONE of
+  the execution fields (title, checkpoint, color, entry conditions, on-enter/exit actions, await/wait), which are
+  meaningless on a node that is never executed. Each lib inspector calls it early and returns, so the same clean
+  panel appears in every editor (including GameFlow/Quest, whose inspectors don't render the universal sections).
 - **`GraphEditorWindowRegistry` (Editor)** — an opt-in `graph type → opener` map (mirrors `NodeTypeColorRegistry`):
   downstream lib editors register their window, and double-clicking a GraphLink opens its target in the right
   editor. Falls back to selecting/pinging the asset with a `[GraphCore]` diagnostic when no editor is registered
