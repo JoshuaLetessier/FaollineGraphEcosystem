@@ -15,11 +15,24 @@ namespace Faolline.GraphCore
         [SerializeField]
         private EndReason _endReason = EndReason.Completed;
 
+        [SerializeField]
+        private string _outcomeLabel = string.Empty;
+
         /// <summary>The reason this graph execution path ended.</summary>
         public EndReason EndReason
         {
             get => _endReason;
             set => _endReason = value;
+        }
+
+        /// <summary>
+        /// Optional semantic label distinguishing multiple end nodes that share the same
+        /// <see cref="EndReason"/> (e.g. "persuaded", "rejected"). Empty by default.
+        /// </summary>
+        public string OutcomeLabel
+        {
+            get => _outcomeLabel;
+            set => _outcomeLabel = value ?? string.Empty;
         }
     }
 }

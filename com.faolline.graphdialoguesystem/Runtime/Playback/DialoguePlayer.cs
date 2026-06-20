@@ -76,7 +76,11 @@ namespace Faolline.GraphDialogue
                 _ended = true;
                 _endReason = reason;
                 var node = _runner.CurrentNode;
-                CurrentStep = new EndStep(node != null ? node.Id : string.Empty, reason);
+                var endNode = node as EndNodeData;
+                CurrentStep = new EndStep(
+                    node != null ? node.Id : string.Empty,
+                    reason,
+                    endNode?.OutcomeLabel);
                 OnEnded?.Invoke((EndStep)CurrentStep);
             };
             _runner.OnStuck += () => _stuck = true;

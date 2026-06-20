@@ -58,10 +58,12 @@ namespace Faolline.GraphDialogue
             return new DialogueChoiceHandle(this, node);
         }
 
-        /// <summary>Adds an End node carrying <paramref name="reason"/>.</summary>
-        public DialogueBasicHandle AddEnd(EndReason reason = EndReason.Completed)
+        /// <summary>Adds an End node carrying <paramref name="reason"/> and an optional
+        /// <paramref name="outcomeLabel"/> (e.g. "persuaded", "rejected").</summary>
+        public DialogueBasicHandle AddEnd(EndReason reason = EndReason.Completed, string outcomeLabel = null)
         {
             var node = new EndNodeData { NodeType = EndNodeData.NodeTypeId, EndReason = reason };
+            if (!string.IsNullOrEmpty(outcomeLabel)) node.OutcomeLabel = outcomeLabel;
             Place(node);
             return new DialogueBasicHandle(this, node);
         }
