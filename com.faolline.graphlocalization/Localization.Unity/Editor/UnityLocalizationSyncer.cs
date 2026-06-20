@@ -19,7 +19,6 @@ namespace Faolline.GraphLocalization.Unity.Editor
     public static class UnityLocalizationSyncer
     {
         private const string CollectionsRoot = "Assets/Localization/Collections";
-        private const string GraphCollectionPrefix = "DLG_";
         private const string GlobalCollectionSuffix = "_Global";
         /// <summary>Suffix for the mirror Asset Table collection of a String Table collection (shared with the builder).</summary>
         public const string AssetCollectionSuffix = "_Assets";
@@ -55,7 +54,8 @@ namespace Faolline.GraphLocalization.Unity.Editor
             // Per-graph collections, each in its own subfolder: Collections/{lib}/{graph}/
             foreach (var graphEntry in database.Graphs)
             {
-                var name = $"{GraphCollectionPrefix}{Sanitize(graphEntry.GraphName)}";
+                var prefix = Sanitize(libName) + "_";
+                var name = $"{prefix}{Sanitize(graphEntry.GraphName)}";
                 desiredNames.Add(name);
                 var folder = EnsureSubFolder(libFolder, Sanitize(graphEntry.GraphName));
                 if (generateStringTables)
