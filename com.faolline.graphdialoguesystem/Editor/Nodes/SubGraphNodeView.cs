@@ -37,6 +37,13 @@ namespace Faolline.GraphDialogue.Editor
             label.AddToClassList("node-label");
             extensionContainer.Add(label);
             RefreshExpandedState();
+
+            RegisterCallback<MouseDownEvent>(evt =>
+            {
+                if (evt.button != 0 || evt.clickCount != 2) return;
+                GraphEditorWindowRegistry.Open(_data?.TargetGraph);
+                evt.StopPropagation();
+            });
         }
     }
 }
