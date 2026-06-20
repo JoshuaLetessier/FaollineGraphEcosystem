@@ -113,7 +113,7 @@ namespace Faolline.GraphQuest
                         Id = Guid.NewGuid().ToString("D"),
                         FromNodeId = p,
                         ToNodeId = o.Id,
-                        PortName = "prereq"
+                        PortName = "unlocks"
                     });
 
             return quest;
