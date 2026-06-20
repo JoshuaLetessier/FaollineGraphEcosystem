@@ -67,10 +67,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
                     managed.Add(col);
                 }
                 if (generateAssetTables)
-                {
-                    var assetKeys = FilterAssetKeys(graphEntry.Keys);
-                    if (assetKeys.Count > 0) EnsureAssetCollection(name + AssetCollectionSuffix, folder, assetKeys, locales);
-                }
+                    CreatePerTypeAssetCollections(name, folder, graphEntry.Keys, locales);
             }
 
             // Global collection (speakers, etc.) in Collections/{lib}/_Global/
@@ -88,10 +85,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
                     managed.Add(globalCol);
                 }
                 if (generateAssetTables)
-                {
-                    var assetKeys = FilterAssetKeys(database.GlobalKeys);
-                    if (assetKeys.Count > 0) EnsureAssetCollection(globalName + AssetCollectionSuffix, folder, assetKeys, locales);
-                }
+                    CreatePerTypeAssetCollections(globalName, folder, database.GlobalKeys, locales);
             }
 
             ReportOrphanCollections(libFolder, desiredNames, report);
@@ -244,12 +238,30 @@ namespace Faolline.GraphLocalization.Unity.Editor
             foreach (var t in col.AssetTables) if (t != null) EditorUtility.SetDirty(t);
         }
 
-        private static IReadOnlyList<LocalizationKeyEntry> FilterAssetKeys(IReadOnlyList<LocalizationKeyEntry> keys)
+        private static readonly (int flag, string suffix)[] AssetTypeMap = new[]
         {
-            var result = new List<LocalizationKeyEntry>();
-            foreach (var k in keys)
-                if (k != null && k.HasLocalizedAsset) result.Add(k);
-            return result;
+            (1 << 1, "_Audio"),
+            (1 << 2, "_Sprite"),
+            (1 << 3, "_Texture"),
+            (1 << 4, "_Video"),
+            (1 << 5, "_Font"),
+        };
+
+        private static void CreatePerTypeAssetCollections(string baseName, string parentFolder,
+            IReadOnlyList<LocalizationKeyEntry> keys, IList<Locale> locales)
+        {
+            foreach (var (flag, suffix) in AssetTypeMap)
+            {
+                var filtered = new List<LocalizationKeyEntry>();
+                foreach (var k in keys)
+                    if (k != null && (k.AssetFlags & flag) != 0) filtered.Add(k);
+
+                if (filtered.Count == 0) continue;
+
+                var colName = baseName + suffix;
+                var folder = EnsureSubFolder(parentFolder, suffix.TrimStart('_'));
+                EnsureAssetCollection(colName, folder, filtered, locales);
+            }
         }
 
         // ── Entries ──────────────────────────────────────────────────────────────

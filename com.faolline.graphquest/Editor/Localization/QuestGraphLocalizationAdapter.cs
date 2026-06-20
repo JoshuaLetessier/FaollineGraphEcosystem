@@ -40,15 +40,14 @@ namespace Faolline.GraphQuest.Editor
                 if (string.IsNullOrEmpty(obj.Id)) continue;
                 var flags = obj.LocalizedAssetFlags;
                 bool wantsText = (flags & Faolline.GraphCore.LocalizedAssetFlags.Text) != 0;
-                bool hasAsset = flags != Faolline.GraphCore.LocalizedAssetFlags.None
-                             && flags != Faolline.GraphCore.LocalizedAssetFlags.Text;
+                int rawFlags = (int)flags;
 
                 if (wantsText)
                 {
                     var objNameKey = QuestLocalizationKeys.ForObjective(obj.Id);
                     entry.AddKey(objNameKey, LocalizationKeyType.ObjectiveName,
                         defaultHint: string.IsNullOrEmpty(obj.Title) ? obj.Id : obj.Title,
-                        hasLocalizedAsset: hasAsset);
+                        assetFlags: rawFlags);
                     count++;
 
                     if (!string.IsNullOrEmpty(obj.Description))

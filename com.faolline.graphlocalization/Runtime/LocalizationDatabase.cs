@@ -78,13 +78,13 @@ namespace Faolline.GraphLocalization
 
         public IReadOnlyList<LocalizationKeyEntry> Keys => _keys;
 
-        public void AddKey(string key, LocalizationKeyType type, string nodeId = "", string defaultHint = "", bool hasLocalizedAsset = false)
+        public void AddKey(string key, LocalizationKeyType type, string nodeId = "", string defaultHint = "", int assetFlags = 0)
         {
             var existing = _keys.Find(k => k.Key == key && k.Type == type);
             if (existing == null)
-                _keys.Add(new LocalizationKeyEntry { Key = key, Type = type, NodeId = nodeId, DefaultHint = defaultHint, HasLocalizedAsset = hasLocalizedAsset });
-            else if (hasLocalizedAsset && !existing.HasLocalizedAsset)
-                existing.HasLocalizedAsset = true;
+                _keys.Add(new LocalizationKeyEntry { Key = key, Type = type, NodeId = nodeId, DefaultHint = defaultHint, AssetFlags = assetFlags });
+            else
+                existing.AssetFlags |= assetFlags;
         }
 
         public void Clear() => _keys.Clear();
@@ -97,7 +97,11 @@ namespace Faolline.GraphLocalization
         public LocalizationKeyType Type;
         public string NodeId;
         public string DefaultHint;
-        public bool HasLocalizedAsset;
+        /// <summary>Raw int of <c>LocalizedAssetFlags</c> from the source node. 0 = none, 1 = Text only.</summary>
+        public int AssetFlags;
+
+        /// <summary>True when at least one non-text asset flag is set (Audio, Sprite, etc.).</summary>
+        public bool HasLocalizedAsset => (AssetFlags & ~1) != 0;
     }
 
     [Serializable]

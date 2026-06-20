@@ -27,14 +27,13 @@ namespace Faolline.GraphDialogue.Editor
                 if (node == null) continue;
                 var flags = node.LocalizedAssetFlags;
                 bool wantsText = (flags & GraphCore.LocalizedAssetFlags.Text) != 0;
-                bool hasAsset = flags != GraphCore.LocalizedAssetFlags.None
-                             && flags != GraphCore.LocalizedAssetFlags.Text;
+                int rawFlags = (int)flags;
 
                 if (node is DialogueLineNodeData lineNode && wantsText)
                 {
                     var key = DialogueLocalizationKeys.ForLine(lineNode);
                     if (!string.IsNullOrEmpty(key))
-                    { entry.AddKey(key, LocalizationKeyType.Text, defaultHint: lineNode.Title, hasLocalizedAsset: hasAsset); count++; }
+                    { entry.AddKey(key, LocalizationKeyType.Text, defaultHint: lineNode.Title, assetFlags: rawFlags); count++; }
                 }
 
                 if (node is ChoiceNodeData choiceNode && choiceNode.Choices != null && wantsText)
@@ -44,7 +43,7 @@ namespace Faolline.GraphDialogue.Editor
                         if (choice == null) continue;
                         var key = DialogueLocalizationKeys.ForChoice(choice);
                         if (!string.IsNullOrEmpty(key))
-                        { entry.AddKey(key, LocalizationKeyType.ChoiceLabel, defaultHint: choice.Title); count++; }
+                        { entry.AddKey(key, LocalizationKeyType.ChoiceLabel, defaultHint: choice.Title, assetFlags: rawFlags); count++; }
                     }
                 }
             }
