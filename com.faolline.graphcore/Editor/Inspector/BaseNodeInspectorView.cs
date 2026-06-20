@@ -242,6 +242,11 @@ namespace Faolline.GraphCore.Editor
             var field = new EnumField("End Reason", node.EndReason);
             field.RegisterValueChangedCallback(e => { node.EndReason = (EndReason)e.newValue; MarkGraphDirty(); });
             foldout.Add(field);
+
+            var outcomeField = new TextField("Outcome Label") { value = node.OutcomeLabel ?? string.Empty };
+            outcomeField.RegisterValueChangedCallback(e => { node.OutcomeLabel = e.newValue; MarkGraphDirty(); });
+            foldout.Add(outcomeField);
+
             Add(foldout);
         }
 

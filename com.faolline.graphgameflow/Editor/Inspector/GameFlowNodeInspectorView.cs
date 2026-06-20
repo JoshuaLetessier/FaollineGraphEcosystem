@@ -99,6 +99,15 @@ namespace Faolline.GraphGameFlow.Editor
                 MarkGraphDirty();
             });
             foldout.Add(field);
+
+            var outcomeField = new TextField("Outcome Label") { value = node.OutcomeLabel ?? string.Empty };
+            outcomeField.RegisterValueChangedCallback(e =>
+            {
+                node.OutcomeLabel = e.newValue;
+                MarkGraphDirty();
+            });
+            foldout.Add(outcomeField);
+
             Add(foldout);
         }
 
