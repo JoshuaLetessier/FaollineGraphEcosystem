@@ -59,7 +59,7 @@ namespace Faolline.GraphTest.Editor
         {
             Clear();
             BoundNode = null;
-            AddGraphLocalizationSection(Graph, MarkGraphDirty);
+
             if (Graph != null) BuildParameterPanel();
         }
 

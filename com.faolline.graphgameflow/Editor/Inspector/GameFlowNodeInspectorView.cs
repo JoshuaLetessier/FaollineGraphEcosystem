@@ -69,7 +69,7 @@ namespace Faolline.GraphGameFlow.Editor
         {
             Clear();
             _boundNode = null;
-            AddGraphLocalizationSection(_graph, MarkGraphDirty);
+
         }
 
         // ── Flow section (gameflow-specific: the await-signal + wait fields) ──────

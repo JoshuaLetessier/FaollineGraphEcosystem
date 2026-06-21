@@ -18,7 +18,8 @@ namespace Faolline.GraphQuest.Editor
             int count = 0;
 
             var questId = graph.QuestId;
-            int graphFlags = (int)graph.DefaultLocalizedAssetFlags;
+            var locData = GraphLocalizationDataUtility.Find(graph);
+            int graphFlags = locData != null ? (int)locData.DefaultFlags : (int)LocalizedAssetFlags.Text;
             if (!string.IsNullOrEmpty(questId))
             {
                 var nameKey = QuestLocalizationKeys.ForQuest(questId);
@@ -39,8 +40,8 @@ namespace Faolline.GraphQuest.Editor
             {
                 if (!(node is ObjectiveNodeData obj)) continue;
                 if (string.IsNullOrEmpty(obj.Id)) continue;
-                var flags = obj.LocalizedAssetFlags;
-                bool wantsText = (flags & Faolline.GraphCore.LocalizedAssetFlags.Text) != 0;
+                var flags = locData != null ? locData.GetFlags(obj.Id) : LocalizedAssetFlags.Text;
+                bool wantsText = (flags & LocalizedAssetFlags.Text) != 0;
                 int rawFlags = (int)flags;
 
                 if (wantsText)
