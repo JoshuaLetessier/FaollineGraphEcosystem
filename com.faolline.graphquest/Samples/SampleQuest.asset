@@ -83,6 +83,7 @@ MonoBehaviour:
   _groups: []
   _entryNodeId: 
   _historyDepth: 20
+  _defaultLocalizedAssetFlags: 1
   _questId: keep_escape
   _displayName: The Keep Escape
   _description: Find a way out of Aldric's keep.
@@ -98,7 +99,7 @@ MonoBehaviour:
         _id: find_clue
         _nodeType: graphquest.objective
         _title: Find the clue
-        _position: {x: 0, y: 0}
+        _position: {x: 0, y: -93}
         _entryConditions: []
         _onEnterActions: []
         _onExitActions: []
@@ -108,6 +109,7 @@ MonoBehaviour:
         _awaitSignal: 
         _resumeConditions: []
         _waitDuration: 0
+        _localizedAssetFlags: 0
         _completionCondition: {fileID: -2390807380701662515}
         _failCondition: {fileID: 0}
         _required: 1
@@ -121,7 +123,7 @@ MonoBehaviour:
         _id: open_door
         _nodeType: graphquest.objective
         _title: Open the door
-        _position: {x: 260, y: -90}
+        _position: {x: 310, y: 0}
         _entryConditions: []
         _onEnterActions: []
         _onExitActions: []
@@ -131,6 +133,7 @@ MonoBehaviour:
         _awaitSignal: 
         _resumeConditions: []
         _waitDuration: 0
+        _localizedAssetFlags: 0
         _completionCondition: {fileID: 2102626315285980926}
         _failCondition: {fileID: 0}
         _required: 1
@@ -144,7 +147,7 @@ MonoBehaviour:
         _id: gather_supplies
         _nodeType: graphquest.objective
         _title: Gather supplies
-        _position: {x: 260, y: 110}
+        _position: {x: 0, y: 93}
         _entryConditions: []
         _onEnterActions: []
         _onExitActions: []
@@ -154,6 +157,7 @@ MonoBehaviour:
         _awaitSignal: 
         _resumeConditions: []
         _waitDuration: 0
+        _localizedAssetFlags: 0
         _completionCondition: {fileID: 5519400317103574486}
         _failCondition: {fileID: 0}
         _required: 0
@@ -167,7 +171,7 @@ MonoBehaviour:
         _id: escape
         _nodeType: graphquest.objective
         _title: Escape the keep
-        _position: {x: 520, y: -90}
+        _position: {x: 620, y: 0}
         _entryConditions: []
         _onEnterActions: []
         _onExitActions: []
@@ -177,6 +181,7 @@ MonoBehaviour:
         _awaitSignal: 
         _resumeConditions: []
         _waitDuration: 0
+        _localizedAssetFlags: 0
         _completionCondition: {fileID: -6305788248187800125}
         _failCondition: {fileID: 0}
         _required: 1

@@ -21,12 +21,13 @@ namespace Faolline.GraphDialogue.Editor
         {
             if (graph?.Nodes == null) return 0;
             int count = 0;
+            var locData = GraphLocalizationDataUtility.Find(graph);
 
             foreach (var node in graph.Nodes)
             {
                 if (node == null) continue;
-                var flags = node.LocalizedAssetFlags;
-                bool wantsText = (flags & GraphCore.LocalizedAssetFlags.Text) != 0;
+                var flags = locData != null ? locData.GetFlags(node.Id) : LocalizedAssetFlags.Text;
+                bool wantsText = (flags & LocalizedAssetFlags.Text) != 0;
                 int rawFlags = (int)flags;
 
                 if (node is DialogueLineNodeData lineNode && wantsText)

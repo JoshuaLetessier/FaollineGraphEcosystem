@@ -53,7 +53,7 @@ namespace Faolline.GraphDialogue.Editor
         {
             Clear();
             BoundNode = null;
-            AddGraphLocalizationSection(Graph, MarkGraphDirty);
+
             if (Graph != null) BuildNoSelectionContent();
         }
 
@@ -61,7 +61,7 @@ namespace Faolline.GraphDialogue.Editor
         protected override void BuildNoSelectionContent()
         {
             BuildSpeakerPanel();
-            BuildParameterPanel();
+            base.BuildNoSelectionContent();
         }
 
         // ── Edge binding (condition on a connection) ──────────────────────────

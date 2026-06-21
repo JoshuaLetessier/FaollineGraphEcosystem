@@ -59,15 +59,8 @@ namespace Faolline.GraphLocalization.Editor
             if (path.Contains("Localization") || path.Contains("Resources")) return false;
 
             var obj = AssetDatabase.LoadMainAssetAtPath(path);
-            if (obj == null || !(obj is ScriptableObject)) return false;
-            if (obj is LocalizationDatabase || obj is GraphLocalizationManifest || obj is LocalizationSettingsAsset) return false;
-
-            var baseType = obj.GetType();
-            while (baseType != null && baseType != typeof(ScriptableObject))
-            {
-                if (baseType.FullName == "Faolline.GraphCore.BaseGraph") return true;
-                baseType = baseType.BaseType;
-            }
+            if (obj is GraphCore.BaseGraph) return true;
+            if (obj is GraphLocalizationData) return true;
             return false;
         }
 

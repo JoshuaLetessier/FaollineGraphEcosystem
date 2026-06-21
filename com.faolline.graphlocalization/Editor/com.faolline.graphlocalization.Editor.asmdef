@@ -2,7 +2,9 @@
     "name": "com.faolline.graphlocalization.Editor",
     "rootNamespace": "Faolline.GraphLocalization.Editor",
     "references": [
-        "com.faolline.graphlocalization.Runtime"
+        "com.faolline.graphlocalization.Runtime",
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Editor"
     ],
     "includePlatforms": [
         "Editor"

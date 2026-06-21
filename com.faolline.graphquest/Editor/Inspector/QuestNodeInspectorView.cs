@@ -36,7 +36,7 @@ namespace Faolline.GraphQuest.Editor
         {
             Clear();
             BoundNode = null;
-            AddGraphLocalizationSection(Graph, MarkGraphDirty);
+
             if (Graph != null) BuildNoSelectionContent();
         }
 
@@ -44,7 +44,7 @@ namespace Faolline.GraphQuest.Editor
         protected override void BuildNoSelectionContent()
         {
             BuildQuestSection();
-            BuildParameterPanel();
+            base.BuildNoSelectionContent();
         }
 
         private void BuildObjectiveSection(SerializedProperty element)

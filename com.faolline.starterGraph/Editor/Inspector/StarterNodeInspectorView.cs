@@ -59,8 +59,8 @@ namespace Faolline.StarterGraph.Editor
         {
             Clear();
             BoundNode = null;
-            AddGraphLocalizationSection(Graph, MarkGraphDirty);
-            if (Graph != null) BuildParameterPanel();
+
+            if (Graph != null) BuildNoSelectionContent();
         }
 
         // ── Choice node (lib choice type + canvas ports) ──────────────────────
