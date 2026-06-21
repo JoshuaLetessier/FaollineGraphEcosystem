@@ -61,7 +61,7 @@ namespace Faolline.GraphDialogue.Editor
         protected override void BuildNoSelectionContent()
         {
             BuildSpeakerPanel();
-            BuildParameterPanel();
+            base.BuildNoSelectionContent();
         }
 
         // ── Edge binding (condition on a connection) ──────────────────────────

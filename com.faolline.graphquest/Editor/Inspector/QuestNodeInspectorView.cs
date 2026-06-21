@@ -44,7 +44,7 @@ namespace Faolline.GraphQuest.Editor
         protected override void BuildNoSelectionContent()
         {
             BuildQuestSection();
-            BuildParameterPanel();
+            base.BuildNoSelectionContent();
         }
 
         private void BuildObjectiveSection(SerializedProperty element)
