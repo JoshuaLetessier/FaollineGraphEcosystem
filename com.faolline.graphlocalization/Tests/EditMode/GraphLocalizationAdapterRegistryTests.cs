@@ -112,19 +112,14 @@ namespace Faolline.GraphLocalization.Tests
         public void ScanAndIndex_Called_PopulatesDatabase()
         {
             // Verify the adapter contract: ScanAndIndex receives the database and can populate it.
-            UnityEngine.ScriptableObject db = null;
             LocalizationDatabase captured = null;
             var adapter = new CapturingAdapter("Test", d => captured = d);
 
             GraphLocalizationAdapterRegistry.Register(adapter);
 
-            db = UnityEngine.ScriptableObject.CreateInstance<LocalizationDatabase>();
-            try
-            {
-                adapter.ScanAndIndex((LocalizationDatabase)db);
-                Assert.AreSame(db, captured, "ScanAndIndex must receive the passed database.");
-            }
-            finally { UnityEngine.Object.DestroyImmediate(db); }
+            var db = new LocalizationDatabase();
+            adapter.ScanAndIndex(db);
+            Assert.AreSame(db, captured, "ScanAndIndex must receive the passed database.");
         }
 
         private sealed class CapturingAdapter : IGraphLocalizationAdapter

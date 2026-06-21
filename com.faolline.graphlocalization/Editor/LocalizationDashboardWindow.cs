@@ -26,9 +26,10 @@ namespace Faolline.GraphLocalization.Editor
         private sealed class LibReport
         {
             public string LibName;
-            public string DatabasePath;
             public LocalizationDatabase Database;
             public string LastBuild;
+            public int TotalGraphs;
+            public int TotalKeys;
             public bool IsExpanded = true;
             public bool GlobalExpanded;
         }
@@ -71,20 +72,30 @@ namespace Faolline.GraphLocalization.Editor
                 return;
             }
 
+            var manifest = GraphLocalizationManifest.Load();
+
             foreach (var adapter in adapters)
             {
-                var safeName = SanitizeFileName(adapter.LibName);
-                var path = $"Assets/Resources/GraphLocalization_{safeName}.asset";
-                var db = AssetDatabase.LoadAssetAtPath<LocalizationDatabase>(path);
+                var db = new LocalizationDatabase();
+                adapter.ScanAndIndex(db);
+
+                var libEntry = manifest != null
+                    ? manifest.Libs as System.Collections.Generic.IReadOnlyList<GraphLocalizationManifest.LibEntry>
+                    : null;
+                GraphLocalizationManifest.LibEntry mEntry = null;
+                if (manifest != null)
+                    foreach (var e in manifest.Libs)
+                        if (e.LibName == adapter.LibName) { mEntry = e; break; }
 
                 var report = new LibReport
                 {
                     LibName = adapter.LibName,
-                    DatabasePath = path,
                     Database = db,
-                    LastBuild = db != null && db.Metadata.LastBuildTime != DateTime.MinValue
-                        ? db.Metadata.LastBuildTime.ToString("yyyy-MM-dd  HH:mm:ss")
+                    LastBuild = mEntry != null && !string.IsNullOrEmpty(mEntry.LastBuildTime)
+                        ? mEntry.LastBuildTime
                         : "Never built",
+                    TotalGraphs = db.TotalGraphsScanned,
+                    TotalKeys = db.TotalKeysFound,
                 };
                 _reports.Add(report);
             }
@@ -167,42 +178,19 @@ namespace Faolline.GraphLocalization.Editor
 
         private void DrawLibReport(LibReport report)
         {
-            // ── Header ─────────────────────────────────────────────────────────────
             var db = report.Database;
-            var headerLabel = db != null
-                ? $"{report.LibName}  —  {db.Graphs.Count} graphs  •  {db.Metadata.TotalKeysFound} keys"
-                : $"{report.LibName}  —  (no database found — run Build All Tables)";
+            var headerLabel = $"{report.LibName}  —  {report.TotalGraphs} graphs  •  {report.TotalKeys} keys";
 
             report.IsExpanded = EditorGUILayout.BeginFoldoutHeaderGroup(report.IsExpanded, headerLabel);
 
             if (report.IsExpanded)
             {
                 EditorGUI.indentLevel++;
-
-                // Last build + database path
                 EditorGUILayout.LabelField("Last build", report.LastBuild, _dimStyle ?? EditorStyles.miniLabel);
-                if (db != null)
-                {
-                    EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField("Database", report.DatabasePath, _dimStyle ?? EditorStyles.miniLabel);
-                    if (GUILayout.Button("Select", EditorStyles.miniButton, GUILayout.Width(50)))
-                        Selection.activeObject = db;
-                    EditorGUILayout.EndHorizontal();
-                }
-
-                if (db == null)
-                {
-                    EditorGUILayout.HelpBox("Run 'Build All Tables' to create the database.", MessageType.Info);
-                    EditorGUI.indentLevel--;
-                    EditorGUILayout.EndFoldoutHeaderGroup();
-                    EditorGUILayout.Space(4);
-                    return;
-                }
 
                 EditorGUILayout.Space(4);
 
-                // ── Per-graph ──────────────────────────────────────────────────────
-                if (db.Graphs.Count == 0)
+                if (db == null || db.Graphs.Count == 0)
                 {
                     EditorGUILayout.LabelField("No graphs indexed.", _dimStyle ?? EditorStyles.miniLabel);
                 }
@@ -213,8 +201,7 @@ namespace Faolline.GraphLocalization.Editor
                         DrawGraphEntry(graph);
                 }
 
-                // ── Global keys ────────────────────────────────────────────────────
-                if (db.GlobalKeys.Count > 0)
+                if (db != null && db.GlobalKeys.Count > 0)
                 {
                     EditorGUILayout.Space(2);
                     report.GlobalExpanded = EditorGUILayout.Foldout(report.GlobalExpanded,
@@ -271,12 +258,5 @@ namespace Faolline.GraphLocalization.Editor
             EditorGUILayout.EndHorizontal();
         }
 
-        private static string SanitizeFileName(string name)
-        {
-            if (string.IsNullOrEmpty(name)) return "Unnamed";
-            var invalid = Path.GetInvalidFileNameChars();
-            var chars = Array.ConvertAll(name.ToCharArray(), c => Array.IndexOf(invalid, c) >= 0 ? '_' : c);
-            return new string(chars);
-        }
     }
 }

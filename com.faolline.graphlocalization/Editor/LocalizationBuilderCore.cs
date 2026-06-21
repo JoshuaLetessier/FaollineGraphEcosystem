@@ -63,17 +63,12 @@ namespace Faolline.GraphLocalization.Editor
         private static void BuildForAdapter(IGraphLocalizationAdapter adapter, LocaleValidationMode validation,
             GraphLocalizationManifest manifest)
         {
-            // Phase 1: scan + index
-            var db = GetOrCreateDatabase(adapter.LibName);
-            db.Clear();
+            // Phase 1: scan + index (transient — not persisted)
+            var db = new LocalizationDatabase();
             adapter.ScanAndIndex(db);
 
-            db.Metadata.LastBuildTime = DateTime.Now;
-            EditorUtility.SetDirty(db);
-            AssetDatabase.SaveAssets();
-
             Debug.Log($"[LocalizationBuilderCore] [{adapter.LibName}] Phase 1: {db.Graphs.Count} graphs, " +
-                $"{db.Metadata.TotalKeysFound} keys, {db.GlobalKeys.Count} global keys.");
+                $"{db.TotalKeysFound} keys, {db.GlobalKeys.Count} global keys.");
 
             // Phase 2: export to the configured backend, recording the produced artifacts in the manifest
             // so the runtime providers can find keys spread across per-graph collections/files.
@@ -116,22 +111,10 @@ namespace Faolline.GraphLocalization.Editor
                     if (asset != null) libEntry.CsvFiles.Add(asset);
                 }
             }
-        }
 
-        private static LocalizationDatabase GetOrCreateDatabase(string libName)
-        {
-            var safeName = SanitizeFileName(libName);
-            var root = ResolveResourcesRoot();
-            var path = $"{root}/GraphLocalization_{safeName}.asset";
-
-            var existing = AssetDatabase.LoadAssetAtPath<LocalizationDatabase>(path);
-            if (existing != null) return existing;
-
-            var db = ScriptableObject.CreateInstance<LocalizationDatabase>();
-            AssetDatabase.CreateAsset(db, path);
-            AssetDatabase.SaveAssets();
-            Debug.Log($"[LocalizationBuilderCore] Created database at {path}");
-            return db;
+            libEntry.LastBuildTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
+            libEntry.TotalGraphsScanned = db.TotalGraphsScanned;
+            libEntry.TotalKeysFound = db.TotalKeysFound;
         }
 
         /// <summary>
