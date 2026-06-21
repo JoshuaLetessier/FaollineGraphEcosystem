@@ -20,18 +20,12 @@ namespace Faolline.GraphLocalization.Unity.Editor
     {
         private const string CollectionsRoot = "Assets/Localization/Collections";
         private const string GlobalCollectionSuffix = "_Global";
-        /// <summary>Suffix for the mirror Asset Table collection of a String Table collection (shared with the builder).</summary>
-        public const string AssetCollectionSuffix = "_Assets";
 
         /// <summary>
         /// Entry point called via reflection from the builder core.
-        /// Signature: (string libName, LocalizationDatabase database, LocaleValidationMode validation,
-        /// bool generateStringTables, bool generateAssetTables).
-        /// Returns the String Table collection names for this lib (always — even when not regenerated — so
-        /// the builder can record them in the runtime manifest). String Tables are created/synced only when
-        /// <paramref name="generateStringTables"/> is true; a mirror Asset Table collection (name +
-        /// <see cref="AssetCollectionSuffix"/>, same keys) is created beside each when
-        /// <paramref name="generateAssetTables"/> is true. Existing collections are never deleted.
+        /// Returns text collection names, a "|" separator, then asset collection names — the builder
+        /// splits them into <c>UnityCollections</c> and <c>UnityAssetCollections</c> in the manifest.
+        /// Asset Tables are created per flag type (Audio, Sprite, etc.) only for keys with matching flags.
         /// </summary>
         public static string[] SyncDatabase(string libName, LocalizationDatabase database,
             LocaleValidationMode validation, bool generateStringTables, bool generateAssetTables)

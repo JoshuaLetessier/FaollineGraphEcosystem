@@ -6,11 +6,10 @@ using UnityEngine;
 namespace Faolline.GraphLocalization.Editor
 {
     /// <summary>
-    /// Central entry point for building all localization databases in the project. Iterates every
-    /// registered <see cref="IGraphLocalizationAdapter"/> and delegates scanning + syncing to it,
-    /// creating one <see cref="LocalizationDatabase"/> per lib under Assets/Resources/.
-    /// Unity Localization sync (Phase 2) is dispatched to the adapter assembly via reflection so
-    /// this core assembly stays free of the com.unity.localization dependency.
+    /// Central entry point for building all localization tables. Iterates every registered
+    /// <see cref="IGraphLocalizationAdapter"/>, scans graph assets into a transient
+    /// <see cref="LocalizationDatabase"/>, then exports to CSV or syncs to Unity Localization tables.
+    /// Results are recorded in the <see cref="GraphLocalizationManifest"/> for runtime discovery.
     /// Menu: Faolline ▸ Localization ▸ Build All Tables
     /// </summary>
     public static class LocalizationBuilderCore
@@ -118,9 +117,9 @@ namespace Faolline.GraphLocalization.Editor
         }
 
         /// <summary>
-        /// The configured Resources root for the manifest + databases (settings asset, default
+        /// The configured Resources root for the manifest (settings asset, default
         /// <c>Assets/Resources</c>), ensured to exist. Warns when it is not under a <c>Resources</c> folder
-        /// (the runtime loads these by name via <c>Resources.Load</c>).
+        /// (the runtime loads the manifest by name via <c>Resources.Load</c>).
         /// </summary>
         private static string ResolveResourcesRoot()
         {

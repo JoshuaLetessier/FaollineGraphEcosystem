@@ -30,9 +30,9 @@ namespace Faolline.GraphLocalization
         [SerializeField, Tooltip("Folder where per-lib CSV files are written (Csv mode).")]
         private string _csvOutputFolder = "Assets/Localization/Csv";
 
-        [SerializeField, Tooltip("Folder where the build writes the GraphLocalizationManifest and per-lib " +
-            "LocalizationDatabase assets. MUST be (or be under) a 'Resources' folder so the runtime can load " +
-            "them by name — e.g. 'Assets/Resources' (default) or 'Assets/MyGame/Resources'.")]
+        [SerializeField, Tooltip("Folder where the build writes the GraphLocalizationManifest. " +
+            "MUST be (or be under) a 'Resources' folder so the runtime can load it by name — " +
+            "e.g. 'Assets/Resources' (default) or 'Assets/MyGame/Resources'.")]
         private string _resourcesRoot = "Assets/Resources";
 
         [Header("Build-time validation")]
