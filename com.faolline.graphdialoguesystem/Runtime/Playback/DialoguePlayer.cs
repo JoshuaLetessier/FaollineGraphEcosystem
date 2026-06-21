@@ -12,6 +12,12 @@ namespace Faolline.GraphDialogue
     /// <see cref="ChoiceStep"/> (options with availability), and <see cref="EndStep"/>. Pass-through
     /// nodes (start, generic statement, sub-dialogue) are advanced automatically; the player pauses on
     /// line and choice nodes until <see cref="Advance"/> / <see cref="Choose"/> is called.
+    /// <para>
+    /// Dialogue nodes with <see cref="BaseNodeData.AwaitSignalName"/> or
+    /// <see cref="BaseNodeData.WaitDuration"/> are supported: the player emits the <see cref="LineStep"/>
+    /// (so the UI can display the line) then holds until <see cref="RaiseSignal"/> or <see cref="Tick"/>
+    /// resumes playback.
+    /// </para>
     /// <para>No <c>MonoBehaviour</c>, no scene — fully testable in EditMode.</para>
     /// </summary>
     public sealed class DialoguePlayer
@@ -40,6 +46,14 @@ namespace Faolline.GraphDialogue
 
         /// <summary>Raised when no valid branch is available (stuck).</summary>
         public event Action OnStuck;
+
+        /// <summary>Raised when the dialogue parks on a line awaiting a named signal. The <see cref="LineStep"/>
+        /// has already been emitted via <see cref="OnLine"/>; call <see cref="RaiseSignal"/> to resume.</summary>
+        public event Action<LineStep, string> OnWaitingForSignal;
+
+        /// <summary>Raised when the dialogue parks on a line awaiting elapsed time. The <see cref="LineStep"/>
+        /// has already been emitted via <see cref="OnLine"/>; feed time via <see cref="Tick"/> to resume.</summary>
+        public event Action<LineStep, float> OnWaitingForTime;
 
         /// <summary>Raised once per distinct missing key (Audit/Strict modes), as it is first encountered.</summary>
         public event Action<string> OnMissingKey;
@@ -92,6 +106,8 @@ namespace Faolline.GraphDialogue
                 OnEnded?.Invoke((EndStep)CurrentStep);
             };
             _runner.OnStuck += () => _stuck = true;
+            _runner.OnWaitingForSignal += HandleWaitingForSignal;
+            _runner.OnWaitingForTime += HandleWaitingForTime;
         }
 
         /// <summary>
@@ -228,6 +244,38 @@ namespace Faolline.GraphDialogue
             Drain();
         }
 
+        /// <summary>Raises a named signal into the dialogue, resuming a matching await. Mirrors
+        /// <see cref="GraphFlowDriver.RaiseSignal(string)"/>. No-op when the player is not waiting.</summary>
+        public void RaiseSignal(string name)
+        {
+            _runner.RaiseSignal(name);
+            if (_runner.State == RunnerState.NodeReady)
+                Drain();
+        }
+
+        /// <summary>As <see cref="RaiseSignal(string)"/>, carrying a scalar payload.</summary>
+        public void RaiseSignal<T>(string name, T payload)
+        {
+            _runner.RaiseSignal<T>(name, payload);
+            if (_runner.State == RunnerState.NodeReady)
+                Drain();
+        }
+
+        /// <summary>Feeds elapsed time to a dialogue node with <see cref="BaseNodeData.WaitDuration"/>.
+        /// When the remaining time reaches zero the player resumes draining. No-op otherwise.</summary>
+        public void Tick(float deltaSeconds)
+        {
+            _runner.Tick(deltaSeconds);
+            if (_runner.State == RunnerState.NodeReady)
+                Drain();
+        }
+
+        /// <summary>True while the dialogue is parked awaiting a named signal.</summary>
+        public bool IsWaitingForSignal => _runner.State == RunnerState.WaitingForSignal;
+
+        /// <summary>True while the dialogue is parked awaiting elapsed time.</summary>
+        public bool IsWaitingForTime => _runner.State == RunnerState.WaitingForTime;
+
         /// <summary>Steps back one entry, restoring prior context values.</summary>
         public void Back()
         {
@@ -244,6 +292,32 @@ namespace Faolline.GraphDialogue
             _ended = false;
             _runner.GoBackToCheckpoint();
             EmitForCurrentNode();
+        }
+
+        // ── Signal / time handlers ────────────────────────────────────────────
+
+        private void HandleWaitingForSignal(BaseNodeData node, string signal)
+        {
+            if (_ended) return;
+            if (node is DialogueLineNodeData line)
+            {
+                var step = BuildLineStep(line);
+                CurrentStep = step;
+                OnLine?.Invoke(step);
+                OnWaitingForSignal?.Invoke(step, signal);
+            }
+        }
+
+        private void HandleWaitingForTime(BaseNodeData node, float seconds)
+        {
+            if (_ended) return;
+            if (node is DialogueLineNodeData line)
+            {
+                var step = BuildLineStep(line);
+                CurrentStep = step;
+                OnLine?.Invoke(step);
+                OnWaitingForTime?.Invoke(step, seconds);
+            }
         }
 
         // ── Drain / emit ──────────────────────────────────────────────────────
