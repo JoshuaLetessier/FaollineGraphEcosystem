@@ -31,8 +31,8 @@ namespace Faolline.GraphLocalization.Editor
             int globalKeys = ExtractGlobalKeys(database);
             totalKeys += globalKeys;
 
-            database.Metadata.TotalGraphsScanned = guids.Length;
-            database.Metadata.TotalKeysFound = totalKeys;
+            database.TotalGraphsScanned = guids.Length;
+            database.TotalKeysFound = totalKeys;
 
             Debug.Log($"[{LibName}] {guids.Length} graphs, {totalKeys} keys.");
         }
