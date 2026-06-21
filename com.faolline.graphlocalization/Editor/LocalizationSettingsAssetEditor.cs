@@ -7,7 +7,6 @@ namespace Faolline.GraphLocalization.Editor
     public sealed class LocalizationSettingsAssetEditor : UnityEditor.Editor
     {
         private SerializedProperty _mode;
-        private SerializedProperty _tableName;
         private SerializedProperty _tableMode;
         private SerializedProperty _localeValidation;
         private SerializedProperty _playerStrictMode;
@@ -34,7 +33,6 @@ namespace Faolline.GraphLocalization.Editor
         private void OnEnable()
         {
             _mode = serializedObject.FindProperty("_mode");
-            _tableName = serializedObject.FindProperty("_unityLocalizationTableName");
             _tableMode = serializedObject.FindProperty("_unityTableMode");
             _localeValidation = serializedObject.FindProperty("_localeValidation");
             _playerStrictMode = serializedObject.FindProperty("_playerStrictMode");
@@ -50,12 +48,11 @@ namespace Faolline.GraphLocalization.Editor
             EditorGUILayout.PropertyField(_mode);
             if (_mode.enumValueIndex == (int)LocalizationMode.UnityLocalization)
             {
-                EditorGUILayout.PropertyField(_tableName);
                 EditorGUILayout.PropertyField(_tableMode, new GUIContent("Tables To Generate"));
                 EditorGUILayout.HelpBox("Build All Tables generates:\n" +
                     "• Text — String Tables only (classic text).\n" +
-                    "• Asset — Asset Tables only (localized audio; String Tables left untouched).\n" +
-                    "• Both — String Tables + mirror Asset Tables (…_Assets, same keys).",
+                    "• Asset — Asset Tables per type (Audio, Sprite…), only for flagged nodes.\n" +
+                    "• Both — String Tables + per-type Asset Tables.",
                     MessageType.None);
             }
             else // Csv

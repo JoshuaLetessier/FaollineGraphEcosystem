@@ -15,9 +15,6 @@ namespace Faolline.GraphLocalization
             "• UnityLocalization: com.unity.localization String Tables (if installed).")]
         private LocalizationMode _mode = LocalizationMode.Csv;
 
-        [SerializeField, Tooltip("Unity Localization String Table collection name used when Mode = UnityLocalization.")]
-        private string _unityLocalizationTableName = "Dialogue";
-
         [SerializeField, Tooltip("UnityLocalization mode: which tables Build All Tables generates.\n\n" +
             "• Text: String Tables only (classic).\n" +
             "• Asset: Asset Tables only (localized audio).\n" +
@@ -58,8 +55,6 @@ namespace Faolline.GraphLocalization
 
         public bool AutoBuild => _autoBuild;
         public LocalizationMode Mode => _mode;
-        public string UnityLocalizationTableName => _unityLocalizationTableName;
-
         /// <summary>UnityLocalization mode: which tables the build generates.</summary>
         public UnityTableMode UnityTableMode => _unityTableMode;
 
@@ -126,7 +121,7 @@ namespace Faolline.GraphLocalization
                 // reference it back (circular). Construct it via reflection instead — the same seam the
                 // builder uses for the syncer. Falls back to CSV if com.unity.localization is absent.
                 var collections = manifest != null ? manifest.AllUnityCollections() : new List<string>();
-                var unityProvider = TryCreateUnityProvider(collections, _unityLocalizationTableName);
+                var unityProvider = TryCreateUnityProvider(collections, null);
                 if (unityProvider != null) return unityProvider;
                 Debug.LogWarning("[GraphLocalization] Mode is UnityLocalization but the Unity provider could not " +
                     "be created (is com.unity.localization installed?). Falling back to CSV.");
