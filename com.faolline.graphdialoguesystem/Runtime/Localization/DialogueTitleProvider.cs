@@ -16,12 +16,18 @@ namespace Faolline.GraphDialogue
         private readonly Dictionary<string, string> _byKey;
 
         /// <inheritdoc/>
-        public string CurrentLocale { get; }
+        public string CurrentLocale { get; private set; }
 
         private DialogueTitleProvider(Dictionary<string, string> byKey, string locale)
         {
             _byKey = byKey;
             CurrentLocale = string.IsNullOrEmpty(locale) ? "en" : locale;
+        }
+
+        /// <inheritdoc/>
+        public void SetLocale(string locale)
+        {
+            if (!string.IsNullOrEmpty(locale)) CurrentLocale = locale;
         }
 
         /// <inheritdoc/>

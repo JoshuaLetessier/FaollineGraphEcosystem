@@ -11,6 +11,13 @@ namespace Faolline.GraphLocalization
         string CurrentLocale { get; }
 
         /// <summary>
+        /// Changes the active locale. Subsequent <see cref="Resolve"/> calls using
+        /// <see cref="CurrentLocale"/> will return text in the new locale. Ignored if
+        /// <paramref name="locale"/> is null or empty.
+        /// </summary>
+        void SetLocale(string locale);
+
+        /// <summary>
         /// Resolves <paramref name="key"/> in <paramref name="locale"/>. Returns the translated string,
         /// or a defined fallback (and logs a warning) when the key is unknown.
         /// Never returns null or empty for a non-empty key.

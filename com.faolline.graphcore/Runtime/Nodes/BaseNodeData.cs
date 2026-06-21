@@ -29,6 +29,9 @@ namespace Faolline.GraphCore
         private List<BaseCondition> _resumeConditions = new List<BaseCondition>();
         [SerializeField] private float  _waitDuration;
 
+        [SerializeField, Tooltip("Which localized asset types accompany this node's text (voice clip, portrait, video…). None = text only. Combinable — e.g. Audio + Sprite for a voiced line with a localized portrait.")]
+        private LocalizedAssetFlags _localizedAssetFlags = LocalizedAssetFlags.Text;
+
         /// <summary>Unique identifier (GUID) for this node.</summary>
         public string Id
         {
@@ -128,5 +131,38 @@ namespace Faolline.GraphCore
             get => _waitDuration;
             set => _waitDuration = value;
         }
+
+        /// <summary>
+        /// Which localized asset types accompany this node's text. Combinable flags —
+        /// e.g. <c>Audio | Sprite</c> for a voiced line with a localized portrait.
+        /// <see cref="LocalizedAssetFlags.None"/> (the default) means text only — no Asset Table
+        /// entry is created. Set by the content author in the node inspector.
+        /// </summary>
+        public LocalizedAssetFlags LocalizedAssetFlags
+        {
+            get => _localizedAssetFlags;
+            set => _localizedAssetFlags = value;
+        }
+
+        /// <summary>True when at least one localized asset type is set on this node.</summary>
+        public bool HasLocalizedAssets => _localizedAssetFlags != LocalizedAssetFlags.None;
+    }
+
+    /// <summary>
+    /// Flags indicating which localized asset types accompany a node's text. Combinable:
+    /// a voiced line with a localized portrait is <c>Audio | Sprite</c>. The localization
+    /// pipeline creates Asset Table entries only for nodes with at least one flag set.
+    /// New flags can be added (next power of two) without breaking existing data.
+    /// </summary>
+    [System.Flags]
+    public enum LocalizedAssetFlags
+    {
+        None    = 0,
+        Text    = 1 << 0,
+        Audio   = 1 << 1,
+        Sprite  = 1 << 2,
+        Texture = 1 << 3,
+        Video   = 1 << 4,
+        Font    = 1 << 5,
     }
 }

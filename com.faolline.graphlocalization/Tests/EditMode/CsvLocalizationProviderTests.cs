@@ -44,5 +44,42 @@ namespace Faolline.GraphLocalization.Tests
             var p = new CsvLocalizationProvider(csv, "en");
             Assert.AreEqual("a, b, c", p.Resolve("dlg.list", "en"));
         }
+
+        [Test]
+        public void SetLocale_ChangesCurrentLocale()
+        {
+            var p = new CsvLocalizationProvider(Csv, "en");
+            Assert.AreEqual("en", p.CurrentLocale);
+            p.SetLocale("fr");
+            Assert.AreEqual("fr", p.CurrentLocale);
+        }
+
+        [Test]
+        public void SetLocale_ResolvesInNewLocale()
+        {
+            var p = new CsvLocalizationProvider(Csv, "en");
+            Assert.AreEqual("Hello", p.Resolve("dlg.hi", p.CurrentLocale));
+            p.SetLocale("fr");
+            Assert.AreEqual("Bonjour", p.Resolve("dlg.hi", p.CurrentLocale));
+        }
+
+        [Test]
+        public void SetLocale_IgnoresNullOrEmpty()
+        {
+            var p = new CsvLocalizationProvider(Csv, "en");
+            p.SetLocale(null);
+            Assert.AreEqual("en", p.CurrentLocale);
+            p.SetLocale("");
+            Assert.AreEqual("en", p.CurrentLocale);
+        }
+
+        [Test]
+        public void LocalizationSettings_SetLocale_PropagatesToProvider()
+        {
+            var p = new CsvLocalizationProvider(Csv, "en");
+            var settings = new LocalizationSettings(p, "en");
+            settings.CurrentLocale = "fr";
+            Assert.AreEqual("fr", p.CurrentLocale, "Setting CurrentLocale on LocalizationSettings must propagate to the provider");
+        }
     }
 }

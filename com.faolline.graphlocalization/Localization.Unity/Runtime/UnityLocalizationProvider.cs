@@ -41,6 +41,15 @@ namespace Faolline.GraphLocalization.Unity
             }
         }
 
+        public void SetLocale(string locale)
+        {
+            if (string.IsNullOrEmpty(locale)) return;
+            var available = UnityLocalizationSettings.AvailableLocales;
+            if (available == null) return;
+            var target = available.GetLocale(new UnityEngine.Localization.LocaleIdentifier(locale));
+            if (target != null) UnityLocalizationSettings.SelectedLocale = target;
+        }
+
         private bool _warnedNoCollections;
 
         public string Resolve(string key, string locale)

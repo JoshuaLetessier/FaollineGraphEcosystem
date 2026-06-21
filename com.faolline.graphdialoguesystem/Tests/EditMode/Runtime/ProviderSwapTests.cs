@@ -16,7 +16,7 @@ namespace Faolline.GraphDialogue.Tests
         private sealed class StubEngineProvider : ILocalizationProvider
         {
             public string CurrentLocale => "en";
-            // The Linear graph's line has Id "l" â†’ derived key "line_l".
+            public void SetLocale(string locale) { }
             public string Resolve(string key, string locale) => key == "line_l" ? "EngineHello" : $"#{key}";
         }
 

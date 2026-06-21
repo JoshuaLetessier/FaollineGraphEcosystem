@@ -15,9 +15,6 @@ namespace Faolline.GraphLocalization
             "• UnityLocalization: com.unity.localization String Tables (if installed).")]
         private LocalizationMode _mode = LocalizationMode.Csv;
 
-        [SerializeField, Tooltip("Unity Localization String Table collection name used when Mode = UnityLocalization.")]
-        private string _unityLocalizationTableName = "Dialogue";
-
         [SerializeField, Tooltip("UnityLocalization mode: which tables Build All Tables generates.\n\n" +
             "• Text: String Tables only (classic).\n" +
             "• Asset: Asset Tables only (localized audio).\n" +
@@ -33,9 +30,9 @@ namespace Faolline.GraphLocalization
         [SerializeField, Tooltip("Folder where per-lib CSV files are written (Csv mode).")]
         private string _csvOutputFolder = "Assets/Localization/Csv";
 
-        [SerializeField, Tooltip("Folder where the build writes the GraphLocalizationManifest and per-lib " +
-            "LocalizationDatabase assets. MUST be (or be under) a 'Resources' folder so the runtime can load " +
-            "them by name — e.g. 'Assets/Resources' (default) or 'Assets/MyGame/Resources'.")]
+        [SerializeField, Tooltip("Folder where the build writes the GraphLocalizationManifest. " +
+            "MUST be (or be under) a 'Resources' folder so the runtime can load it by name — " +
+            "e.g. 'Assets/Resources' (default) or 'Assets/MyGame/Resources'.")]
         private string _resourcesRoot = "Assets/Resources";
 
         [Header("Build-time validation")]
@@ -45,6 +42,10 @@ namespace Faolline.GraphLocalization
             "• Strict: log gaps as errors (pre-release QA gate).")]
         private LocaleValidationMode _localeValidation = LocaleValidationMode.Warn;
 
+        [Header("Editor")]
+        [SerializeField, Tooltip("When enabled, localization tables are rebuilt automatically whenever a graph asset is saved. Disable for large projects where the rebuild is slow.")]
+        private bool _autoBuild = true;
+
         [Header("Runtime playback")]
         [SerializeField, Tooltip("How the player reacts when a key cannot be resolved during playback.\n\n" +
             "• Permissive: use the #key fallback silently.\n" +
@@ -52,9 +53,8 @@ namespace Faolline.GraphLocalization
             "• Strict: throw a LocalizationException on the first missing key.")]
         private LocalizationStrictMode _playerStrictMode = LocalizationStrictMode.Audit;
 
+        public bool AutoBuild => _autoBuild;
         public LocalizationMode Mode => _mode;
-        public string UnityLocalizationTableName => _unityLocalizationTableName;
-
         /// <summary>UnityLocalization mode: which tables the build generates.</summary>
         public UnityTableMode UnityTableMode => _unityTableMode;
 
@@ -121,7 +121,7 @@ namespace Faolline.GraphLocalization
                 // reference it back (circular). Construct it via reflection instead — the same seam the
                 // builder uses for the syncer. Falls back to CSV if com.unity.localization is absent.
                 var collections = manifest != null ? manifest.AllUnityCollections() : new List<string>();
-                var unityProvider = TryCreateUnityProvider(collections, _unityLocalizationTableName);
+                var unityProvider = TryCreateUnityProvider(collections, null);
                 if (unityProvider != null) return unityProvider;
                 Debug.LogWarning("[GraphLocalization] Mode is UnityLocalization but the Unity provider could not " +
                     "be created (is com.unity.localization installed?). Falling back to CSV.");

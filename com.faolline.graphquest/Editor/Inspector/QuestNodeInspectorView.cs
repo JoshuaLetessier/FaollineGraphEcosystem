@@ -36,6 +36,7 @@ namespace Faolline.GraphQuest.Editor
         {
             Clear();
             BoundNode = null;
+            AddGraphLocalizationSection(Graph, MarkGraphDirty);
             if (Graph != null) BuildNoSelectionContent();
         }
 

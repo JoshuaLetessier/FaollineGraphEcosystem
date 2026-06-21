@@ -3,22 +3,22 @@ using Faolline.GraphLocalization;
 
 namespace Faolline.GraphQuest.Tests
 {
-    /// <summary>Localized journal text — objective/quest names &amp; descriptions resolved as keys via a provider.</summary>
+    /// <summary>Localized journal text — quest/objective names resolved via deterministic keys.</summary>
     public sealed class QuestLocalizationTests : QuestTestBase
     {
         private const string Csv =
             "Key,en,fr\n" +
             "quest_rescue,Rescue Aldric,Sauver Aldric\n" +
-            "obj_find,Find the clue,Trouve l'indice\n" +
-            "obj_find_desc,Search the desk.,Fouille le bureau.\n";
+            "objective_find,Find the clue,Trouve l'indice\n" +
+            "objective_find_desc,Search the desk.,Fouille le bureau.\n";
 
         [Test]
         public void GetObjectives_ResolvesKeys_InProviderLocale()
         {
             var provider = new CsvLocalizationProvider(Csv, "fr");
             var quest = TrackGraph(QuestBuilder.Create("rescue")
-                .Named("quest_rescue")
-                .AddObjective("find").Named("obj_find").Describe("obj_find_desc").CompleteWhen(Flag("found"))
+                .Named("Rescue Aldric")
+                .AddObjective("find").Named("Find the clue").Describe("Search the desk.").CompleteWhen(Flag("found"))
                 .Build());
             var ev = new QuestEvaluator(quest, new QuestContext()).UseLocalization(provider);
             ev.Evaluate();
@@ -34,7 +34,7 @@ namespace Faolline.GraphQuest.Tests
         {
             var quest = TrackGraph(QuestBuilder.Create("rescue").Named("Rescue Aldric")
                 .AddObjective("find").Named("Find the clue").CompleteWhen(Flag("found")).Build());
-            var ev = new QuestEvaluator(quest, new QuestContext());   // no provider
+            var ev = new QuestEvaluator(quest, new QuestContext());
             ev.Evaluate();
 
             Assert.AreEqual("Rescue Aldric", ev.DisplayName);
@@ -45,8 +45,9 @@ namespace Faolline.GraphQuest.Tests
         public void SwitchingLocale_ChangesResolvedText()
         {
             var provider = new CsvLocalizationProvider(Csv, "en");
-            var quest = TrackGraph(QuestBuilder.Create("q")
-                .AddObjective("find").Named("obj_find").CompleteWhen(Flag("found")).Build());
+            var quest = TrackGraph(QuestBuilder.Create("rescue")
+                .Named("Rescue Aldric")
+                .AddObjective("find").Named("Find the clue").CompleteWhen(Flag("found")).Build());
             var ev = new QuestEvaluator(quest, new QuestContext()).UseLocalization(provider);
             ev.Evaluate();
 
@@ -60,11 +61,11 @@ namespace Faolline.GraphQuest.Tests
         {
             var provider = new CsvLocalizationProvider(Csv, "fr");
             var quest = TrackGraph(QuestBuilder.Create("q")
-                .AddObjective("raw_id").CompleteWhen(Flag("x")).Build());   // no .Named ⇒ id fallback
+                .AddObjective("raw_id").CompleteWhen(Flag("x")).Build());
             var ev = new QuestEvaluator(quest, new QuestContext()).UseLocalization(provider);
             ev.Evaluate();
 
-            Assert.AreEqual("raw_id", ev.GetObjectives()[0].DisplayName, "the id fallback is not treated as a key");
+            Assert.AreEqual("raw_id", ev.GetObjectives()[0].DisplayName, "no matching key → falls back to authored text (the id)");
         }
     }
 }

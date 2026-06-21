@@ -37,6 +37,12 @@ namespace Faolline.GraphDialogue
         /// <c>#key</c> marker — useful before a table is exported or for an incomplete locale. Strict mode still
         /// throws; Audit still records the missing key. Default <c>false</c> (the bare <c>#key</c> behavior).
         /// </param>
+        /// <summary>Creates a presenter that auto-resolves from <see cref="LocalizationContext.Current"/>.</summary>
+        public DialoguePresenter(
+            Func<string, Speaker> speakerLookup = null,
+            bool titleFallback = false)
+            : this(null, null, speakerLookup, LocalizationContext.Current.StrictMode, titleFallback) { }
+
         public DialoguePresenter(
             ILocalizationProvider localization,
             ILocalizedAssetProvider assets = null,
@@ -44,8 +50,9 @@ namespace Faolline.GraphDialogue
             LocalizationStrictMode strictMode = LocalizationStrictMode.Permissive,
             bool titleFallback = false)
         {
-            _localization = localization ?? new CsvLocalizationProvider(string.Empty, "en");
-            _assets = assets;
+            var ctx = LocalizationContext.Current;
+            _localization = localization ?? ctx.Provider;
+            _assets = assets ?? ctx.AssetProvider;
             _speakerLookup = speakerLookup;
             _strictMode = strictMode;
             _titleFallback = titleFallback;

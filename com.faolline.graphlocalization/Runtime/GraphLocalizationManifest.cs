@@ -26,6 +26,9 @@ namespace Faolline.GraphLocalization
             public List<string> UnityAssetCollections = new List<string>();
             /// <summary>CSV files produced for this lib (asset references; loadable at runtime).</summary>
             public List<TextAsset> CsvFiles = new List<TextAsset>();
+            public string LastBuildTime;
+            public int TotalGraphsScanned;
+            public int TotalKeysFound;
         }
 
         [SerializeField] private List<LibEntry> _libs = new List<LibEntry>();

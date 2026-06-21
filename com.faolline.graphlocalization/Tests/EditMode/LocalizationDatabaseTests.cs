@@ -1,6 +1,4 @@
-using System.Collections.Generic;
 using NUnit.Framework;
-using UnityEngine;
 using Faolline.GraphLocalization;
 
 namespace Faolline.GraphLocalization.Tests
@@ -11,10 +9,7 @@ namespace Faolline.GraphLocalization.Tests
         private LocalizationDatabase _db;
 
         [SetUp]
-        public void SetUp() => _db = ScriptableObject.CreateInstance<LocalizationDatabase>();
-
-        [TearDown]
-        public void TearDown() { if (_db != null) Object.DestroyImmediate(_db); }
+        public void SetUp() => _db = new LocalizationDatabase();
 
         // ── Per-graph entries ────────────────────────────────────────────────────
 
@@ -77,18 +72,6 @@ namespace Faolline.GraphLocalization.Tests
         {
             _db.AddGlobalKey(null, LocalizationKeyType.Text);
             _db.AddGlobalKey("   ", LocalizationKeyType.Text);
-            Assert.AreEqual(0, _db.GlobalKeys.Count);
-        }
-
-        // ── Clear ────────────────────────────────────────────────────────────────
-
-        [Test]
-        public void Clear_RemovesGraphsAndGlobalKeys()
-        {
-            _db.GetOrCreateGraphEntry("g1", "G");
-            _db.AddGlobalKey("k1", LocalizationKeyType.SpeakerName);
-            _db.Clear();
-            Assert.AreEqual(0, _db.Graphs.Count);
             Assert.AreEqual(0, _db.GlobalKeys.Count);
         }
 
