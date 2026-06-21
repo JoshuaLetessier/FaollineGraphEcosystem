@@ -16,8 +16,6 @@ namespace Faolline.GraphLocalization.Editor
     public static class LocalizationBuilderCore
     {
         private const string CollectionsRoot = "Assets/Localization/Collections";
-        // Must match UnityLocalizationSyncer.AssetCollectionSuffix (that type is in the gated assembly).
-        private const string AssetCollectionSuffix = "_Assets";
 
         [MenuItem("Faolline/Localization/Build All Tables")]
         public static void BuildAll()

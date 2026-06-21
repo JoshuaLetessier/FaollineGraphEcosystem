@@ -65,7 +65,7 @@ namespace Faolline.GraphLocalization.Editor
             var baseType = obj.GetType();
             while (baseType != null && baseType != typeof(ScriptableObject))
             {
-                if (baseType.Name == "BaseGraph") return true;
+                if (baseType.FullName == "Faolline.GraphCore.BaseGraph") return true;
                 baseType = baseType.BaseType;
             }
             return false;

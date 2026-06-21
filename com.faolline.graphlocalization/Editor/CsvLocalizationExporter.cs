@@ -10,6 +10,10 @@ namespace Faolline.GraphLocalization.Editor
     /// Format: <c>Key,&lt;locale1&gt;,&lt;locale2&gt;,…</c> — directly consumable by
     /// <see cref="CsvLocalizationProvider"/>. The source locale column is pre-filled with each key's
     /// default text; existing translations are preserved across rebuilds and orphan keys are dropped.
+    /// <para>
+    /// <b>Note:</b> CSV mode exports text keys only. Per-node <c>LocalizedAssetFlags</c> (Audio, Sprite, etc.)
+    /// are not represented in CSV — localized asset management requires the Unity Localization backend (Both mode).
+    /// </para>
     /// </summary>
     public static class CsvLocalizationExporter
     {
