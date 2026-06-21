@@ -47,6 +47,7 @@ namespace Faolline.GraphQuest.Editor
                 {
                     var objNameKey = QuestLocalizationKeys.ForObjective(obj.Id);
                     entry.AddKey(objNameKey, LocalizationKeyType.ObjectiveName,
+                        nodeId: obj.Id,
                         defaultHint: string.IsNullOrEmpty(obj.Title) ? obj.Id : obj.Title,
                         assetFlags: rawFlags);
                     count++;
@@ -55,6 +56,7 @@ namespace Faolline.GraphQuest.Editor
                     {
                         var objDescKey = QuestLocalizationKeys.ForObjectiveDescription(obj.Id);
                         entry.AddKey(objDescKey, LocalizationKeyType.ObjectiveDescription,
+                            nodeId: obj.Id,
                             defaultHint: obj.Description, assetFlags: rawFlags);
                         count++;
                     }

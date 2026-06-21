@@ -33,7 +33,7 @@ namespace Faolline.GraphDialogue.Editor
                 {
                     var key = DialogueLocalizationKeys.ForLine(lineNode);
                     if (!string.IsNullOrEmpty(key))
-                    { entry.AddKey(key, LocalizationKeyType.Text, defaultHint: lineNode.Title, assetFlags: rawFlags); count++; }
+                    { entry.AddKey(key, LocalizationKeyType.Text, nodeId: node.Id, defaultHint: lineNode.Title, assetFlags: rawFlags); count++; }
                 }
 
                 if (node is ChoiceNodeData choiceNode && choiceNode.Choices != null && wantsText)
@@ -43,7 +43,7 @@ namespace Faolline.GraphDialogue.Editor
                         if (choice == null) continue;
                         var key = DialogueLocalizationKeys.ForChoice(choice);
                         if (!string.IsNullOrEmpty(key))
-                        { entry.AddKey(key, LocalizationKeyType.ChoiceLabel, defaultHint: choice.Title, assetFlags: rawFlags); count++; }
+                        { entry.AddKey(key, LocalizationKeyType.ChoiceLabel, nodeId: node.Id, defaultHint: choice.Title, assetFlags: rawFlags); count++; }
                     }
                 }
             }
