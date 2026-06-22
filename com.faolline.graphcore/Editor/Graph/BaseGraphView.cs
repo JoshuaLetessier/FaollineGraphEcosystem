@@ -904,9 +904,10 @@ namespace Faolline.GraphCore.Editor
 
                 var edgeView = CreateEdgeViewForPaste(edgeData);
                 if (edgeView == null) continue;
-                AddElement(edgeView);
 
                 _graph?.AddEdge(edgeData);
+                ConnectEdgeView(edgeView, edgeData);
+                AddElement(edgeView);
                 _isDirty = true;
                 OnEdgeConnected(edgeData);
             }
