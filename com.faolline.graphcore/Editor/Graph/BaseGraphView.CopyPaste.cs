@@ -123,10 +123,12 @@ namespace Faolline.GraphCore.Editor
         }
 
         /// <summary>
-        /// Override to deserialize a JSON string into a concrete BaseNodeData instance.
-        /// Base implementation returns null (paste requires subclass support).
+        /// Deserializes a JSON string into a concrete BaseNodeData instance via
+        /// <see cref="NodeTypeDeserializationRegistry"/>. Override to add custom deserialization
+        /// for types not registered in the registry.
         /// </summary>
-        protected virtual BaseNodeData DeserializeNode(string json) => null;
+        protected virtual BaseNodeData DeserializeNode(string json)
+            => NodeTypeDeserializationRegistry.Deserialize(json);
 
         /// <summary>
         /// Override to create a BaseEdgeView for a pasted edge without connecting ports.
