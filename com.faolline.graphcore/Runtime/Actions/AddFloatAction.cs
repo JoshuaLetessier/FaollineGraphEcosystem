@@ -4,7 +4,7 @@ namespace Faolline.GraphCore
 {
     /// <summary>Adds <see cref="Value"/> to the current float at <see cref="ParameterKey"/> (defaults to 0 when
     /// absent). Use for continuous modifiers (health, progress bars) where the result is relative.</summary>
-    // No [CreateAssetMenu] — created via the inspector's object picker on node action fields.
+    [CreateAssetMenu(menuName = "Faolline/Actions/Add Float", fileName = "AddFloatAction")]
     public class AddFloatAction : BaseAction
     {
         [SerializeField] private string _parameterKey;

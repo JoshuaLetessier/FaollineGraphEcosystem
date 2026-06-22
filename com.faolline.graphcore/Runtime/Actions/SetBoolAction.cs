@@ -7,7 +7,7 @@ namespace Faolline.GraphCore
     /// bool setter — downstream libs that historically shipped their own (GraphStandard, GraphDialogue) now
     /// subclass this so there is a single implementation and no cross-namespace ambiguity.
     /// </summary>
-    // No [CreateAssetMenu] — created via the inspector's object picker on node action fields.
+    [CreateAssetMenu(menuName = "Faolline/Actions/Set Bool", fileName = "SetBoolAction")]
     public class SetBoolAction : BaseAction
     {
         [SerializeField] private string _parameterKey;

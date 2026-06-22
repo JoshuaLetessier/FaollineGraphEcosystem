@@ -4,7 +4,7 @@ namespace Faolline.GraphCore
 {
     /// <summary>Universal action: writes a named float value into the execution context. Canonical home in
     /// GraphCore; downstream libs subclass this.</summary>
-    // No [CreateAssetMenu] — created via the inspector's object picker on node action fields.
+    [CreateAssetMenu(menuName = "Faolline/Actions/Set Float", fileName = "SetFloatAction")]
     public class SetFloatAction : BaseAction
     {
         [SerializeField] private string _parameterKey;

@@ -13,7 +13,7 @@ namespace Faolline.GraphStandard
     /// here, and let a <see cref="ReactiveEvaluator"/> over the same context derive the unlocks.
     /// </para>
     /// </summary>
-    // No [CreateAssetMenu] — created via the inspector's object picker on node action fields.
+    [CreateAssetMenu(menuName = "Faolline/Actions/Add To Collection", fileName = "AddToCollectionAction")]
     public class AddToCollectionAction : BaseAction
     {
         [SerializeField] private string _collectionKey;

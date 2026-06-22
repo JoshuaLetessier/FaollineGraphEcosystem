@@ -4,7 +4,7 @@ namespace Faolline.GraphCore
 {
     /// <summary>Universal action: writes a named string value into the execution context. Canonical home in
     /// GraphCore; downstream libs subclass this.</summary>
-    // No [CreateAssetMenu] — created via the inspector's object picker on node action fields.
+    [CreateAssetMenu(menuName = "Faolline/Actions/Set String", fileName = "SetStringAction")]
     public class SetStringAction : BaseAction
     {
         [SerializeField] private string _parameterKey;

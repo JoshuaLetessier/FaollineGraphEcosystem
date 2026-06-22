@@ -8,7 +8,7 @@ namespace Faolline.GraphStandard
     /// <see cref="Value"/>. A key with no collection is treated as empty (the condition is simply not
     /// satisfied), never an error. Attach to an edge, choice, or node entry to gate on membership.
     /// </summary>
-    // No [CreateAssetMenu] — created via the inspector's object picker on condition fields.
+    [CreateAssetMenu(menuName = "Faolline/Conditions/Collection Contains", fileName = "CollectionContainsCondition")]
     public class CollectionContainsCondition : BaseCondition
     {
         [SerializeField] private string _collectionKey;

@@ -9,7 +9,7 @@ namespace Faolline.GraphCore
     /// condition: downstream libs that historically shipped their own (GraphStandard, GraphDialogue) now subclass
     /// this so there is a single implementation and no cross-namespace ambiguity for a consumer using both.
     /// </summary>
-    // No [CreateAssetMenu] — created via the inspector's object picker on condition fields.
+    [CreateAssetMenu(menuName = "Faolline/Conditions/Bool", fileName = "BoolCondition")]
     public class BoolCondition : BaseCondition
     {
         [SerializeField] private string _parameterKey;

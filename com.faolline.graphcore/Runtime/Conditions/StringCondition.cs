@@ -8,7 +8,7 @@ namespace Faolline.GraphCore
     /// to warn instead; a wrong-typed value always warns (a real misconfiguration). Canonical home in GraphCore;
     /// downstream libs subclass this.
     /// </summary>
-    // No [CreateAssetMenu] — created via the inspector's object picker on condition fields.
+    [CreateAssetMenu(menuName = "Faolline/Conditions/String", fileName = "StringCondition")]
     public class StringCondition : BaseCondition
     {
         [SerializeField] private string _parameterKey;
