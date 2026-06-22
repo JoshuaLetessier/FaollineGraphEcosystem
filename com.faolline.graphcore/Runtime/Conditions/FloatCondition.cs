@@ -8,7 +8,7 @@ namespace Faolline.GraphCore
     /// <see cref="WarnOnMissing"/> to warn instead; a wrong-typed value always warns (a real misconfiguration).
     /// Canonical home in GraphCore; downstream libs subclass this.
     /// </summary>
-    [CreateAssetMenu(menuName = "GraphCore/Conditions/Float Condition", fileName = "FloatCondition")]
+    // No [CreateAssetMenu] — created via the inspector's object picker on condition fields.
     public class FloatCondition : BaseCondition
     {
         [SerializeField] private string _parameterKey;

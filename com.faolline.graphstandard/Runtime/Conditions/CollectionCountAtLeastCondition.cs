@@ -8,7 +8,7 @@ namespace Faolline.GraphStandard
     /// <see cref="Threshold"/> values. This is how a "k-of-N done unlocks this" gate is expressed on a Linear
     /// edge. A key with no collection counts as 0; a <see cref="Threshold"/> of 0 is always satisfied.
     /// </summary>
-    [CreateAssetMenu(menuName = "GraphStandard/Conditions/Collection Count At Least", fileName = "CollectionCountAtLeastCondition")]
+    // No [CreateAssetMenu] — created via the inspector's object picker on condition fields.
     public class CollectionCountAtLeastCondition : BaseCondition
     {
         [SerializeField] private string _collectionKey;

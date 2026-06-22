@@ -8,7 +8,7 @@ namespace Faolline.GraphCore
     /// Root container asset for a graph. Owns all nodes, edges, and parameters.
     /// <see cref="GraphId"/> is a stable GUID assigned once in <c>OnEnable</c> and never changed.
     /// </summary>
-    [CreateAssetMenu(menuName = "GraphCore/Base Graph", fileName = "NewBaseGraph")]
+    // No [CreateAssetMenu] — consumers create typed graphs (DialogueGraph, GameFlowGraph, etc.), not raw BaseGraph.
     public class BaseGraph : ScriptableObject
     {
         [SerializeField, HideInInspector] private string             _graphId;

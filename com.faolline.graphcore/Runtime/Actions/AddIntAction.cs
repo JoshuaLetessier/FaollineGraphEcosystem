@@ -4,7 +4,7 @@ namespace Faolline.GraphCore
 {
     /// <summary>Adds <see cref="Value"/> to the current int at <see cref="ParameterKey"/> (defaults to 0 when
     /// absent). Use for rewards, costs, and counters where the result is relative to the current value.</summary>
-    [CreateAssetMenu(menuName = "GraphCore/Actions/Add Int Action", fileName = "AddIntAction")]
+    // No [CreateAssetMenu] — created via the inspector's object picker on node action fields.
     public class AddIntAction : BaseAction
     {
         [SerializeField] private string _parameterKey;

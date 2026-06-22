@@ -4,7 +4,7 @@ namespace Faolline.GraphCore
 {
     /// <summary>Universal action: logs a configurable message to the Unity console when executed. Canonical home in
     /// GraphCore; downstream libs subclass this.</summary>
-    [CreateAssetMenu(menuName = "GraphCore/Actions/Log Action", fileName = "LogAction")]
+    // No [CreateAssetMenu] — created via the inspector's object picker on node action fields.
     public class LogAction : BaseAction
     {
         [SerializeField] private string _message;
