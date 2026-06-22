@@ -23,6 +23,7 @@ namespace Faolline.GraphCore.Editor
         {
             public string displayName;
             public string package;
+            public string version;
             public bool required;
             public string[] dependsOn;
         }
@@ -38,10 +39,12 @@ namespace Faolline.GraphCore.Editor
 
         private ModuleConfig _config;
         private readonly Dictionary<string, bool> _installed = new Dictionary<string, bool>();
+        private readonly Dictionary<string, string> _installedVersions = new Dictionary<string, string>();
         private readonly Dictionary<string, bool> _desired = new Dictionary<string, bool>();
         private ListRequest _listRequest;
         private AddAndRemoveRequest _modifyRequest;
         private string _status = "Loading…";
+        private int _updatesAvailable;
 
         [MenuItem("Window/Faolline/Graph Ecosystem Modules")]
         public static void ShowWindow()
@@ -97,13 +100,26 @@ namespace Faolline.GraphCore.Editor
                 if (_listRequest.Status == StatusCode.Success)
                 {
                     _installed.Clear();
-                    foreach (var p in _listRequest.Result) _installed[p.name] = true;
+                    _installedVersions.Clear();
+                    foreach (var p in _listRequest.Result)
+                    {
+                        _installed[p.name] = true;
+                        _installedVersions[p.name] = p.version;
+                    }
 
+                    _updatesAvailable = 0;
                     if (_config?.modules != null)
+                    {
                         foreach (var m in _config.modules)
+                        {
                             _desired[m.package] = m.required || _installed.ContainsKey(m.package);
+                            if (IsUpdateAvailable(m)) _updatesAvailable++;
+                        }
+                    }
 
-                    _status = "Ready.";
+                    _status = _updatesAvailable > 0
+                        ? $"Ready — {_updatesAvailable} update(s) available."
+                        : "Ready — all packages up to date.";
                 }
                 else
                 {
@@ -157,8 +173,25 @@ namespace Faolline.GraphCore.Editor
                     }
 
                     GUILayout.FlexibleSpace();
+
+                    bool isInstalled = _installed.ContainsKey(m.package);
+                    if (isInstalled && _installedVersions.TryGetValue(m.package, out var installedVer))
+                    {
+                        if (IsUpdateAvailable(m))
+                        {
+                            var prev = GUI.color;
+                            GUI.color = new Color(1f, 0.75f, 0.2f);
+                            GUILayout.Label($"{installedVer} → {m.version}", EditorStyles.miniLabel);
+                            GUI.color = prev;
+                        }
+                        else
+                        {
+                            GUILayout.Label(installedVer, EditorStyles.miniLabel);
+                        }
+                    }
+
                     string tag = m.required ? "required"
-                        : _installed.ContainsKey(m.package) ? "installed" : "";
+                        : isInstalled ? "installed" : "";
                     if (!string.IsNullOrEmpty(tag))
                         GUILayout.Label(tag, EditorStyles.miniLabel);
 
@@ -170,12 +203,65 @@ namespace Faolline.GraphCore.Editor
             EditorGUILayout.Space(8);
             using (new EditorGUI.DisabledScope(busy))
             {
+                EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button("Apply", GUILayout.Height(28)))
                     Apply();
+                using (new EditorGUI.DisabledScope(_updatesAvailable == 0))
+                {
+                    if (GUILayout.Button($"Update All ({_updatesAvailable})", GUILayout.Height(28), GUILayout.Width(140)))
+                        UpdateAll();
+                }
+                EditorGUILayout.EndHorizontal();
             }
 
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField(_status, EditorStyles.miniLabel);
+        }
+
+        // ── Version check ───────────────────────────────────────────────────
+
+        private bool IsUpdateAvailable(ModuleEntry m)
+        {
+            if (string.IsNullOrEmpty(m.version)) return false;
+            if (!_installedVersions.TryGetValue(m.package, out var installed)) return false;
+            return CompareVersions(installed, m.version) < 0;
+        }
+
+        private static int CompareVersions(string a, string b)
+        {
+            var pa = ParseVersion(a);
+            var pb = ParseVersion(b);
+            for (int i = 0; i < 3; i++)
+            {
+                if (pa[i] < pb[i]) return -1;
+                if (pa[i] > pb[i]) return 1;
+            }
+            return 0;
+        }
+
+        private static int[] ParseVersion(string v)
+        {
+            var result = new int[3];
+            if (string.IsNullOrEmpty(v)) return result;
+            var parts = v.Split('.');
+            for (int i = 0; i < Mathf.Min(parts.Length, 3); i++)
+                int.TryParse(parts[i], out result[i]);
+            return result;
+        }
+
+        // ── Update all ─────────────────────────────────────────────────────
+
+        private void UpdateAll()
+        {
+            if (_config?.modules == null) return;
+            var toAdd = new List<string>();
+            foreach (var m in _config.modules)
+                if (IsUpdateAvailable(m))
+                    toAdd.Add(BuildGitIdentifier(m.package));
+
+            if (toAdd.Count == 0) { _status = "Nothing to update."; return; }
+            _status = $"Updating {toAdd.Count} package(s)…";
+            _modifyRequest = Client.AddAndRemove(toAdd.ToArray(), new string[0]);
         }
 
         // ── Apply ───────────────────────────────────────────────────────────

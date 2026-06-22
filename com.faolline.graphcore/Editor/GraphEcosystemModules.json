@@ -6,44 +6,51 @@
     {
       "displayName": "Graph Core (base)",
       "package": "com.faolline.graphcore",
+      "version": "0.20.0",
       "required": true,
       "dependsOn": []
     },
     {
       "displayName": "Graph Standard (buffer)",
       "package": "com.faolline.graphstandard",
+      "version": "0.12.1",
       "required": true,
       "dependsOn": [ "com.faolline.graphcore" ]
     },
     {
       "displayName": "Graph Localization",
       "package": "com.faolline.graphlocalization",
+      "version": "0.5.0",
       "required": false,
       "dependsOn": []
     },
     {
       "displayName": "Graph Dialogue System",
       "package": "com.faolline.graphdialoguesystem",
+      "version": "0.9.0",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphlocalization" ]
     },
     {
       "displayName": "Graph Save",
       "package": "com.faolline.graphsave",
+      "version": "0.3.2",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore" ]
     },
     {
       "displayName": "Graph GameFlow",
       "package": "com.faolline.graphgameflow",
+      "version": "0.6.3",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore" ]
     },
     {
       "displayName": "Graph Quest",
       "package": "com.faolline.graphquest",
+      "version": "0.3.0",
       "required": false,
-      "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphstandard" ]
+      "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphstandard", "com.faolline.graphlocalization" ]
     }
   ]
 }
