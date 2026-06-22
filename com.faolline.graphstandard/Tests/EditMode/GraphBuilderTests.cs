@@ -135,5 +135,61 @@ namespace Faolline.GraphStandard.Tests
             var foreign = new GraphBuilder<BaseGraph>().AddStatement("foreign");
             Assert.Throws<System.ArgumentException>(() => b.Edge(a, foreign));
         }
+
+        [Test]
+        public void Edge_WithCondition_SetsConditionOnEdge()
+        {
+            var cond = Track(ScriptableObject.CreateInstance<Gate>());
+            var b = new GraphBuilder<BaseGraph>();
+            var start = b.AddStart().AsEntry();
+            var a = b.AddStatement("A");
+            var end = b.AddEnd();
+            start.To(a);
+            b.Edge(a, end, "out", cond);
+            var g = Track(b.Build());
+
+            var edge = g.Edges.First(e => e.FromNodeId == a.Node.Id && e.ToNodeId == end.Node.Id);
+            Assert.AreSame(cond, edge.Condition, "Edge condition should be set by the overload.");
+        }
+
+        [Test]
+        public void To_WithCondition_SetsConditionOnEdge()
+        {
+            var cond = Track(ScriptableObject.CreateInstance<Gate>());
+            var b = new GraphBuilder<BaseGraph>();
+            var start = b.AddStart().AsEntry();
+            var a = b.AddStatement("A");
+            var end = b.AddEnd();
+            start.To(a);
+            a.To(end, "out", cond);
+            var g = Track(b.Build());
+
+            var edge = g.Edges.First(e => e.FromNodeId == a.Node.Id && e.ToNodeId == end.Node.Id);
+            Assert.AreSame(cond, edge.Condition);
+        }
+
+        [Test]
+        public void Edge_WithCondition_RunnerRespectsGate()
+        {
+            var gate = Track(ScriptableObject.CreateInstance<Gate>());
+            var b = new GraphBuilder<BaseGraph>();
+            var start = b.AddStart().AsEntry();
+            var hub = b.AddStatement("Hub");
+            var gated = b.AddStatement("Gated");
+            var fallback = b.AddEnd("Fallback");
+            start.To(hub);
+            b.Edge(hub, gated, "out", gate);
+            hub.To(fallback);
+            var g = Track(b.Build());
+
+            var runner = new BaseRunner();
+            string reached = null;
+            runner.OnNodeEntered += n => reached = n.Title;
+            runner.OnNodeCompleted += n => runner.Proceed();
+            runner.Start(g, new BaseContext(), new NodeExecutorRegistry());
+
+            Assert.AreEqual("Fallback", reached,
+                "Gate is closed, so the runner should skip the gated edge and take the fallback.");
+        }
     }
 }

@@ -46,7 +46,19 @@ namespace Faolline.GraphStandard
         /// <paramref name="portName"/> matching a choice's <see cref="BaseChoice.Title"/> is resolved to that
         /// choice's id (the routing key); otherwise the port is used literally (default "out").
         /// </summary>
+        /// <summary>
+        /// Connects <paramref name="from"/> to <paramref name="to"/>. For a Choice <paramref name="from"/>, a
+        /// <paramref name="portName"/> matching a choice's <see cref="BaseChoice.Title"/> is resolved to that
+        /// choice's id (the routing key); otherwise the port is used literally (default "out").
+        /// </summary>
         public GraphBuilderBase Edge(GraphNodeBuilder from, GraphNodeBuilder to, string portName = "out")
+            => Edge(from, to, portName, null);
+
+        /// <summary>
+        /// As <see cref="Edge(GraphNodeBuilder, GraphNodeBuilder, string)"/>, with an optional
+        /// <paramref name="condition"/> gating the edge (the runner skips it when the condition fails).
+        /// </summary>
+        public GraphBuilderBase Edge(GraphNodeBuilder from, GraphNodeBuilder to, string portName, BaseCondition condition)
         {
             if (from == null || to == null)
                 throw new ArgumentNullException(from == null ? nameof(from) : nameof(to));
@@ -58,7 +70,8 @@ namespace Faolline.GraphStandard
                 Id         = Guid.NewGuid().ToString("D"),
                 FromNodeId = from.Node.Id,
                 ToNodeId   = to.Node.Id,
-                PortName   = ResolvePort(from.Node, portName)
+                PortName   = ResolvePort(from.Node, portName),
+                Condition  = condition
             });
             return this;
         }

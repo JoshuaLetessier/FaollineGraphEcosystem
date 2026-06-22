@@ -119,5 +119,12 @@ namespace Faolline.GraphStandard
             _owner.Edge(this, target, portName);
             return this;
         }
+
+        /// <summary>As <see cref="To(GraphNodeBuilder, string)"/>, with a <paramref name="condition"/> gating the edge.</summary>
+        public GraphNodeBuilder To(GraphNodeBuilder target, string portName, BaseCondition condition)
+        {
+            _owner.Edge(this, target, portName, condition);
+            return this;
+        }
     }
 }

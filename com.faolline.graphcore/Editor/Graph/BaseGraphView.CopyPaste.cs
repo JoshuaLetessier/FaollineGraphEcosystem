@@ -114,19 +114,22 @@ namespace Faolline.GraphCore.Editor
 
                 var edgeView = CreateEdgeViewForPaste(edgeData);
                 if (edgeView == null) continue;
-                AddElement(edgeView);
 
                 _graph?.AddEdge(edgeData);
+                ConnectEdgeView(edgeView, edgeData);
+                AddElement(edgeView);
                 _isDirty = true;
                 OnEdgeConnected(edgeData);
             }
         }
 
         /// <summary>
-        /// Override to deserialize a JSON string into a concrete BaseNodeData instance.
-        /// Base implementation returns null (paste requires subclass support).
+        /// Deserializes a JSON string into a concrete BaseNodeData instance via
+        /// <see cref="NodeTypeDeserializationRegistry"/>. Override to add custom deserialization
+        /// for types not registered in the registry.
         /// </summary>
-        protected virtual BaseNodeData DeserializeNode(string json) => null;
+        protected virtual BaseNodeData DeserializeNode(string json)
+            => NodeTypeDeserializationRegistry.Deserialize(json);
 
         /// <summary>
         /// Override to create a BaseEdgeView for a pasted edge without connecting ports.
@@ -134,11 +137,12 @@ namespace Faolline.GraphCore.Editor
         /// </summary>
         protected virtual BaseEdgeView CreateEdgeViewForPaste(BaseEdgeData edgeData) => CreateEdgeView(edgeData);
 
-        // Minimal helper to read the Id field from any JSON-serialized BaseNodeData
         [Serializable]
         private class NodeIdPlaceholder
         {
-            public string Id;
+            // Must match the [SerializeField] backing field name in BaseNodeData, not the property name.
+            public string _id;
+            public string Id => _id;
         }
     }
 }
