@@ -52,6 +52,11 @@ namespace Faolline.GraphCore.Editor
         }
 
         [Serializable]
-        private class NodeTypeProbe { public string NodeType; }
+        private class NodeTypeProbe
+        {
+            // Must match the [SerializeField] backing field name in BaseNodeData.
+            public string _nodeType;
+            public string NodeType => _nodeType;
+        }
     }
 }

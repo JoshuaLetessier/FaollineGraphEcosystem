@@ -136,11 +136,12 @@ namespace Faolline.GraphCore.Editor
         /// </summary>
         protected virtual BaseEdgeView CreateEdgeViewForPaste(BaseEdgeData edgeData) => CreateEdgeView(edgeData);
 
-        // Minimal helper to read the Id field from any JSON-serialized BaseNodeData
         [Serializable]
         private class NodeIdPlaceholder
         {
-            public string Id;
+            // Must match the [SerializeField] backing field name in BaseNodeData, not the property name.
+            public string _id;
+            public string Id => _id;
         }
     }
 }

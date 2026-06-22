@@ -96,7 +96,11 @@ namespace Faolline.GraphCore.Editor
         }
 
         [Serializable]
-        private class IdPlaceholder { public string Id; }
+        private class IdPlaceholder
+        {
+            public string _id;
+            public string Id => _id;
+        }
     }
 
     /// <summary>Result of <see cref="GraphTemplate.Instantiate"/>: raw JSON + ID remapping, ready for the
