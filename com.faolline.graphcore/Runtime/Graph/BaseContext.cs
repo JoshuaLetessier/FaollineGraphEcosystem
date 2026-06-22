@@ -279,6 +279,24 @@ namespace Faolline.GraphCore
 
         // ── Change notifications ───────────────────────────────────────────────
 
+        private List<Action<string>> _anyParamSubs;
+
+        /// <summary>
+        /// Subscribes <paramref name="handler"/> to changes on ANY parameter key. The handler
+        /// receives the changed key. Fires AFTER per-key handlers. Multiple handlers supported.
+        /// </summary>
+        public void OnAnyParameterChanged(Action<string> handler)
+        {
+            if (handler == null) return;
+            (_anyParamSubs ??= new List<Action<string>>()).Add(handler);
+        }
+
+        /// <summary>Removes <paramref name="handler"/> from the wildcard parameter change list.</summary>
+        public void OffAnyParameterChanged(Action<string> handler)
+        {
+            _anyParamSubs?.Remove(handler);
+        }
+
         /// <summary>
         /// Subscribes <paramref name="handler"/> to changes on <paramref name="key"/>.
         /// The handler receives the new value boxed as <c>object</c>.
@@ -302,11 +320,18 @@ namespace Faolline.GraphCore
 
         private void FireSubscribers(string key, object value)
         {
-            if (!_subs.TryGetValue(key, out var list)) return;
-            // Iterate over a snapshot to handle re-entrant unsubscribe
-            var snapshot = new List<Action<object>>(list);
-            foreach (var handler in snapshot)
-                handler(value);
+            if (_subs.TryGetValue(key, out var list))
+            {
+                var snapshot = new List<Action<object>>(list);
+                foreach (var handler in snapshot)
+                    handler(value);
+            }
+            if (_anyParamSubs != null && _anyParamSubs.Count > 0)
+            {
+                var snapshot = new List<Action<string>>(_anyParamSubs);
+                foreach (var handler in snapshot)
+                    handler(key);
+            }
         }
 
         // ── Graph initialization ──────────────────────────────────────────────
@@ -466,13 +491,38 @@ namespace Faolline.GraphCore
                 list.Remove(handler);
         }
 
+        private List<Action<string>> _anyCollectionSubs;
+
+        /// <summary>
+        /// Subscribes <paramref name="handler"/> to changes on ANY collection key. The handler
+        /// receives the changed key. Fires AFTER per-key handlers. Multiple handlers supported.
+        /// </summary>
+        public void OnAnyCollectionChanged(Action<string> handler)
+        {
+            if (handler == null) return;
+            (_anyCollectionSubs ??= new List<Action<string>>()).Add(handler);
+        }
+
+        /// <summary>Removes <paramref name="handler"/> from the wildcard collection change list.</summary>
+        public void OffAnyCollectionChanged(Action<string> handler)
+        {
+            _anyCollectionSubs?.Remove(handler);
+        }
+
         private void FireCollectionChanged(string key)
         {
-            if (_collectionSubs == null || !_collectionSubs.TryGetValue(key, out var list)) return;
-            // Iterate a snapshot so subscribe/unsubscribe during delivery is re-entrant safe.
-            var snapshot = new List<Action<string>>(list);
-            foreach (var handler in snapshot)
-                handler(key);
+            if (_collectionSubs != null && _collectionSubs.TryGetValue(key, out var list))
+            {
+                var snapshot = new List<Action<string>>(list);
+                foreach (var handler in snapshot)
+                    handler(key);
+            }
+            if (_anyCollectionSubs != null && _anyCollectionSubs.Count > 0)
+            {
+                var snapshot = new List<Action<string>>(_anyCollectionSubs);
+                foreach (var handler in snapshot)
+                    handler(key);
+            }
         }
 
         // ── Cloning ────────────────────────────────────────────────────────────

@@ -404,5 +404,66 @@ namespace Faolline.GraphQuest
             _context.AddToCollection(_rewardedKey, guardKey);
             OnRewardFired?.Invoke(eventId);
         }
+
+        // ── Auto-evaluate (push mode) ────────────────────────────────────────
+
+        private bool _autoEvaluate;
+        private bool _evaluating;
+        private bool _dirtyDuringEvaluate;
+
+        /// <summary>True when auto-evaluate is active (subscribed to context changes).</summary>
+        public bool IsAutoEvaluateEnabled => _autoEvaluate;
+
+        /// <summary>
+        /// Opts into push-mode evaluation: the evaluator subscribes to all context parameter and
+        /// collection changes and calls <see cref="Evaluate()"/> automatically. Eliminates the need
+        /// for frame-polling. Idempotent — calling twice is a no-op.
+        /// <para>
+        /// <b>Timers are NOT auto-ticked.</b> Objectives with <see cref="ObjectiveNodeData.TimeLimitSeconds"/>
+        /// still require the consumer to call <see cref="Evaluate(float)"/> with a clock.
+        /// </para>
+        /// </summary>
+        public void EnableAutoEvaluate()
+        {
+            if (_autoEvaluate || _context == null) return;
+            _autoEvaluate = true;
+            _context.OnAnyParameterChanged(HandleAutoEvaluateTrigger);
+            _context.OnAnyCollectionChanged(HandleAutoEvaluateTrigger);
+        }
+
+        /// <summary>
+        /// Disables auto-evaluate and unsubscribes from context changes. Idempotent.
+        /// </summary>
+        public void DisableAutoEvaluate()
+        {
+            if (!_autoEvaluate || _context == null) return;
+            _autoEvaluate = false;
+            _dirtyDuringEvaluate = false;
+            _context.OffAnyParameterChanged(HandleAutoEvaluateTrigger);
+            _context.OffAnyCollectionChanged(HandleAutoEvaluateTrigger);
+        }
+
+        private void HandleAutoEvaluateTrigger(string _)
+        {
+            if (_evaluating)
+            {
+                _dirtyDuringEvaluate = true;
+                return;
+            }
+            _evaluating = true;
+            try
+            {
+                Evaluate();
+                while (_dirtyDuringEvaluate)
+                {
+                    _dirtyDuringEvaluate = false;
+                    Evaluate();
+                }
+            }
+            finally
+            {
+                _evaluating = false;
+            }
+        }
     }
 }

@@ -123,7 +123,17 @@ namespace Faolline.GraphCore
             }
 
             GraphRunMonitor.Register(_runProbe);
+            GraphRunContextRegistry.Register(_runProbe, _context);
             GraphRunMonitor.NotifyChanged();
+        }
+
+        private void EditorUnwireProbe()
+        {
+            if (_runProbe != null)
+            {
+                GraphRunMonitor.Unregister(_runProbe);
+                GraphRunContextRegistry.Unregister(_runProbe);
+            }
         }
 #endif
 
