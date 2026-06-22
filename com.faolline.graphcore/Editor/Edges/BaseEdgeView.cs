@@ -55,6 +55,7 @@ namespace Faolline.GraphCore.Editor
         }
 
         private OrthogonalEdgeControl _orthoControl;
+        private Label _conditionBadge;
 
         /// <summary>
         /// Uses an <see cref="OrthogonalEdgeControl"/> so the edge renders as a right-angle polyline (through
@@ -78,6 +79,7 @@ namespace Faolline.GraphCore.Editor
             if (!base.UpdateEdgeControl()) return false;
             if (!selected && output != null && input != null)
                 ApplyEdgeColor();
+            PositionConditionBadge();
             return true;
         }
 
@@ -90,9 +92,64 @@ namespace Faolline.GraphCore.Editor
             if (_orthoControl != null) _orthoControl.EdgeData = edgeData;
             LoadStyleSheet();
             ApplyEdgeColor();
+            InitConditionBadge();
             RegisterCallback<MouseDownEvent>(OnEdgeMouseDown);          // double-click on the line adds a bend point
             RegisterCallback<AttachToPanelEvent>(_ => { RefreshVisual(); RebuildWaypointHandles(); });
             RegisterCallback<DetachFromPanelEvent>(_ => ClearWaypointHandles());
+        }
+
+        // ── Condition badge ───────────────────────────────────────────────────────
+
+        private void InitConditionBadge()
+        {
+            bool hasCondition = EdgeData?.Condition != null;
+            if (!hasCondition) return;
+
+            _conditionBadge = new Label("◆")
+            {
+                pickingMode = PickingMode.Ignore,
+                style =
+                {
+                    position = Position.Absolute,
+                    fontSize = 12,
+                    color = new Color(1f, 0.75f, 0.2f),
+                    unityTextAlign = TextAnchor.MiddleCenter,
+                    backgroundColor = new Color(0.18f, 0.18f, 0.18f, 0.9f),
+                    borderTopLeftRadius = 6,
+                    borderTopRightRadius = 6,
+                    borderBottomLeftRadius = 6,
+                    borderBottomRightRadius = 6,
+                    paddingLeft = 3,
+                    paddingRight = 3,
+                    paddingTop = 1,
+                    paddingBottom = 1,
+                    width = 18,
+                    height = 18
+                }
+            };
+            _conditionBadge.tooltip = EdgeData.Condition.GetType().Name;
+            Add(_conditionBadge);
+        }
+
+        private void PositionConditionBadge()
+        {
+            if (_conditionBadge == null || edgeControl == null) return;
+            var points = edgeControl.controlPoints;
+            if (points == null || points.Length < 2) return;
+
+            int midIdx = points.Length / 2;
+            var a = points[Mathf.Max(0, midIdx - 1)];
+            var b = points[Mathf.Min(points.Length - 1, midIdx)];
+            var mid = (a + b) * 0.5f;
+
+            // controlPoints are in the edge's parent space; badge is a child of this edge view,
+            // so convert parent → this edge's local space.
+            var local = edgeControl.parent != null
+                ? edgeControl.parent.ChangeCoordinatesTo(this, mid)
+                : mid;
+
+            _conditionBadge.style.left = local.x - 9;
+            _conditionBadge.style.top = local.y - 9;
         }
 
         // ── Malleable waypoints (editor interaction) ──────────────────────────────
