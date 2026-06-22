@@ -63,5 +63,53 @@ namespace Faolline.GraphDialogue
                     if (c != null) Node.EntryConditions.Add(c);
             return (TSelf)this;
         }
+
+        /// <summary>Appends enter-actions (run on entering the node).</summary>
+        public TSelf OnEnter(params BaseAction[] actions)
+        {
+            if (actions != null)
+                foreach (var a in actions)
+                    if (a != null) Node.OnEnterActions.Add(a);
+            return (TSelf)this;
+        }
+
+        /// <summary>Appends exit-actions (run on leaving the node).</summary>
+        public TSelf OnExit(params BaseAction[] actions)
+        {
+            if (actions != null)
+                foreach (var a in actions)
+                    if (a != null) Node.OnExitActions.Add(a);
+            return (TSelf)this;
+        }
+
+        /// <summary>Marks this node as a checkpoint for GoBackToCheckpoint.</summary>
+        public TSelf Checkpoint(bool value = true)
+        {
+            Node.IsCheckpoint = value;
+            return (TSelf)this;
+        }
+
+        /// <summary>Parks the player on this node until the named signal is raised.</summary>
+        public TSelf Await(string signalName)
+        {
+            Node.AwaitSignalName = signalName;
+            return (TSelf)this;
+        }
+
+        /// <summary>Holds on this node for the given seconds of host-fed time before advancing.</summary>
+        public TSelf Wait(float seconds)
+        {
+            Node.WaitDuration = seconds;
+            return (TSelf)this;
+        }
+
+        /// <summary>Appends resume conditions (gate checked when the awaited signal arrives).</summary>
+        public TSelf ResumeWhen(params BaseCondition[] conditions)
+        {
+            if (conditions != null)
+                foreach (var c in conditions)
+                    if (c != null) Node.ResumeConditions.Add(c);
+            return (TSelf)this;
+        }
     }
 }
