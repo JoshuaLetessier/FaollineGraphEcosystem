@@ -28,6 +28,7 @@ namespace Faolline.GraphGameFlow
         [SerializeField] private TriggerMode _autoMode = TriggerMode.Manual;
 
         [Tooltip("Optional tag filter for physics triggers (empty = any object triggers).")]
+        [TagSelector]
         [SerializeField] private string _requiredTag;
 
         [Header("Guard")]
@@ -38,8 +39,9 @@ namespace Faolline.GraphGameFlow
         [Tooltip("Actions executed on the active context when fired.")]
         [SerializeField] private List<BaseAction> _actions = new List<BaseAction>();
 
-        [Tooltip("Optional signal raised on the context after actions execute.")]
-        [SerializeField] private string _signal;
+        [Tooltip("Optional signal raised on the context after actions execute. Use a SignalName asset for safety, or type a raw string.")]
+        [SerializeField] private SignalName _signalAsset;
+        [SerializeField] private string _signalRaw;
 
         [Header("Options")]
         [Tooltip("When true, Fire() does nothing after the first successful invocation.")]
@@ -87,8 +89,9 @@ namespace Faolline.GraphGameFlow
             foreach (var go in _deactivate)
                 if (go != null) go.SetActive(false);
 
-            if (!string.IsNullOrEmpty(_signal))
-                ctx.RaiseSignal(_signal);
+            string signal = _signalAsset != null ? (string)_signalAsset : _signalRaw;
+            if (!string.IsNullOrEmpty(signal))
+                ctx.RaiseSignal(signal);
         }
 
         /// <summary>Resets the fire-once guard so the trigger can fire again.</summary>

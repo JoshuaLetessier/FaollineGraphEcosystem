@@ -245,7 +245,7 @@ namespace Faolline.GraphGameFlow.Tests
 
         private static void SetSignal(ContextTrigger trigger, string signal)
         {
-            var field = typeof(ContextTrigger).GetField("_signal",
+            var field = typeof(ContextTrigger).GetField("_signalRaw",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             field.SetValue(trigger, signal);
         }
