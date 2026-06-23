@@ -24,6 +24,7 @@ namespace Faolline.GraphCore
         [SerializeField] private bool  _isCheckpoint;
         [SerializeField] private bool  _hasColorOverride;
         [SerializeField] private Color _nodeColor;
+        [SerializeField] private SignalName _awaitSignalAsset;
         [SerializeField] private string _awaitSignal = string.Empty;
         [SerializeField, Tooltip("Extra conditions an await-signal must satisfy to resume this node. All must pass (AND). Unlike Entry Conditions (checked once on arrival), these are re-checked every time the signal fires — the node stays parked until the context satisfies them.")]
         private List<BaseCondition> _resumeConditions = new List<BaseCondition>();
@@ -113,7 +114,7 @@ namespace Faolline.GraphCore
         /// </summary>
         public string AwaitSignalName
         {
-            get => _awaitSignal;
+            get => _awaitSignalAsset != null ? (string)_awaitSignalAsset : _awaitSignal;
             set => _awaitSignal = value ?? string.Empty;
         }
 

@@ -78,8 +78,11 @@ namespace Faolline.GraphGameFlow.Editor
         {
             var foldout = new Foldout { text = "Flow", value = true };
 
+            var assetProp = nodeElement.FindPropertyRelative("_awaitSignalAsset");
+            if (assetProp != null) foldout.Add(new PropertyField(assetProp, "Await Signal (asset)"));
+
             var awaitProp = nodeElement.FindPropertyRelative("_awaitSignal");
-            if (awaitProp != null) foldout.Add(new PropertyField(awaitProp, "Await Signal"));
+            if (awaitProp != null) foldout.Add(new PropertyField(awaitProp, "Await Signal (raw)"));
 
             var waitProp = nodeElement.FindPropertyRelative("_waitDuration");
             if (waitProp != null) foldout.Add(new PropertyField(waitProp, "Wait Duration"));
