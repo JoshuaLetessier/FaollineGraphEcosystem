@@ -6,23 +6,42 @@ namespace Faolline.GraphGameFlow
 {
     /// <summary>
     /// Scene-to-graph bridge: executes a list of <see cref="BaseAction"/>s against the active
-    /// <see cref="GraphFlowDriver"/>'s context when <see cref="Fire"/> is called. Wire <c>Fire()</c>
-    /// to any Unity event (button onClick, OnTriggerEnter, interaction callback, puzzle completion)
-    /// to update graph state without writing custom scripts.
+    /// <see cref="GraphFlowDriver"/>'s context when <see cref="Fire"/> is called — manually, or
+    /// automatically via built-in physics triggers (<see cref="AutoMode"/>).
     /// <para>
-    /// Optionally raises a named signal after the actions, and can be set to fire only once.
-    /// The context is read from <see cref="GraphFlowDriver.Active"/> — the persistent cross-scene
-    /// driver. If no driver is active, the trigger logs a warning and does nothing.
+    /// An optional <see cref="BaseCondition"/> guard can gate the trigger: <see cref="Fire"/> only
+    /// proceeds when the guard evaluates true against the active context (e.g. "player has key").
     /// </para>
     /// </summary>
     public class ContextTrigger : MonoBehaviour
     {
-        [Tooltip("Actions executed on the active context when Fire() is called.")]
+        public enum TriggerMode
+        {
+            Manual,
+            OnTriggerEnter,
+            OnTriggerExit,
+            OnCollisionEnter
+        }
+
+        [Header("Trigger")]
+        [Tooltip("Manual = call Fire() from code/UnityEvent. Others fire automatically on physics events.")]
+        [SerializeField] private TriggerMode _autoMode = TriggerMode.Manual;
+
+        [Tooltip("Optional tag filter for physics triggers (empty = any object triggers).")]
+        [SerializeField] private string _requiredTag;
+
+        [Header("Guard")]
+        [Tooltip("Optional condition that must pass before actions execute. Null = no guard.")]
+        [SerializeField] private BaseCondition _guard;
+
+        [Header("Actions")]
+        [Tooltip("Actions executed on the active context when fired.")]
         [SerializeField] private List<BaseAction> _actions = new List<BaseAction>();
 
         [Tooltip("Optional signal raised on the context after actions execute.")]
         [SerializeField] private string _signal;
 
+        [Header("Options")]
         [Tooltip("When true, Fire() does nothing after the first successful invocation.")]
         [SerializeField] private bool _fireOnce = true;
 
@@ -34,12 +53,12 @@ namespace Faolline.GraphGameFlow
 
         private bool _fired;
 
-        /// <summary>True after the first successful <see cref="Fire"/> (when <see cref="_fireOnce"/> is on).</summary>
+        /// <summary>True after the first successful <see cref="Fire"/> (when fire-once is on).</summary>
         public bool HasFired => _fired;
 
         /// <summary>
         /// Executes all configured actions against the active driver's context, toggles GameObjects,
-        /// and optionally raises a signal. Call from a UnityEvent, an interaction system, or code.
+        /// and optionally raises a signal. Respects the guard condition and fire-once flag.
         /// </summary>
         public void Fire()
         {
@@ -52,8 +71,12 @@ namespace Faolline.GraphGameFlow
                 return;
             }
 
-            _fired = true;
             var ctx = driver.Context;
+
+            if (_guard != null && !_guard.Evaluate(ctx))
+                return;
+
+            _fired = true;
 
             foreach (var action in _actions)
                 if (action != null) action.Execute(ctx);
@@ -70,5 +93,28 @@ namespace Faolline.GraphGameFlow
 
         /// <summary>Resets the fire-once guard so the trigger can fire again.</summary>
         public void ResetTrigger() => _fired = false;
+
+        // ── Physics auto-triggers ────────────────────────────────────────────
+
+        private bool PassesTagFilter(GameObject other)
+            => string.IsNullOrEmpty(_requiredTag) || other.CompareTag(_requiredTag);
+
+        private void OnTriggerEnter(Collider other)
+        {
+            if (_autoMode == TriggerMode.OnTriggerEnter && PassesTagFilter(other.gameObject))
+                Fire();
+        }
+
+        private void OnTriggerExit(Collider other)
+        {
+            if (_autoMode == TriggerMode.OnTriggerExit && PassesTagFilter(other.gameObject))
+                Fire();
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            if (_autoMode == TriggerMode.OnCollisionEnter && PassesTagFilter(collision.gameObject))
+                Fire();
+        }
     }
 }

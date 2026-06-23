@@ -177,6 +177,63 @@ namespace Faolline.GraphGameFlow.Tests
             trigger.Fire();
         }
 
+        [Test]
+        public void Guard_BlocksFireWhenFalse()
+        {
+            var driver = CreateActiveDriver();
+            var action = ScriptableObject.CreateInstance<SetBoolAction>();
+            action.ParameterKey = "guarded_flag"; action.Value = true;
+            _so.Add(action);
+
+            var guard = ScriptableObject.CreateInstance<BoolCondition>();
+            guard.ParameterKey = "has_key"; guard.ExpectedValue = true;
+            _so.Add(guard);
+
+            var triggerGo = new GameObject("Trigger");
+            _go.Add(triggerGo);
+            var trigger = triggerGo.AddComponent<ContextTrigger>();
+            SetActions(trigger, action);
+            SetGuard(trigger, guard);
+            SetFireOnce(trigger, false);
+
+            trigger.Fire();
+            Assert.IsFalse(driver.Context.TryGet<bool>("guarded_flag", out var v1) && v1,
+                "Guard is false (has_key not set) — action should not execute.");
+
+            driver.Context.Set<bool>("has_key", true);
+            trigger.Fire();
+            Assert.IsTrue(driver.Context.TryGet<bool>("guarded_flag", out var v2) && v2,
+                "Guard is now true — action should execute.");
+        }
+
+        [Test]
+        public void Guard_DoesNotConsumeFireOnce_WhenBlocked()
+        {
+            var driver = CreateActiveDriver();
+            var action = ScriptableObject.CreateInstance<AddIntAction>();
+            action.ParameterKey = "count"; action.Value = 1;
+            _so.Add(action);
+
+            var guard = ScriptableObject.CreateInstance<BoolCondition>();
+            guard.ParameterKey = "ready"; guard.ExpectedValue = true;
+            _so.Add(guard);
+
+            var triggerGo = new GameObject("Trigger");
+            _go.Add(triggerGo);
+            var trigger = triggerGo.AddComponent<ContextTrigger>();
+            SetActions(trigger, action);
+            SetGuard(trigger, guard);
+            SetFireOnce(trigger, true);
+
+            trigger.Fire();
+            Assert.IsFalse(trigger.HasFired, "Guard blocked — HasFired should still be false.");
+
+            driver.Context.Set<bool>("ready", true);
+            trigger.Fire();
+            Assert.IsTrue(trigger.HasFired);
+            Assert.IsTrue(driver.Context.TryGet<int>("count", out var v) && v == 1);
+        }
+
         // ── Reflection helpers to set serialized fields in tests ─────────────
 
         private static void SetActions(ContextTrigger trigger, params BaseAction[] actions)
@@ -212,6 +269,13 @@ namespace Faolline.GraphGameFlow.Tests
             var field = typeof(ContextTrigger).GetField("_deactivate",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             field.SetValue(trigger, new List<GameObject>(objects));
+        }
+
+        private static void SetGuard(ContextTrigger trigger, BaseCondition guard)
+        {
+            var field = typeof(ContextTrigger).GetField("_guard",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            field.SetValue(trigger, guard);
         }
     }
 }
