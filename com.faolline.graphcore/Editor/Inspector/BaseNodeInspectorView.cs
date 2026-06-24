@@ -325,6 +325,13 @@ namespace Faolline.GraphCore.Editor
         {
             var foldout = new Foldout { text = SubGraphSectionTitle, value = true };
 
+            if (node.TargetGraph == null)
+            {
+                foldout.Add(new HelpBox(
+                    "No target graph assigned. This sub-graph node will be skipped at runtime with a warning.",
+                    HelpBoxMessageType.Warning));
+            }
+
             var targetField = new ObjectField("Target Graph")
             {
                 objectType = typeof(BaseGraph), allowSceneObjects = false, value = node.TargetGraph
