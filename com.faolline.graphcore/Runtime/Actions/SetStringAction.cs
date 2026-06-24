@@ -7,8 +7,10 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Actions/Set String", fileName = "SetStringAction")]
     public class SetStringAction : BaseAction
     {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private string _value;
+        [SerializeField, Tooltip("Context parameter key to write. Must match a key declared on the graph's Parameters list.")]
+        private string _parameterKey;
+        [SerializeField, Tooltip("The string value written to the context parameter.")]
+        private string _value;
 
         /// <summary>The context parameter key to write.</summary>
         public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }

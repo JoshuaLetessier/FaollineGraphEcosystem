@@ -15,12 +15,20 @@ namespace Faolline.GraphGameFlow
     /// thin wrappers, so the whole bridge is verifiable in EditMode without entering Play.
     /// </para>
     /// </summary>
+    [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/Assets/FaollineGraphEcosystem/com.faolline.graphgameflow/README.md")]
     public sealed class GraphFlowDriver : MonoBehaviour
     {
-        [SerializeField] private BaseGraph _graph;
-        [SerializeField] private bool      _autoAdvance = true;
-        [SerializeField] private bool      _bootOnStart = true;
-        [SerializeField] private bool      _persistAcrossScenes = false;
+        [Header("Graph")]
+        [SerializeField, Tooltip("The graph asset to run. Assign in the inspector or set from code before Boot().")]
+        private BaseGraph _graph;
+
+        [Header("Behaviour")]
+        [SerializeField, Tooltip("When enabled, the driver advances automatically as each node completes. Choices always require an explicit ChooseById call regardless.")]
+        private bool      _autoAdvance = true;
+        [SerializeField, Tooltip("When enabled (default), the driver boots automatically in Start(). Disable to boot manually from code via Boot().")]
+        private bool      _bootOnStart = true;
+        [SerializeField, Tooltip("When enabled, this driver survives scene loads (DontDestroyOnLoad) so a single flow can span scenes. Duplicate per-scene copies self-destruct.")]
+        private bool      _persistAcrossScenes = false;
 
         private BaseRunner      _runner;
         private GameFlowContext _context;

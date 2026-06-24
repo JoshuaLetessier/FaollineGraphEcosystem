@@ -11,10 +11,14 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Conditions/String", fileName = "StringCondition")]
     public class StringCondition : BaseCondition
     {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private string _expectedValue;
-        [SerializeField] private bool _negate;
-        [SerializeField] private bool _warnOnMissing;
+        [SerializeField, Tooltip("Context parameter key to read and compare.")]
+        private string _parameterKey;
+        [SerializeField, Tooltip("The string value this condition compares against (case-sensitive equality).")]
+        private string _expectedValue;
+        [SerializeField, Tooltip("When enabled, the condition passes on inequality instead of equality.")]
+        private bool _negate;
+        [SerializeField, Tooltip("When enabled, logs a warning if the parameter key is absent from the context. When disabled (default), absent keys silently evaluate to false.")]
+        private bool _warnOnMissing;
 
         /// <summary>The context parameter key to evaluate.</summary>
         public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }

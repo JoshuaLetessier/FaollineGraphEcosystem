@@ -9,15 +9,18 @@ namespace Faolline.GraphCore
     /// <see cref="GraphId"/> is a stable GUID assigned once in <c>OnEnable</c> and never changed.
     /// </summary>
     // No [CreateAssetMenu] — consumers create typed graphs (DialogueGraph, GameFlowGraph, etc.), not raw BaseGraph.
+    [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/Assets/FaollineGraphEcosystem/com.faolline.graphcore/README.md")]
     public class BaseGraph : ScriptableObject
     {
         [SerializeField, HideInInspector] private string             _graphId;
         [SerializeReference] private List<BaseNodeData> _nodes      = new List<BaseNodeData>();
         [SerializeReference] private List<BaseEdgeData> _edges      = new List<BaseEdgeData>();
-        [SerializeField]   private List<ParameterData>  _parameters = new List<ParameterData>();
+        [SerializeField, Tooltip("Typed parameters declared on this graph. InitFromGraph seeds the context with these defaults.")]
+        private List<ParameterData>  _parameters = new List<ParameterData>();
         [SerializeField]   private List<GraphGroupData> _groups     = new List<GraphGroupData>();
         [SerializeField, HideInInspector] private string             _entryNodeId;
-        [SerializeField]   private int                _historyDepth = 20;
+        [SerializeField, Tooltip("Maximum history entries kept by the runtime for GoBack / GoBackToCheckpoint. Default 20. Set to 0 for unlimited.")]
+        private int                _historyDepth = 20;
 
         private void OnEnable()
         {

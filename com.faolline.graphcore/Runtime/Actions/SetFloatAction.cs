@@ -7,8 +7,10 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Actions/Set Float", fileName = "SetFloatAction")]
     public class SetFloatAction : BaseAction
     {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private float _value;
+        [SerializeField, Tooltip("Context parameter key to write. Must match a key declared on the graph's Parameters list.")]
+        private string _parameterKey;
+        [SerializeField, Tooltip("The float value written to the context parameter.")]
+        private float _value;
 
         /// <summary>The context parameter key to write.</summary>
         public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }

@@ -7,8 +7,10 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Actions/Add Float", fileName = "AddFloatAction")]
     public class AddFloatAction : BaseAction
     {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private float _value;
+        [SerializeField, Tooltip("Context parameter key to modify. Must match a key declared on the graph's Parameters list.")]
+        private string _parameterKey;
+        [SerializeField, Tooltip("The float value added to the current value (use a negative number to subtract).")]
+        private float _value;
 
         /// <summary>The context parameter key to modify.</summary>
         public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }

@@ -10,8 +10,10 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Actions/Set Bool", fileName = "SetBoolAction")]
     public class SetBoolAction : BaseAction
     {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private bool _value;
+        [SerializeField, Tooltip("Context parameter key to write. Must match a key declared on the graph's Parameters list.")]
+        private string _parameterKey;
+        [SerializeField, Tooltip("The bool value written to the context parameter.")]
+        private bool _value;
 
         /// <summary>The context parameter key to write.</summary>
         public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }

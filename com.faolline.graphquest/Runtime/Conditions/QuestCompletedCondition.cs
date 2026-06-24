@@ -13,7 +13,8 @@ namespace Faolline.GraphQuest
     [CreateAssetMenu(menuName = "GraphQuest/Conditions/Quest Completed", fileName = "QuestCompletedCondition")]
     public sealed class QuestCompletedCondition : BaseCondition
     {
-        [SerializeField] private List<string> _questIds = new List<string>();
+        [SerializeField, Tooltip("Quest ids that must ALL be Completed for this condition to hold. Empty list = vacuously true.")]
+        private List<string> _questIds = new List<string>();
 
         /// <summary>The quest ids that must all be Completed for this condition to hold.</summary>
         public List<string> QuestIds => _questIds;

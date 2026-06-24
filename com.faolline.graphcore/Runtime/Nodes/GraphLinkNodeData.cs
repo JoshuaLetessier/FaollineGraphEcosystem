@@ -17,8 +17,10 @@ namespace Faolline.GraphCore
         /// <summary>Canonical type identifier for graph-link annotation nodes.</summary>
         public const string NodeTypeId = "graphcore/graph-link";
 
-        [SerializeField] private BaseGraph _targetGraph;
-        [SerializeField] private string _note;
+        [SerializeField, Tooltip("Documentary reference to another graph (never executed at runtime). Any graph type is valid.")]
+        private BaseGraph _targetGraph;
+        [SerializeField, Tooltip("Optional author note displayed alongside the reference in the editor.")]
+        private string _note;
 
         /// <summary>The associated graph this annotation points at (any kind). May be <c>null</c> (unlinked).
         /// Never executed — this is a documentary reference only.</summary>

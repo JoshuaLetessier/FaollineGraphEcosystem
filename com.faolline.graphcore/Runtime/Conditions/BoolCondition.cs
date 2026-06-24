@@ -12,9 +12,12 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Conditions/Bool", fileName = "BoolCondition")]
     public class BoolCondition : BaseCondition
     {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private bool _expectedValue;
-        [SerializeField] private bool _warnOnMissing;
+        [SerializeField, Tooltip("Context parameter key to read and compare.")]
+        private string _parameterKey;
+        [SerializeField, Tooltip("The bool value this condition expects to find in the context.")]
+        private bool _expectedValue;
+        [SerializeField, Tooltip("When enabled, logs a warning if the parameter key is absent from the context. When disabled (default), absent keys silently evaluate to false.")]
+        private bool _warnOnMissing;
 
         /// <summary>The context parameter key to evaluate.</summary>
         public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }

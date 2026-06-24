@@ -13,6 +13,7 @@ namespace Faolline.GraphGameFlow
     /// proceeds when the guard evaluates true against the active context (e.g. "player has key").
     /// </para>
     /// </summary>
+    [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/Assets/FaollineGraphEcosystem/com.faolline.graphgameflow/README.md")]
     public class ContextTrigger : MonoBehaviour
     {
         public enum TriggerMode

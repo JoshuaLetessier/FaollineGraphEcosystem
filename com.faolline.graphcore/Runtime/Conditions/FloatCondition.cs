@@ -11,10 +11,14 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Conditions/Float", fileName = "FloatCondition")]
     public class FloatCondition : BaseCondition
     {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private ComparisonOperator _operator = ComparisonOperator.Equal;
-        [SerializeField] private float _expectedValue;
-        [SerializeField] private bool _warnOnMissing;
+        [SerializeField, Tooltip("Context parameter key to read and compare.")]
+        private string _parameterKey;
+        [SerializeField, Tooltip("Comparison applied between the context value and the expected value (Equal, NotEqual, Less, LessOrEqual, Greater, GreaterOrEqual).")]
+        private ComparisonOperator _operator = ComparisonOperator.Equal;
+        [SerializeField, Tooltip("The float value this condition compares against.")]
+        private float _expectedValue;
+        [SerializeField, Tooltip("When enabled, logs a warning if the parameter key is absent from the context. When disabled (default), absent keys silently evaluate to false.")]
+        private bool _warnOnMissing;
 
         /// <summary>The context parameter key to evaluate.</summary>
         public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }

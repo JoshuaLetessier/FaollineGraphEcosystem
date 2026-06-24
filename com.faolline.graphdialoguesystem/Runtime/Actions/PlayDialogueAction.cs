@@ -16,9 +16,12 @@ namespace Faolline.GraphDialogue
     [CreateAssetMenu(menuName = "GraphDialogue/Actions/Play Dialogue", fileName = "PlayDialogueAction")]
     public sealed class PlayDialogueAction : BaseAction
     {
-        [SerializeField] private DialogueGraph _dialogueGraph;
-        [SerializeField] private string _signalName;
-        [SerializeField] private bool _titleFallback = true;
+        [SerializeField, Tooltip("The DialogueGraph asset to play when this action executes.")]
+        private DialogueGraph _dialogueGraph;
+        [SerializeField, Tooltip("Signal name raised on the context when the dialogue ends. Empty = auto-derived from the graph's GraphId (dialogue_done_{GraphId}).")]
+        private string _signalName;
+        [SerializeField, Tooltip("When enabled, missing localization keys fall back to the authored node Title text.")]
+        private bool _titleFallback = true;
 
         /// <summary>The dialogue to play.</summary>
         public DialogueGraph DialogueGraph { get => _dialogueGraph; set => _dialogueGraph = value; }

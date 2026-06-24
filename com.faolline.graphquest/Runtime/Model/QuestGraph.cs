@@ -12,12 +12,23 @@ namespace Faolline.GraphQuest
     [CreateAssetMenu(menuName = "GraphQuest/Quest Graph", fileName = "NewQuest")]
     public sealed class QuestGraph : BaseGraph
     {
-        [SerializeField] private string _questId = string.Empty;
-        [SerializeField] private string _displayName = string.Empty;
-        [SerializeField, TextArea] private string _description = string.Empty;
-        [SerializeField] private BaseCondition _unlockCondition;
-        [SerializeField] private BaseAction _completionReward;
-        [SerializeField] private QuestCompletionRule _completionRule = QuestCompletionRule.AllRequired;
+        [Header("Identity")]
+        [SerializeField, Tooltip("Stable logical id scoping this quest's context collections. Set once by QuestBuilder; do not change after objectives reference it.")]
+        private string _questId = string.Empty;
+
+        [Header("Display")]
+        [SerializeField, Tooltip("Display title for a quest journal UI. Falls back to Quest Id when empty.")]
+        private string _displayName = string.Empty;
+        [SerializeField, TextArea, Tooltip("Longer description for a quest journal UI.")]
+        private string _description = string.Empty;
+
+        [Header("Unlock & Completion")]
+        [SerializeField, Tooltip("Optional. While non-null and unmet, the quest is Locked and surfaces no Active objectives.")]
+        private BaseCondition _unlockCondition;
+        [SerializeField, Tooltip("Optional action executed once when the quest enters Completed (e.g. unlock a new area).")]
+        private BaseAction _completionReward;
+        [SerializeField, Tooltip("How quest completion is decided from its objectives. AllRequired (default) requires every Required objective to complete.")]
+        private QuestCompletionRule _completionRule = QuestCompletionRule.AllRequired;
 
         /// <summary>Stable logical id (scopes the quest's context collections). Set by <see cref="QuestBuilder"/>.</summary>
         public string QuestId { get => _questId; set => _questId = value ?? string.Empty; }

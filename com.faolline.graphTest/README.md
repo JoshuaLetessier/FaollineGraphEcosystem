@@ -1,12 +1,51 @@
 # com.faolline.graphTest
 
+**Version**: 0.1.2 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.17.0, `com.faolline.graphstandard` ≥ 0.12.0
+
 **Internal verification package — not for distribution.**
 
-A concrete verification package over `com.faolline.graphcore` that exercises the editor and runtime
-surface (test/sample graph types and scaffolding). Used to keep graphcore honest as it evolves.
+Integration test suite for the Faolline Graph Ecosystem. Exercises the graphcore editor and runtime
+surface through concrete test graph types, sample builders, and NUnit test assemblies.
 
 It is **not** part of the consumable ecosystem: it is intentionally absent from the module selector
-whitelist (`com.faolline.graphcore/Editor/GraphEcosystemModules.json`) and nothing depends on it, so a
-consumer project never receives it. Kept in the repo for development and CI only.
+whitelist and nothing depends on it. Kept in the repo for development and CI only.
 
-Depends on: `com.faolline.graphcore`.
+---
+
+## What it tests
+
+- **TestGraph / TestContext** — concrete graph and context subclasses used as test fixtures
+- **Test actions & conditions** — `TestAction`, `TestCondition`, and typed variants that record
+  invocations for assertion (not real logic — pure verification scaffolding)
+- **Sample builders** — menu items that generate fully-wired sample graphs for manual inspection
+- **Editor integration** — `TestGraphEditorWindow` exercises the graph editor surface
+
+---
+
+## Running the tests
+
+1. Open **Window ▸ General ▸ Test Runner** in Unity.
+2. Select the **EditMode** tab.
+3. Run all tests under `Faolline.GraphTest` and `Faolline.GraphCore.Tests`.
+
+All tests run headless (no Play mode required). The test assemblies use `[assembly: InternalsVisibleTo]`
+to access internal graphcore APIs where needed.
+
+---
+
+## Architecture
+
+```
+com.faolline.graphTest/
+  Runtime/
+    TestGraph.cs              ← Concrete graph asset for test fixtures
+    TestContext.cs             ← Concrete context for test fixtures
+    TestContextKeys.cs         ← Typed parameter key constants
+    Actions/                   ← Test-only action implementations (recording, no real effects)
+    Conditions/                ← Test-only condition implementations
+  Editor/
+    TestGraphEditorWindow.cs   ← Graph editor window for manual inspection
+    SampleBuilders/            ← Menu-driven sample graph generators
+  Tests/
+    EditMode/                  ← NUnit test assemblies (graphcore + graphstandard coverage)
+```

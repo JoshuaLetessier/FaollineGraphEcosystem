@@ -11,8 +11,10 @@ namespace Faolline.GraphStandard
     [CreateAssetMenu(menuName = "Faolline/Conditions/Collection Count At Least", fileName = "CollectionCountAtLeastCondition")]
     public class CollectionCountAtLeastCondition : BaseCondition
     {
-        [SerializeField] private string _collectionKey;
-        [SerializeField] private int _threshold;
+        [SerializeField, Tooltip("Context collection key whose cardinality is checked.")]
+        private string _collectionKey;
+        [SerializeField, Tooltip("Minimum element count that satisfies this condition. 0 = always satisfied.")]
+        private int _threshold;
 
         /// <summary>The collection key whose cardinality is read.</summary>
         public string CollectionKey { get => _collectionKey; set => _collectionKey = value; }

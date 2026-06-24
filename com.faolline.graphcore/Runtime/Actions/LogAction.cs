@@ -7,7 +7,8 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Actions/Log", fileName = "LogAction")]
     public class LogAction : BaseAction
     {
-        [SerializeField] private string _message;
+        [SerializeField, Tooltip("Message logged to the Unity console when this action executes.")]
+        private string _message;
 
         /// <summary>The message logged to the console when this action executes.</summary>
         public string Message { get => _message; set => _message = value; }

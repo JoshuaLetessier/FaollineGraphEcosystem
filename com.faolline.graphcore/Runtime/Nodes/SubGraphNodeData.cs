@@ -15,9 +15,12 @@ namespace Faolline.GraphCore
         /// <summary>Canonical type identifier for sub-graph nodes.</summary>
         public const string NodeTypeId = "graphcore/subgraph";
 
-        [SerializeField] private BaseGraph _targetGraph;
-        [SerializeField] private bool      _inheritParentContext;
-        [SerializeField] private bool      _opensScope;
+        [SerializeField, Tooltip("The graph asset to invoke as a nested sub-graph. Null = incomplete node (will be skipped with a warning at runtime).")]
+        private BaseGraph _targetGraph;
+        [SerializeField, Tooltip("When enabled, the sub-graph shares the parent's context (reads and writes the same parameters). When disabled, a fresh context is created from the sub-graph's declared parameters.")]
+        private bool      _inheritParentContext;
+        [SerializeField, Tooltip("Opens a local context overlay: reads fall through to parent values, writes land in a transient scope discarded on exit. Takes precedence over Inherit Parent Context.")]
+        private bool      _opensScope;
 
         /// <summary>
         /// The graph to invoke. <c>null</c> indicates an incomplete or unlinked node.

@@ -16,8 +16,10 @@ namespace Faolline.GraphDialogue
         /// <summary>Canonical type identifier for dialogue line nodes.</summary>
         public new const string NodeTypeId = "graphdialogue/line";
 
-        [SerializeField] private string _speakerKey = string.Empty;
-        [SerializeField] private string _expressionKey = "neutral";
+        [SerializeField, Tooltip("Logical speaker id matching a Speaker asset's SpeakerId. Not translated — used to look up the speaker at runtime.")]
+        private string _speakerKey = string.Empty;
+        [SerializeField, Tooltip("Speaker expression key selecting a visual expression (e.g. happy, angry). Defaults to neutral. Maps to a SpeakerExpression entry on the Speaker asset.")]
+        private string _expressionKey = "neutral";
 
         // The line's localization key is NOT stored as a field — it is derived from this node's Id via
         // DialogueLocalizationKeys.ForLine(node), so it can never be mistyped or drift. The editable

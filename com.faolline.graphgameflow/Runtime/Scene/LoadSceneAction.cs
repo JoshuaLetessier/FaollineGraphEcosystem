@@ -16,8 +16,10 @@ namespace Faolline.GraphGameFlow
     {
         private static readonly ISceneLoader DefaultLoader = new UnitySceneLoader();
 
-        [SerializeField] private string        _sceneName;
-        [SerializeField] private LoadSceneMode _mode = LoadSceneMode.Single;
+        [SerializeField, Tooltip("Target scene name (must be in Build Settings). The custom editor provides a dropdown picker.")]
+        private string        _sceneName;
+        [SerializeField, Tooltip("Single replaces the current scene(s). Additive loads on top of existing ones.")]
+        private LoadSceneMode _mode = LoadSceneMode.Single;
 
         /// <summary>Target scene, by name (must be in Build Settings).</summary>
         public string SceneName { get => _sceneName; set => _sceneName = value; }

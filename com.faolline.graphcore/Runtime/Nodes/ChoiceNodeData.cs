@@ -16,7 +16,7 @@ namespace Faolline.GraphCore
         /// <summary>Canonical type identifier for choice nodes.</summary>
         public const string NodeTypeId = "graphcore/choice";
 
-        [SerializeReference]
+        [SerializeReference, Tooltip("Branching options presented at this node. Each choice has a title, an optional condition gate, and a unique id used by ChooseById.")]
         private List<BaseChoice> _choices = new List<BaseChoice>();
 
         /// <summary>The available choices at this node. Never null. Extensible via subclasses.</summary>

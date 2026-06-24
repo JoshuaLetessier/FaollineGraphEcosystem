@@ -11,8 +11,10 @@ namespace Faolline.GraphStandard
     [CreateAssetMenu(menuName = "Faolline/Conditions/Collection Contains", fileName = "CollectionContainsCondition")]
     public class CollectionContainsCondition : BaseCondition
     {
-        [SerializeField] private string _collectionKey;
-        [SerializeField] private string _value;
+        [SerializeField, Tooltip("Context collection key to inspect (a named string-set on BaseContext).")]
+        private string _collectionKey;
+        [SerializeField, Tooltip("The value whose membership in the collection is tested.")]
+        private string _value;
 
         /// <summary>The collection key inspected.</summary>
         public string CollectionKey { get => _collectionKey; set => _collectionKey = value; }

@@ -12,7 +12,7 @@ namespace Faolline.GraphCore
         /// <summary>Canonical type identifier for end nodes.</summary>
         public const string NodeTypeId = "graphcore/end";
 
-        [SerializeField]
+        [SerializeField, Tooltip("Why this execution path ended (Completed, Failed, or Cancelled). Surfaced in the OnEnded event and the EndStep.")]
         private EndReason _endReason = EndReason.Completed;
 
         [SerializeField, Tooltip("Optional semantic label to distinguish multiple End nodes that share the same End Reason (e.g. \"persuaded\", \"rejected\"). Surfaced in the EndStep so the consumer can branch on the outcome without reading context flags.")]

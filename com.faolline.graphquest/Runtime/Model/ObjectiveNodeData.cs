@@ -16,13 +16,33 @@ namespace Faolline.GraphQuest
         /// <summary>Canonical node-type id for quest objectives.</summary>
         public const string NodeTypeId = "graphquest.objective";
 
-        [SerializeField] private BaseCondition _completionCondition;
-        [SerializeField] private BaseCondition _failCondition;
-        [SerializeField] private bool _required = true;
-        [SerializeField] private BaseAction _reward;
-        [SerializeField] private int _requiredPrerequisiteCount = -1;
-        [SerializeField] private float _timeLimitSeconds;
-        [SerializeField, TextArea] private string _description = string.Empty;
+        [Header("Completion")]
+        [SerializeField, Tooltip("Condition checked against the context each evaluation. When it holds, the objective records Completed. Null = never auto-completes (manual only).")]
+        private BaseCondition _completionCondition;
+        [SerializeField, Tooltip("Optional. When it holds, the objective records Failed. Checked before completion (fail takes precedence).")]
+        private BaseCondition _failCondition;
+        [SerializeField, Tooltip("Required objectives gate quest completion; optional ones track state and award rewards only.")]
+        private bool _required = true;
+
+        [Header("Prerequisites")]
+        [SerializeField, Tooltip("How many prerequisite objectives must be Completed to unlock this one (k-of-N).\n\n" +
+            "-1 (default) = ALL (AND).\n" +
+            "1 = ANY (OR).\n" +
+            "0 or negative = no gate.\n" +
+            "k > N = never unlocks from prerequisites.")]
+        private int _requiredPrerequisiteCount = -1;
+
+        [Header("Rewards")]
+        [SerializeField, Tooltip("Optional action executed once when the objective enters Completed (e.g. grant XP, unlock an item).")]
+        private BaseAction _reward;
+
+        [Header("Timing")]
+        [SerializeField, Tooltip("Time limit in seconds. Once active, the objective fails if not completed within this duration. 0 (default) = no limit. Only checked when the host calls Evaluate(now) with a clock.")]
+        private float _timeLimitSeconds;
+
+        [Header("Display")]
+        [SerializeField, TextArea, Tooltip("Longer description for a quest journal or tracker UI. The short label is the inherited Title field.")]
+        private string _description = string.Empty;
 
         /// <summary>When this holds against the context, the objective is recorded Completed. Null ⇒ never auto-completes.</summary>
         public BaseCondition CompletionCondition { get => _completionCondition; set => _completionCondition = value; }

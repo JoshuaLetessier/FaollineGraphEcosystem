@@ -11,13 +11,22 @@ namespace Faolline.GraphDialogue
     /// carries data.
     /// </summary>
     [CreateAssetMenu(menuName = "GraphDialogue/Speaker", fileName = "NewSpeaker")]
+    [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/Assets/FaollineGraphEcosystem/com.faolline.graphdialoguesystem/README.md")]
     public class Speaker : ScriptableObject
     {
-        [SerializeField] private string _speakerId = string.Empty;
-        [SerializeField] private string _displayNameFallback = "Speaker";
-        [SerializeField] private Color _nameColor = Color.white;
-        [SerializeField] private List<SpeakerExpression> _expressions = new List<SpeakerExpression>();
-        [SerializeField] private UnityEngine.Object _fallbackExpression;
+        [Header("Identity")]
+        [SerializeField, Tooltip("Logical id referenced by DialogueLineNodeData.SpeakerKey. Not translated.")]
+        private string _speakerId = string.Empty;
+        [SerializeField, Tooltip("Literal display name used when the localization key cannot be resolved. Also serves as the source text pre-filled into the localization table.")]
+        private string _displayNameFallback = "Speaker";
+        [SerializeField, Tooltip("Tint applied to this speaker's name in the built-in dialogue views.")]
+        private Color _nameColor = Color.white;
+
+        [Header("Expressions")]
+        [SerializeField, Tooltip("Named expressions (key to presentation asset). The expression key on a dialogue line selects from this list.")]
+        private List<SpeakerExpression> _expressions = new List<SpeakerExpression>();
+        [SerializeField, Tooltip("Presentation asset used when a requested expression key has no match in the expressions list.")]
+        private UnityEngine.Object _fallbackExpression;
 
         /// <summary>Logical id referenced by <see cref="DialogueLineNodeData.SpeakerKey"/>. Not translated.</summary>
         public string SpeakerId { get => _speakerId; set => _speakerId = value; }

@@ -7,8 +7,10 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Actions/Add Int", fileName = "AddIntAction")]
     public class AddIntAction : BaseAction
     {
-        [SerializeField] private string _parameterKey;
-        [SerializeField] private int _value;
+        [SerializeField, Tooltip("Context parameter key to modify. Must match a key declared on the graph's Parameters list.")]
+        private string _parameterKey;
+        [SerializeField, Tooltip("The int value added to the current value (use a negative number to subtract).")]
+        private int _value;
 
         /// <summary>The context parameter key to modify.</summary>
         public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }

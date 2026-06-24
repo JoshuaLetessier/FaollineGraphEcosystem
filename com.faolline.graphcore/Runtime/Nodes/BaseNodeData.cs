@@ -14,21 +14,37 @@ namespace Faolline.GraphCore
     {
         [SerializeField, HideInInspector] private string _id;
         [SerializeField, HideInInspector] private string _nodeType;
-        [SerializeField] private string _title = string.Empty;
+
+        [Header("Appearance")]
+        [SerializeField, Tooltip("Display name shown on the node title bar. When empty, the node type label is used. Also serves as source text for localization.")]
+        private string _title = string.Empty;
         [SerializeField] private Vector2 _position;
+        [SerializeField, Tooltip("When enabled, this node uses the custom Node Color instead of the default type color in the editor.")]
+        private bool  _hasColorOverride;
+        [SerializeField, Tooltip("Custom editor display color for this node. Only applied when Has Color Override is enabled.")]
+        private Color _nodeColor;
+
+        [Header("Entry / Exit Logic")]
         [SerializeField, Tooltip("Conditions checked before the runner enters this node. All must pass (AND). Use to gate access to a node based on context state.")]
         private List<BaseCondition> _entryConditions  = new List<BaseCondition>();
-        [SerializeField] private List<BaseAction>    _onEnterActions   = new List<BaseAction>();
-        [SerializeField] private List<BaseAction>    _onExitActions    = new List<BaseAction>();
+        [SerializeField, Tooltip("Actions executed when the runner enters this node, after entry conditions pass.")]
+        private List<BaseAction>    _onEnterActions   = new List<BaseAction>();
+        [SerializeField, Tooltip("Actions executed when the runner exits this node, before traversing the next edge.")]
+        private List<BaseAction>    _onExitActions    = new List<BaseAction>();
 
-        [SerializeField] private bool  _isCheckpoint;
-        [SerializeField] private bool  _hasColorOverride;
-        [SerializeField] private Color _nodeColor;
-        [SerializeField] private SignalName _awaitSignalAsset;
-        [SerializeField] private string _awaitSignal = string.Empty;
+        [Header("Signals & Timing")]
+        [SerializeField, Tooltip("SignalName asset the runner waits for on entry. The node parks (WaitingForSignal) until a matching signal is raised. Takes precedence over the raw string field below.")]
+        private SignalName _awaitSignalAsset;
+        [SerializeField, Tooltip("Raw signal name string (used when no SignalName asset is assigned above). The node parks until this signal is raised on the runner.")]
+        private string _awaitSignal = string.Empty;
         [SerializeField, Tooltip("Extra conditions an await-signal must satisfy to resume this node. All must pass (AND). Unlike Entry Conditions (checked once on arrival), these are re-checked every time the signal fires — the node stays parked until the context satisfies them.")]
         private List<BaseCondition> _resumeConditions = new List<BaseCondition>();
-        [SerializeField] private float  _waitDuration;
+        [SerializeField, Tooltip("Seconds the node waits before advancing (0 = no wait). If an await signal is also set, the signal takes precedence and this duration is ignored.")]
+        private float  _waitDuration;
+
+        [Header("Checkpoint")]
+        [SerializeField, Tooltip("When enabled, GoBackToCheckpoint can restore the runner to this node. Also marks a valid capture point for GraphSave snapshots.")]
+        private bool  _isCheckpoint;
 
         /// <summary>Unique identifier (GUID) for this node.</summary>
         public string Id

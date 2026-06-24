@@ -16,8 +16,10 @@ namespace Faolline.GraphStandard
     [CreateAssetMenu(menuName = "Faolline/Actions/Add To Collection", fileName = "AddToCollectionAction")]
     public class AddToCollectionAction : BaseAction
     {
-        [SerializeField] private string _collectionKey;
-        [SerializeField] private string _value;
+        [SerializeField, Tooltip("Context collection key to add the value to (a named string-set on BaseContext).")]
+        private string _collectionKey;
+        [SerializeField, Tooltip("The string value added to the collection. Idempotent — duplicates are ignored.")]
+        private string _value;
 
         /// <summary>The collection key written to.</summary>
         public string CollectionKey { get => _collectionKey; set => _collectionKey = value; }
