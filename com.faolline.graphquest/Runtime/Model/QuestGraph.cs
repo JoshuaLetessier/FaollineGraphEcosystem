@@ -29,6 +29,8 @@ namespace Faolline.GraphQuest
         private BaseAction _completionReward;
         [SerializeField, Tooltip("How quest completion is decided from its objectives. AllRequired (default) requires every Required objective to complete.")]
         private QuestCompletionRule _completionRule = QuestCompletionRule.AllRequired;
+        [SerializeField, Tooltip("For Threshold rule: the minimum number of Required objectives that must be Completed. Ignored by AllRequired and AnyRequired.")]
+        private int _completionThreshold;
 
         /// <summary>Stable logical id (scopes the quest's context collections). Set by <see cref="QuestBuilder"/>.</summary>
         public string QuestId { get => _questId; set => _questId = value ?? string.Empty; }
@@ -51,5 +53,8 @@ namespace Faolline.GraphQuest
 
         /// <summary>How quest completion is decided from its objectives. Default <see cref="QuestCompletionRule.AllRequired"/>.</summary>
         public QuestCompletionRule CompletionRule { get => _completionRule; set => _completionRule = value; }
+
+        /// <summary>For <see cref="QuestCompletionRule.Threshold"/>: the minimum number of Required objectives that must be Completed. Ignored by other rules.</summary>
+        public int CompletionThreshold { get => _completionThreshold; set => _completionThreshold = value; }
     }
 }

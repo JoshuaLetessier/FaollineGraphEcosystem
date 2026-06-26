@@ -18,6 +18,8 @@ namespace Faolline.GraphQuest
         private string _description = string.Empty;
         private BaseCondition _unlock;
         private BaseAction _questReward;
+        private QuestCompletionRule _completionRule = QuestCompletionRule.AllRequired;
+        private int _completionThreshold;
         private readonly List<ObjectiveSpec> _objectives = new List<ObjectiveSpec>();
 
         private QuestBuilder(string questId) => _questId = questId ?? string.Empty;
@@ -49,6 +51,12 @@ namespace Faolline.GraphQuest
             _objectives.Add(spec);
             return new ObjectiveBuilder(this, spec);
         }
+
+        /// <summary>Sets the completion rule to <see cref="QuestCompletionRule.AnyRequired"/>: the quest completes when at least one required objective is done.</summary>
+        public QuestBuilder CompleteOnAny() { _completionRule = QuestCompletionRule.AnyRequired; return this; }
+
+        /// <summary>Sets the completion rule to <see cref="QuestCompletionRule.Threshold"/>: the quest completes when at least <paramref name="count"/> required objectives are done.</summary>
+        public QuestBuilder CompleteOnThreshold(int count) { _completionRule = QuestCompletionRule.Threshold; _completionThreshold = count; return this; }
 
         /// <summary>Sets the reward fired once when the quest completes.</summary>
         public QuestBuilder RewardQuestWith(BaseAction reward) { _questReward = reward; return this; }
@@ -86,7 +94,8 @@ namespace Faolline.GraphQuest
             quest.Description = _description;
             quest.UnlockCondition = _unlock;
             quest.CompletionReward = _questReward;
-            quest.CompletionRule = QuestCompletionRule.AllRequired;
+            quest.CompletionRule = _completionRule;
+            quest.CompletionThreshold = _completionThreshold;
 
             foreach (var o in _objectives)
             {

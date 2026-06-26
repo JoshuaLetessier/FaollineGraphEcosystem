@@ -76,8 +76,32 @@ namespace Faolline.GraphQuest.Editor
             AddGraph(foldout, "_unlockCondition", "Unlock Condition");
             AddGraph(foldout, "_completionReward", "Completion Reward");
             AddGraph(foldout, "_completionRule", "Completion Rule");
+
+            var thresholdProp = SerializedGraph.FindProperty("_completionThreshold");
+            var ruleProp = SerializedGraph.FindProperty("_completionRule");
+            if (thresholdProp != null)
+            {
+                var thresholdField = new PropertyField(thresholdProp, "Completion Threshold");
+                thresholdField.style.display = ruleProp != null && ruleProp.enumValueIndex == (int)QuestCompletionRule.Threshold
+                    ? DisplayStyle.Flex : DisplayStyle.None;
+                foldout.Add(thresholdField);
+            }
+
             foldout.Bind(SerializedGraph);
-            foldout.RegisterCallback<SerializedPropertyChangeEvent>(_ => MarkGraphDirty());
+            foldout.RegisterCallback<SerializedPropertyChangeEvent>(_ =>
+            {
+                MarkGraphDirty();
+                if (thresholdProp == null) return;
+                SerializedGraph.Update();
+                var rp = SerializedGraph.FindProperty("_completionRule");
+                if (rp != null)
+                {
+                    bool show = rp.enumValueIndex == (int)QuestCompletionRule.Threshold;
+                    foreach (var pf in foldout.Query<PropertyField>().ToList())
+                        if (pf.bindingPath == "_completionThreshold")
+                            pf.style.display = show ? DisplayStyle.Flex : DisplayStyle.None;
+                }
+            });
             Add(foldout);
         }
 

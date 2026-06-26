@@ -356,20 +356,37 @@ namespace Faolline.GraphQuest
 
         private QuestState ComputeQuestState()
         {
-            bool anyRequiredFailed = false;
-            bool allRequiredCompleted = true;
             int requiredCount = 0;
+            int completedCount = 0;
+            int failedCount = 0;
             foreach (var obj in Objectives())
             {
                 if (!obj.Required) continue;
                 requiredCount++;
                 var s = GetObjectiveState(obj.Id);
-                if (s == QuestState.Failed) anyRequiredFailed = true;
-                if (s != QuestState.Completed) allRequiredCompleted = false;
+                if (s == QuestState.Completed) completedCount++;
+                else if (s == QuestState.Failed) failedCount++;
             }
-            if (anyRequiredFailed) return QuestState.Failed;
-            if (requiredCount > 0 && allRequiredCompleted) return QuestState.Completed;
-            return QuestState.Active;
+
+            switch (_quest.CompletionRule)
+            {
+                case QuestCompletionRule.AnyRequired:
+                    if (completedCount > 0) return QuestState.Completed;
+                    if (failedCount == requiredCount && requiredCount > 0) return QuestState.Failed;
+                    return QuestState.Active;
+
+                case QuestCompletionRule.Threshold:
+                    int threshold = _quest.CompletionThreshold;
+                    if (completedCount >= threshold && threshold > 0) return QuestState.Completed;
+                    int remaining = requiredCount - completedCount - failedCount;
+                    if (completedCount + remaining < threshold) return QuestState.Failed;
+                    return QuestState.Active;
+
+                default: // AllRequired
+                    if (failedCount > 0) return QuestState.Failed;
+                    if (requiredCount > 0 && completedCount == requiredCount) return QuestState.Completed;
+                    return QuestState.Active;
+            }
         }
 
         private List<string> CollectByState(QuestState state)
