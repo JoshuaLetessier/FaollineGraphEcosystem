@@ -8,5 +8,6 @@ namespace Faolline.StarterGraph
     /// Serves as the root asset opened by <see cref="Faolline.StarterGraph.Editor.StarterGraphEditorWindow"/>.
     /// </summary>
     [CreateAssetMenu(menuName = "StarterGraph/Test Graph", fileName = "NewStarterGraph")]
+    [Icon("Assets/FaollineGraphEcosystem/com.faolline.graphcore/Editor/Icons/ico_graph_starter.png")]
     public class StarterGraph : BaseGraph { }
 }

@@ -10,6 +10,7 @@ namespace Faolline.GraphQuest
     /// optional completion reward, and a completion rule.
     /// </summary>
     [CreateAssetMenu(menuName = "GraphQuest/Quest Graph", fileName = "NewQuest")]
+    [Icon("Assets/FaollineGraphEcosystem/com.faolline.graphcore/Editor/Icons/ico_graph_quest.png")]
     public sealed class QuestGraph : BaseGraph
     {
         [Header("Identity")]

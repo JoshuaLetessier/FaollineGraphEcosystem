@@ -9,7 +9,8 @@ namespace Faolline.GraphCore
     /// <see cref="GraphId"/> is a stable GUID assigned once in <c>OnEnable</c> and never changed.
     /// </summary>
     // No [CreateAssetMenu] — consumers create typed graphs (DialogueGraph, GameFlowGraph, etc.), not raw BaseGraph.
-    [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/Assets/FaollineGraphEcosystem/com.faolline.graphcore/README.md")]
+    [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphcore/README.md")]
+    [Icon("Assets/FaollineGraphEcosystem/com.faolline.graphcore/Editor/Icons/ico_graph_base.png")]
     public class BaseGraph : ScriptableObject
     {
         [SerializeField, HideInInspector] private string             _graphId;

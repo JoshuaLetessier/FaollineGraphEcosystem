@@ -12,6 +12,7 @@ namespace Faolline.GraphDialogue
     /// <see cref="DialoguePlayer"/>.
     /// </summary>
     [CreateAssetMenu(menuName = "GraphDialogue/Dialogue Graph", fileName = "NewDialogueGraph")]
+    [Icon("Assets/FaollineGraphEcosystem/com.faolline.graphcore/Editor/Icons/ico_graph_dialogue.png")]
     public class DialogueGraph : BaseGraph
     {
         [SerializeField, Tooltip("Speakers used by this dialogue. Line nodes pick from this list; the " +

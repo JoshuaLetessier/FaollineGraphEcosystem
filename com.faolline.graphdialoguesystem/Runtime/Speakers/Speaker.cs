@@ -11,7 +11,8 @@ namespace Faolline.GraphDialogue
     /// carries data.
     /// </summary>
     [CreateAssetMenu(menuName = "GraphDialogue/Speaker", fileName = "NewSpeaker")]
-    [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/Assets/FaollineGraphEcosystem/com.faolline.graphdialoguesystem/README.md")]
+    [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphdialoguesystem/README.md")]
+    [Icon("Assets/FaollineGraphEcosystem/com.faolline.graphcore/Editor/Icons/ico_speaker.png")]
     public class Speaker : ScriptableObject
     {
         [Header("Identity")]
