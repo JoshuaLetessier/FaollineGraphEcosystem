@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [master]
 
+permissions:
+  checks: write
+  contents: read
+
 jobs:
   tests:
     name: ${{ matrix.testMode }} tests
