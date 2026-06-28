@@ -40,10 +40,15 @@ namespace Faolline.GraphQuest.Editor
             var open = Objective(g, "open_door", "Open the door", "Use what you found to unlock the cell.",
                 Bool(g, "Cond_DoorOpen", "door_open"), new Vector2(260, -90));
 
-            var supplies = Objective(g, "gather_supplies", "Gather supplies", "Optional: grab a torch and rations.",
-                Bool(g, "Cond_HasSupplies", "has_supplies"), new Vector2(260, 110));
+            var suppliesCond = Sub<CollectionCountAtLeastCondition>(g, "Cond_HasSupplies");
+            suppliesCond.CollectionKey = "supplies";
+            suppliesCond.Threshold = 3;
+            var supplies = Objective(g, "gather_supplies", "Gather supplies", "Optional: collect 3 useful items from the keep.",
+                suppliesCond, new Vector2(260, 110));
             supplies.Required = false;
             supplies.Reward = Reward(g, "Reward_Supplies", "supplies_bonus");
+            supplies.ProgressCollectionKey = "supplies";
+            supplies.ProgressTarget = 3;
 
             var escape = Objective(g, "escape", "Escape the keep", "Slip past the gate to freedom.",
                 Bool(g, "Cond_Escaped", "escaped"), new Vector2(520, -90));

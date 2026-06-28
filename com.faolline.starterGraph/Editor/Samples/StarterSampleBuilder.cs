@@ -7,9 +7,9 @@ namespace Faolline.StarterGraph.Editor
     /// <summary>
     /// Generates a small, self-contained sample <see cref="StarterGraph"/> that shows the template's extension
     /// points in one graph: the typed context (a declared <c>Flag</c> bool parameter seeded on run), a custom
-    /// node (<see cref="StarterStatementNodeData"/>), a custom action (<see cref="StarterLogAction"/>) and a
-    /// custom condition (<see cref="StarterBoolCondition"/>) gating one branch of a Choice. Conditions/actions
-    /// are sub-assets so the graph is portable. Menu: <c>Faolline/Create Starter Sample Graph</c>.
+    /// node (<see cref="StarterStatementNodeData"/>), a graphcore <see cref="LogAction"/> and a graphcore
+    /// <see cref="BoolCondition"/> gating one branch of a Choice. Conditions/actions are sub-assets so the
+    /// graph is portable. Menu: <c>Faolline/Create Starter Sample Graph</c>.
     /// <para>Shape: Start → Intro(log) → Choice(Left gated by Flag, Right always) → A/B(log) → End.</para>
     /// </summary>
     public static class StarterSampleBuilder
@@ -29,10 +29,11 @@ namespace Faolline.StarterGraph.Editor
             g.AddParameter(ParameterData.Bool(StarterContextKeys.Flag, true));
 
             // Example action (BaseAction) + example condition (BaseCondition), stored as sub-assets.
-            var introLog = Sub<StarterLogAction>(g, "IntroLog"); introLog.Message = "Intro";
-            var leftLog  = Sub<StarterLogAction>(g, "LeftLog");  leftLog.Message  = "Took Left";
-            var rightLog = Sub<StarterLogAction>(g, "RightLog"); rightLog.Message = "Took Right";
-            var flagCond = Sub<StarterBoolCondition>(g, "FlagCond"); flagCond.ParameterKey = StarterContextKeys.Flag; flagCond.ExpectedValue = true;
+            var introLog = Sub<LogAction>(g, "IntroLog"); introLog.Message = "Intro";
+            var leftLog  = Sub<LogAction>(g, "LeftLog");  leftLog.Message  = "Took Left";
+            var rightLog = Sub<LogAction>(g, "RightLog"); rightLog.Message = "Took Right";
+            var flagCond = Sub<BoolCondition>(g, "FlagCond"); flagCond.ParameterKey = StarterContextKeys.Flag; flagCond.ExpectedValue = true;
+            var toggleFlag = Sub<ToggleBoolAction>(g, "ToggleFlag"); toggleFlag.ParameterKey = StarterContextKeys.Flag;
 
             var start  = new StartNodeData            { Id = NewId(), NodeType = StartNodeData.NodeTypeId,            Position = new Vector2(0,    0) };
             var intro  = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Intro", Position = new Vector2(240,  0) };
@@ -45,6 +46,7 @@ namespace Faolline.StarterGraph.Editor
             choice.Choices.Add(right);
 
             var aNode = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Left",  Position = new Vector2(740, -120) }; aNode.OnEnterActions.Add(leftLog);
+            aNode.OnExitActions.Add(toggleFlag);
             var bNode = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Right", Position = new Vector2(740,  120) }; bNode.OnEnterActions.Add(rightLog);
             var end   = new EndNodeData { Id = NewId(), NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed, Position = new Vector2(1000, 0) };
 
@@ -65,8 +67,9 @@ namespace Faolline.StarterGraph.Editor
             Selection.activeObject = g;
             EditorGUIUtility.PingObject(g);
             Debug.Log($"[StarterGraph] Minimal sample created: {SamplePath}. Open it, press Run → it pauses at the " +
-                      "Choice (Left is gated by the Flag bool parameter, Right is always available). It exercises the " +
-                      "template's pattern to copy: graph + typed context + node + action + condition + choice.");
+                      "Choice (Left is gated by the Flag bool parameter, Right is always available). Taking Left " +
+                      "toggles the flag (ToggleBoolAction) so the gate flips on GoBack. It exercises the template's " +
+                      "pattern to copy: graph + typed context + node + action + condition + choice.");
         }
 
         // ── Helpers ─────────────────────────────────────────────────────────────
