@@ -1,6 +1,6 @@
 # com.faolline.graphdialoguesystem
 
-**Version**: 0.4.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore`
+**Version**: 0.10.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore`
 
 A graph-based dialogue library built **entirely on top of** `com.faolline.graphcore` (zero core
 changes), following the `com.faolline.starterGraph` package shape. Author branching, multi-speaker,
@@ -204,6 +204,11 @@ See the `com.faolline.graphlocalization` README for the full workflow.
 ---
 
 ## Testing
+
+- **Generic context support**: `DialoguePlayer` and the dialogue bus accept any `BaseContext` (not just
+  `DialogueContext`), so a host can drive dialogues on its own blackboard without subclassing.
+- **Drain warning**: the player logs a `[GraphDialogue]` warning when it hits `MaxDrainSteps` during
+  auto-advance, preventing silent infinite loops in mis-wired dialogue graphs.
 
 EditMode-only, headless, test-first (Constitution Principle IV). Run via
 **Window ▸ General ▸ Test Runner ▸ EditMode**, filter `Faolline.GraphDialogue.Tests`.

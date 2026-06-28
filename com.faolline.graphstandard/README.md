@@ -1,6 +1,6 @@
 # com.faolline.graphstandard
 
-**Version**: 0.8.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.7.0
+**Version**: 0.13.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.7.0
 
 Buffer library **above** `com.faolline.graphcore`. graphcore is the universal **data substrate** (graph,
 nodes, edges, conditions, actions, context) plus the **Linear** reference runner (`BaseRunner`, single
@@ -164,6 +164,8 @@ Authorable standard nodes/edges over graphcore's string-set collections — atta
 | Primitive | Kind | Effect |
 |-----------|------|--------|
 | `AddToCollectionAction` | action (on-enter/on-exit) | adds a configured value to a configured collection key (idempotent; no-op on empty key/value) |
+| `RemoveFromCollectionAction` | action (on-enter/on-exit) | removes a configured value from a configured collection key (no-op if absent) |
+| `ClearCollectionAction` | action (on-enter/on-exit) | removes all values from a configured collection key |
 | `CollectionContainsCondition` | condition | satisfied when the collection contains a configured value (absent key ⇒ false) |
 | `CollectionCountAtLeastCondition` | condition | satisfied when the collection's count ≥ a threshold (threshold 0 ⇒ always true; absent key ⇒ 0) |
 

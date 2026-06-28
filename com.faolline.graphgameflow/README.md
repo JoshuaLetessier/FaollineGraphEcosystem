@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.6.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.7.0
+**Version**: 0.7.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` 0.7.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -184,6 +184,17 @@ the flow resumes and loads B — all over one shared `GameFlowContext`.
   is covered here without entering Play.
 - **PlayMode**: proves the real Unity lifecycle — `Start`→`Boot`, `Update`→`Tick` over real frames — drives
   the bridge end to end. The literal `SceneManager.LoadScene` call is Unity's own API (in `UnitySceneLoader`).
+
+---
+
+## Additional driver features
+
+- **`Boot(GraphRunSnapshot)`**: restore a saved flow by booting from a `com.faolline.graphsave` snapshot,
+  resuming execution at the persisted node and context state.
+- **`UseUnscaledTime`**: when enabled, the driver feeds `Time.unscaledDeltaTime` instead of
+  `Time.deltaTime`, so timed waits run independently of `Time.timeScale` (useful during pause menus).
+- **`ContextTrigger` target driver**: a `ContextTrigger` component can reference a `GraphFlowDriver` to
+  raise signals or set context values on a specific driver from scene callbacks (colliders, buttons, etc.).
 
 ---
 

@@ -1,5 +1,7 @@
 # Faolline GraphQuest
 
+**Version**: 0.4.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore`, `com.faolline.graphstandard`, `com.faolline.graphlocalization`
+
 `com.faolline.graphquest` — a **quest & objective** domain library above
 [`com.faolline.graphcore`](../com.faolline.graphcore) and [`com.faolline.graphstandard`](../com.faolline.graphstandard).
 
@@ -34,6 +36,10 @@ smaller completed-set), never an undo.
 - **Localized text (optional)** — `evaluator.UseLocalization(provider)` resolves objective/quest names &
   descriptions as keys via `com.faolline.graphlocalization` (CSV or Unity Localization); without a provider the
   text stays literal.
+- **Quantified objectives** — `.ProgressCollectionKey("items").ProgressTarget(10)` tracks a collection count
+  against a target; `ObjectiveView` exposes `Progress` / `ProgressTarget` (e.g. "3/10" in a journal UI).
+- **Abandon** — `QuestEvaluator.Abandon()` drops the quest to `QuestState.Abandoned`, for player-initiated
+  quest abandonment. Re-activatable via `Reset()` if the design allows replaying.
 
 ## Quick example
 

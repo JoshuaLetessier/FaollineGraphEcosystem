@@ -4,6 +4,19 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0]
+
+### Added
+- **Quantified objectives.** `ObjectiveNodeData` gains `ProgressCollectionKey` (a context collection whose
+  count drives the display) and `ProgressTarget` (the goal, e.g. 10). `ObjectiveView` surfaces `Progress`
+  (current count) and `ProgressTarget` so a journal can show "3/10 wolves". `HasProgress` is true when
+  configured. The completion condition remains independent (may be a `CollectionCountAtLeastCondition` or
+  any other `BaseCondition`).
+- **`Abandon()` — player-initiated quest drop.** New `QuestState.Abandoned` (value 4), distinct from
+  `Failed` (condition-driven) and `Reset` (replay). Persisted in an abandoned-set in the context. An
+  abandoned quest short-circuits evaluation (no further state changes until `Reset`). `IsAbandoned` property
+  on `QuestEvaluator`. `Reset` clears the abandoned state along with completed/failed/rewarded.
+
 ## [0.3.0]
 
 ### Added

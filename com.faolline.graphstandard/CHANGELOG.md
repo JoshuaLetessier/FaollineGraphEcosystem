@@ -4,6 +4,13 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.13.0]
+
+### Added
+- **`RemoveFromCollectionAction`** — removes a configured value from a context collection. Symmetric
+  counterpart of `AddToCollectionAction`. `Create > Faolline/Actions/Remove From Collection`.
+- **`ClearCollectionAction`** — empties a context collection. `Create > Faolline/Actions/Clear Collection`.
+
 ## [0.12.1]
 
 ### Changed

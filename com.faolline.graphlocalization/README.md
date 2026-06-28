@@ -1,6 +1,6 @@
 # com.faolline.graphlocalization
 
-**Version**: 0.3.0 — **Unity**: 6000.x — no required dependencies
+**Version**: 0.5.0 — **Unity**: 6000.x — no required dependencies
 
 Provider-agnostic localization for the Faolline graph ecosystem. Resolves localized text at runtime
 through a pluggable `ILocalizationProvider`, and builds translation tables from your graphs at edit
@@ -68,6 +68,23 @@ string text = LocalizationContext.Resolve("line_intro");
 var provider = new CsvLocalizationProvider(csvText, "en");
 string greeting = provider.Resolve("speaker_npc_mayor", "en");
 ```
+
+### Asset Tables & per-node filtering
+
+- **One Asset Table per flag type**: localized assets (audio, sprites, etc.) are organized into separate
+  tables by flag type, so each asset kind has its own build/resolution pipeline.
+- **Per-node `LocalizedAssetFlags` filtering**: nodes declare which asset flags they use; the build and
+  runtime resolve only the relevant asset tables for each node, avoiding unnecessary lookups.
+
+### Provider API
+
+- **`SetLocale()` on `ILocalizationProvider`**: change the active locale at runtime without
+  reconstructing the provider. Implementations update their resolution and notify subscribers.
+- **Auto-create settings + auto-rebuild on graph save**: the first build auto-creates a
+  `LocalizationSettingsAsset` if none exists, and saving a graph in the editor triggers an automatic
+  table rebuild so translations stay in sync with authoring changes.
+
+---
 
 To extend the build, implement `IGraphLocalizationAdapter` (auto-discovered):
 

@@ -4,6 +4,19 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.0]
+
+### Added
+- **`Boot(GraphRunSnapshot)`** — restores a flow from a saved snapshot: applies the snapshot to the
+  context, then starts the runner at the saved node. Closes the save/restore loop on the driver (the
+  "load game" path). Requires `com.faolline.graphsave`.
+- **`UseUnscaledTime`** option (inspector toggle, default off). When enabled, the driver uses
+  `Time.unscaledDeltaTime` instead of `Time.deltaTime`, so flows keep running at `timeScale = 0`
+  (pause menus, cutscene overlays).
+- **`ContextTrigger` target driver.** A new optional `Target Driver` field (serialized reference) lets a
+  trigger target a specific per-scene `GraphFlowDriver` instead of the persistent `Active` singleton.
+  Falls back to `Active` when unset.
+
 ## [0.6.3]
 
 ### Changed

@@ -4,6 +4,40 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.21.0]
+
+### Added
+- **Composite conditions: `AndCondition`, `OrCondition`, `NotCondition`.** Logical combinators that nest
+  arbitrarily — express "A or B", "not C", "A and (B or C)" without custom code. And is vacuous true on
+  empty; Or is false on empty; Not returns true on null inner. `Create > Faolline/Conditions/And|Or|Not`.
+- **Param-to-param comparison conditions: `IntCompareCondition`, `FloatCompareCondition`,
+  `StringCompareCondition`.** Compare two context keys (e.g. `hp < hpMax`) instead of a key vs a literal.
+  Absent keys default to 0/empty. `Create > Faolline/Conditions/Int|Float|String Compare`.
+- **`RaiseSignalAction`** — emits a named signal into the context when executed. Pairs with
+  `BaseNodeData.AwaitSignalName` to let one part of a graph unblock another without host code.
+- **`ToggleBoolAction`** — flips a bool parameter (absent key defaults to true).
+- **`SetRandomIntAction`** — sets a param to a random int in [min, max] inclusive. Useful for dice rolls
+  and branching variety.
+
+### Changed
+- **Runner subscribes to context signals when awaiting.** When the runner enters `WaitingForSignal`, it now
+  subscribes to the awaited signal name on the context, so a signal raised via `context.RaiseSignal()` (e.g.
+  a dialogue end callback) resumes the runner without requiring `runner.RaiseSignal()`. Fixes the
+  flow→dialogue→signal handshake.
+- **`BaseGraphView` split into 8 partial files** (917→252 lines in main) for maintainability: Selection,
+  Nodes, Edges, Groups, Changes, Templates, ContextMenu (+ existing CopyPaste, RunCursor).
+- **Lazy per-graph node/edge indexes in `BaseRunner`.** `FindNode` and `GetOutgoingEdges` now build and
+  cache a dictionary on first access per graph (O(1) lookup instead of O(N)/O(E) scan). Cleared on
+  `Start`/`StartFrom`.
+- **`ArgumentNullException` guards on `BaseRunner.Start`/`StartFrom`** for `graph` and `context`. Produces
+  a clear `[GraphCore]` error instead of a `NullReferenceException` deep in the call stack.
+- **`HistoryDepth = 0` memory cost documented** in XML doc on `BaseGraph.HistoryDepth` and
+  `BaseRunner.AppendSnapshot`.
+- **Boxing note** added to `BaseContext` class summary, explaining GC cost of per-frame `Set<T>`/`Get<T>`
+  and recommending signals or typed subclass fields for hot loops.
+- **XML doc type lists updated** — `Set<T>`, `Get<T>`, `GetAllParameters`, `RaiseSignal<T>` now mention all
+  7 supported types (bool, int, float, string, Vector2, Vector3, Color).
+
 ## [0.20.0]
 
 ### Added

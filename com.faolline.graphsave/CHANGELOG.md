@@ -4,6 +4,19 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0]
+
+### Added
+- **`JsonFileGraphSaveStore`** — batteries-included `IGraphSaveStore` backed by JSON files under
+  `Application.persistentDataPath`. Each slot is one `.json` file. No dependencies beyond graphcore. For
+  production games needing encryption or cloud sync, implement `IGraphSaveStore` directly or use the
+  `com.faolline.graphsave.savesystem` bridge.
+
+### Changed
+- **Defensive parse warnings on restore.** `GraphRunSnapshot.ApplyParam` now logs a `[GraphSave] Skipping
+  param '…'` warning when a value cannot be parsed (corrupted/edited/outdated save), instead of silently
+  skipping the key.
+
 ## [0.3.2]
 
 ### Changed

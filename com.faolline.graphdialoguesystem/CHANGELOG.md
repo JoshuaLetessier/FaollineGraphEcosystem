@@ -4,6 +4,17 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.10.0]
+
+### Changed
+- **`DialoguePlayer` and `DialogueBus` accept any `BaseContext`** (not just `DialogueContext`). A
+  `GameFlowContext` or any host context is now used directly — no more silent fork to an empty
+  `DialogueContext`. Interpolation `{var}`, conditions, and writes flow through the shared context.
+  `DialogueContext` remains available as a typed convenience subclass but is no longer required.
+- **Warning at drain ceiling.** When the pass-through drain loop hits `MaxDrainSteps` (1000), a
+  `[GraphDialogue]` warning is logged instead of exiting silently — helps diagnose runaway chains or
+  undetected cycles.
+
 ## [0.9.0]
 
 ### Added

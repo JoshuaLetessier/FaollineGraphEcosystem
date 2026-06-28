@@ -1,6 +1,6 @@
 # com.faolline.graphcore
 
-**Version**: 0.8.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
+**Version**: 0.21.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
 
 Shared foundation library for graph-based systems in the Faolline ecosystem. Provides the
 **data layer** (graph structure, nodes, edges, parameters) and the **execution runtime**
@@ -421,6 +421,16 @@ given node (e.g. restoring a saved session) instead of the entry node.
 ---
 
 ## Changelog
+
+### 0.21.0
+- **Composite conditions**: `AndCondition`, `OrCondition`, `NotCondition` — nest arbitrarily to build
+  complex gates from simple building blocks.
+- **Param-to-param comparison**: `IntCompareCondition`, `FloatCompareCondition`, `StringCompareCondition` —
+  compare two context parameters against each other (not just a parameter vs. a constant).
+- **New actions**: `RaiseSignalAction` (fire a named signal from a node action), `ToggleBoolAction`
+  (flip a bool parameter), `SetRandomIntAction` (set an int parameter to a random value in a range).
+- **Runner signal bridging**: `BaseRunner` now bridges context signals when awaiting, so a signal raised
+  on the context while the runner is parked on an await node is delivered to the runner automatically.
 
 ### 0.6.0
 - **Timed waits**: `BaseNodeData.WaitDuration` + `BaseRunner.Tick` + `RunnerState.WaitingForTime` +
