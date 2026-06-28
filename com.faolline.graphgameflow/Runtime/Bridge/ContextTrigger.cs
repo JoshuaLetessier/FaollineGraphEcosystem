@@ -44,6 +44,10 @@ namespace Faolline.GraphGameFlow
         [SerializeField] private SignalName _signalAsset;
         [SerializeField] private string _signalRaw;
 
+        [Header("Target")]
+        [Tooltip("The driver whose context receives the actions and signal. When null, falls back to GraphFlowDriver.Active (the persistent singleton).")]
+        [SerializeField] private GraphFlowDriver _targetDriver;
+
         [Header("Options")]
         [Tooltip("When true, Fire() does nothing after the first successful invocation.")]
         [SerializeField] private bool _fireOnce = true;
@@ -67,7 +71,7 @@ namespace Faolline.GraphGameFlow
         {
             if (_fireOnce && _fired) return;
 
-            var driver = GraphFlowDriver.Active;
+            var driver = _targetDriver != null ? _targetDriver : GraphFlowDriver.Active;
             if (driver == null || driver.Context == null)
             {
                 Debug.LogWarning($"[GraphGameFlow] ContextTrigger '{name}': no active GraphFlowDriver; ignored.");

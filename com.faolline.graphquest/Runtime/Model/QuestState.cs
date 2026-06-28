@@ -16,6 +16,9 @@ namespace Faolline.GraphQuest
         Completed = 2,
 
         /// <summary>The fail condition has held; the id is recorded in the failed-set (fail precedes complete).</summary>
-        Failed = 3
+        Failed = 3,
+
+        /// <summary>The player explicitly abandoned the quest (distinct from fail — player-initiated, not condition-driven).</summary>
+        Abandoned = 4
     }
 }

@@ -40,6 +40,12 @@ namespace Faolline.GraphQuest
         [SerializeField, Tooltip("Time limit in seconds. Once active, the objective fails if not completed within this duration. 0 (default) = no limit. Only checked when the host calls Evaluate(now) with a clock.")]
         private float _timeLimitSeconds;
 
+        [Header("Progress")]
+        [SerializeField, Tooltip("Optional context collection key whose count drives a progress display (e.g. 3/10). Empty = no progress tracking (binary completion only).")]
+        private string _progressCollectionKey = string.Empty;
+        [SerializeField, Tooltip("The target count for progress (e.g. 10 for 'kill 10 wolves'). Ignored when Progress Collection Key is empty.")]
+        private int _progressTarget;
+
         [Header("Display")]
         [SerializeField, TextArea, Tooltip("Longer description for a quest journal or tracker UI. The short label is the inherited Title field.")]
         private string _description = string.Empty;
@@ -62,6 +68,12 @@ namespace Faolline.GraphQuest
         /// <c>k &gt; N</c> never unlocks from prerequisites. Backs graphstandard's <c>ReactiveEvaluator</c> k-of-N.
         /// </summary>
         public int RequiredPrerequisiteCount { get => _requiredPrerequisiteCount; set => _requiredPrerequisiteCount = value; }
+
+        /// <summary>Optional context collection key whose count drives a progress display (e.g. "wolves_killed" → 3/10). Empty = binary completion.</summary>
+        public string ProgressCollectionKey { get => _progressCollectionKey; set => _progressCollectionKey = value ?? string.Empty; }
+
+        /// <summary>Target count for progress (the denominator). Ignored when <see cref="ProgressCollectionKey"/> is empty.</summary>
+        public int ProgressTarget { get => _progressTarget; set => _progressTarget = value; }
 
         /// <summary>Optional longer description for a quest journal/tracker UI (the short label is the inherited <see cref="Faolline.GraphCore.BaseNodeData.Title"/>). Never null.</summary>
         public string Description { get => _description; set => _description = value ?? string.Empty; }

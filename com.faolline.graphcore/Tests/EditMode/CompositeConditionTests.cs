@@ -1,0 +1,142 @@
+using NUnit.Framework;
+using UnityEngine;
+
+namespace Faolline.GraphCore.Tests
+{
+    public class CompositeConditionTests
+    {
+        private BaseContext _ctx;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _ctx = new BaseContext();
+            _ctx.Set<bool>("a", true);
+            _ctx.Set<bool>("b", false);
+        }
+
+        private BoolCondition Bool(string key, bool expected)
+        {
+            var c = ScriptableObject.CreateInstance<BoolCondition>();
+            c.ParameterKey = key;
+            c.ExpectedValue = expected;
+            return c;
+        }
+
+        // ── And ───────────────────────────────────────────────────────────────
+
+        [Test]
+        public void And_AllTrue_ReturnsTrue()
+        {
+            var and = ScriptableObject.CreateInstance<AndCondition>();
+            var c1 = Bool("a", true);
+            var c2 = ScriptableObject.CreateInstance<AlwaysTrueCondition>();
+            and.Conditions.Add(c1);
+            and.Conditions.Add(c2);
+            try { Assert.IsTrue(and.Evaluate(_ctx)); }
+            finally { Object.DestroyImmediate(and); Object.DestroyImmediate(c1); Object.DestroyImmediate(c2); }
+        }
+
+        [Test]
+        public void And_OneFalse_ReturnsFalse()
+        {
+            var and = ScriptableObject.CreateInstance<AndCondition>();
+            var c1 = Bool("a", true);
+            var c2 = Bool("b", true);
+            and.Conditions.Add(c1);
+            and.Conditions.Add(c2);
+            try { Assert.IsFalse(and.Evaluate(_ctx)); }
+            finally { Object.DestroyImmediate(and); Object.DestroyImmediate(c1); Object.DestroyImmediate(c2); }
+        }
+
+        [Test]
+        public void And_Empty_ReturnsTrue()
+        {
+            var and = ScriptableObject.CreateInstance<AndCondition>();
+            try { Assert.IsTrue(and.Evaluate(_ctx)); }
+            finally { Object.DestroyImmediate(and); }
+        }
+
+        // ── Or ────────────────────────────────────────────────────────────────
+
+        [Test]
+        public void Or_OneTrue_ReturnsTrue()
+        {
+            var or = ScriptableObject.CreateInstance<OrCondition>();
+            var c1 = Bool("b", true);
+            var c2 = Bool("a", true);
+            or.Conditions.Add(c1);
+            or.Conditions.Add(c2);
+            try { Assert.IsTrue(or.Evaluate(_ctx)); }
+            finally { Object.DestroyImmediate(or); Object.DestroyImmediate(c1); Object.DestroyImmediate(c2); }
+        }
+
+        [Test]
+        public void Or_AllFalse_ReturnsFalse()
+        {
+            var or = ScriptableObject.CreateInstance<OrCondition>();
+            var c1 = Bool("a", false);
+            var c2 = Bool("b", true);
+            or.Conditions.Add(c1);
+            or.Conditions.Add(c2);
+            try { Assert.IsFalse(or.Evaluate(_ctx)); }
+            finally { Object.DestroyImmediate(or); Object.DestroyImmediate(c1); Object.DestroyImmediate(c2); }
+        }
+
+        [Test]
+        public void Or_Empty_ReturnsFalse()
+        {
+            var or = ScriptableObject.CreateInstance<OrCondition>();
+            try { Assert.IsFalse(or.Evaluate(_ctx)); }
+            finally { Object.DestroyImmediate(or); }
+        }
+
+        // ── Not ───────────────────────────────────────────────────────────────
+
+        [Test]
+        public void Not_NegatesInner()
+        {
+            var not = ScriptableObject.CreateInstance<NotCondition>();
+            var inner = Bool("a", true);
+            not.Condition = inner;
+            try
+            {
+                Assert.IsFalse(not.Evaluate(_ctx));
+                inner.ExpectedValue = false;
+                Assert.IsTrue(not.Evaluate(_ctx));
+            }
+            finally { Object.DestroyImmediate(not); Object.DestroyImmediate(inner); }
+        }
+
+        [Test]
+        public void Not_NullInner_ReturnsTrue()
+        {
+            var not = ScriptableObject.CreateInstance<NotCondition>();
+            try { Assert.IsTrue(not.Evaluate(_ctx)); }
+            finally { Object.DestroyImmediate(not); }
+        }
+
+        // ── Nesting ───────────────────────────────────────────────────────────
+
+        [Test]
+        public void Nested_OrInsideAnd()
+        {
+            var or = ScriptableObject.CreateInstance<OrCondition>();
+            or.Conditions.Add(Bool("b", true));
+            or.Conditions.Add(Bool("a", true));
+
+            var and = ScriptableObject.CreateInstance<AndCondition>();
+            and.Conditions.Add(or);
+            and.Conditions.Add(Bool("a", true));
+
+            try { Assert.IsTrue(and.Evaluate(_ctx)); }
+            finally
+            {
+                foreach (var c in or.Conditions) Object.DestroyImmediate(c);
+                foreach (var c in and.Conditions) if (c != or) Object.DestroyImmediate(c);
+                Object.DestroyImmediate(or);
+                Object.DestroyImmediate(and);
+            }
+        }
+    }
+}

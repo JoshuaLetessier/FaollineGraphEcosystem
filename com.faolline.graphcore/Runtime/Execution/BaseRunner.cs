@@ -148,6 +148,8 @@ namespace Faolline.GraphCore
         private NodeExecutorRegistry _registry;
         private BaseGraph _rootGraph;
         private float _waitRemaining;
+        private string _subscribedSignalName;
+        private Action<SignalArgs> _contextSignalBridge;
 
         // ── Events ─────────────────────────────────────────────────────────────
 
@@ -351,7 +353,28 @@ namespace Faolline.GraphCore
             // Resume only when the name matches AND the node's resume-gate passes. A name match with a failing
             // gate is ignored — the node stays parked and re-armable (the actor may raise again once ready).
             if (node != null && node.AwaitSignalName == name && ResumeConditionsPass(node))
+            {
+                UnsubscribeContextSignal();
                 ExitAndAdvance();
+            }
+        }
+
+        private void SubscribeContextSignal(string signalName)
+        {
+            UnsubscribeContextSignal();
+            _subscribedSignalName = signalName;
+            _contextSignalBridge = args => ResumeIfAwaiting(args.Name);
+            _context?.OnSignal(signalName, _contextSignalBridge);
+        }
+
+        private void UnsubscribeContextSignal()
+        {
+            if (_subscribedSignalName != null && _contextSignalBridge != null)
+            {
+                _context?.OffSignal(_subscribedSignalName, _contextSignalBridge);
+                _subscribedSignalName = null;
+                _contextSignalBridge = null;
+            }
         }
 
         private bool ResumeConditionsPass(BaseNodeData node)
@@ -436,10 +459,12 @@ namespace Faolline.GraphCore
             // 4. Raise events
             OnNodeEntered?.Invoke(node);
 
-            // Await-signal: hold here until BaseRunner.RaiseSignal delivers the named signal.
+            // Await-signal: hold here until a matching signal is raised — either via BaseRunner.RaiseSignal
+            // or directly on the context (e.g. a dialogue end callback calling context.RaiseSignal).
             if (!string.IsNullOrEmpty(node.AwaitSignalName))
             {
                 _state = RunnerState.WaitingForSignal;
+                SubscribeContextSignal(node.AwaitSignalName);
                 OnWaitingForSignal?.Invoke(node, node.AwaitSignalName);
                 return;
             }

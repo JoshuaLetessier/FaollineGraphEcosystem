@@ -159,5 +159,70 @@ namespace Faolline.GraphStandard.Tests
             Add("completed", "p2").Execute(ctx);
             Assert.IsTrue(gate.Evaluate(ctx));
         }
+
+        // ── US4: remove / clear collections from a node ───────────────────────
+
+        private static RemoveFromCollectionAction Remove(string key, string value)
+        {
+            var a = ScriptableObject.CreateInstance<RemoveFromCollectionAction>();
+            a.CollectionKey = key;
+            a.Value = value;
+            return a;
+        }
+
+        private static ClearCollectionAction Clear(string key)
+        {
+            var a = ScriptableObject.CreateInstance<ClearCollectionAction>();
+            a.CollectionKey = key;
+            return a;
+        }
+
+        [Test]
+        public void RemoveFromCollection_RemovesValue()
+        {
+            var ctx = new BaseContext();
+            ctx.AddToCollection("inv", "sword");
+            ctx.AddToCollection("inv", "shield");
+            Remove("inv", "sword").Execute(ctx);
+            Assert.IsFalse(ctx.CollectionContains("inv", "sword"));
+            Assert.IsTrue(ctx.CollectionContains("inv", "shield"));
+        }
+
+        [Test]
+        public void RemoveFromCollection_AbsentValue_IsNoOp()
+        {
+            var ctx = new BaseContext();
+            Remove("inv", "missing").Execute(ctx);
+            Assert.AreEqual(0, ctx.CollectionCount("inv"));
+        }
+
+        [Test]
+        public void RemoveFromCollection_EmptyKeyOrValue_IsNoOp()
+        {
+            var ctx = new BaseContext();
+            ctx.AddToCollection("inv", "sword");
+            Remove("", "sword").Execute(ctx);
+            Remove("inv", "").Execute(ctx);
+            Assert.IsTrue(ctx.CollectionContains("inv", "sword"));
+        }
+
+        [Test]
+        public void ClearCollection_EmptiesSet()
+        {
+            var ctx = new BaseContext();
+            ctx.AddToCollection("inv", "a");
+            ctx.AddToCollection("inv", "b");
+            Clear("inv").Execute(ctx);
+            Assert.AreEqual(0, ctx.CollectionCount("inv"));
+        }
+
+        [Test]
+        public void ClearCollection_EmptyKey_IsNoOp()
+        {
+            var ctx = new BaseContext();
+            ctx.AddToCollection("inv", "a");
+            Clear("").Execute(ctx);
+            Assert.AreEqual(1, ctx.CollectionCount("inv"));
+        }
     }
 }
