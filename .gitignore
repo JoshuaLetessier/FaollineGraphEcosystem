@@ -30,6 +30,7 @@ crashlytics-build.properties
 # Unity auto-generated VS/Rider solution files
 *.csproj
 *.sln
+*.slnx
 *.suo
 *.tmp
 *.user
@@ -40,6 +41,9 @@ crashlytics-build.properties
 *.pdb
 *.opendb
 *.VC.db
+
+# Test results
+TestResults*.xml
 
 # Unity3D generated meta files are to be tracked
 # *.meta  ← DO NOT ignore .meta files for packages

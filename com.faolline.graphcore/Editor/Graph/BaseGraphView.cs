@@ -33,13 +33,7 @@ namespace Faolline.GraphCore.Editor
         /// <summary>The graph currently loaded on this canvas. Null when no graph is loaded.</summary>
         protected BaseGraph Graph => _graph;
 
-        // Tracks whether the canvas has structural changes not yet saved to disk.
-        // Node position changes are captured on SaveGraph(), not tracked here.
         private bool _isDirty;
-
-        // Coalesces edge re-routing: many node GeometryChangedEvents can fire in one frame (initial layout pass,
-        // a drag) — we re-route every edge ONCE on the next tick instead of per-node, so the orthogonal router
-        // weaves around node boxes that were unmeasured (size NaN) or elsewhere when the edges first laid out.
         private bool _rerouteScheduled;
 
         /// <summary>
@@ -62,49 +56,6 @@ namespace Faolline.GraphCore.Editor
             InitRunCursor();
         }
 
-        // ── Selection overrides ───────────────────────────────────────────────
-
-        /// <inheritdoc/>
-        public override void AddToSelection(ISelectable selectable)
-        {
-            base.AddToSelection(selectable);
-            NotifySelectionChanged();
-        }
-
-        /// <inheritdoc/>
-        public override void RemoveFromSelection(ISelectable selectable)
-        {
-            base.RemoveFromSelection(selectable);
-            NotifySelectionChanged();
-        }
-
-        /// <inheritdoc/>
-        public override void ClearSelection()
-        {
-            base.ClearSelection();
-            SelectionCleared?.Invoke();
-        }
-
-        private void NotifySelectionChanged()
-        {
-            int nodeCount = 0;
-            BaseNodeData lastData = null;
-
-            foreach (var item in selection)
-            {
-                if (item is BaseNodeView nv && nv.NodeData != null)
-                {
-                    nodeCount++;
-                    lastData = nv.NodeData;
-                }
-            }
-
-            if (nodeCount == 1)
-                NodeSelected?.Invoke(lastData);
-            else
-                SelectionCleared?.Invoke();
-        }
-
         // ── Public API ────────────────────────────────────────────────────────
 
         /// <summary>
@@ -113,11 +64,6 @@ namespace Faolline.GraphCore.Editor
         /// </summary>
         public void LoadGraph(BaseGraph graph)
         {
-            // Suppress change-tracking for the whole load. Clearing the old visual elements via
-            // DeleteElements fires graphViewChanged → HandleRemovals, which would otherwise delete
-            // node/edge DATA from the just-assigned graph (Unity may defer element removal by a step,
-            // so the removal callback can land on the wrong graph and wipe it). Rebuilding is also
-            // purely programmatic, so it must not be tracked either.
             graphViewChanged = null;
             try
             {
@@ -152,7 +98,6 @@ namespace Faolline.GraphCore.Editor
                     AddElement(view);
                 }
 
-                // Load groups (before nodes so groups render behind them)
                 foreach (var groupData in _graph.Groups)
                 {
                     var groupView = new BaseGroupView(groupData);
@@ -161,14 +106,12 @@ namespace Faolline.GraphCore.Editor
                     AddElement(groupView);
                     _groupViews[groupData.Id] = groupView;
 
-                    // Re-add contained node views into the group
                     foreach (var nodeId in groupData.NodeIds)
                     {
                         if (_nodeViews.TryGetValue(nodeId, out var nv))
                             groupView.AddElement(nv);
                     }
 
-                    // Apply initial collapsed visual (including node visibility)
                     if (groupData.IsCollapsed)
                     {
                         groupView.ApplyCollapsedVisual(true);
@@ -181,113 +124,19 @@ namespace Faolline.GraphCore.Editor
                 graphViewChanged = OnGraphViewChanged;
             }
 
-            // Re-apply the live-run cursor so a reload while the game is playing keeps the active node lit.
             RefreshRunCursor();
-
-            // Edges are now connected to their ports → resolve any source→target gradient colours.
             RefreshAllEdgeColors();
         }
 
         /// <summary>
-        /// Rebuilds and reconnects every edge view touching <paramref name="nodeId"/> from the graph
-        /// data. Call after a node view regenerates its ports (e.g. a Choice node adding/removing a
-        /// choice) so edges bound to surviving ports are reconnected rather than left orphaned.
-        /// </summary>
-        public void ReconnectNodeEdges(string nodeId)
-        {
-            if (_graph == null) return;
-            if (!_nodeViews.ContainsKey(nodeId)) return;
-
-            var stale = new List<Edge>();
-            foreach (var el in edges.ToList())
-            {
-                if (el is BaseEdgeView bev && bev.EdgeData != null
-                    && (bev.EdgeData.FromNodeId == nodeId || bev.EdgeData.ToNodeId == nodeId))
-                    stale.Add(el);
-            }
-            foreach (var e in stale)
-            {
-                e.output?.Disconnect(e);
-                e.input?.Disconnect(e);
-                RemoveElement(e);
-            }
-
-            foreach (var edgeData in _graph.Edges)
-            {
-                if (edgeData.FromNodeId != nodeId && edgeData.ToNodeId != nodeId) continue;
-                var view = CreateEdgeView(edgeData);
-                if (view == null) continue;
-                ConnectEdgeView(view, edgeData);
-                AddElement(view);
-            }
-        }
-
-        /// <summary>
-        /// Reconnects a reloaded <paramref name="edgeView"/> to the source/target node ports so it
-        /// renders on the canvas and tracks node movement. The source port is matched by
-        /// <see cref="BaseEdgeData.PortName"/> (which equals the choice Id for Choice nodes); the
-        /// target uses the node's first input port. No-op if either endpoint cannot be resolved.
-        /// </summary>
-        private void ConnectEdgeView(BaseEdgeView edgeView, BaseEdgeData edgeData)
-        {
-            if (edgeData == null) return;
-            if (!_nodeViews.TryGetValue(edgeData.FromNodeId, out var fromView)) return;
-            if (!_nodeViews.TryGetValue(edgeData.ToNodeId, out var toView)) return;
-
-            var outputPort = FindPort(fromView.outputContainer, edgeData.PortName);
-            var inputPort  = FindPort(toView.inputContainer, null);
-            if (outputPort == null || inputPort == null) return;
-
-            edgeView.output = outputPort;
-            edgeView.input  = inputPort;
-            outputPort.Connect(edgeView);
-            inputPort.Connect(edgeView);
-        }
-
-        /// <summary>
-        /// Returns the port in <paramref name="container"/> whose <c>portName</c> equals
-        /// <paramref name="portName"/>. When <paramref name="portName"/> is null/empty, returns the
-        /// first port (used for single-input nodes). Returns null when no match is found.
-        /// </summary>
-        private static UnityEditor.Experimental.GraphView.Port FindPort(VisualElement container, string portName)
-        {
-            UnityEditor.Experimental.GraphView.Port first = null;
-            foreach (var child in container.Children())
-            {
-                if (child is UnityEditor.Experimental.GraphView.Port port)
-                {
-                    if (first == null) first = port;
-                    if (port.portName == portName) return port;
-                }
-            }
-            return string.IsNullOrEmpty(portName) ? first : null;
-        }
-
-        /// <summary>
-        /// Syncs all canvas node positions to <c>BaseNodeData.Position</c>, then marks
-        /// the asset dirty and saves it to disk. No-op if no graph is loaded.
-        /// </summary>
-        public void SaveGraph()
-        {
-            // Persist the live canvas to disk, then rebuild it so every edge re-renders from the saved data.
-            AutoSave(writeToDisk: true);
-            ReloadView();
-        }
-
-        /// <summary>
         /// Rebuilds the canvas from the graph data — recreating node and edge views and re-running edge routing —
-        /// while preserving the current layout (unsaved node/group moves) and the viewport (no camera jump). This
-        /// is the "refresh the window without closing it" path: the same canvas rebuild <see cref="SaveGraph"/>
-        /// does, minus the disk write (notably it settles malleable-edge waypoints whose live repaint can lag).
-        /// No-op when no graph is loaded.
+        /// while preserving the current layout and the viewport. No-op when no graph is loaded.
         /// </summary>
         public void ReloadView()
         {
             if (_graph == null)
                 return;
 
-            // Mirror the live layout into the data so the rebuild keeps current node/group positions (they are
-            // only synced on demand), and preserve the viewport so the reload doesn't jump the camera.
             SyncCanvasToData();
             var viewPos = viewTransform.position;
             var viewScale = viewTransform.scale;
@@ -296,11 +145,18 @@ namespace Faolline.GraphCore.Editor
         }
 
         /// <summary>
+        /// Syncs all canvas node positions to <c>BaseNodeData.Position</c>, then marks
+        /// the asset dirty and saves it to disk. No-op if no graph is loaded.
+        /// </summary>
+        public void SaveGraph()
+        {
+            AutoSave(writeToDisk: true);
+            ReloadView();
+        }
+
+        /// <summary>
         /// Persists the canvas without reloading it — for auto-save on window/editor close or before a domain
-        /// reload (entering Play, recompile). Syncs node/group positions into the data (which otherwise only
-        /// happens on <see cref="SaveGraph"/>) and marks the asset dirty; when <paramref name="writeToDisk"/> is
-        /// true it also flushes to disk via <c>AssetDatabase.SaveAssets</c>. No canvas rebuild (the caller is
-        /// tearing the view down), so it is safe to call from lifecycle teardown. No-op if no graph is loaded.
+        /// reload. No-op if no graph is loaded.
         /// </summary>
         public void AutoSave(bool writeToDisk)
         {
@@ -315,10 +171,16 @@ namespace Faolline.GraphCore.Editor
         }
 
         /// <summary>
-        /// Copies the live canvas layout (node positions, group positions/sizes and member node IDs) back into
-        /// the graph data. Positions are captured here rather than tracked live, so this must run before any
-        /// persist. Does not mark dirty / save — callers decide.
+        /// Re-applies the resolved color to every node view currently on the canvas.
         /// </summary>
+        public void RefreshNodeColors()
+        {
+            foreach (var view in _nodeViews.Values)
+                view.RefreshColor();
+        }
+
+        // ── Layout sync ──────────────────────────────────────────────────────
+
         private void SyncCanvasToData()
         {
             foreach (var kvp in _nodeViews)
@@ -327,14 +189,11 @@ namespace Faolline.GraphCore.Editor
                 kvp.Value.NodeData.Position = rect.position;
             }
 
-            // Sync group positions/sizes and member node IDs
             foreach (var kvp in _groupViews)
             {
                 var data = kvp.Value.GroupData;
                 var rect = kvp.Value.GetPosition();
                 data.Position = rect.position;
-                // Don't overwrite the stored size while collapsed (height is reduced to the header) —
-                // it must be preserved so expand restores the original size.
                 if (!data.IsCollapsed)
                     data.Size = rect.size;
                 data.NodeIds.Clear();
@@ -344,212 +203,13 @@ namespace Faolline.GraphCore.Editor
             }
         }
 
-        /// <summary>
-        /// Auto-arranges the graph into a tidy left-to-right layered layout (longest-path layering + crossing
-        /// reduction). Clears manual edge bend points (a fresh layout makes them meaningless), rebuilds the
-        /// canvas, and frames the result. The graph is marked dirty; the new positions persist on the next Save.
-        /// </summary>
-        public void ArrangeGraph()
-        {
-            if (_graph == null) return;
-
-            // The node views are already on screen, so their measured sizes are available — feed them to the
-            // layout so columns are spaced by ACTUAL node widths (long dialogue titles no longer overlap the
-            // next column) and rows by the tallest node. Nodes with an unmeasured size fall back to a default box.
-            var sizes = new Dictionary<string, Vector2>();
-            foreach (var kv in _nodeViews)
-            {
-                var s = kv.Value.layout.size;
-                if (!float.IsNaN(s.x) && !float.IsNaN(s.y) && s.x > 1f && s.y > 1f) sizes[kv.Key] = s;
-            }
-
-            var positions = GraphAutoLayout.Arrange(_graph.Nodes, _graph.Edges, _graph.EntryNodeId, nodeSizes: sizes);
-            foreach (var node in _graph.Nodes)
-                if (node != null && positions.TryGetValue(node.Id, out var p)) node.Position = p;
-
-            // Route column-skipping edges through a lane below the rows so they don't pass under nodes.
-            var routes = GraphAutoLayout.RouteLongEdges(positions, _graph.Edges, nodeSizes: sizes);
-            foreach (var edge in _graph.Edges)
-            {
-                if (edge == null) continue;
-                edge.Waypoints.Clear();
-                if (routes.TryGetValue(edge.Id, out var wps)) edge.Waypoints.AddRange(wps);
-            }
-
-            _isDirty = true;
-            EditorUtility.SetDirty(_graph);
-            LoadGraph(_graph);   // rebuild from the new positions
-            FrameAll();          // fit the arranged graph to the view
-        }
-
-        /// <summary>
-        /// Re-applies the resolved color to every node view currently on the canvas.
-        /// Call when node data is modified externally (e.g. from the Inspector).
-        /// </summary>
-        public void RefreshNodeColors()
-        {
-            foreach (var view in _nodeViews.Values)
-                view.RefreshColor();
-        }
-
-        // ── Groups ────────────────────────────────────────────────────────────────
-
-        /// <summary>
-        /// Called from the canvas context menu. Creates a group around all currently selected nodes.
-        /// If no nodes are selected, creates an empty group at the mouse position.
-        /// </summary>
-        public void GroupSelection(Vector2 mousePosition)
-        {
-            if (_graph == null) return;
-
-            var groupData = new GraphGroupData
-            {
-                Id       = System.Guid.NewGuid().ToString("D"),
-                Title    = "Group",
-                Position = mousePosition,
-            };
-
-            // Collect selected node views
-            var selected = new List<BaseNodeView>();
-            foreach (var item in selection)
-                if (item is BaseNodeView nv && nv.NodeData != null) selected.Add(nv);
-
-            if (selected.Count > 0)
-            {
-                // Size the group to encompass the selection
-                var min = new Vector2(float.MaxValue, float.MaxValue);
-                var max = new Vector2(float.MinValue, float.MinValue);
-                foreach (var nv in selected)
-                {
-                    var r = nv.GetPosition();
-                    min = Vector2.Min(min, r.position);
-                    max = Vector2.Max(max, r.position + r.size);
-                }
-                const float padding = 20f;
-                groupData.Position = min - Vector2.one * padding;
-                groupData.Size     = (max - min) + Vector2.one * padding * 2;
-                foreach (var nv in selected)
-                    groupData.NodeIds.Add(nv.NodeData.Id);
-            }
-
-            _graph.AddGroup(groupData);
-
-            var groupView = new BaseGroupView(groupData);
-            groupView.DataChanged = () => { _isDirty = true; EditorUtility.SetDirty(_graph); };
-            WireGroupCollapseCallback(groupView);
-            AddElement(groupView);
-            _groupViews[groupData.Id] = groupView;
-            foreach (var nv in selected) groupView.AddElement(nv);
-
-            _isDirty = true;
-            EditorUtility.SetDirty(_graph);
-        }
-
-        /// <summary>Test/inspection hook: the live group views currently on the canvas.</summary>
-        public IReadOnlyList<BaseGroupView> GroupViewsForTest => new List<BaseGroupView>(_groupViews.Values);
-
-        /// <summary>Test/inspection hook: whether a node view is currently visible (not hidden by collapse).</summary>
-        public bool IsNodeViewVisibleForTest(string nodeId)
-            => _nodeViews.TryGetValue(nodeId, out var nv) && nv.style.display.value != DisplayStyle.None;
-
-        // ── Group collapse helpers ─────────────────────────────────────────────────
-
-        private void WireGroupCollapseCallback(BaseGroupView groupView)
-        {
-            groupView.CollapseToggled = collapsed =>
-            {
-                SetGroupNodesVisible(groupView.GroupData, !collapsed);
-                _isDirty = true;
-                EditorUtility.SetDirty(_graph);
-            };
-        }
-
-        private void SetGroupNodesVisible(GraphGroupData groupData, bool visible)
-        {
-            foreach (var nodeId in groupData.NodeIds)
-                if (_nodeViews.TryGetValue(nodeId, out var nv))
-                    nv.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
-        }
-
-        /// <summary>Removes a group view and its data from the graph. Contained nodes are NOT deleted.</summary>
-        private void RemoveGroup(BaseGroupView groupView)
-        {
-            if (_graph == null || groupView?.GroupData == null) return;
-            _graph.RemoveGroup(groupView.GroupData);
-            _groupViews.Remove(groupView.GroupData.Id);
-            RemoveElement(groupView);
-            _isDirty = true;
-            EditorUtility.SetDirty(_graph);
-        }
-
-        public override void BuildContextualMenu(ContextualMenuPopulateEvent evt)
-        {
-            base.BuildContextualMenu(evt);
-
-            // "Group Selection" appears on the canvas (not on a node or group)
-            if (evt.target is GraphView || evt.target is VisualElement ve && ve.ClassListContains("graphView"))
-            {
-                bool hasNodeSelection = false;
-                foreach (var item in selection)
-                    if (item is BaseNodeView) { hasNodeSelection = true; break; }
-
-                var label = hasNodeSelection ? "Group Selection" : "Add Group";
-                evt.menu.AppendAction(label, _ => GroupSelection(contentViewContainer.WorldToLocal(evt.mousePosition)));
-
-                // Universal documentary cross-reference (non-executing). Available in every lib editor.
-                // Capture the canvas position NOW (the event is stale inside the deferred action lambda).
-                var graphLinkPos = contentViewContainer.WorldToLocal(evt.mousePosition);
-                evt.menu.AppendAction("Add GraphLink (reference)", _ =>
-                    AddNodeToCanvas(new GraphLinkNodeData { NodeType = GraphLinkNodeData.NodeTypeId }, graphLinkPos));
-
-                // ── Templates ────────────────────────────────────────────────
-                if (hasNodeSelection)
-                {
-                    evt.menu.AppendAction("Save Selection as Template", _ => SaveSelectionAsTemplate());
-                }
-
-                var insertPos = contentViewContainer.WorldToLocal(evt.mousePosition);
-                var templates = FindAllTemplates();
-                if (templates.Count > 0)
-                {
-                    foreach (var tpl in templates)
-                    {
-                        var captured = tpl;
-                        evt.menu.AppendAction($"Templates/{captured.name}", _ => InsertTemplate(captured, insertPos));
-                    }
-                }
-            }
-        }
-
-        // ── Port compatibility ────────────────────────────────────────────────
-
-        /// <summary>
-        /// Returns all ports that can receive a connection from <paramref name="startPort"/>.
-        /// Allows connections between ports of opposite directions on different nodes.
-        /// Override to add domain-specific type constraints.
-        /// </summary>
-        public override List<UnityEditor.Experimental.GraphView.Port> GetCompatiblePorts(
-            UnityEditor.Experimental.GraphView.Port startPort,
-            UnityEditor.Experimental.GraphView.NodeAdapter nodeAdapter)
-        {
-            var result = new List<UnityEditor.Experimental.GraphView.Port>();
-            foreach (var port in ports.ToList())
-            {
-                if (port.direction != startPort.direction && port.node != startPort.node)
-                    result.Add(port);
-            }
-            return result;
-        }
-
-        // ── Abstract factory methods ──────────────────────────────────────────
+        // ── Abstract factory methods ─────────────────────────────────────────
 
         /// <summary>
         /// Create and return a <see cref="BaseNodeView"/> for the given node data.
         /// </summary>
         protected abstract BaseNodeView CreateNodeView(BaseNodeData node);
 
-        // Universal GraphCore node types get their view here (so they render in EVERY lib editor with no per-lib
-        // code); everything else delegates to the lib's CreateNodeView. Currently: the GraphLink annotation.
         private BaseNodeView ResolveNodeView(BaseNodeData node)
             => node is GraphLinkNodeData link ? new GraphLinkNodeView(link) : CreateNodeView(node);
 
@@ -558,246 +218,18 @@ namespace Faolline.GraphCore.Editor
         /// </summary>
         protected abstract BaseEdgeView CreateEdgeView(BaseEdgeData edge);
 
-        // ── Protected helpers for subclasses ─────────────────────────────────
+        // ── Hooks ────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Adds <paramref name="nodeData"/> to the loaded graph and the canvas.
-        /// Assigns a GUID to <paramref name="nodeData"/> if <see cref="BaseNodeData.Id"/> is empty.
-        /// Sets the canvas position to <paramref name="position"/>.
-        /// No-op if no graph is currently loaded.
-        /// </summary>
-        protected void AddNodeToCanvas(BaseNodeData nodeData, Vector2 position)
-        {
-            if (_graph == null) return;
-
-            // At most one Start node per graph — it is the single entry point. Refuse a second (safety net for
-            // the menu's disabled state, and for any programmatic add). AppendAddStartAction greys the menu item.
-            if (nodeData != null && nodeData.NodeType == StartNodeData.NodeTypeId && HasStartNode())
-            {
-                Debug.LogWarning("[GraphCore] This graph already has a Start node — only one is allowed (the single entry point).");
-                return;
-            }
-
-            if (string.IsNullOrEmpty(nodeData.Id))
-                nodeData.Id = System.Guid.NewGuid().ToString("D");
-
-            nodeData.Position = position;
-
-            _graph.AddNode(nodeData);
-
-            var view = ResolveNodeView(nodeData);
-            if (view == null) return;
-
-            view.SetPosition(new Rect(position, Vector2.zero));
-            view.TitleChanged += OnNodeTitleChanged;
-            AddElement(view);
-            _nodeViews[nodeData.Id] = view;
-            RerouteEdgesWhenMoved(view);
-            _isDirty = true;
-            OnNodeCreated(nodeData);
-        }
-
-        // Re-routes every edge whenever this node view's geometry changes — its initial measurement (so an edge
-        // that laid out before the node had a size stops cutting through it) and any later move/resize (so an
-        // edge weaves around a node dragged into its path). Coalesced to one re-route per frame via the schedule.
-        private void RerouteEdgesWhenMoved(BaseNodeView view)
-            => view.RegisterCallback<GeometryChangedEvent>(_ => ScheduleReroute());
-
-        private void ScheduleReroute()
-        {
-            if (_rerouteScheduled) return;
-            _rerouteScheduled = true;
-            schedule.Execute(() =>
-            {
-                _rerouteScheduled = false;
-                foreach (var el in edges.ToList())
-                    if (el is BaseEdgeView bev) bev.Reroute();
-            });
-        }
-
-        /// <summary>
-        /// Re-applies every edge's colour. Called once the canvas is built (so a source→target gradient can read
-        /// its now-connected endpoint nodes' colours) and whenever the <see cref="BaseEdgeView.ColorByEndpoints"/>
-        /// toolbar toggle flips.
-        /// </summary>
-        public void RefreshAllEdgeColors()
-        {
-            foreach (var el in edges.ToList())
-                if (el is BaseEdgeView bev) bev.RefreshColor();
-        }
-
-        /// <summary>True when the loaded graph already holds a Start node (only one is allowed — the entry point).</summary>
-        protected bool HasStartNode()
-        {
-            if (_graph?.Nodes == null) return false;
-            foreach (var n in _graph.Nodes)
-                if (n != null && n.NodeType == StartNodeData.NodeTypeId) return true;
-            return false;
-        }
-
-        /// <summary>
-        /// Appends the shared "Add Start Node" context-menu action, disabled when the graph already has a Start
-        /// node (only one is allowed — the single entry point). Libs call this from <c>BuildContextualMenu</c>
-        /// instead of appending their own Start action, so the one-Start rule is enforced uniformly.
-        /// </summary>
-        protected void AppendAddStartAction(ContextualMenuPopulateEvent evt, Vector2 mousePos)
-        {
-            evt.menu.AppendAction("Add Start Node",
-                _ => AddNodeToCanvas(new StartNodeData { NodeType = StartNodeData.NodeTypeId }, mousePos),
-                _ => HasStartNode() ? DropdownMenuAction.Status.Disabled : DropdownMenuAction.Status.Normal);
-        }
-
-        // Inline title edits on any node view mark the canvas dirty so they persist on save.
-        private void OnNodeTitleChanged()
-        {
-            _isDirty = true;
-            if (_graph != null) EditorUtility.SetDirty(_graph);
-        }
-
-        // ── Hooks ─────────────────────────────────────────────────────────────
-
-        /// <summary>
-        /// Called after a new node has been added to the canvas and to the graph data.
-        /// </summary>
+        /// <summary>Called after a new node has been added to the canvas and to the graph data.</summary>
         protected virtual void OnNodeCreated(BaseNodeData node) { }
 
-        /// <summary>
-        /// Called after a new edge has been accepted and added to the canvas and graph data.
-        /// CycleDetector has already approved the connection when this fires.
-        /// </summary>
+        /// <summary>Called after a new edge has been accepted and added to the canvas and graph data.</summary>
         protected virtual void OnEdgeConnected(BaseEdgeData edge) { }
 
-        /// <summary>
-        /// Called after a node has been removed from the canvas and graph data.
-        /// </summary>
+        /// <summary>Called after a node has been removed from the canvas and graph data.</summary>
         protected virtual void OnNodeDeleted(BaseNodeData node) { }
 
-        // ── GraphViewChanged routing ──────────────────────────────────────────
-
-        private GraphViewChange OnGraphViewChanged(GraphViewChange change)
-        {
-            if (change.elementsToRemove != null)
-                HandleRemovals(change.elementsToRemove);
-
-            if (change.edgesToCreate != null)
-                HandleEdgeCreation(change.edgesToCreate);
-
-            // Node position changes (movedElements) are intentionally NOT written to
-            // _graph here — sync is deferred to SaveGraph() per FR-003.
-
-            return change;
-        }
-
-        /// <summary>
-        /// Test hook: simulates GraphView removing <paramref name="elements"/> (the same path the
-        /// canvas uses when the user presses Delete). Mutates the list like the real change pipeline.
-        /// </summary>
-        public void HandleRemovalsForTest(List<GraphElement> elements) => HandleRemovals(elements);
-
-        private void HandleRemovals(List<GraphElement> elements)
-        {
-            // When a group is deleted, GraphView automatically adds its contained nodes to the
-            // removal list too. Collect their IDs so we can keep them — the nodes must survive the
-            // group deletion (groups are authoring annotations only).
-            var protectedByGroup = new System.Collections.Generic.HashSet<string>();
-            foreach (var el in elements)
-                if (el is BaseGroupView gv && gv.GroupData != null)
-                    foreach (var id in gv.GroupData.NodeIds)
-                        protectedByGroup.Add(id);
-
-            // Physically remove the protected node views from the removal list so GraphView does not
-            // delete them visually (the list is change.elementsToRemove, consumed after this returns).
-            if (protectedByGroup.Count > 0)
-            {
-                elements.RemoveAll(el =>
-                    el is BaseNodeView nv && nv.NodeData != null && protectedByGroup.Contains(nv.NodeData.Id));
-            }
-
-            foreach (var element in elements)
-            {
-                if (element is BaseNodeView nodeView && nodeView.NodeData != null)
-                {
-                    var nodeData = nodeView.NodeData;
-
-                    if (_graph != null)
-                    {
-                        // Remove edges from graph that reference this node
-                        var edgeList = new List<BaseEdgeData>();
-                        foreach (var e in _graph.Edges)
-                        {
-                            if (e.FromNodeId == nodeData.Id || e.ToNodeId == nodeData.Id)
-                                edgeList.Add(e);
-                        }
-                        foreach (var e in edgeList)
-                            _graph.RemoveEdge(e);
-
-                        _graph.RemoveNode(nodeData);
-                    }
-
-                    _nodeViews.Remove(nodeData.Id);
-                    _isDirty = true;
-                    OnNodeDeleted(nodeData);
-                }
-                else if (element is BaseEdgeView edgeView && edgeView.EdgeData != null)
-                {
-                    _graph?.RemoveEdge(edgeView.EdgeData);
-                    _isDirty = true;
-                }
-                else if (element is BaseGroupView groupView && groupView.GroupData != null)
-                {
-                    _graph?.RemoveGroup(groupView.GroupData);
-                    _groupViews.Remove(groupView.GroupData.Id);
-                    _isDirty = true;
-                }
-            }
-        }
-
-        private void HandleEdgeCreation(List<Edge> edges)
-        {
-            foreach (var edge in edges)
-            {
-                if (edge is BaseEdgeView edgeView)
-                {
-                    // Retrieve connected node data
-                    BaseNodeData fromNode = null;
-                    BaseNodeData toNode = null;
-
-                    if (edge.output?.node is BaseNodeView outNode)
-                        fromNode = outNode.NodeData;
-                    if (edge.input?.node is BaseNodeView inNode)
-                        toNode = inNode.NodeData;
-
-                    if (fromNode == null || toNode == null) continue;
-
-                    // Build edge data
-                    var edgeData = new BaseEdgeData();
-                    edgeData.Id = System.Guid.NewGuid().ToString("D");
-                    edgeData.FromNodeId = fromNode.Id;
-                    edgeData.ToNodeId = toNode.Id;
-                    edgeData.PortName = edge.output?.portName ?? string.Empty;
-
-                    // CycleDetector: check every edge connection without exception (FR-011)
-                    BaseGraph targetGraph = null;
-                    if (toNode is SubGraphNodeData subNode)
-                        targetGraph = subNode.TargetGraph;
-
-                    var cycleResult = CycleDetector.Check(_graph, targetGraph);
-                    if (cycleResult.HasCycle)
-                    {
-                        var path = string.Join(" → ", cycleResult.CyclePath);
-                        Debug.LogError($"[GraphCore] Cycle detected: {path}");
-                        // Edge refused — remove it from the change list so it won't be added
-                        edges.Remove(edge);
-                        continue;
-                    }
-
-                    edgeView.EdgeData = edgeData;
-                    _graph?.AddEdge(edgeData);
-                    _isDirty = true;
-                    OnEdgeConnected(edgeData);
-                }
-            }
-        }
+        // ── Style ────────────────────────────────────────────────────────────
 
         private void LoadStyleSheet()
         {
@@ -814,102 +246,6 @@ namespace Faolline.GraphCore.Editor
                         break;
                     }
                 }
-            }
-        }
-
-        // ── Templates ────────────────────────────────────────────────────────
-
-        private static List<GraphTemplate> FindAllTemplates()
-        {
-            var result = new List<GraphTemplate>();
-            var guids = AssetDatabase.FindAssets("t:GraphTemplate");
-            foreach (var guid in guids)
-            {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
-                var tpl = AssetDatabase.LoadAssetAtPath<GraphTemplate>(path);
-                if (tpl != null) result.Add(tpl);
-            }
-            return result;
-        }
-
-        private void SaveSelectionAsTemplate()
-        {
-            var nodes = new List<BaseNodeData>();
-            var edges = new List<BaseEdgeData>();
-
-            foreach (var item in selection)
-            {
-                if (item is BaseNodeView nv && nv.NodeData != null)
-                    nodes.Add(nv.NodeData);
-                if (item is BaseEdgeView ev && ev.EdgeData != null)
-                    edges.Add(ev.EdgeData);
-            }
-
-            if (nodes.Count == 0)
-            {
-                Debug.LogWarning("[GraphCore] No nodes selected — template not created.");
-                return;
-            }
-
-            var path = EditorUtility.SaveFilePanelInProject(
-                "Save Graph Template", "NewTemplate", "asset",
-                "Choose where to save the graph template.");
-            if (string.IsNullOrEmpty(path)) return;
-
-            var template = ScriptableObject.CreateInstance<GraphTemplate>();
-            template.Capture(nodes, edges);
-            AssetDatabase.CreateAsset(template, path);
-            AssetDatabase.SaveAssets();
-            Debug.Log($"[GraphCore] Template saved: {path} ({nodes.Count} nodes, {edges.Count} internal edges).");
-        }
-
-        private void InsertTemplate(GraphTemplate template, Vector2 insertPosition)
-        {
-            if (template == null || template.NodeCount == 0) return;
-
-            var result = template.Instantiate(insertPosition);
-
-            foreach (var json in result.NodeJsons)
-            {
-                var nodeData = DeserializeNode(json);
-                if (nodeData == null) continue;
-
-                if (result.IdMap.TryGetValue(nodeData.Id, out var newId))
-                    nodeData.Id = newId;
-
-                nodeData.Position += result.InsertPosition;
-
-                var view = CreateNodeView(nodeData);
-                if (view == null) continue;
-                view.SetPosition(new Rect(nodeData.Position, Vector2.zero));
-                AddElement(view);
-                _nodeViews[nodeData.Id] = view;
-
-                _graph?.AddNode(nodeData);
-                _isDirty = true;
-                OnNodeCreated(nodeData);
-            }
-
-            foreach (var json in result.EdgeJsons)
-            {
-                var edgeData = JsonUtility.FromJson<BaseEdgeData>(json);
-                if (edgeData == null) continue;
-
-                if (!result.IdMap.TryGetValue(edgeData.FromNodeId, out var newFrom)) continue;
-                if (!result.IdMap.TryGetValue(edgeData.ToNodeId, out var newTo)) continue;
-
-                edgeData.Id = System.Guid.NewGuid().ToString("D");
-                edgeData.FromNodeId = newFrom;
-                edgeData.ToNodeId = newTo;
-
-                var edgeView = CreateEdgeViewForPaste(edgeData);
-                if (edgeView == null) continue;
-
-                _graph?.AddEdge(edgeData);
-                ConnectEdgeView(edgeView, edgeData);
-                AddElement(edgeView);
-                _isDirty = true;
-                OnEdgeConnected(edgeData);
             }
         }
     }

@@ -4,6 +4,37 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.9.0]
+
+### Added
+- **`PlayDialogueAction`** — a graphcore `BaseAction` that launches a dialogue from a gameflow/quest node. The
+  host's runner stays parked while the dialogue plays; on end, context state written by the dialogue is visible
+  to the host. Requires graphcore 0.20.0.
+- **`DialoguePlayer` signal and time support.** The player now forwards `RaiseSignal` and `Tick(dt)` to its
+  internal runner, so dialogue nodes can await signals and use timed waits.
+- **Edge condition fluent helpers** on `DialogueGraphBuilder` — `.When(condition)` on an edge, parity with
+  graphstandard's builder.
+- **Dialogue handle parity** with graphstandard (same `IGraphHandle` surface for host interop).
+
+### Changed
+- **Ecosystem-wide documentation pass** — tooltips, headers, `[HelpURL]` on key types, README updates.
+
+## [0.8.0]
+
+### Added
+- **Auto-wire localization from `LocalizationContext`.** When a `LocalizationContext` is present the dialogue
+  system automatically resolves its localization provider — no manual wiring needed.
+- **`OutcomeLabel` on dialogue End nodes.** Inherits graphcore's semantic outcome label; the host can branch on
+  how the dialogue ended.
+- **Per-node `LocalizedAssetFlags` support.** Dialogue nodes respect the per-node flags for asset table filtering
+  (Text, Audio, etc.), following graphcore 0.19.0.
+- **Double-click SubGraph/SubDialogue nodes** to open the target dialogue in the Dialogue editor.
+
+### Changed
+- **All inspectors route through `BuildNoSelectionContent`** for consistent panel behavior.
+- **`NodeId` populated on `LocalizationKeyEntry`** so the localization adapter correctly links keys to their
+  source nodes.
+
 ## [0.7.3]
 
 ### Changed

@@ -103,7 +103,7 @@ namespace Faolline.GraphLocalization
             var type = Type.GetType(
                 "Faolline.GraphLocalization.Unity.UnityLocalizedAssetProvider, " +
                 "com.faolline.graphlocalization.Localization.Unity");
-            if (type == null) return null;
+            if (type == null || !typeof(ILocalizedAssetProvider).IsAssignableFrom(type)) return null;
 
             var ctor = type.GetConstructor(new[] { typeof(IEnumerable<string>) });
             if (ctor == null) return null;
@@ -140,7 +140,7 @@ namespace Faolline.GraphLocalization
             var type = Type.GetType(
                 "Faolline.GraphLocalization.Unity.UnityLocalizationProvider, " +
                 "com.faolline.graphlocalization.Localization.Unity");
-            if (type == null) return null;
+            if (type == null || !typeof(ILocalizationProvider).IsAssignableFrom(type)) return null;
 
             var ctor = type.GetConstructor(new[] { typeof(IEnumerable<string>), typeof(string) });
             if (ctor == null) return null;

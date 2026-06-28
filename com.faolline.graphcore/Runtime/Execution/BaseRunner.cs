@@ -198,6 +198,10 @@ namespace Faolline.GraphCore
         /// </exception>
         public void Start(BaseGraph graph, BaseContext context, NodeExecutorRegistry registry)
         {
+            if (graph == null)
+                throw new ArgumentNullException(nameof(graph), "[GraphCore] Cannot start: graph is null.");
+            if (context == null)
+                throw new ArgumentNullException(nameof(context), "[GraphCore] Cannot start: context is null.");
             if (string.IsNullOrEmpty(graph.EntryNodeId))
                 throw new InvalidOperationException(
                     "[GraphCore] Cannot start: graph.EntryNodeId is not set.");
@@ -207,6 +211,7 @@ namespace Faolline.GraphCore
             _rootGraph = graph;
             _graphStack.Clear();
             _history.Clear();
+            ClearIndexes();
 
             var rootFrame = new GraphExecutionState
             {
@@ -229,11 +234,19 @@ namespace Faolline.GraphCore
         /// </summary>
         public void StartFrom(BaseGraph graph, string nodeId, BaseContext context, NodeExecutorRegistry registry)
         {
+            if (graph == null)
+                throw new ArgumentNullException(nameof(graph), "[GraphCore] Cannot start: graph is null.");
+            if (string.IsNullOrEmpty(nodeId))
+                throw new ArgumentException("[GraphCore] Cannot start: nodeId is null or empty.", nameof(nodeId));
+            if (context == null)
+                throw new ArgumentNullException(nameof(context), "[GraphCore] Cannot start: context is null.");
+
             _context   = context;
             _registry  = registry;
             _rootGraph = graph;
             _graphStack.Clear();
             _history.Clear();
+            ClearIndexes();
 
             var frame = new GraphExecutionState
             {
@@ -606,6 +619,10 @@ namespace Faolline.GraphCore
 
         // ── Internal: history ──────────────────────────────────────────────────
 
+        /// <remarks>
+        /// Deep-clones the full context per call. With <see cref="BaseGraph.HistoryDepth"/> = 0 (unlimited),
+        /// memory grows linearly with traversal length.
+        /// </remarks>
         private void AppendSnapshot(string nodeId)
         {
             var stackSnapshot = CloneGraphStack();
@@ -665,19 +682,47 @@ namespace Faolline.GraphCore
 
         // ── Internal: helpers ─────────────────────────────────────────────────
 
-        private static BaseNodeData FindNode(BaseGraph graph, string nodeId)
+        private readonly Dictionary<BaseGraph, Dictionary<string, BaseNodeData>> _nodeIndex =
+            new Dictionary<BaseGraph, Dictionary<string, BaseNodeData>>();
+        private readonly Dictionary<BaseGraph, Dictionary<string, List<BaseEdgeData>>> _adjacency =
+            new Dictionary<BaseGraph, Dictionary<string, List<BaseEdgeData>>>();
+
+        private void ClearIndexes()
         {
-            foreach (var node in graph.Nodes)
-                if (node.Id == nodeId) return node;
-            return null;
+            _nodeIndex.Clear();
+            _adjacency.Clear();
         }
 
-        private static List<BaseEdgeData> GetOutgoingEdges(BaseGraph graph, string fromNodeId)
+        private BaseNodeData FindNode(BaseGraph graph, string nodeId)
         {
-            var result = new List<BaseEdgeData>();
-            foreach (var edge in graph.Edges)
-                if (edge.FromNodeId == fromNodeId) result.Add(edge);
-            return result;
+            if (!_nodeIndex.TryGetValue(graph, out var index))
+            {
+                index = new Dictionary<string, BaseNodeData>();
+                foreach (var node in graph.Nodes)
+                    if (node != null) index[node.Id] = node;
+                _nodeIndex[graph] = index;
+            }
+            return index.TryGetValue(nodeId, out var found) ? found : null;
+        }
+
+        private List<BaseEdgeData> GetOutgoingEdges(BaseGraph graph, string fromNodeId)
+        {
+            if (!_adjacency.TryGetValue(graph, out var adj))
+            {
+                adj = new Dictionary<string, List<BaseEdgeData>>();
+                foreach (var edge in graph.Edges)
+                {
+                    if (edge == null) continue;
+                    if (!adj.TryGetValue(edge.FromNodeId, out var list))
+                    {
+                        list = new List<BaseEdgeData>();
+                        adj[edge.FromNodeId] = list;
+                    }
+                    list.Add(edge);
+                }
+                _adjacency[graph] = adj;
+            }
+            return adj.TryGetValue(fromNodeId, out var edges) ? edges : new List<BaseEdgeData>();
         }
 
         private BaseEdgeData SelectEdge(List<BaseEdgeData> edges, string forcedId = null)

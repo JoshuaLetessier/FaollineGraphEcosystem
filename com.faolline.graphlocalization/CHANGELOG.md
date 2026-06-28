@@ -4,6 +4,33 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0]
+
+### Added
+- **One Asset Table per flag type.** The build now generates separate Asset Table collections per
+  `LocalizedAssetFlags` type (Text, Audio, Image, …) instead of one catch-all — so the consumer imports only the
+  asset types a graph actually uses. Collection names shortened to `GraphName_Text`, `GraphName_Audio`.
+- **Per-node `LocalizedAssetMode` / `LocalizedAssetFlags` filtering.** The build respects each node's flags: a
+  node that only needs Text won't generate Audio table entries. `LocalizedAssetFlags` is the canonical `[Flags]`
+  enum (extracted from graphcore).
+- **Auto-create settings + auto-rebuild on graph save.** Saving a graph with the localization window open triggers
+  a rebuild if settings exist; if no `LocalizationSettingsAsset` exists, one is created automatically.
+- **`SetLocale()` on `ILocalizationProvider`.** The provider contract now supports switching locales at runtime
+  (previously locale was set at construction only).
+- **Dashboard counts quest/objective key types** so quest graphs show meaningful coverage numbers.
+
+### Changed
+- **`LocalizationDatabase` is now transient, not a persisted asset.** The database was a `ScriptableObject` saved
+  to disk but only consumed by the build step — it is now created on-the-fly during a build and discarded. One
+  fewer asset to track. The `UnityLocalizationTableName` field (also unused) was removed.
+- **Stale `Metadata` references removed** from `BaseGraphLocalizationAdapter`.
+- **Derive Unity collection prefix from `libName`** for consistency across libs.
+- **Prevent auto-builder infinite loop** when settings trigger a rebuild that triggers another save.
+
+### Fixed
+- **Manifest asset collection naming** aligned with the per-flag-type tables.
+- **Asset tables sit next to string table** — no extra subfolder.
+
 ## [0.4.0]
 
 ### Added

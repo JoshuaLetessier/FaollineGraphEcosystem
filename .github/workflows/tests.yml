@@ -1,0 +1,82 @@
+name: Tests
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+jobs:
+  tests:
+    name: ${{ matrix.testMode }} tests
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        testMode: [EditMode, PlayMode]
+
+    steps:
+      - name: Checkout packages
+        uses: actions/checkout@v4
+        with:
+          path: packages
+
+      - name: Scaffold Unity project
+        run: |
+          mkdir -p unity-project/Assets
+          cp -r "$GITHUB_WORKSPACE/packages" unity-project/Assets/FaollineGraphEcosystem
+
+          mkdir -p unity-project/ProjectSettings
+          cat > unity-project/ProjectSettings/ProjectVersion.txt << 'EOF'
+          m_EditorVersion: 6000.0.78f1
+          m_EditorVersionWithRevision: 6000.0.78f1 (0f21b61eafab)
+          EOF
+
+          mkdir -p unity-project/Packages
+          cat > unity-project/Packages/manifest.json << 'MANIFEST'
+          {
+            "dependencies": {
+              "com.faolline.savesystem.core": "https://github.com/JoshuaLetessier/UnitySaveSystem.git?path=/Packages/com.faolline.savesystem.core",
+              "com.faolline.savesystem.json": "https://github.com/JoshuaLetessier/UnitySaveSystem.git?path=/Packages/com.faolline.savesystem.json",
+              "com.unity.localization": "1.5.11",
+              "com.unity.test-framework": "1.6.0",
+              "com.unity.ugui": "2.0.0",
+              "com.unity.inputsystem": "1.19.0",
+              "com.unity.timeline": "1.8.12",
+              "com.unity.modules.accessibility": "1.0.0",
+              "com.unity.modules.animation": "1.0.0",
+              "com.unity.modules.imgui": "1.0.0",
+              "com.unity.modules.jsonserialize": "1.0.0",
+              "com.unity.modules.uielements": "1.0.0",
+              "com.unity.modules.ui": "1.0.0",
+              "com.unity.modules.imageconversion": "1.0.0",
+              "com.unity.modules.physics": "1.0.0"
+            }
+          }
+          MANIFEST
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: unity-project/Library
+          key: Library-${{ matrix.testMode }}-${{ hashFiles('packages/**/*.cs', 'packages/**/*.asmdef') }}
+          restore-keys: |
+            Library-${{ matrix.testMode }}-
+
+      - name: Run ${{ matrix.testMode }} tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          projectPath: unity-project
+          testMode: ${{ matrix.testMode }}
+          unityVersion: 6000.0.78f1
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: "${{ matrix.testMode }} test results"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Test results (${{ matrix.testMode }})
+          path: artifacts

@@ -4,6 +4,41 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0]
+
+### Added
+- **`AnyRequired` + `Threshold` completion rules.** Quest-level completion now supports three modes: `AllRequired`
+  (default — every non-optional objective must complete), `AnyRequired` (a single required objective completing
+  finishes the quest), and `Threshold(n)` (at least *n* required objectives must complete). Set via
+  `QuestBuilder.CompletionRule(...)`. Gives designers a one-liner for "do any of these" or "do 3 of 5" quests
+  without k-of-N workarounds at the objective level.
+
+### Changed
+- **Ecosystem-wide documentation pass** — tooltips, headers, `[HelpURL]` on key types, README updates.
+- **Align `package.json` with ecosystem conventions** (add `author`, remove empty URLs).
+
+## [0.2.0]
+
+### Added
+- **Auto-wire localization from `LocalizationContext`.** When a `LocalizationContext` is present the quest
+  evaluator automatically resolves its localization provider — journal `DisplayName` / `Description` are localized
+  with no manual wiring.
+- **Generic localization adapter + deterministic quest keys.** `QuestLocalizationAdapter` implements
+  `IGraphLocalizationAdapter` so the localization build discovers quest graphs and generates keys deterministically
+  (`quest_<questId>_obj_<objectiveId>_name`, etc.). Per-node `LocalizedAssetFlags` respected.
+- **`ContextWatch` auto-evaluate** — `QuestEvaluator` can subscribe to context changes and re-evaluate
+  automatically, so the host doesn't need to call `Evaluate()` after every context write.
+
+### Changed
+- **Per-node `LocalizedAssetFlags` support** following graphcore 0.19.0; the quest localization adapter respects
+  per-node flags for asset table filtering.
+- **`QuestBuilder` edge `PortName` aligned** with `ObjectiveNodeView` for consistency between code-first and
+  editor-authored quests.
+- **All inspectors route through `BuildNoSelectionContent`** for consistent panel behavior.
+- **`NodeId` populated on `LocalizationKeyEntry`** in the quest localization adapter.
+- **Manifest asset collection naming** fixed for quest graphs.
+- **Sample quest asset removed** from localization dashboard (it polluted the coverage counts).
+
 ## [0.1.5]
 
 ### Changed

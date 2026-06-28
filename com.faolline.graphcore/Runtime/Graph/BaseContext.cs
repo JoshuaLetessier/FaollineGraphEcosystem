@@ -5,9 +5,18 @@ namespace Faolline.GraphCore
 {
     /// <summary>
     /// Typed parameter blackboard for graph execution. Stores <c>bool</c>, <c>int</c>,
-    /// <c>float</c>, and <c>string</c> values by string key. Supports per-key change
-    /// notifications, deep cloning (values only, no subscribers), and initialization
-    /// from a <see cref="BaseGraph"/>'s declared parameters.
+    /// <c>float</c>, <c>string</c>, <c>Vector2</c>, <c>Vector3</c>, and <c>Color</c>
+    /// values by string key. Supports per-key change notifications, deep cloning
+    /// (values only, no subscribers), and initialization from a <see cref="BaseGraph"/>'s
+    /// declared parameters.
+    /// <para>
+    /// <b>Boxing note:</b> values are stored in a <c>Dictionary&lt;string, object&gt;</c>, so every
+    /// <see cref="Set{T}"/> of a value type (int, float, bool, Vector2, Vector3, Color) allocates a
+    /// box, and every <see cref="Get{T}"/> unboxes. This is negligible at narrative rhythm (once per
+    /// node transition) but generates GC pressure if called per-frame. For hot-loop state, prefer
+    /// <see cref="RaiseSignal(string)">signals</see> (transient, never cloned/saved) or a typed
+    /// field on a <see cref="BaseContext"/> subclass.
+    /// </para>
     /// Subclass to add domain-specific state; override <see cref="DeepClone"/> and
     /// <see cref="CreateCloneInstance"/> to preserve additional fields across history snapshots.
     /// </summary>
@@ -52,7 +61,8 @@ namespace Faolline.GraphCore
 
         /// <summary>
         /// Sets a typed parameter value. Fires <see cref="OnParameterChanged"/> subscribers.
-        /// <typeparamref name="T"/> must be <c>bool</c>, <c>int</c>, <c>float</c>, or <c>string</c>.
+        /// <typeparamref name="T"/> must be <c>bool</c>, <c>int</c>, <c>float</c>, <c>string</c>,
+        /// <c>Vector2</c>, <c>Vector3</c>, or <c>Color</c>.
         /// </summary>
         public void Set<T>(string key, T value)
         {
@@ -126,7 +136,7 @@ namespace Faolline.GraphCore
         /// Returns a read-only snapshot of the <em>global</em> parameter values (key → boxed value).
         /// Used for serialization (e.g. save/restore). Transient local-context values are deliberately
         /// excluded, so a save taken while a local context is open captures durable global state only.
-        /// Types are limited to bool, int, float, string.
+        /// Types are limited to bool, int, float, string, Vector2, Vector3, Color.
         /// </summary>
         public IReadOnlyDictionary<string, object> GetAllParameters()
             => new System.Collections.ObjectModel.ReadOnlyDictionary<string, object>(_params);
@@ -193,7 +203,8 @@ namespace Faolline.GraphCore
 
         /// <summary>
         /// Raises a transient signal carrying a single scalar payload. <typeparamref name="T"/> must be
-        /// <c>bool</c>, <c>int</c>, <c>float</c>, or <c>string</c> (parity with <see cref="Set{T}"/>).
+        /// <c>bool</c>, <c>int</c>, <c>float</c>, <c>string</c>, <c>Vector2</c>, <c>Vector3</c>,
+        /// or <c>Color</c> (parity with <see cref="Set{T}"/>).
         /// Delivery and naming rules match <see cref="RaiseSignal(string)"/>.
         /// </summary>
         public void RaiseSignal<T>(string name, T payload)

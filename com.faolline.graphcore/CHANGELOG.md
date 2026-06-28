@@ -4,6 +4,51 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.20.0]
+
+### Added
+- **Reusable graph templates (save selection / insert).** Select a group of nodes, save them as a named template;
+  insert later into any graph of the same type. Paste and template insert now correctly reconnect edge ports,
+  fix JSON field names in placeholders, and handle node deserialization.
+- **Condition badge on edges.** Edges that carry a gate (entry conditions) now show a small badge on the canvas,
+  making conditional transitions visible at a glance.
+- **`SignalName` asset + `TagSelector` attribute.** Type-safe signal references: create a `SignalName`
+  ScriptableObject asset to name a signal, then assign it on the node's await field instead of typing a raw
+  string. `TagSelector` attribute enables inspector dropdowns for signal names.
+- **`AddIntAction` / `AddFloatAction`.** Increment/decrement an int or float parameter in a single action (no
+  need for a Get+Set pair).
+- **Version tracking + "Update All" in the module selector.** The package selector now shows version numbers and
+  offers a one-click "Update All" to bump dependency floors.
+
+### Fixed
+- **Edge ports reconnect correctly on paste and template insert.**
+- **JSON field names in paste/template placeholders** no longer silently drop data.
+- **Node deserialization** for paste and templates handles all registered node types.
+
+### Changed
+- **Ecosystem-wide documentation pass** — tooltips, headers, `[HelpURL]` on key types, README updates.
+- **HelpBox warning for unassigned SubGraph target** in the node inspector.
+- **`CreateAssetMenu` removed from base actions/conditions/graph** — only concrete subclasses expose it, keeping
+  the Create menu clean. Base types unified under the `Faolline/` menu.
+
+## [0.19.0]
+
+### Added
+- **`OutcomeLabel` on End nodes.** A semantic label (`Success`, `Failure`, custom) on `BaseNodeData` for End
+  nodes, surfaced in the inspector. Lets a host distinguish how a graph ended without inspecting context state.
+- **`ResumeConditions` exposed in the node inspector.** The guarded-await resume gate (0.7.0) is now editable
+  directly in the node inspector, not only via code.
+- **Per-node `LocalizedAssetFlags`** (`[Flags]` enum replacing the old `LocalizedAssetMode`). Each node declares
+  which localized asset types it needs (Text, Audio, Image, …). The graph carries a default; "Apply to all nodes"
+  propagates it. Flags extracted to `graphlocalization` as the canonical definition.
+- **Graph-level default `LocalizedAssetFlags` + "Apply to all nodes"** button in the graph inspector.
+- **Double-click SubGraph nodes to open the target graph** in its registered editor window.
+
+### Changed
+- **`LocalizedAssetMode` → `LocalizedAssetFlags`** (`[Flags]` enum, refactor). Text flag on by default; adapters
+  respect the per-node flags.
+- **Tooltips** added on `OutcomeLabel`, `EntryConditions`, and `ResumeConditions` inspector fields.
+
 ## [0.18.0]
 
 ### Added

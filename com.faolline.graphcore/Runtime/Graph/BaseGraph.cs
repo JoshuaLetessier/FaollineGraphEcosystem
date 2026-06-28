@@ -52,6 +52,13 @@ namespace Faolline.GraphCore
 
         /// <summary>
         /// Maximum history entries kept by the runtime. Default: 20. Set to 0 for unlimited.
+        /// <para>
+        /// <b>Memory cost of 0 (unlimited):</b> each <see cref="BaseRunner.Proceed"/> call deep-clones
+        /// the entire <see cref="BaseContext"/> (all parameters, collections, and local overlays) into a
+        /// new history entry. On a long-running graph with a large context this accumulates one full clone
+        /// per step with no cap — memory grows linearly with traversal length. Keep the default (20) unless
+        /// full rewind is required, and consider checkpointing instead of unlimited history.
+        /// </para>
         /// Enforcement is the runtime layer's responsibility.
         /// </summary>
         public int HistoryDepth
