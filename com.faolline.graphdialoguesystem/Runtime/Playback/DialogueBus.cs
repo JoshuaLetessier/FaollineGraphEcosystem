@@ -61,9 +61,8 @@ namespace Faolline.GraphDialogue
             }
 
             _onEndedCallback = onEnded;
-            var dialogueContext = context as DialogueContext ?? new DialogueContext();
 
-            _player = new DialoguePlayer(graph, dialogueContext, speakerLookup: speakerLookup, titleFallback: titleFallback);
+            _player = new DialoguePlayer(graph, context, speakerLookup: speakerLookup, titleFallback: titleFallback);
             _player.OnLine += HandleLine;
             _player.OnChoices += HandleChoices;
             _player.OnEnded += HandleEnded;

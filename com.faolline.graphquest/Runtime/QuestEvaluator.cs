@@ -28,6 +28,7 @@ namespace Faolline.GraphQuest
         private readonly string _completedKey;
         private readonly string _failedKey;
         private readonly string _rewardedKey;
+        private readonly string _abandonedKey;
 
         private readonly Dictionary<string, QuestState> _lastObjectiveStates = new Dictionary<string, QuestState>(StringComparer.Ordinal);
         private QuestState _lastQuestState;
@@ -61,6 +62,7 @@ namespace Faolline.GraphQuest
             _completedKey = QuestContextKeys.CompletedSet(_questId);
             _failedKey = QuestContextKeys.FailedSet(_questId);
             _rewardedKey = QuestContextKeys.RewardedSet(_questId);
+            _abandonedKey = QuestContextKeys.AbandonedSet(_questId);
 
             // Surface each objective's k-of-N prerequisite gate to the engine (unlisted ⇒ all-of-N / AND).
             Dictionary<string, int> requiredCounts = null;
@@ -116,6 +118,12 @@ namespace Faolline.GraphQuest
         {
             if (_quest == null || _context == null) return;
             if (useTime) _lastNow = now;
+
+            if (IsAbandoned)
+            {
+                RaiseQuest(QuestState.Abandoned);
+                return;
+            }
 
             // Quest gate: while the unlock condition is unmet, everything is Locked.
             if (!QuestUnlocked())
@@ -191,6 +199,25 @@ namespace Faolline.GraphQuest
         }
 
         /// <summary>
+        /// Abandons the quest (player-initiated drop). The quest transitions to <see cref="QuestState.Abandoned"/>
+        /// and no further evaluation will change its state until <see cref="Reset"/> is called. Distinct from
+        /// <see cref="QuestState.Failed"/> (condition-driven) and <see cref="Reset"/> (replay).
+        /// </summary>
+        public void Abandon()
+        {
+            if (_context == null) return;
+            _context.AddToCollection(_abandonedKey, _questId);
+            _context.RemoveFromCollection(QuestContextKeys.CompletedQuests, _questId);
+            var state = QuestState.Abandoned;
+            RaiseQuest(state);
+            foreach (var obj in Objectives())
+                RaiseObjective(obj.Id, state);
+        }
+
+        /// <summary>True when the quest has been explicitly abandoned by the player.</summary>
+        public bool IsAbandoned => _context != null && _context.CollectionContains(_abandonedKey, _questId);
+
+        /// <summary>
         /// Clears this quest's progress for replay: empties its completed / failed / rewarded context sets (only
         /// the keys scoped to this quest's id — other quests sharing the context are untouched) and re-derives, so
         /// every objective returns to Locked/Active and one-shot rewards can fire again. The consumer needs no
@@ -209,6 +236,7 @@ namespace Faolline.GraphQuest
             _context.ClearCollection(_completedKey);
             _context.ClearCollection(_failedKey);
             _context.ClearCollection(_rewardedKey);
+            _context.ClearCollection(_abandonedKey);
             _context.RemoveFromCollection(QuestContextKeys.CompletedQuests, _questId);
             // Disarm any timer deadlines so they re-arm fresh on the next Evaluate(now).
             if (_quest != null)
@@ -235,9 +263,16 @@ namespace Faolline.GraphQuest
         }
 
         /// <summary>The current aggregated quest state.</summary>
-        public QuestState State => (_quest == null || _context == null || !QuestUnlocked())
-            ? QuestState.Locked
-            : ComputeQuestState();
+        public QuestState State
+        {
+            get
+            {
+                if (_quest == null || _context == null) return QuestState.Locked;
+                if (IsAbandoned) return QuestState.Abandoned;
+                if (!QuestUnlocked()) return QuestState.Locked;
+                return ComputeQuestState();
+            }
+        }
 
         /// <summary>The ids of all objectives currently <see cref="QuestState.Active"/>.</summary>
         public IReadOnlyCollection<string> ActiveObjectiveIds => CollectByState(QuestState.Active);
@@ -283,13 +318,23 @@ namespace Faolline.GraphQuest
             var list = new List<ObjectiveView>();
             if (_quest == null) return list;
             foreach (var obj in Objectives())
+            {
+                int progress = 0, progressTarget = 0;
+                if (!string.IsNullOrEmpty(obj.ProgressCollectionKey) && obj.ProgressTarget > 0)
+                {
+                    progress = _context != null ? _context.CollectionCount(obj.ProgressCollectionKey) : 0;
+                    progressTarget = obj.ProgressTarget;
+                }
                 list.Add(new ObjectiveView(
                     obj.Id,
                     ResolveWithFallback(QuestLocalizationKeys.ForObjective(obj.Id),
                         string.IsNullOrEmpty(obj.Title) ? obj.Id : obj.Title),
                     ResolveWithFallback(QuestLocalizationKeys.ForObjectiveDescription(obj.Id), obj.Description),
                     obj.Required,
-                    GetObjectiveState(obj.Id)));
+                    GetObjectiveState(obj.Id),
+                    progress,
+                    progressTarget));
+            }
             return list;
         }
 

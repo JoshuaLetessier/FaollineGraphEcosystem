@@ -16,6 +16,9 @@ namespace Faolline.GraphQuest
         /// <summary>Base key for the rewarded-set (one-shot reward guard).</summary>
         public const string Rewarded = "quest_rewarded";
 
+        /// <summary>Base key for the abandoned-set (player-initiated drop).</summary>
+        public const string Abandoned = "quest_abandoned";
+
         /// <summary>The rewarded-set marker for a quest's own completion reward (distinct from any objective id).</summary>
         public const string QuestRewardMarker = "__quest__";
 
@@ -33,6 +36,9 @@ namespace Faolline.GraphQuest
 
         /// <summary>The per-quest rewarded-set collection key.</summary>
         public static string RewardedSet(string questId) => Scoped(Rewarded, questId);
+
+        /// <summary>The per-quest abandoned-set collection key.</summary>
+        public static string AbandonedSet(string questId) => Scoped(Abandoned, questId);
 
         /// <summary>Base key for a timed objective's deadline param (absolute game time at which it fails).</summary>
         public const string Deadline = "quest_deadline";

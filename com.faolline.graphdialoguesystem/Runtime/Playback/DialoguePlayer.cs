@@ -25,7 +25,7 @@ namespace Faolline.GraphDialogue
         private const int MaxDrainSteps = 1000;
 
         private readonly DialogueGraph _graph;
-        private readonly DialogueContext _context;
+        private readonly BaseContext _context;
         private readonly DialoguePresenter _presenter;
 
         private readonly BaseRunner _runner = new BaseRunner();
@@ -70,7 +70,7 @@ namespace Faolline.GraphDialogue
         /// <summary>Creates a player that auto-resolves localization from <see cref="LocalizationContext.Current"/>.</summary>
         public DialoguePlayer(
             DialogueGraph graph,
-            DialogueContext context = null,
+            BaseContext context = null,
             Func<string, Speaker> speakerLookup = null,
             bool titleFallback = false)
             : this(graph, context, null, speakerLookup, LocalizationContext.Current.StrictMode, null, titleFallback) { }
@@ -81,7 +81,7 @@ namespace Faolline.GraphDialogue
         /// it, so code-built dialogues showed <c>#line_&lt;id&gt;</c>).</param>
         public DialoguePlayer(
             DialogueGraph graph,
-            DialogueContext context,
+            BaseContext context,
             ILocalizationProvider localization,
             Func<string, Speaker> speakerLookup = null,
             LocalizationStrictMode strictMode = LocalizationStrictMode.Permissive,
@@ -89,7 +89,7 @@ namespace Faolline.GraphDialogue
             bool titleFallback = false)
         {
             _graph = graph;
-            _context = context ?? new DialogueContext();
+            _context = context ?? new BaseContext();
             _presenter = new DialoguePresenter(localization, assets, speakerLookup, strictMode, titleFallback);
             _presenter.OnMissingKey += key => OnMissingKey?.Invoke(key);
 
@@ -347,6 +347,12 @@ namespace Faolline.GraphDialogue
                     _stuck = true;
                     break;
                 }
+            }
+
+            if (!_stuck && guard >= MaxDrainSteps)
+            {
+                Debug.LogWarning($"[GraphDialogue] Drain exceeded {MaxDrainSteps} pass-through steps — possible cycle or excessively long chain. Playback stopped.");
+                _stuck = true;
             }
 
             if (_stuck)

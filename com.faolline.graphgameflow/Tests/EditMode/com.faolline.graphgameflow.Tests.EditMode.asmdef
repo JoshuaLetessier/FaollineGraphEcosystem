@@ -6,6 +6,7 @@
         "com.faolline.graphgameflow.Editor",
         "com.faolline.graphcore.Runtime",
         "com.faolline.graphcore.Editor",
+        "com.faolline.graphsave.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

@@ -29,6 +29,8 @@ namespace Faolline.GraphGameFlow
         private bool      _bootOnStart = true;
         [SerializeField, Tooltip("When enabled, this driver survives scene loads (DontDestroyOnLoad) so a single flow can span scenes. Duplicate per-scene copies self-destruct.")]
         private bool      _persistAcrossScenes = false;
+        [SerializeField, Tooltip("When enabled, the driver uses Time.unscaledDeltaTime instead of Time.deltaTime. Enable for flows that must keep running when Time.timeScale is 0 (pause menus, cutscene overlays).")]
+        private bool      _useUnscaledTime = false;
 
         private BaseRunner      _runner;
         private GameFlowContext _context;
@@ -53,6 +55,9 @@ namespace Faolline.GraphGameFlow
         /// per-scene copy) destroys itself, leaving the first one running. Default false.
         /// </summary>
         public bool PersistAcrossScenes { get => _persistAcrossScenes; set => _persistAcrossScenes = value; }
+
+        /// <summary>When true, uses <c>Time.unscaledDeltaTime</c> so the flow keeps running at <c>timeScale=0</c>.</summary>
+        public bool UseUnscaledTime { get => _useUnscaledTime; set => _useUnscaledTime = value; }
 
         /// <summary>
         /// The current persistent driver (the one that booted with <see cref="PersistAcrossScenes"/>), or
@@ -137,7 +142,7 @@ namespace Faolline.GraphGameFlow
         }
 
         private void Start() { if (_bootOnStart) Boot(); }
-        private void Update() { if (_running) Tick(Time.deltaTime); }
+        private void Update() { if (_running) Tick(_useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime); }
         private void OnDestroy() { Stop(); if (Active == this) Active = null; }
 
         // ── Host bridge surface ─────────────────────────────────────────────────
@@ -149,6 +154,43 @@ namespace Faolline.GraphGameFlow
         /// already running.
         /// </summary>
         public void Boot() => BootInternal(null, null);
+
+        /// <summary>
+        /// Restores a flow from a <see cref="Faolline.GraphSave.GraphRunSnapshot"/>: applies the snapshot
+        /// to the context, then starts the runner at the saved node. The snapshot's context values overwrite
+        /// the graph's defaults — this is the "load game" path. Requires a <c>com.faolline.graphsave</c>
+        /// dependency.
+        /// </summary>
+        public void Boot(GraphSave.GraphRunSnapshot snapshot, GameFlowContext context = null, NodeExecutorRegistry registry = null)
+        {
+            if (snapshot == null)
+            {
+                Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: null snapshot; ignored.");
+                return;
+            }
+            if (_running)
+            {
+                Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: already running; ignored.");
+                return;
+            }
+            if (_graph == null)
+            {
+                Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: no graph assigned; staying inert.");
+                return;
+            }
+
+            _context = context ?? new GameFlowContext { SceneLoader = SceneLoader };
+            if (_context.SceneLoader == null) _context.SceneLoader = SceneLoader;
+
+            snapshot.ApplyTo(_context, replaceCollections: true);
+
+            _runner = new BaseRunner();
+            Subscribe();
+            _running = true;
+
+            var nodeId = string.IsNullOrEmpty(snapshot.CurrentNodeId) ? _graph.EntryNodeId : snapshot.CurrentNodeId;
+            _runner.StartFrom(_graph, nodeId, _context, registry ?? new NodeExecutorRegistry());
+        }
 
         /// <summary>
         /// Boots on a CALLER-SUPPLIED context and executor registry — prepare shared state (collections,
