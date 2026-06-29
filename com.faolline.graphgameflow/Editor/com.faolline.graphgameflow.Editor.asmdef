@@ -4,8 +4,7 @@
     "references": [
         "com.faolline.graphcore.Runtime",
         "com.faolline.graphcore.Editor",
-        "com.faolline.graphgameflow.Runtime",
-        "com.faolline.graphstandard.Runtime"
+        "com.faolline.graphgameflow.Runtime"
     ],
     "includePlatforms": [
         "Editor"

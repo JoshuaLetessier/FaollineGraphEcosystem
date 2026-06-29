@@ -3,7 +3,6 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Faolline.GraphCore;
 using Faolline.GraphGameFlow;
-using Faolline.GraphStandard;
 
 namespace Faolline.GraphGameFlow.Editor
 {
