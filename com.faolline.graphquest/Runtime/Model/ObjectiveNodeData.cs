@@ -41,7 +41,9 @@ namespace Faolline.GraphQuest
         private float _timeLimitSeconds;
 
         [Header("Progress")]
-        [SerializeField, Tooltip("Optional context collection key whose count drives a progress display (e.g. 3/10). Empty = no progress tracking (binary completion only).")]
+        [SerializeField, Tooltip("Drag a CollectionName asset whose count drives a progress display (e.g. 3/10). Takes precedence over the raw string.")]
+        private CollectionName _progressCollectionAsset;
+        [SerializeField, Tooltip("Fallback: raw collection key (used when no CollectionName asset is assigned). Empty = no progress tracking.")]
         private string _progressCollectionKey = string.Empty;
         [SerializeField, Tooltip("The target count for progress (e.g. 10 for 'kill 10 wolves'). Ignored when Progress Collection Key is empty.")]
         private int _progressTarget;
@@ -73,8 +75,15 @@ namespace Faolline.GraphQuest
         /// </summary>
         public int RequiredPrerequisiteCount { get => _requiredPrerequisiteCount; set => _requiredPrerequisiteCount = value; }
 
-        /// <summary>Optional context collection key whose count drives a progress display (e.g. "wolves_killed" → 3/10). Empty = binary completion.</summary>
-        public string ProgressCollectionKey { get => _progressCollectionKey; set => _progressCollectionKey = value ?? string.Empty; }
+        /// <summary>Drag a CollectionName asset for typo-safe progress tracking. Takes precedence over the raw string.</summary>
+        public CollectionName ProgressCollectionAsset { get => _progressCollectionAsset; set => _progressCollectionAsset = value; }
+
+        /// <summary>Resolved collection key for progress (asset first, then raw string). Empty = no tracking.</summary>
+        public string ProgressCollectionKey
+        {
+            get => _progressCollectionAsset != null ? (string)_progressCollectionAsset : _progressCollectionKey;
+            set => _progressCollectionKey = value ?? string.Empty;
+        }
 
         /// <summary>Target count for progress (the denominator). Ignored when <see cref="ProgressCollectionKey"/> is empty.</summary>
         public int ProgressTarget { get => _progressTarget; set => _progressTarget = value; }
