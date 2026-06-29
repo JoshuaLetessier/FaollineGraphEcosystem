@@ -7,7 +7,7 @@ namespace Faolline.GraphCore
     /// to define logic. Attach instances to <see cref="BaseEdgeData.Condition"/>,
     /// <see cref="BaseChoice.Condition"/>, or <see cref="BaseNodeData.EntryConditions"/>.
     /// </summary>
-    [Icon("Assets/FaollineGraphEcosystem/com.faolline.graphcore/Editor/Icons/ico_condition.png")]
+    [Icon("Packages/com.faolline.graphcore/Editor/Icons/ico_condition.png")]
     public abstract class BaseCondition : ScriptableObject
     {
         /// <summary>Evaluates this condition within the given context.</summary>

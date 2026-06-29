@@ -10,7 +10,7 @@ namespace Faolline.GraphCore
     /// </summary>
     // No [CreateAssetMenu] — consumers create typed graphs (DialogueGraph, GameFlowGraph, etc.), not raw BaseGraph.
     [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphcore/README.md")]
-    [Icon("Assets/FaollineGraphEcosystem/com.faolline.graphcore/Editor/Icons/ico_graph_base.png")]
+    [Icon("Packages/com.faolline.graphcore/Editor/Icons/ico_graph_base.png")]
     public class BaseGraph : ScriptableObject
     {
         [SerializeField, HideInInspector] private string             _graphId;

@@ -9,7 +9,7 @@ namespace Faolline.GraphCore
     /// guarantee they match.
     /// </summary>
     [CreateAssetMenu(menuName = "Faolline/Signal Name", fileName = "NewSignal")]
-    [Icon("Assets/FaollineGraphEcosystem/com.faolline.graphcore/Editor/Icons/ico_signal.png")]
+    [Icon("Packages/com.faolline.graphcore/Editor/Icons/ico_signal.png")]
     public class SignalName : ScriptableObject
     {
         [SerializeField] private string _name;

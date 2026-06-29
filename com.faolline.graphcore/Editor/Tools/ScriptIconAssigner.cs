@@ -14,7 +14,8 @@ namespace Faolline.GraphCore.Editor
     public static class ScriptIconAssigner
     {
         private const int Size = 64;
-        private const string IconFolder = "Assets/FaollineGraphEcosystem/com.faolline.graphcore/Editor/Icons";
+        private const string IconFolderAssets = "Assets/FaollineGraphEcosystem/com.faolline.graphcore/Editor/Icons";
+        private const string IconFolderPackage = "Packages/com.faolline.graphcore/Editor/Icons";
 
         private struct IconDef
         {
@@ -46,11 +47,18 @@ namespace Faolline.GraphCore.Editor
             ["GraphTemplate"]   = new IconDef { Name = "ico_template",        Fill = new Color(0.50f, 0.70f, 0.60f), Border = new Color(0.35f, 0.50f, 0.40f), Letter = "▦" },
         };
 
+        private static string ResolveIconFolder()
+        {
+            if (AssetDatabase.IsValidFolder(IconFolderAssets)) return IconFolderAssets;
+            if (AssetDatabase.IsValidFolder(IconFolderPackage)) return IconFolderPackage;
+            return IconFolderAssets;
+        }
+
         [MenuItem("Faolline/Tools/Assign Script Icons")]
         public static void AssignAll()
         {
-            EnsureIconFolder();
-            var icons = GenerateIcons();
+            var iconFolder = ResolveIconFolder();
+            var icons = LoadOrGenerateIcons(iconFolder);
             int assigned = 0;
 
             var guids = AssetDatabase.FindAssets("t:MonoScript", new[]
@@ -127,15 +135,19 @@ namespace Faolline.GraphCore.Editor
             return null;
         }
 
-        private static Dictionary<string, Texture2D> GenerateIcons()
+        private static Dictionary<string, Texture2D> LoadOrGenerateIcons(string iconFolder)
         {
+            bool isWritable = iconFolder.StartsWith("Assets");
+            if (isWritable) EnsureIconFolder(iconFolder);
+
             var result = new Dictionary<string, Texture2D>();
             foreach (var kvp in TypeToIcon)
             {
                 var def = kvp.Value;
-                var path = $"{IconFolder}/{def.Name}.png";
+                var path = $"{iconFolder}/{def.Name}.png";
 
-                if (!File.Exists(path))
+                var loaded = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                if (loaded == null && isWritable)
                 {
                     var tex = CreateIcon(def);
                     File.WriteAllBytes(path, tex.EncodeToPNG());
@@ -150,9 +162,11 @@ namespace Faolline.GraphCore.Editor
                         importer.mipmapEnabled = false;
                         importer.SaveAndReimport();
                     }
+                    loaded = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
                 }
 
-                result[kvp.Key] = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                if (loaded != null)
+                    result[kvp.Key] = loaded;
             }
             return result;
         }
@@ -288,10 +302,10 @@ namespace Faolline.GraphCore.Editor
             }
         }
 
-        private static void EnsureIconFolder()
+        private static void EnsureIconFolder(string folder)
         {
-            if (AssetDatabase.IsValidFolder(IconFolder)) return;
-            var parent = Path.GetDirectoryName(IconFolder).Replace('\\', '/');
+            if (AssetDatabase.IsValidFolder(folder)) return;
+            var parent = Path.GetDirectoryName(folder).Replace('\\', '/');
             AssetDatabase.CreateFolder(parent, "Icons");
         }
     }

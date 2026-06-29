@@ -10,6 +10,6 @@ namespace Faolline.GraphGameFlow
     /// asset is brandable, exactly as the sibling packages do (StarterGraph, DialogueGraph).
     /// </summary>
     [CreateAssetMenu(menuName = "GraphGameFlow/Game Flow Graph", fileName = "NewGameFlowGraph")]
-    [Icon("Assets/FaollineGraphEcosystem/com.faolline.graphcore/Editor/Icons/ico_graph_gameflow.png")]
+    [Icon("Packages/com.faolline.graphcore/Editor/Icons/ico_graph_gameflow.png")]
     public class GameFlowGraph : BaseGraph { }
 }
