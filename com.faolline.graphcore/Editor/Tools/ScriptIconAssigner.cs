@@ -86,7 +86,31 @@ namespace Faolline.GraphCore.Editor
                 assigned++;
             }
 
-            Debug.Log($"[GraphCore] Assigned icons to {assigned} scripts. Refresh the Project browser if icons don't appear immediately.");
+            RefreshExistingAssets();
+            Debug.Log($"[GraphCore] Assigned icons to {assigned} scripts and refreshed existing assets.");
+        }
+
+        /// <summary>
+        /// Reimports all existing ScriptableObject assets whose type has an icon, so the Project browser
+        /// picks up the new icon even for assets created before the <c>[Icon]</c> attribute was added.
+        /// </summary>
+        private static void RefreshExistingAssets()
+        {
+            int refreshed = 0;
+            var typeNames = new[] { "BaseGraph", "BaseCondition", "BaseAction", "Speaker", "SignalName", "GraphTemplate" };
+            foreach (var typeName in typeNames)
+            {
+                var guids = AssetDatabase.FindAssets($"t:{typeName}");
+                foreach (var guid in guids)
+                {
+                    var path = AssetDatabase.GUIDToAssetPath(guid);
+                    if (string.IsNullOrEmpty(path) || path.Contains("/Tests/")) continue;
+                    AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceUpdate);
+                    refreshed++;
+                }
+            }
+            if (refreshed > 0)
+                Debug.Log($"[GraphCore] Reimported {refreshed} existing assets to refresh their icons.");
         }
 
         private static string ResolveIconKey(Type type)
