@@ -10,15 +10,20 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Actions/Raise Signal", fileName = "RaiseSignalAction")]
     public class RaiseSignalAction : BaseAction
     {
-        [SerializeField, Tooltip("The signal name to raise. Must match an AwaitSignalName on the target node.")]
-        private string _signalName;
+        [SerializeField, Tooltip("Drag a SignalName asset for typo-safe references. Takes precedence over the raw string.")]
+        private SignalName _signalAsset;
+        [SerializeField, Tooltip("Fallback: raw signal name string (used when no SignalName asset is assigned).")]
+        private string _signalRaw;
 
-        public string SignalName { get => _signalName; set => _signalName = value; }
+        public SignalName SignalAsset { get => _signalAsset; set => _signalAsset = value; }
+        public string SignalRaw { get => _signalRaw; set => _signalRaw = value; }
 
         public override void Execute(BaseContext context)
         {
-            if (context == null || string.IsNullOrEmpty(_signalName)) return;
-            context.RaiseSignal(_signalName);
+            if (context == null) return;
+            string name = _signalAsset != null ? (string)_signalAsset : _signalRaw;
+            if (string.IsNullOrEmpty(name)) return;
+            context.RaiseSignal(name);
         }
     }
 }
