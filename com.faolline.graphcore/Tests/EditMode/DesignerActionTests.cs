@@ -12,11 +12,14 @@ namespace Faolline.GraphCore.Tests
 
         // ── RaiseSignalAction ─────────────────────────────────────────────────
 
+        private static SignalName Sig(string n) { var s = ScriptableObject.CreateInstance<SignalName>(); s.name = n; return s; }
+
         [Test]
-        public void RaiseSignalAction_RaisesViaRawString()
+        public void RaiseSignalAction_RaisesNamedSignal()
         {
             var a = ScriptableObject.CreateInstance<RaiseSignalAction>();
-            a.SignalRaw = "door_open";
+            var sig = Sig("door_open");
+            a.Signal = sig;
             bool received = false;
             _ctx.OnSignal("door_open", _ => received = true);
             try
@@ -24,50 +27,13 @@ namespace Faolline.GraphCore.Tests
                 a.Execute(_ctx);
                 Assert.IsTrue(received);
             }
-            finally { Object.DestroyImmediate(a); }
-        }
-
-        [Test]
-        public void RaiseSignalAction_RaisesViaSignalAsset()
-        {
-            var a = ScriptableObject.CreateInstance<RaiseSignalAction>();
-            var sig = ScriptableObject.CreateInstance<SignalName>();
-            sig.name = "unlock";
-            a.SignalAsset = sig;
-            bool received = false;
-            _ctx.OnSignal("unlock", _ => received = true);
-            try
-            {
-                a.Execute(_ctx);
-                Assert.IsTrue(received);
-            }
             finally { Object.DestroyImmediate(a); Object.DestroyImmediate(sig); }
         }
 
         [Test]
-        public void RaiseSignalAction_AssetTakesPrecedenceOverRaw()
+        public void RaiseSignalAction_NullSignal_IsNoOp()
         {
             var a = ScriptableObject.CreateInstance<RaiseSignalAction>();
-            var sig = ScriptableObject.CreateInstance<SignalName>();
-            sig.name = "asset_signal";
-            a.SignalAsset = sig;
-            a.SignalRaw = "raw_signal";
-            string raised = null;
-            _ctx.OnSignal("asset_signal", args => raised = args.Name);
-            _ctx.OnSignal("raw_signal", args => raised = args.Name);
-            try
-            {
-                a.Execute(_ctx);
-                Assert.AreEqual("asset_signal", raised);
-            }
-            finally { Object.DestroyImmediate(a); Object.DestroyImmediate(sig); }
-        }
-
-        [Test]
-        public void RaiseSignalAction_EmptyBoth_IsNoOp()
-        {
-            var a = ScriptableObject.CreateInstance<RaiseSignalAction>();
-            a.SignalRaw = "";
             try { a.Execute(_ctx); }
             finally { Object.DestroyImmediate(a); }
         }

@@ -9,29 +9,21 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Actions/Remove From Collection", fileName = "RemoveFromCollectionAction")]
     public class RemoveFromCollectionAction : BaseAction
     {
-        [Header("Collection")]
-        [SerializeField, Tooltip("Drag a CollectionName asset for typo-safe references. Takes precedence over the raw string.")]
-        private CollectionName _collectionAsset;
-        [SerializeField, Tooltip("Fallback: raw collection key (used when no CollectionName asset is assigned).")]
-        private string _collectionKey;
+        [SerializeField, Tooltip("The collection to remove the value from.")]
+        private CollectionName _collection;
 
-        [Header("Value")]
-        [SerializeField, Tooltip("Drag a CollectionEntry asset (or a subclass). Takes precedence over the raw string.")]
-        private CollectionEntry _valueAsset;
-        [SerializeField, Tooltip("Fallback: raw value string (used when no CollectionEntry asset is assigned).")]
-        private string _value;
+        [SerializeField, Tooltip("The entry to remove.")]
+        private CollectionEntry _entry;
 
-        public CollectionName CollectionAsset { get => _collectionAsset; set => _collectionAsset = value; }
-        public string CollectionKey { get => _collectionKey; set => _collectionKey = value; }
-        public CollectionEntry ValueAsset { get => _valueAsset; set => _valueAsset = value; }
-        public string Value { get => _value; set => _value = value; }
+        public CollectionName Collection { get => _collection; set => _collection = value; }
+        public CollectionEntry Entry { get => _entry; set => _entry = value; }
 
         public override void Execute(BaseContext context)
         {
-            if (context == null) return;
-            string key = _collectionAsset != null ? (string)_collectionAsset : _collectionKey;
-            string val = _valueAsset != null ? (string)_valueAsset : _value;
-            if (string.IsNullOrWhiteSpace(key) || string.IsNullOrWhiteSpace(val)) return;
+            if (context == null || _collection == null || _entry == null) return;
+            string key = (string)_collection;
+            string val = (string)_entry;
+            if (string.IsNullOrEmpty(key) || string.IsNullOrEmpty(val)) return;
             context.RemoveFromCollection(key, val);
         }
     }

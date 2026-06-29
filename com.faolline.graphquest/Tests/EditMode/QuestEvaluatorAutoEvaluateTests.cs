@@ -45,9 +45,11 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void EnableAutoEvaluate_FiresOnCollectionChange()
         {
+            var itemsCol = ScriptableObject.CreateInstance<CollectionName>(); itemsCol.name = "items";
+            var keyEntry = ScriptableObject.CreateInstance<CollectionEntry>(); keyEntry.name = "key";
             var containsCond = ScriptableObject.CreateInstance<Faolline.GraphStandard.CollectionContainsCondition>();
-            containsCond.CollectionKey = "items";
-            containsCond.Value = "key";
+            containsCond.Collection = itemsCol;
+            containsCond.Entry = keyEntry;
 
             var quest = QuestBuilder.Create("coll_test")
                 .AddObjective("obj_coll")

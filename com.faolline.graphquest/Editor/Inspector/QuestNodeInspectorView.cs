@@ -58,8 +58,7 @@ namespace Faolline.GraphQuest.Editor
             AddRelative(foldout, element, "_completionCondition", "Completion Condition");
             AddRelative(foldout, element, "_failCondition", "Fail Condition");
             AddRelative(foldout, element, "_reward", "Reward");
-            AddRelative(foldout, element, "_progressCollectionAsset", "Progress Collection");
-            AddRelative(foldout, element, "_progressCollectionKey", "Progress Key (fallback)");
+            AddRelative(foldout, element, "_progressCollection", "Progress Collection");
             AddRelative(foldout, element, "_progressTarget", "Progress Target");
             AddRelative(foldout, element, "_isHideObjective", "Hide from Player");
             foldout.Bind(SerializedGraph);

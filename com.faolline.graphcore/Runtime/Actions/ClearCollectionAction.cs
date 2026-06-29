@@ -8,19 +8,16 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Actions/Clear Collection", fileName = "ClearCollectionAction")]
     public class ClearCollectionAction : BaseAction
     {
-        [SerializeField, Tooltip("Drag a CollectionName asset for typo-safe references. Takes precedence over the raw string.")]
-        private CollectionName _collectionAsset;
-        [SerializeField, Tooltip("Fallback: raw collection key (used when no CollectionName asset is assigned).")]
-        private string _collectionKey;
+        [SerializeField, Tooltip("The collection to clear.")]
+        private CollectionName _collection;
 
-        public CollectionName CollectionAsset { get => _collectionAsset; set => _collectionAsset = value; }
-        public string CollectionKey { get => _collectionKey; set => _collectionKey = value; }
+        public CollectionName Collection { get => _collection; set => _collection = value; }
 
         public override void Execute(BaseContext context)
         {
-            if (context == null) return;
-            string key = _collectionAsset != null ? (string)_collectionAsset : _collectionKey;
-            if (string.IsNullOrWhiteSpace(key)) return;
+            if (context == null || _collection == null) return;
+            string key = (string)_collection;
+            if (string.IsNullOrEmpty(key)) return;
             context.ClearCollection(key);
         }
     }

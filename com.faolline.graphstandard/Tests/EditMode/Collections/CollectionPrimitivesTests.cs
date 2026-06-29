@@ -13,26 +13,36 @@ namespace Faolline.GraphStandard.Tests
     /// </summary>
     public class CollectionPrimitivesTests
     {
+        private static CollectionName Col(string key)
+        {
+            var c = ScriptableObject.CreateInstance<CollectionName>(); c.name = key; return c;
+        }
+
+        private static CollectionEntry Entry(string key)
+        {
+            var e = ScriptableObject.CreateInstance<CollectionEntry>(); e.name = key; return e;
+        }
+
         private static AddToCollectionAction Add(string key, string value)
         {
             var a = ScriptableObject.CreateInstance<AddToCollectionAction>();
-            a.CollectionKey = key;
-            a.Value = value;
+            a.Collection = Col(key);
+            a.Entry = Entry(value);
             return a;
         }
 
         private static CollectionContainsCondition Contains(string key, string value)
         {
             var c = ScriptableObject.CreateInstance<CollectionContainsCondition>();
-            c.CollectionKey = key;
-            c.Value = value;
+            c.Collection = Col(key);
+            c.Entry = Entry(value);
             return c;
         }
 
         private static CollectionCountAtLeastCondition CountAtLeast(string key, int threshold)
         {
             var c = ScriptableObject.CreateInstance<CollectionCountAtLeastCondition>();
-            c.CollectionKey = key;
+            c.Collection = Col(key);
             c.Threshold = threshold;
             return c;
         }
@@ -165,15 +175,15 @@ namespace Faolline.GraphStandard.Tests
         private static RemoveFromCollectionAction Remove(string key, string value)
         {
             var a = ScriptableObject.CreateInstance<RemoveFromCollectionAction>();
-            a.CollectionKey = key;
-            a.Value = value;
+            a.Collection = Col(key);
+            a.Entry = Entry(value);
             return a;
         }
 
         private static ClearCollectionAction Clear(string key)
         {
             var a = ScriptableObject.CreateInstance<ClearCollectionAction>();
-            a.CollectionKey = key;
+            a.Collection = Col(key);
             return a;
         }
 

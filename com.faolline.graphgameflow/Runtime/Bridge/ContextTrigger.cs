@@ -40,9 +40,8 @@ namespace Faolline.GraphGameFlow
         [Tooltip("Actions executed on the active context when fired.")]
         [SerializeField] private List<BaseAction> _actions = new List<BaseAction>();
 
-        [Tooltip("Optional signal raised on the context after actions execute. Use a SignalName asset for safety, or type a raw string.")]
-        [SerializeField] private SignalName _signalAsset;
-        [SerializeField] private string _signalRaw;
+        [Tooltip("Optional signal raised on the context after actions execute.")]
+        [SerializeField] private SignalName _signal;
 
         [Header("Target")]
         [Tooltip("The driver whose context receives the actions and signal. When null, falls back to GraphFlowDriver.Active (the persistent singleton).")]
@@ -94,9 +93,12 @@ namespace Faolline.GraphGameFlow
             foreach (var go in _deactivate)
                 if (go != null) go.SetActive(false);
 
-            string signal = _signalAsset != null ? (string)_signalAsset : _signalRaw;
-            if (!string.IsNullOrEmpty(signal))
-                ctx.RaiseSignal(signal);
+            if (_signal != null)
+            {
+                string signalName = (string)_signal;
+                if (!string.IsNullOrEmpty(signalName))
+                    ctx.RaiseSignal(signalName);
+            }
         }
 
         /// <summary>Resets the fire-once guard so the trigger can fire again.</summary>
