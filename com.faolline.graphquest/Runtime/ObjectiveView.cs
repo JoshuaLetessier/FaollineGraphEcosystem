@@ -31,8 +31,12 @@ namespace Faolline.GraphQuest
         /// <summary>True when this objective has progress tracking configured (<see cref="ProgressTarget"/> &gt; 0).</summary>
         public bool HasProgress => ProgressTarget > 0;
 
+        /// <summary>True when this objective is flagged as hidden (secret/surprise). The consumer decides
+        /// whether to show or hide it in the UI — the library only carries the flag.</summary>
+        public bool Hidden { get; }
+
         public ObjectiveView(string id, string displayName, string description, bool required, QuestState state,
-            int progress = 0, int progressTarget = 0)
+            int progress = 0, int progressTarget = 0, bool hidden = false)
         {
             Id = id;
             DisplayName = displayName;
@@ -41,6 +45,7 @@ namespace Faolline.GraphQuest
             State = state;
             Progress = progress;
             ProgressTarget = progressTarget;
+            Hidden = hidden;
         }
     }
 }

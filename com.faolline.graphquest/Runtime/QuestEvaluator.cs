@@ -333,7 +333,8 @@ namespace Faolline.GraphQuest
                     obj.Required,
                     GetObjectiveState(obj.Id),
                     progress,
-                    progressTarget));
+                    progressTarget,
+                    obj.IsHideObjective));
             }
             return list;
         }

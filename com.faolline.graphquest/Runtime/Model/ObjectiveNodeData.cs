@@ -50,6 +50,10 @@ namespace Faolline.GraphQuest
         [SerializeField, TextArea, Tooltip("Longer description for a quest journal or tracker UI. The short label is the inherited Title field.")]
         private string _description = string.Empty;
 
+        [Header("Visibility")]
+        [SerializeField, Tooltip("Optional. When true, the objective is hidden from the player (e.g. a secret or surprise). Default false.")]
+        private bool _isHideObjective = false;
+
         /// <summary>When this holds against the context, the objective is recorded Completed. Null ⇒ never auto-completes.</summary>
         public BaseCondition CompletionCondition { get => _completionCondition; set => _completionCondition = value; }
 
@@ -84,5 +88,8 @@ namespace Faolline.GraphQuest
         /// host calls <c>QuestEvaluator.Evaluate(now)</c> with a clock; <c>Evaluate()</c> ignores them.
         /// </summary>
         public float TimeLimitSeconds { get => _timeLimitSeconds; set => _timeLimitSeconds = value; }
+
+        /// <summary>Optional. When true, the objective is hidden from the player (e.g. a secret or surprise). Default false.</summary>
+        public bool IsHideObjective { get => _isHideObjective; set => _isHideObjective = value; }
     }
 }
