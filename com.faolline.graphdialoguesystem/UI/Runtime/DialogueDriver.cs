@@ -16,7 +16,7 @@ namespace Faolline.GraphDialogue.UI
     /// choice selection back to the player. Pointer interaction comes from the view's controls; keyboard
     /// input is added by the keyboard story. The driver is null-view safe (runs logically + warns).
     /// </summary>
-    [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/Assets/FaollineGraphEcosystem/com.faolline.graphdialoguesystem/README.md")]
+    [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphdialoguesystem/README.md")]
     public class DialogueDriver : MonoBehaviour
     {
         [Header("Setup")]

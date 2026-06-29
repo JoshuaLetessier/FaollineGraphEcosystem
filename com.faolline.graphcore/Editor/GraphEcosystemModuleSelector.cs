@@ -211,6 +211,8 @@ namespace Faolline.GraphCore.Editor
                     if (GUILayout.Button($"Update All ({_updatesAvailable})", GUILayout.Height(28), GUILayout.Width(140)))
                         UpdateAll();
                 }
+                if (GUILayout.Button("Force Update All", GUILayout.Height(28), GUILayout.Width(140)))
+                        ForceUpdateAll();
                 EditorGUILayout.EndHorizontal();
             }
 
@@ -261,6 +263,17 @@ namespace Faolline.GraphCore.Editor
 
             if (toAdd.Count == 0) { _status = "Nothing to update."; return; }
             _status = $"Updating {toAdd.Count} package(s)…";
+            _modifyRequest = Client.AddAndRemove(toAdd.ToArray(), new string[0]);
+        }
+
+        private void ForceUpdateAll()
+        {
+            if (_config?.modules == null) return;
+            var toAdd = new List<string>();
+            foreach (var m in _config.modules)
+                toAdd.Add(BuildGitIdentifier(m.package));
+
+            _status = $"Force-updating {toAdd.Count} package(s)…";
             _modifyRequest = Client.AddAndRemove(toAdd.ToArray(), new string[0]);
         }
 

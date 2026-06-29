@@ -15,7 +15,7 @@ namespace Faolline.GraphGameFlow
     /// thin wrappers, so the whole bridge is verifiable in EditMode without entering Play.
     /// </para>
     /// </summary>
-    [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/Assets/FaollineGraphEcosystem/com.faolline.graphgameflow/README.md")]
+    [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphgameflow/README.md")]
     public sealed class GraphFlowDriver : MonoBehaviour
     {
         [Header("Graph")]

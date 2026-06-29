@@ -1,117 +1,113 @@
-# Implementation Plan: Visual GraphLink cross-reference + editor navigation
+# Implementation Plan: [FEATURE]
 
-**Branch**: `030-graphlink-navigation` | **Date**: 2026-06-16 | **Spec**: [spec.md](./spec.md)
+**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
 
-**Input**: Feature specification from `/specs/030-graphlink-navigation/spec.md`
+**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+
+**Note**: This template is filled in by the `/speckit-plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
-Add a **documentary, editor-only** way to associate graphs: a new universal `GraphLinkNodeData` node (in
-graphcore) that holds a `BaseGraph TargetGraph` reference plus an optional note, and is **never executed**
-(the runner treats it as an inert pass-through). In the editor it renders as a distinct, labelled, openable
-reference ("📎 Quest: Relics"); double-clicking routes through a graphcore **editor navigation registry**
-(graph type → opener), populated opt-in by each lib's editor, to open the referenced graph in its proper
-window — falling back to ping/select + a `[GraphCore]` diagnostic when no opener is registered. Zero runtime
-behaviour change; graphcore stays universal (the registry holds delegates the libs register, no downstream refs).
+[Extract from feature spec: primary requirement + technical approach from research]
 
 ## Technical Context
 
-**Language/Version**: C# 9 / Unity 6000.3.6f1.
+<!--
+  ACTION REQUIRED: Replace the content in this section with the technical details
+  for the project. The structure here is presented in advisory capacity to guide
+  the iteration process.
+-->
 
-**Primary Dependencies**: `com.faolline.graphcore` (Runtime: `BaseNodeData`/`BaseRunner`; Editor:
-`BaseNodeView`, `UnityEditor.Experimental.GraphView`, `EditorWindow`). Downstream editor opt-in:
-graphquest / graphdialoguesystem / graphgameflow editors register their window.
+**Language/Version**: [e.g., Python 3.11, Swift 5.9, Rust 1.75 or NEEDS CLARIFICATION]
 
-**Storage**: N/A. `GraphLinkNodeData.TargetGraph` is a serialized `BaseGraph` (ScriptableObject) reference,
-exactly like `SubGraphNodeData.TargetGraph`.
+**Primary Dependencies**: [e.g., FastAPI, UIKit, LLVM or NEEDS CLARIFICATION]
 
-**Testing**: EditMode (NUnit) via Unity batchmode (`-runTests -testPlatform EditMode`). No PlayMode required.
+**Storage**: [if applicable, e.g., PostgreSQL, CoreData, files or N/A]
 
-**Target Platform**: Unity Editor (navigation) + graphcore Runtime (the inert pass-through contract).
+**Testing**: [e.g., pytest, XCTest, cargo test or NEEDS CLARIFICATION]
 
-**Project Type**: Unity package library (graphcore) + per-lib editor registrations.
+**Target Platform**: [e.g., Linux server, iOS 15+, WASM or NEEDS CLARIFICATION]
 
-**Performance Goals**: runtime pass-through is an O(1) no-op; registry lookup is a dictionary get. No hot path.
+**Project Type**: [e.g., library/cli/web-service/mobile-app/compiler/desktop-app or NEEDS CLARIFICATION]
 
-**Constraints**: ZERO change to existing runtime behaviour, existing SubGraph nesting, and all current tests
-stay green. graphcore references nothing downstream (Principle II). `[GraphCore]` log prefix; one class per
-file; `Action<T>` not `UnityEvent`; XML docs; USS for the node view.
+**Performance Goals**: [domain-specific, e.g., 1000 req/s, 10k lines/sec, 60 fps or NEEDS CLARIFICATION]
 
-**Scale/Scope**: 1 runtime node type + 1 runner pass-through branch; 1 editor node view + 1 editor registry +
-1 open action; 3 one-line lib editor registrations; ~6 EditMode tests.
+**Constraints**: [domain-specific, e.g., <200ms p95, <100MB memory, offline-capable or NEEDS CLARIFICATION]
+
+**Scale/Scope**: [domain-specific, e.g., 10k users, 1M LOC, 50 screens or NEEDS CLARIFICATION]
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- **I. Foundation Stability** — PASS. Adds a NEW built-in node type (`GraphLinkNodeData`) and new public editor
-  APIs → MINOR. `BaseNodeData` is untouched (append-only respected; `GraphLinkNodeData` is a new subclass).
-  No public API removed.
-- **II. Universal Abstractions Only** — PASS. `GraphLinkNodeData` holds a `BaseGraph` (never a typed lib graph)
-  and references nothing downstream. The navigation registry maps `System.Type → opener delegate` and is
-  *populated by the libs*; graphcore keeps zero knowledge of any specific lib. A graph-to-graph documentary
-  reference + an editor-window registry are universal authoring concerns.
-- **III. Specification-First** — PASS. `spec.md` approved (checklist all green) before this plan.
-- **IV. Test-Driven Development** — PASS (enforced in tasks): EditMode tests written first — GraphLink off-path
-  never entered; GraphLink on-path is a no-op pass-through (identical run); registry resolves a registered type
-  and falls back gracefully for an unregistered one.
-- **V. Simplicity (YAGNI)** — PASS. Thin node (a reference + note) + a small static registry (dictionary of
-  delegates). No new abstraction beyond what the spec requires. Reuses the existing `BaseGraph` reference shape
-  and the `BaseNodeView`/registry patterns already in graphcore (mirrors `NodeTypeColorRegistry`).
-- **VI. Typed Context Contract** — N/A. `GraphLinkNodeData` is inert; it never touches `BaseContext` at runtime,
-  so no typed-context subclass/keys are required.
-- **VII. Cross-lib Compatibility via SubGraph Only** — PASS (no conflict). Principle VII governs **invocation**
-  (one graph *executing* another) — which MUST stay SubGraph-only. `GraphLink` invokes/executes NOTHING; it is a
-  non-executing documentary annotation. It still follows VII's letter (it references a `BaseGraph`, never a typed
-  lib graph). The registry's editor opening is an Editor-time navigation action, not graph invocation.
-
-**Result: PASS — no violations, no Complexity Tracking entries needed.**
+[Gates determined based on constitution file]
 
 ## Project Structure
 
 ### Documentation (this feature)
 
 ```text
-specs/030-graphlink-navigation/
-├── plan.md              # This file
-├── research.md          # Phase 0 — decisions
-├── data-model.md        # Phase 1 — entities
-├── quickstart.md        # Phase 1 — author + lib-registration walkthrough
-├── contracts/
-│   └── graphlink-api.md # Phase 1 — public API + runtime/editor contracts
-└── tasks.md             # Phase 2 (/speckit-tasks — not created here)
+specs/[###-feature]/
+├── plan.md              # This file (/speckit-plan command output)
+├── research.md          # Phase 0 output (/speckit-plan command)
+├── data-model.md        # Phase 1 output (/speckit-plan command)
+├── quickstart.md        # Phase 1 output (/speckit-plan command)
+├── contracts/           # Phase 1 output (/speckit-plan command)
+└── tasks.md             # Phase 2 output (/speckit-tasks command - NOT created by /speckit-plan)
 ```
 
 ### Source Code (repository root)
+<!--
+  ACTION REQUIRED: Replace the placeholder tree below with the concrete layout
+  for this feature. Delete unused options and expand the chosen structure with
+  real paths (e.g., apps/admin, packages/something). The delivered plan must
+  not include Option labels.
+-->
 
 ```text
-com.faolline.graphcore/
-├── Runtime/
-│   ├── Nodes/
-│   │   └── GraphLinkNodeData.cs          # NEW — inert reference node (TargetGraph + Note + NodeTypeId)
-│   └── Execution/
-│       └── BaseRunner.cs                 # MODIFIED — pass-through branch for GraphLinkNodeData (no pause/exec)
-├── Editor/
-│   ├── Nodes/
-│   │   └── GraphLinkNodeView.cs          # NEW — distinct labelled view; double-click → registry.Open
-│   ├── Registry/
-│   │   └── GraphEditorWindowRegistry.cs  # NEW — Type→opener; Register / Open(BaseGraph) + graceful fallback
-│   └── Styles/
-│       └── GraphLinkNodeView.uss         # NEW — distinct annotation styling (USS only)
-└── Tests/EditMode/
-    ├── GraphLinkRunnerPassThroughTests.cs        # NEW — off-path inert + on-path no-op pass-through
-    └── Editor/GraphEditorWindowRegistryTests.cs  # NEW — resolve registered type + graceful fallback
+# [REMOVE IF UNUSED] Option 1: Single project (DEFAULT)
+src/
+├── models/
+├── services/
+├── cli/
+└── lib/
 
-com.faolline.graphquest/Editor/          # MODIFIED — register QuestGraph → quest window ([InitializeOnLoadMethod])
-com.faolline.graphdialoguesystem/Editor/ # MODIFIED — register DialogueGraph → dialogue window
-com.faolline.graphgameflow/Editor/       # MODIFIED — register GameFlowGraph → gameflow window
+tests/
+├── contract/
+├── integration/
+└── unit/
+
+# [REMOVE IF UNUSED] Option 2: Web application (when "frontend" + "backend" detected)
+backend/
+├── src/
+│   ├── models/
+│   ├── services/
+│   └── api/
+└── tests/
+
+frontend/
+├── src/
+│   ├── components/
+│   ├── pages/
+│   └── services/
+└── tests/
+
+# [REMOVE IF UNUSED] Option 3: Mobile + API (when "iOS/Android" detected)
+api/
+└── [same as backend above]
+
+ios/ or android/
+└── [platform-specific structure: feature modules, UI flows, platform tests]
 ```
 
-**Structure Decision**: Single Unity-package layout (graphcore owns the node + registry; downstream editors
-register opt-in). This mirrors the existing graphcore Runtime/Editor split and the `NodeTypeColorRegistry`
-opt-in pattern. Version bumps: graphcore MINOR (new node type + editor APIs); graphquest/dialogue/gameflow PATCH
-(one registration line each) with their graphcore floor aligned per convention.
+**Structure Decision**: [Document the selected structure and reference the real
+directories captured above]
 
 ## Complexity Tracking
 
-> No Constitution Check violations — section intentionally empty.
+> **Fill ONLY if Constitution Check has violations that must be justified**
+
+| Violation | Why Needed | Simpler Alternative Rejected Because |
+|-----------|------------|-------------------------------------|
+| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
+| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |

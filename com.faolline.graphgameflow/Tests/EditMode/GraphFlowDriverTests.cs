@@ -416,5 +416,133 @@ namespace Faolline.GraphGameFlow.Tests
             LogAssert.Expect(LogType.Warning, "[GraphGameFlow] GraphFlowDriver.Boot: already running; ignored.");
             d.Boot(new GameFlowContext(), null);   // same guard as Boot()
         }
+
+        // ── Edge cases ──────────────────────────────────────────────────────
+
+        [Test]
+        public void OnStuck_FiresWhenNoOutgoingEdge()
+        {
+            var g = NewGraph("start");
+            g.AddNode(Start("start"));
+            g.AddNode(St("dead"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "dead" });
+            // "dead" has no outgoing edge
+            var d = NewDriver(g, autoAdvance: true);
+
+            bool stuck = false;
+            d.OnStuck += () => stuck = true;
+            d.Boot();
+
+            Assert.IsTrue(stuck, "OnStuck must fire when the flow can't advance.");
+        }
+
+        [Test]
+        public void Stop_ThenBoot_CanRestart()
+        {
+            var g = NewGraph("start");
+            g.AddNode(Start("start")); g.AddNode(End("end"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "end" });
+            var d = NewDriver(g, autoAdvance: false);
+
+            d.Boot();
+            Assert.IsTrue(d.IsRunning);
+            d.Stop();
+            Assert.IsFalse(d.IsRunning);
+
+            d.Boot();
+            Assert.IsTrue(d.IsRunning, "can reboot after a clean stop.");
+        }
+
+        [Test]
+        public void DoubleStop_DoesNotThrow()
+        {
+            var d = NewDriver(LinearGraph(), autoAdvance: false);
+            d.Boot();
+            Assert.DoesNotThrow(() => { d.Stop(); d.Stop(); });
+        }
+
+        [Test]
+        public void SubGraph_TraversesNestedGraphAndReturns()
+        {
+            var sub = NewGraph("sub_start");
+            sub.AddNode(Start("sub_start")); sub.AddNode(End("sub_end"));
+            sub.AddEdge(new BaseEdgeData { FromNodeId = "sub_start", ToNodeId = "sub_end" });
+
+            var subNode = new SubGraphNodeData
+            {
+                Id = "sg", NodeType = SubGraphNodeData.NodeTypeId,
+                TargetGraph = sub, InheritParentContext = true
+            };
+
+            var g = NewGraph("start");
+            g.AddNode(Start("start")); g.AddNode(subNode); g.AddNode(End("end"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "sg" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "sg", ToNodeId = "end" });
+            var d = NewDriver(g, autoAdvance: true);
+
+            EndReason? ended = null;
+            d.OnEnded += r => ended = r;
+            d.Boot();
+
+            Assert.AreEqual(EndReason.Completed, ended, "sub-graph traversed and flow completed.");
+            Assert.IsFalse(d.IsRunning);
+        }
+
+        [Test]
+        public void SubGraph_InheritContext_SharesState()
+        {
+            var sub = NewGraph("sub_start");
+            var subSt = St("sub_st");
+            sub.AddNode(Start("sub_start")); sub.AddNode(subSt); sub.AddNode(End("sub_end"));
+            sub.AddEdge(new BaseEdgeData { FromNodeId = "sub_start", ToNodeId = "sub_st" });
+            sub.AddEdge(new BaseEdgeData { FromNodeId = "sub_st", ToNodeId = "sub_end" });
+
+            var setAction = ScriptableObject.CreateInstance<SetBoolAction>();
+            setAction.ParameterKey = "from_sub"; setAction.Value = true;
+            _so.Add(setAction);
+            subSt.OnEnterActions.Add(setAction);
+
+            var subNode = new SubGraphNodeData
+            {
+                Id = "sg", NodeType = SubGraphNodeData.NodeTypeId,
+                TargetGraph = sub, InheritParentContext = true
+            };
+
+            var g = NewGraph("start");
+            g.AddNode(Start("start")); g.AddNode(subNode); g.AddNode(End("end"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "sg" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "sg", ToNodeId = "end" });
+            var d = NewDriver(g, autoAdvance: true);
+
+            d.Boot();
+
+            Assert.IsTrue(d.Context.TryGet<bool>("from_sub", out var v) && v,
+                "sub-graph with inherited context writes into the parent's context.");
+        }
+
+        [Test]
+        public void RaiseSignal_ResolvesAwaitAndContinues()
+        {
+            var g = NewGraph("start");
+            var gate = St("gate"); gate.AwaitSignalName = "unlock";
+            g.AddNode(Start("start")); g.AddNode(gate); g.AddNode(End("end"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "gate" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "gate", ToNodeId = "end" });
+            var d = NewDriver(g, autoAdvance: true);
+
+            BaseNodeData signalNode = null; string signalName = null;
+            d.OnWaitingForSignal += (n, s) => { signalNode = n; signalName = s; };
+            EndReason? ended = null;
+            d.OnEnded += r => ended = r;
+            d.Boot();
+
+            Assert.IsNotNull(signalNode, "OnWaitingForSignal must fire.");
+            Assert.AreEqual("gate", signalNode.Id);
+            Assert.AreEqual("unlock", signalName);
+            Assert.IsNull(ended);
+
+            d.RaiseSignal("unlock");
+            Assert.AreEqual(EndReason.Completed, ended, "signal resolved the await and the flow completed.");
+        }
     }
 }

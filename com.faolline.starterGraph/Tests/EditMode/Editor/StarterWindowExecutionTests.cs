@@ -18,9 +18,9 @@ namespace Faolline.StarterGraph.Tests
         // Start → Setup → Choice(Left gated by the Flag bool param, Right always) → A/B → End.
         // The gating value comes from the declared Flag parameter's default (seeded via InitFromGraph), so no
         // context-mutating action is needed.
-        private static StarterGraph BuildChoiceGraph(out StarterBoolCondition cond)
+        private static StarterGraph BuildChoiceGraph(out BoolCondition cond)
         {
-            cond = ScriptableObject.CreateInstance<StarterBoolCondition>();
+            cond = ScriptableObject.CreateInstance<BoolCondition>();
             cond.ParameterKey = StarterContextKeys.Flag; cond.ExpectedValue = true;
 
             var g = ScriptableObject.CreateInstance<StarterGraph>();

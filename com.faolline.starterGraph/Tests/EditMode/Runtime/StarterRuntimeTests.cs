@@ -36,22 +36,22 @@ namespace Faolline.StarterGraph.Tests
         }
 
         [Test]
-        public void StarterLogAction_Executes_WithoutError()
+        public void CoreLogAction_Executes_WithoutError()
         {
-            var a = ScriptableObject.CreateInstance<StarterLogAction>();
+            var a = ScriptableObject.CreateInstance<LogAction>();
             a.Message = "hello";
             try
             {
                 LogAssert.Expect(LogType.Log, new System.Text.RegularExpressions.Regex("hello"));
-                a.Execute(new BaseContext());   // logs the message; no throw
+                a.Execute(new BaseContext());
             }
             finally { UnityEngine.Object.DestroyImmediate(a); }
         }
 
         [Test]
-        public void StarterBoolCondition_ReadsTypedContextKey()
+        public void CoreBoolCondition_ReadsTypedContextKey()
         {
-            var c = ScriptableObject.CreateInstance<StarterBoolCondition>();
+            var c = ScriptableObject.CreateInstance<BoolCondition>();
             c.ParameterKey = StarterContextKeys.Flag; c.ExpectedValue = true;
             var ctx = new StarterContext { Flag = true };
             try

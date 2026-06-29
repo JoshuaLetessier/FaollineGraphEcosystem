@@ -138,6 +138,266 @@ namespace Faolline.GraphSave.Tests
             finally { Object.DestroyImmediate(graph); }
         }
 
+        // ── Edge cases ───────────────────────────────────────────────────────
+
+        [Test]
+        public void Capture_EmptyContext_ProducesEmptySnapshot()
+        {
+            var snap = GraphRunSnapshot.Capture(new BaseContext(), "g", "n");
+            Assert.AreEqual(0, snap.Parameters.Count);
+            Assert.AreEqual(0, snap.Collections.Count);
+
+            var ctx = new BaseContext();
+            snap.ApplyTo(ctx);
+            Assert.AreEqual(0, ctx.GetAllParameters().Count);
+            Assert.AreEqual(0, ctx.GetAllCollections().Count);
+        }
+
+        [Test]
+        public void Capture_NullContext_ProducesEmptySnapshot()
+        {
+            var snap = GraphRunSnapshot.Capture((BaseContext)null, "g", "n");
+            Assert.AreEqual("g", snap.GraphId);
+            Assert.AreEqual("n", snap.CurrentNodeId);
+            Assert.AreEqual(0, snap.Parameters.Count);
+            Assert.AreEqual(0, snap.Collections.Count);
+        }
+
+        [Test]
+        public void Capture_FromRunner_ReadsGraphIdAndNodeId()
+        {
+            var graph = ScriptableObject.CreateInstance<BaseGraph>();
+            var start = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
+            graph.AddNode(start);
+            graph.EntryNodeId = "s";
+            try
+            {
+                var runner = new BaseRunner();
+                var ctx = new BaseContext();
+                ctx.Set<int>("v", 7);
+                runner.Start(graph, ctx, new NodeExecutorRegistry());
+
+                var snap = GraphRunSnapshot.Capture(runner, ctx);
+                Assert.AreEqual(graph.GraphId, snap.GraphId);
+                Assert.AreEqual("s", snap.CurrentNodeId);
+                Assert.AreEqual(1, snap.Parameters.Count);
+            }
+            finally { Object.DestroyImmediate(graph); }
+        }
+
+        [Test]
+        public void Capture_FromNullRunner_ProducesNullIds()
+        {
+            var ctx = new BaseContext();
+            var snap = GraphRunSnapshot.Capture((BaseRunner)null, ctx);
+            Assert.IsNull(snap.GraphId);
+            Assert.IsNull(snap.CurrentNodeId);
+        }
+
+        [Test]
+        public void ApplyTo_NullContext_DoesNotThrow()
+        {
+            var snap = new GraphRunSnapshot();
+            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "k", Type = "int", Value = "1" });
+            Assert.DoesNotThrow(() => snap.ApplyTo(null));
+        }
+
+        [Test]
+        public void ApplyTo_MalformedFloat_SkipsGracefully()
+        {
+            var snap = new GraphRunSnapshot();
+            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "bad", Type = "float", Value = "not_a_number" });
+            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "ok", Type = "int", Value = "5" });
+
+            var ctx = new BaseContext();
+            snap.ApplyTo(ctx);
+            Assert.IsFalse(ctx.TryGet<float>("bad", out _), "unparseable float is silently skipped.");
+            Assert.IsTrue(ctx.TryGet<int>("ok", out var v) && v == 5, "valid params still applied.");
+        }
+
+        [Test]
+        public void ApplyTo_MalformedVector_SkipsGracefully()
+        {
+            var snap = new GraphRunSnapshot();
+            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "v2_bad", Type = "vector2", Value = "1,2,3" });
+            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "v3_bad", Type = "vector3", Value = "nope" });
+            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "col_bad", Type = "color", Value = "" });
+
+            var ctx = new BaseContext();
+            snap.ApplyTo(ctx);
+            Assert.IsFalse(ctx.TryGet<Vector2>("v2_bad", out _), "wrong component count skipped.");
+            Assert.IsFalse(ctx.TryGet<Vector3>("v3_bad", out _), "non-numeric components skipped.");
+            Assert.IsFalse(ctx.TryGet<Color>("col_bad", out _), "empty value skipped.");
+        }
+
+        [Test]
+        public void ApplyTo_NullParam_SkipsGracefully()
+        {
+            var snap = new GraphRunSnapshot();
+            snap.Parameters.Add(null);
+            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "", Type = "int", Value = "1" });
+            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "ok", Type = "int", Value = "2" });
+
+            var ctx = new BaseContext();
+            Assert.DoesNotThrow(() => snap.ApplyTo(ctx));
+            Assert.IsTrue(ctx.TryGet<int>("ok", out var v) && v == 2);
+        }
+
+        [Test]
+        public void ApplyTo_NullCollection_SkipsGracefully()
+        {
+            var snap = new GraphRunSnapshot();
+            snap.Collections.Add(null);
+            snap.Collections.Add(new GraphRunSnapshot.Collection { Key = "ok", Items = { "a" } });
+
+            var ctx = new BaseContext();
+            Assert.DoesNotThrow(() => snap.ApplyTo(ctx));
+            Assert.IsTrue(ctx.CollectionContains("ok", "a"));
+        }
+
+        [Test]
+        public void MultipleCollections_RoundTrip()
+        {
+            var ctx = new BaseContext();
+            ctx.AddToCollection("quests", "q1");
+            ctx.AddToCollection("quests", "q2");
+            ctx.AddToCollection("inventory", "sword");
+
+            var snap = GraphRunSnapshot.Capture(ctx);
+            var json = JsonUtility.ToJson(snap);
+            var back = JsonUtility.FromJson<GraphRunSnapshot>(json);
+
+            var restored = new BaseContext();
+            back.ApplyTo(restored);
+            Assert.IsTrue(restored.CollectionContains("quests", "q1"));
+            Assert.IsTrue(restored.CollectionContains("quests", "q2"));
+            Assert.IsTrue(restored.CollectionContains("inventory", "sword"));
+            Assert.AreEqual(2, restored.CollectionCount("quests"));
+            Assert.AreEqual(1, restored.CollectionCount("inventory"));
+        }
+
+        [Test]
+        public void UnknownType_FallsBackToString()
+        {
+            var snap = new GraphRunSnapshot();
+            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "custom", Type = "widget", Value = "hello" });
+
+            var ctx = new BaseContext();
+            snap.ApplyTo(ctx);
+            Assert.IsTrue(ctx.TryGet<string>("custom", out var v) && v == "hello");
+        }
+
+        [Test]
+        public void Restore_NullArgs_DoesNotThrow()
+        {
+            var snap = new GraphRunSnapshot { CurrentNodeId = "n" };
+            Assert.DoesNotThrow(() => snap.Restore(null, null, null));
+            Assert.DoesNotThrow(() => snap.Restore(new BaseRunner(), null, new BaseContext()));
+        }
+
+        [Test]
+        public void Restore_MissingNodeId_FallsBackToEntry()
+        {
+            var graph = ScriptableObject.CreateInstance<BaseGraph>();
+            var start = new StartNodeData { Id = "entry", NodeType = StartNodeData.NodeTypeId };
+            graph.AddNode(start);
+            graph.EntryNodeId = "entry";
+            try
+            {
+                var snap = new GraphRunSnapshot { GraphId = graph.GraphId, CurrentNodeId = "" };
+                snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "x", Type = "int", Value = "3" });
+
+                var runner = new BaseRunner();
+                var ctx = new BaseContext();
+                snap.Restore(runner, graph, ctx);
+
+                Assert.AreEqual("entry", runner.CurrentNode?.Id, "falls back to entry node.");
+                Assert.IsTrue(ctx.TryGet<int>("x", out var x) && x == 3);
+            }
+            finally { Object.DestroyImmediate(graph); }
+        }
+
+        [Test]
+        public void Store_Overwrite_ReplacesSlot()
+        {
+            var store = new MemoryStore();
+            var ctx1 = new BaseContext();
+            ctx1.Set<int>("v", 1);
+            store.Save("s", GraphRunSnapshot.Capture(ctx1));
+
+            var ctx2 = new BaseContext();
+            ctx2.Set<int>("v", 99);
+            store.Save("s", GraphRunSnapshot.Capture(ctx2));
+
+            var restored = new BaseContext();
+            store.Load("s").ApplyTo(restored);
+            Assert.IsTrue(restored.TryGet<int>("v", out var v) && v == 99, "overwrite replaces the slot.");
+        }
+
+        [Test]
+        public void Store_MultipleSlots_AreIndependent()
+        {
+            var store = new MemoryStore();
+            var c1 = new BaseContext(); c1.Set<int>("v", 1);
+            var c2 = new BaseContext(); c2.Set<int>("v", 2);
+            store.Save("a", GraphRunSnapshot.Capture(c1));
+            store.Save("b", GraphRunSnapshot.Capture(c2));
+
+            store.Delete("a");
+            Assert.IsFalse(store.Exists("a"));
+            Assert.IsTrue(store.Exists("b"));
+
+            var r = new BaseContext();
+            store.Load("b").ApplyTo(r);
+            Assert.IsTrue(r.TryGet<int>("v", out var v) && v == 2);
+        }
+
+        [Test]
+        public void FullPipeline_Capture_Serialize_Deserialize_Restore()
+        {
+            var graph = ScriptableObject.CreateInstance<BaseGraph>();
+            var start = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
+            var mid = new StatementNodeData { Id = "m", NodeType = StatementNodeData.NodeTypeId };
+            graph.AddNode(start); graph.AddNode(mid);
+            graph.AddEdge(new BaseEdgeData { FromNodeId = "s", ToNodeId = "m" });
+            graph.EntryNodeId = "s";
+            try
+            {
+                var ctx = new BaseContext();
+                ctx.Set<int>("score", 42);
+                ctx.Set<float>("hp", 0.75f);
+                ctx.Set<bool>("boss_defeated", true);
+                ctx.Set<string>("zone", "dungeon");
+                ctx.Set<Vector3>("pos", new Vector3(1f, 2f, 3f));
+                ctx.AddToCollection("keys", "red");
+                ctx.AddToCollection("keys", "blue");
+
+                var runner = new BaseRunner();
+                runner.Start(graph, ctx, new NodeExecutorRegistry());
+                runner.Proceed();
+
+                var snap = GraphRunSnapshot.Capture(runner, ctx);
+                var store = new MemoryStore();
+                store.Save("save1", snap);
+
+                var loaded = store.Load("save1");
+                var runner2 = new BaseRunner();
+                var ctx2 = new BaseContext();
+                loaded.Restore(runner2, graph, ctx2);
+
+                Assert.AreEqual("m", runner2.CurrentNode?.Id);
+                Assert.AreEqual(42, ctx2.Get<int>("score"));
+                Assert.That(ctx2.Get<float>("hp"), Is.EqualTo(0.75f).Within(0.001f));
+                Assert.IsTrue(ctx2.Get<bool>("boss_defeated"));
+                Assert.AreEqual("dungeon", ctx2.Get<string>("zone"));
+                Assert.AreEqual(new Vector3(1f, 2f, 3f), ctx2.Get<Vector3>("pos"));
+                Assert.IsTrue(ctx2.CollectionContains("keys", "red"));
+                Assert.IsTrue(ctx2.CollectionContains("keys", "blue"));
+                Assert.AreEqual(2, ctx2.CollectionCount("keys"));
+            }
+            finally { Object.DestroyImmediate(graph); }
+        }
+
         // In-memory store that mirrors a real one by going through JSON, exercising the serializable contract.
         private sealed class MemoryStore : IGraphSaveStore
         {
