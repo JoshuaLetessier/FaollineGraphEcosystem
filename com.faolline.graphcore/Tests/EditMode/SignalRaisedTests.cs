@@ -69,7 +69,7 @@ namespace Faolline.GraphCore.Tests
             var ctx = new BaseContext();
             ctx.RaiseSignal("a");
             ctx.RaiseSignal("b");
-            var all = ctx.GetAllRaisedSignals();
+            var all = new System.Collections.Generic.HashSet<string>(ctx.GetAllRaisedSignals());
             Assert.IsTrue(all.Contains("a"));
             Assert.IsTrue(all.Contains("b"));
             Assert.AreEqual(2, all.Count);

@@ -326,7 +326,7 @@ namespace Faolline.GraphCore
                 : System.Array.Empty<string>();
 
         /// <summary>Restores a previously saved raised-signal history without firing any subscribers.</summary>
-        internal void RestoreSignalHistory(System.Collections.Generic.IEnumerable<string> names)
+        public void RestoreSignalHistory(System.Collections.Generic.IEnumerable<string> names)
         {
             if (names == null) return;
             _raisedSignals ??= new HashSet<string>();
