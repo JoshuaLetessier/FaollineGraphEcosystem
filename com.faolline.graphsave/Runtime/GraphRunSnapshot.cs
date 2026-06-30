@@ -29,6 +29,9 @@ namespace Faolline.GraphSave
         /// <summary>The context's named string collections.</summary>
         public List<Collection> Collections = new List<Collection>();
 
+        /// <summary>Every signal name that had been raised at least once in the context at capture time.</summary>
+        public List<string> RaisedSignals = new List<string>();
+
         /// <summary>One context parameter, value flattened to a string with a type tag.</summary>
         [Serializable]
         public class Param
@@ -61,6 +64,8 @@ namespace Faolline.GraphSave
                     if (kv.Value != null) collection.Items.AddRange(kv.Value);
                     snapshot.Collections.Add(collection);
                 }
+
+                snapshot.RaisedSignals.AddRange(context.GetAllRaisedSignals());
             }
             return snapshot;
         }
@@ -94,6 +99,9 @@ namespace Faolline.GraphSave
                     foreach (var item in c.Items)
                         context.AddToCollection(c.Key, item);
             }
+
+            if (RaisedSignals != null && RaisedSignals.Count > 0)
+                context.RestoreSignalHistory(RaisedSignals);
         }
 
         /// <summary>

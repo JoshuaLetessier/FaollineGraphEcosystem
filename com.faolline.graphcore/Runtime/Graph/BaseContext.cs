@@ -39,8 +39,14 @@ namespace Faolline.GraphCore
         // (_params): they never appear in GetAllParameters/DeepClone/CopyValuesFrom, so they never
         // pollute saves or history snapshots. Both dictionaries are lazily allocated, so a context that
         // never touches signals pays nothing.
+        //
+        // _raisedSignals (0.22.0): DURABLE history of every signal name that has ever been raised in
+        // this context. Unlike _lastSignals (a per-name cache of the last args), this set accumulates
+        // across the whole run and IS captured by DeepClone/CopyValuesFrom/GetAllRaisedSignals so that
+        // save/restore and history step-back can reproduce "has this signal been raised?" checks.
         private Dictionary<string, List<Action<SignalArgs>>> _signalSubs;
         private Dictionary<string, SignalArgs> _lastSignals;
+        private HashSet<string> _raisedSignals;
 
         // ── Collections (0.5.0) ────────────────────────────────────────────────
         // Named string-SETS, in a keyspace independent from _params. DURABLE state (unlike signals):
@@ -225,6 +231,7 @@ namespace Faolline.GraphCore
                 return;
             }
 
+            (_raisedSignals ??= new HashSet<string>()).Add(name);
             var args = new SignalArgs(name, hasPayload, payload);
             (_lastSignals ??= new Dictionary<string, SignalArgs>())[name] = args;
 
@@ -286,6 +293,46 @@ namespace Faolline.GraphCore
                 return true;
             args = default;
             return false;
+        }
+
+        // ── Signal history ─────────────────────────────────────────────────────
+
+        /// <summary>
+        /// Returns <c>true</c> when the signal <paramref name="name"/> has been raised at least once in
+        /// this context. Unlike <see cref="TryGetLastSignal"/>, this check persists across the run and is
+        /// captured by save/restore. Use <see cref="ForgetSignal"/> to clear a name from the history.
+        /// </summary>
+        public bool HasSignalBeenRaised(string name)
+            => !string.IsNullOrEmpty(name) && _raisedSignals != null && _raisedSignals.Contains(name);
+
+        /// <summary>
+        /// Removes <paramref name="name"/> from the raised-signal history so that a subsequent
+        /// <see cref="HasSignalBeenRaised"/> returns <c>false</c>. Useful for replay, dialogue restart,
+        /// or any flow that must treat the signal as "not yet seen" again. No-op when absent.
+        /// </summary>
+        public void ForgetSignal(string name)
+        {
+            if (!string.IsNullOrEmpty(name))
+                _raisedSignals?.Remove(name);
+        }
+
+        /// <summary>
+        /// Returns a snapshot of every signal name that has been raised at least once in this context.
+        /// Used for serialization (see <c>GraphRunSnapshot</c>). Never null.
+        /// </summary>
+        public IReadOnlyCollection<string> GetAllRaisedSignals()
+            => _raisedSignals != null
+                ? (IReadOnlyCollection<string>)new List<string>(_raisedSignals)
+                : System.Array.Empty<string>();
+
+        /// <summary>Restores a previously saved raised-signal history without firing any subscribers.</summary>
+        internal void RestoreSignalHistory(System.Collections.Generic.IEnumerable<string> names)
+        {
+            if (names == null) return;
+            _raisedSignals ??= new HashSet<string>();
+            foreach (var n in names)
+                if (!string.IsNullOrEmpty(n))
+                    _raisedSignals.Add(n);
         }
 
         // ── Change notifications ───────────────────────────────────────────────
@@ -563,6 +610,9 @@ namespace Faolline.GraphCore
                 foreach (var kvp in _collections)
                     clone._collections[kvp.Key] = new HashSet<string>(kvp.Value);
             }
+            // Signal history is durable state — copy the set.
+            if (_raisedSignals != null)
+                clone._raisedSignals = new HashSet<string>(_raisedSignals);
             return clone;
         }
 
@@ -612,6 +662,12 @@ namespace Faolline.GraphCore
             {
                 _collections = null;
             }
+
+            // Restore signal history (durable state). Subscribers are preserved.
+            if (source._raisedSignals != null)
+                _raisedSignals = new HashSet<string>(source._raisedSignals);
+            else
+                _raisedSignals = null;
         }
     }
 }
