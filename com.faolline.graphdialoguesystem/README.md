@@ -1,6 +1,6 @@
 # com.faolline.graphdialoguesystem
 
-**Version**: 0.10.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore`
+**Version**: 0.11.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore`
 
 A graph-based dialogue library built **entirely on top of** `com.faolline.graphcore` (zero core
 changes), following the `com.faolline.starterGraph` package shape. Author branching, multi-speaker,
@@ -136,6 +136,13 @@ var presenter = new DialoguePresenter(localization, speakerLookup: lookup, title
 `DialoguePlayer` itself now resolves through this presenter internally (unchanged for standalone dialogues).
 The dialogue's outcome already flows through the **shared context** (SubGraph + `InheritParentContext`), so an
 authored action on a line writes straight into the host's state — no bridge code.
+
+Want the same view (typewriter, auto-advance, choice timeout, voice, history) `DialogueDriver` gives standalone
+dialogues, but for a flow-embedded one? Import the **GameFlow Dialogue Bridge** sample (Package Manager ▸ this
+package ▸ Samples ▸ Import) — it wraps the pattern above into a drop-in `FlowDialogueBridge` component built on
+the same `IDialoguePlaybackSource`/`DialoguePlaybackController` `DialogueDriver` uses internally. It ships as a
+sample (source you import), not a package dependency, since `graphdialoguesystem` and `com.faolline.graphgameflow`
+must not depend on each other.
 
 ---
 

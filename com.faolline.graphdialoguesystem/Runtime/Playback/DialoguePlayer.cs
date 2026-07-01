@@ -20,7 +20,7 @@ namespace Faolline.GraphDialogue
     /// </para>
     /// <para>No <c>MonoBehaviour</c>, no scene — fully testable in EditMode.</para>
     /// </summary>
-    public sealed class DialoguePlayer
+    public sealed class DialoguePlayer : IDialoguePlaybackSource
     {
         private const int MaxDrainSteps = 1000;
 

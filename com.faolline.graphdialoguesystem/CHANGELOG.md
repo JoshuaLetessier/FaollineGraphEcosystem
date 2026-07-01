@@ -4,6 +4,25 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.11.0]
+
+### Added
+- **`IDialoguePlaybackSource`** — the runner-agnostic contract `DialoguePlayer` emits `LineStep`/
+  `ChoiceStep`/`EndStep`/stuck events through (`DialoguePlayer` now implements it directly). Lets any
+  step source (not just `DialoguePlayer`) drive the same UI-facing playback behaviour.
+- **`DialoguePlaybackController`** (UI) — the typewriter-skip-on-advance, auto-advance timer, choice
+  timeout, voice playback, and line-history logic extracted from `DialogueDriver` into a source-agnostic
+  helper, so it can be reused by a flow-embedded dialogue without duplicating it.
+- **`GameFlow Dialogue Bridge` sample** — `GraphFlowDialogueSource` + `FlowDialogueBridge` (importable via
+  Package Manager ▸ this package ▸ Samples) reuse the standalone `DialogueDriver`'s view/playback behaviour
+  for a dialogue embedded in a `com.faolline.graphgameflow` flow (SubGraph node), instead of hand-wiring
+  `DialoguePresenter` from scratch. Ships as a sample (source you import), not a package dependency —
+  `graphdialoguesystem` and `graphgameflow` still don't depend on each other.
+
+### Changed
+- **`DialogueDriver` refactored internally** to delegate to `DialoguePlaybackController`. Public API and
+  behavior are unchanged; existing tests stay green.
+
 ## [0.10.0]
 
 ### Changed

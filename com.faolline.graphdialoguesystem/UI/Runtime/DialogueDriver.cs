@@ -49,15 +49,7 @@ namespace Faolline.GraphDialogue.UI
         // Optional programmatic override; when null, speakers come from the graph (graph.Speakers).
         private IReadOnlyList<Speaker> _speakersOverride;
         private DialoguePlayer _player;
-        private bool _awaitingChoice;
-        // Last emitted steps, tracked only for the debug overlay.
-        private LineStep _lastLine;
-        private bool _ended;
-        // Flow timers.
-        private float _lineShownTime;
-        private float _choiceShownTime;
-        private bool _autoAdvanceArmed;
-        private ChoiceStep _lastChoices;
+        private DialoguePlaybackController _controller;
 
         /// <summary>
         /// The active view. Resolves from the assigned <c>viewBehaviour</c>: if that component is itself an
@@ -95,11 +87,8 @@ namespace Faolline.GraphDialogue.UI
         /// <summary>Raised for each line as it is shown — drives backlog/history UIs.</summary>
         public event Action<LineStep> OnLineShown;
 
-        // Lines shown so far this session (for a backlog/history view). Cleared on StartDialogue.
-        private readonly List<LineStep> _history = new List<LineStep>();
-
         /// <summary>The lines shown so far this session, oldest first (backlog source).</summary>
-        public IReadOnlyList<LineStep> History => _history;
+        public IReadOnlyList<LineStep> History => _controller?.History ?? Array.Empty<LineStep>();
 
         // ── Lifecycle ───────────────────────────────────────────────────────────────
 
@@ -122,27 +111,20 @@ namespace Faolline.GraphDialogue.UI
 
         private void Update()
         {
-            if (_player == null) return;
+            if (_player == null || _controller == null) return;
 
-            if (_awaitingChoice)
+            if (_controller.AwaitingChoice)
             {
                 int k = ReadChoiceDigit();
                 if (k > 0) { ChooseByIndex(k); return; }
-                if (choiceTimeout > 0f && Time.time - _choiceShownTime >= choiceTimeout)
-                    SelectFirstAvailableChoice();
+            }
+            else if (ReadAdvance())
+            {
+                Advance();
                 return;
             }
 
-            if (ReadAdvance()) { Advance(); return; }
-
-            // Auto-advance: the delay is measured from when the line finishes (typewriter included).
-            bool typing = View is DialogueViewBase vb && vb.IsTyping;
-            if (typing) _lineShownTime = Time.time;
-            else if (_autoAdvanceArmed && _lastLine != null && Time.time - _lineShownTime >= autoAdvanceDelay)
-            {
-                _autoAdvanceArmed = false;
-                Advance();
-            }
+            _controller.Tick(Time.time);
         }
 
         private void OnDestroy() => Teardown();
@@ -179,7 +161,6 @@ namespace Faolline.GraphDialogue.UI
             graph = dialogueGraph;
 
             Teardown();
-            _history.Clear();
 
             var provider = _provider ?? LocalizationContext.Current.Provider;
             var strict = LocalizationContext.Current.StrictMode;
@@ -188,49 +169,25 @@ namespace Faolline.GraphDialogue.UI
             View?.BindSpeakers(ActiveSpeakers);
 
             _player = new DialoguePlayer(graph, new DialogueContext(), provider, FindSpeaker, strict, assets);
-            _player.OnLine += HandleLine;
-            _player.OnChoices += HandleChoices;
-            _player.OnEnded += HandleEnded;
-            _player.OnStuck += HandleStuck;
+            _controller = new DialoguePlaybackController(
+                _player, () => View, autoAdvance, autoAdvanceDelay, choiceTimeout, voiceSource);
+            _controller.OnStuck += HandleStuck;
+            _controller.OnLineShown += step => OnLineShown?.Invoke(step);
 
-            if (View != null)
-                View.ChoiceSelected += Choose;
-            else
-                Debug.LogWarning("[GraphDialogue] DialogueDriver: no IDialogueView assigned — running logic only.");
-
-            _awaitingChoice = false;
             _player.Start();
         }
 
         /// <summary>Advances the current line. Ignored while awaiting a choice.</summary>
-        public void Advance()
-        {
-            if (_player == null || _awaitingChoice) return;
-            // While the line is still revealing, the first advance completes it instead of skipping ahead.
-            if (View is DialogueViewBase vb && vb.IsTyping) { vb.SkipTyping(); return; }
-            _player.Advance();
-        }
+        public void Advance() => _controller?.Advance();
 
         /// <summary>Selects an option by its routing id.</summary>
-        public void Choose(string choiceId)
-        {
-            if (_player == null || string.IsNullOrEmpty(choiceId)) return;
-            _player.Choose(choiceId);
-        }
+        public void Choose(string choiceId) => _controller?.Choose(choiceId);
 
         /// <summary>
         /// Selects the option at <paramref name="oneBasedIndex"/> in the currently displayed choices
         /// (as a keyboard 1–9 press would). No-op when not at a choice, out of range, or unavailable.
         /// </summary>
-        public void ChooseByIndex(int oneBasedIndex)
-        {
-            if (!_awaitingChoice || _lastChoices == null) return;
-            var options = _lastChoices.Options;
-            if (oneBasedIndex < 1 || oneBasedIndex > options.Count) return;
-            var option = options[oneBasedIndex - 1];
-            if (option == null || !option.Available) return;
-            Choose(option.ChoiceId);
-        }
+        public void ChooseByIndex(int oneBasedIndex) => _controller?.ChooseByIndex(oneBasedIndex);
 
         /// <summary>Steps back one entry (player history).</summary>
         public void Back() => _player?.Back();
@@ -238,66 +195,8 @@ namespace Faolline.GraphDialogue.UI
         /// <summary>Steps back to the last checkpoint.</summary>
         public void BackToCheckpoint() => _player?.BackToCheckpoint();
 
-        // ── Player event handlers ────────────────────────────────────────────────────
-
-        private void HandleLine(LineStep step)
-        {
-            _awaitingChoice = false;
-            _lastChoices = null;
-            _lastLine = step;
-            _ended = false;
-            _lineShownTime = Time.time;
-            _autoAdvanceArmed = autoAdvance;
-            if (step != null) { _history.Add(step); OnLineShown?.Invoke(step); }
-            PlayVoice(step);
-            View?.ShowLine(step);
-        }
-
-        private void PlayVoice(LineStep step)
-        {
-            if (voiceSource == null) return;
-            if (voiceSource.isPlaying) voiceSource.Stop();
-            if (step?.VoiceClip != null)
-            {
-                voiceSource.clip = step.VoiceClip;
-                voiceSource.Play();
-            }
-        }
-
-        private void StopVoice()
-        {
-            if (voiceSource != null && voiceSource.isPlaying) voiceSource.Stop();
-        }
-
-        private void HandleChoices(ChoiceStep step)
-        {
-            _awaitingChoice = true;
-            _lastChoices = step;
-            _lastLine = null;
-            _ended = false;
-            _autoAdvanceArmed = false;
-            _choiceShownTime = Time.time;
-            View?.ShowChoices(step);
-        }
-
-        private void HandleEnded(EndStep step)
-        {
-            _awaitingChoice = false;
-            _lastChoices = null;
-            _lastLine = null;
-            _ended = true;
-            _autoAdvanceArmed = false;
-            StopVoice();
-            View?.HideAll();
-        }
-
         private void HandleStuck()
         {
-            _awaitingChoice = false;
-            _lastChoices = null;
-            _lastLine = null;
-            _autoAdvanceArmed = false;
-            StopVoice();
             Debug.LogWarning("[GraphDialogue] DialogueDriver: dialogue is stuck (no valid branch from the " +
                 "current node). Check your edge/choice conditions.", this);
             OnStuck?.Invoke();
@@ -307,45 +206,40 @@ namespace Faolline.GraphDialogue.UI
 
         private void OnGUI()
         {
-            if (!showDebugOverlay || _player == null) return;
+            if (!showDebugOverlay || _player == null || _controller == null) return;
 
             const float w = 560f, h = 20f;
             float x = overlayPosition.x, y = overlayPosition.y;
             var title = new GUIStyle(GUI.skin.label) { fontStyle = FontStyle.Bold };
 
-            string state = _ended ? "Ended" : _awaitingChoice ? "ChoiceReady" : "LineReady";
+            string state = _controller.Ended ? "Ended" : _controller.AwaitingChoice ? "ChoiceReady" : "LineReady";
             GUI.Label(new Rect(x, y, w, h), "DialogueDriver (debug)", title); y += h;
             GUI.Label(new Rect(x, y, w, h), $"State: {state}  |  Node: {_player.CurrentStep?.NodeId}"); y += h;
 
-            if (_lastLine != null)
+            if (_controller.LastLine != null)
             {
-                GUI.Label(new Rect(x, y, w, h), $"LINE — {_lastLine.ResolvedSpeakerName}: \"{_lastLine.ResolvedText}\""); y += h;
+                var line = _controller.LastLine;
+                GUI.Label(new Rect(x, y, w, h), $"LINE — {line.ResolvedSpeakerName}: \"{line.ResolvedText}\""); y += h;
                 GUI.Label(new Rect(x, y, w, h), "[Space]/click to advance"); y += h;
             }
-            else if (_awaitingChoice && _lastChoices != null)
+            else if (_controller.AwaitingChoice && _controller.LastChoices != null)
             {
+                var choices = _controller.LastChoices;
                 GUI.Label(new Rect(x, y, w, h), "CHOICES — press [1..9] or click:"); y += h;
-                for (int i = 0; i < _lastChoices.Options.Count; i++)
+                for (int i = 0; i < choices.Options.Count; i++)
                 {
-                    var o = _lastChoices.Options[i];
+                    var o = choices.Options[i];
                     var tag = o.Available ? "" : "  [blocked]";
                     GUI.Label(new Rect(x + 12, y, w, h), $"{i + 1}) {o.ResolvedLabel}{tag}"); y += h;
                 }
             }
-            else if (_ended)
+            else if (_controller.Ended)
             {
                 GUI.Label(new Rect(x, y, w, h), "END"); y += h;
             }
         }
 
         // ── Helpers ──────────────────────────────────────────────────────────────────
-
-        private void SelectFirstAvailableChoice()
-        {
-            if (_lastChoices == null) return;
-            foreach (var o in _lastChoices.Options)
-                if (o != null && o.Available) { Choose(o.ChoiceId); return; }
-        }
 
         private Speaker FindSpeaker(string speakerId)
         {
@@ -392,15 +286,13 @@ namespace Faolline.GraphDialogue.UI
 
         private void Teardown()
         {
-            if (_player != null)
+            if (_controller != null)
             {
-                _player.OnLine -= HandleLine;
-                _player.OnChoices -= HandleChoices;
-                _player.OnEnded -= HandleEnded;
-                _player.OnStuck -= HandleStuck;
-                _player = null;
+                _controller.OnStuck -= HandleStuck;
+                _controller.Teardown();
+                _controller = null;
             }
-            if (_view != null) _view.ChoiceSelected -= Choose;
+            _player = null;
         }
     }
 }

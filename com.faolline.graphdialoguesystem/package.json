@@ -1,6 +1,6 @@
 {
     "name": "com.faolline.graphdialoguesystem",
-    "version": "0.10.0",
+    "version": "0.11.0",
     "displayName": "Faolline GraphDialogue System",
     "description": "Graph-based dialogue library built on com.faolline.graphcore. Spoken lines, speakers, localized text, branching choices, inline conditions/effects, and a headless playback engine.",
     "unity": "6000.0",
@@ -19,6 +19,11 @@
             "displayName": "Dialogue UI (Canvas + UI Toolkit)",
             "description": "Wiring recipes, plus the UI Toolkit UXML/USS, for showing dialogues in-game with either front-end.",
             "path": "Samples~/DialogueUI"
+        },
+        {
+            "displayName": "GameFlow Dialogue Bridge",
+            "description": "Reuses the standalone DialogueDriver's view/playback behaviour (typewriter, auto-advance, choice timeout, voice, history) for a dialogue embedded in a com.faolline.graphgameflow flow via a SubGraph node. Requires com.faolline.graphgameflow installed.",
+            "path": "Samples~/GameFlowDialogueBridge"
         }
     ],
     "author": {
