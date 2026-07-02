@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.23.0]
+
+### Added
+- **`BaseContext.OnAnySignalRaised` / `OffAnySignalRaised`** — wildcard subscription to every raised signal
+  (receives the signal name), mirroring `OnAnyParameterChanged` / `OnAnyCollectionChanged`. Fires after the
+  per-name `OnSignal` handlers. Lets a reactive consumer re-derive on any signal without knowing the name in
+  advance — the seam `QuestEvaluator.EnableAutoEvaluate` now uses so signal-gated quests auto-evaluate.
+
 ## [0.21.0]
 
 ### Added

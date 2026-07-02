@@ -242,6 +242,35 @@ namespace Faolline.GraphCore
                 foreach (var handler in snapshot)
                     handler(args);
             }
+
+            // Wildcard delivery, AFTER per-name handlers (mirrors OnAnyParameterChanged). Lets a
+            // reactive consumer (e.g. QuestEvaluator.EnableAutoEvaluate) re-evaluate on any signal
+            // without knowing the name in advance.
+            if (_anySignalSubs != null && _anySignalSubs.Count > 0)
+            {
+                var snapshot = new List<Action<string>>(_anySignalSubs);
+                foreach (var handler in snapshot)
+                    handler(name);
+            }
+        }
+
+        private List<Action<string>> _anySignalSubs;
+
+        /// <summary>
+        /// Subscribes <paramref name="handler"/> to ANY raised signal. The handler receives the signal
+        /// name and fires AFTER the per-name <see cref="OnSignal"/> handlers. Multiple handlers supported.
+        /// Mirrors <see cref="OnAnyParameterChanged"/> / <see cref="OnAnyCollectionChanged"/>.
+        /// </summary>
+        public void OnAnySignalRaised(Action<string> handler)
+        {
+            if (handler == null) return;
+            (_anySignalSubs ??= new List<Action<string>>()).Add(handler);
+        }
+
+        /// <summary>Removes <paramref name="handler"/> from the wildcard signal list.</summary>
+        public void OffAnySignalRaised(Action<string> handler)
+        {
+            _anySignalSubs?.Remove(handler);
         }
 
         /// <summary>

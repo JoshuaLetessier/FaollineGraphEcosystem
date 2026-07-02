@@ -116,6 +116,48 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
+        public void OnAnySignalRaised_FiresForEveryName_WithSignalName()
+        {
+            var ctx = new BaseContext();
+            string last = null;
+            int hits = 0;
+            ctx.OnAnySignalRaised(name => { last = name; hits++; });
+
+            ctx.RaiseSignal("alpha");
+            ctx.RaiseSignal<int>("beta", 7);
+
+            Assert.AreEqual(2, hits, "Wildcard handler fires once per raised signal, regardless of name.");
+            Assert.AreEqual("beta", last);
+        }
+
+        [Test]
+        public void OnAnySignalRaised_FiresAfterPerNameSubscribers()
+        {
+            var ctx = new BaseContext();
+            var order = new System.Collections.Generic.List<string>();
+            ctx.OnSignal("ev", _ => order.Add("per-name"));
+            ctx.OnAnySignalRaised(_ => order.Add("any"));
+
+            ctx.RaiseSignal("ev");
+
+            Assert.AreEqual(new[] { "per-name", "any" }, order);
+        }
+
+        [Test]
+        public void OffAnySignalRaised_StopsDelivery()
+        {
+            var ctx = new BaseContext();
+            int hits = 0;
+            Action<string> h = _ => hits++;
+            ctx.OnAnySignalRaised(h);
+            ctx.RaiseSignal("ev");
+            ctx.OffAnySignalRaised(h);
+            ctx.RaiseSignal("ev");
+
+            Assert.AreEqual(1, hits);
+        }
+
+        [Test]
         public void RaiseSignalT_UnsupportedType_Throws()
         {
             var ctx = new BaseContext();
