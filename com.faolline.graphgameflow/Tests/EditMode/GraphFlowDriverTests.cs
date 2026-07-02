@@ -419,9 +419,36 @@ namespace Faolline.GraphGameFlow.Tests
 
         // ── Edge cases ──────────────────────────────────────────────────────
 
+        private sealed class FalseCond : BaseCondition { public override bool Evaluate(BaseContext c) => false; }
+
         [Test]
-        public void OnStuck_FiresWhenNoOutgoingEdge()
+        public void OnStuck_FiresWhenAllOutgoingEdgesBlocked()
         {
+            // "Stuck" = an outgoing edge EXISTS but no branch is traversable (all conditions false), so the flow
+            // dead-locks. (A node with NO outgoing edge is a dead-end that ENDS the flow — see DeadEnd test.)
+            var cond = ScriptableObject.CreateInstance<FalseCond>();
+            _so.Add(cond);
+            var g = NewGraph("start");
+            g.AddNode(Start("start"));
+            g.AddNode(St("mid"));
+            g.AddNode(End("end"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "mid" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "mid", ToNodeId = "end", Condition = cond }); // blocked
+            var d = NewDriver(g, autoAdvance: true);
+
+            bool stuck = false;
+            d.OnStuck += () => stuck = true;
+            d.Boot();
+
+            Assert.IsTrue(stuck, "OnStuck must fire when an edge exists but every branch is condition-blocked.");
+        }
+
+        [Test]
+        public void DeadEndNode_EndsFlow_NotStuck()
+        {
+            // A node with NO outgoing edge is a terminal node: the runner treats it as an implicit completion
+            // (mirrors BaseRunner's documented "terminal non-end node → Completed" and the core dead-end tests),
+            // so the flow ENDS rather than getting stuck.
             var g = NewGraph("start");
             g.AddNode(Start("start"));
             g.AddNode(St("dead"));
@@ -430,10 +457,13 @@ namespace Faolline.GraphGameFlow.Tests
             var d = NewDriver(g, autoAdvance: true);
 
             bool stuck = false;
+            EndReason? ended = null;
             d.OnStuck += () => stuck = true;
+            d.OnEnded += r => ended = r;
             d.Boot();
 
-            Assert.IsTrue(stuck, "OnStuck must fire when the flow can't advance.");
+            Assert.IsFalse(stuck, "a dead-end node ends the flow; it is not 'stuck'.");
+            Assert.AreEqual(EndReason.Completed, ended, "a terminal non-end node completes the flow.");
         }
 
         [Test]
