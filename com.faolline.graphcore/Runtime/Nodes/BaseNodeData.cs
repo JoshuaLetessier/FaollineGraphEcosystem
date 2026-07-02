@@ -37,6 +37,8 @@ namespace Faolline.GraphCore
         private SignalName _awaitSignalAsset;
         [SerializeField, Tooltip("Raw signal name string (used when no SignalName asset is assigned above). The node parks until this signal is raised on the runner.")]
         private string _awaitSignal = string.Empty;
+        [SerializeField, Tooltip("Additional signals to wait for (logical OR): the node resumes on the FIRST of any awaited signal that passes the Resume Conditions. Combine with the single await field above.")]
+        private List<SignalName> _awaitSignals = new List<SignalName>();
         [SerializeField, Tooltip("Extra conditions an await-signal must satisfy to resume this node. All must pass (AND). Unlike Entry Conditions (checked once on arrival), these are re-checked every time the signal fires — the node stays parked until the context satisfies them.")]
         private List<BaseCondition> _resumeConditions = new List<BaseCondition>();
         [SerializeField, Tooltip("When ON, if the awaited signal was ALREADY raised in the context before the runner reached this node, resume immediately instead of parking forever. The signal's raised-history is consulted (so a reward or shortcut that fired ahead of the cursor is not lost). ResumeConditions still gate the resume. Default OFF (live-only: only a raise that happens while parked resumes).")]
@@ -148,6 +150,33 @@ namespace Faolline.GraphCore
             get => _awaitSignalAsset != null ? (string)_awaitSignalAsset : _awaitSignal;
             set => _awaitSignal = value ?? string.Empty;
         }
+
+        /// <summary>
+        /// Every signal name this node waits for, as a logical OR: the union of <see cref="AwaitSignalName"/>
+        /// (when non-empty) and the extra <c>_awaitSignals</c> assets, de-duplicated, primary first. The runner
+        /// parks while this is non-empty and resumes on the FIRST awaited signal that passes
+        /// <see cref="ResumeConditions"/>. A single await is just a one-element set (back-compat). Never null.
+        /// </summary>
+        public IReadOnlyList<string> AwaitSignalNames
+        {
+            get
+            {
+                var names = new List<string>();
+                var primary = AwaitSignalName;
+                if (!string.IsNullOrEmpty(primary)) names.Add(primary);
+                if (_awaitSignals != null)
+                    foreach (var s in _awaitSignals)
+                    {
+                        if (s == null) continue;
+                        var n = (string)s;
+                        if (!string.IsNullOrEmpty(n) && !names.Contains(n)) names.Add(n);
+                    }
+                return names;
+            }
+        }
+
+        /// <summary>The extra OR-await signal assets (beyond <see cref="AwaitSignalName"/>). Never null.</summary>
+        public List<SignalName> AwaitSignals => _awaitSignals ??= new List<SignalName>();
 
         /// <summary>
         /// When greater than zero, entering this node holds execution (<see cref="RunnerState.WaitingForTime"/>)

@@ -4,6 +4,13 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.8.0]
+
+### Added
+- **"Await Any Of (OR)" field in the node inspector.** Surfaces graphcore 0.26.0's multi-signal await
+  (`BaseNodeData.AwaitSignals`) so a flow node can wait for several signals at once (resume on the first that
+  passes the resume conditions) directly from the editor. Requires graphcore ≥ 0.26.0.
+
 ## [0.7.0]
 
 ### Added

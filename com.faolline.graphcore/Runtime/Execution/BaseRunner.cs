@@ -148,7 +148,7 @@ namespace Faolline.GraphCore
         private NodeExecutorRegistry _registry;
         private BaseGraph _rootGraph;
         private float _waitRemaining;
-        private string _subscribedSignalName;
+        private List<string> _subscribedSignalNames;
         private Action<SignalArgs> _contextSignalBridge;
 
         // ── Events ─────────────────────────────────────────────────────────────
@@ -350,29 +350,46 @@ namespace Faolline.GraphCore
         {
             if (_state != RunnerState.WaitingForSignal) return;
             var node = CurrentNode;
-            // Resume only when the name matches AND the node's resume-gate passes. A name match with a failing
-            // gate is ignored — the node stays parked and re-armable (the actor may raise again once ready).
-            if (node != null && node.AwaitSignalName == name && ResumeConditionsPass(node))
+            // Resume only when the raised name is one this node awaits (logical OR over AwaitSignalNames) AND the
+            // node's resume-gate passes. A match with a failing gate is ignored — the node stays parked and
+            // re-armable (the actor may raise again once ready).
+            if (node != null && Contains(node.AwaitSignalNames, name) && ResumeConditionsPass(node))
             {
                 UnsubscribeContextSignal();
                 ExitAndAdvance();
             }
         }
 
-        private void SubscribeContextSignal(string signalName)
+        private static bool Contains(IReadOnlyList<string> names, string name)
+        {
+            for (int i = 0; i < names.Count; i++)
+                if (names[i] == name) return true;
+            return false;
+        }
+
+        private bool AnyRaised(IReadOnlyList<string> names)
+        {
+            for (int i = 0; i < names.Count; i++)
+                if (_context.HasSignalBeenRaised(names[i])) return true;
+            return false;
+        }
+
+        private void SubscribeContextSignals(IReadOnlyList<string> signalNames)
         {
             UnsubscribeContextSignal();
-            _subscribedSignalName = signalName;
+            _subscribedSignalNames = new List<string>(signalNames);
             _contextSignalBridge = args => ResumeIfAwaiting(args.Name);
-            _context?.OnSignal(signalName, _contextSignalBridge);
+            foreach (var n in _subscribedSignalNames)
+                _context?.OnSignal(n, _contextSignalBridge);
         }
 
         private void UnsubscribeContextSignal()
         {
-            if (_subscribedSignalName != null && _contextSignalBridge != null)
+            if (_subscribedSignalNames != null && _contextSignalBridge != null)
             {
-                _context?.OffSignal(_subscribedSignalName, _contextSignalBridge);
-                _subscribedSignalName = null;
+                foreach (var n in _subscribedSignalNames)
+                    _context?.OffSignal(n, _contextSignalBridge);
+                _subscribedSignalNames = null;
                 _contextSignalBridge = null;
             }
         }
@@ -459,23 +476,24 @@ namespace Faolline.GraphCore
             // 4. Raise events
             OnNodeEntered?.Invoke(node);
 
-            // Await-signal: hold here until a matching signal is raised — either via BaseRunner.RaiseSignal
-            // or directly on the context (e.g. a dialogue end callback calling context.RaiseSignal).
-            if (!string.IsNullOrEmpty(node.AwaitSignalName))
+            // Await-signal: hold here until ANY awaited signal is raised (logical OR over AwaitSignalNames) —
+            // either via BaseRunner.RaiseSignal or directly on the context (e.g. a dialogue end callback).
+            var awaitNames = node.AwaitSignalNames;
+            if (awaitNames.Count > 0)
             {
                 // Opt-in: a signal that already fired ahead of the cursor (recorded in the context's
                 // raised-signal history) resumes the node immediately instead of parking forever — provided
                 // the ResumeConditions gate also passes. Off by default (live-only park).
                 bool alreadySatisfied = node.ResumeIfSignalAlreadyRaised
                     && _context != null
-                    && _context.HasSignalBeenRaised(node.AwaitSignalName)
+                    && AnyRaised(awaitNames)
                     && ResumeConditionsPass(node);
 
                 if (!alreadySatisfied)
                 {
                     _state = RunnerState.WaitingForSignal;
-                    SubscribeContextSignal(node.AwaitSignalName);
-                    OnWaitingForSignal?.Invoke(node, node.AwaitSignalName);
+                    SubscribeContextSignals(awaitNames);
+                    OnWaitingForSignal?.Invoke(node, awaitNames[0]);
                     return;
                 }
                 // else: fall through to normal node-ready completion (no park).
