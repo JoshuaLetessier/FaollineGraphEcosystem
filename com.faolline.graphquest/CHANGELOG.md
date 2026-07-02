@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0]
+
+### Fixed
+- **Auto-evaluate now reacts to raised signals.** `EnableAutoEvaluate` previously only subscribed to
+  parameter and collection changes, so a quest gated purely on `SignalRaisedCondition` stayed frozen (a
+  signal is neither a parameter nor a collection). It now also subscribes to `BaseContext.OnAnySignalRaised`
+  (graphcore 0.23.0), so signal-only quests derive automatically. Requires graphcore ≥ 0.23.0.
+
 ## [0.4.0]
 
 ### Added

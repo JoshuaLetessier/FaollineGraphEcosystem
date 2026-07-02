@@ -478,9 +478,10 @@ namespace Faolline.GraphQuest
         public bool IsAutoEvaluateEnabled => _autoEvaluate;
 
         /// <summary>
-        /// Opts into push-mode evaluation: the evaluator subscribes to all context parameter and
-        /// collection changes and calls <see cref="Evaluate()"/> automatically. Eliminates the need
-        /// for frame-polling. Idempotent — calling twice is a no-op.
+        /// Opts into push-mode evaluation: the evaluator subscribes to all context parameter changes,
+        /// collection changes, and raised signals, and calls <see cref="Evaluate()"/> automatically.
+        /// Eliminates the need for frame-polling — including for quests gated purely on
+        /// <see cref="SignalRaisedCondition"/>. Idempotent — calling twice is a no-op.
         /// <para>
         /// <b>Timers are NOT auto-ticked.</b> Objectives with <see cref="ObjectiveNodeData.TimeLimitSeconds"/>
         /// still require the consumer to call <see cref="Evaluate(float)"/> with a clock.
@@ -492,6 +493,7 @@ namespace Faolline.GraphQuest
             _autoEvaluate = true;
             _context.OnAnyParameterChanged(HandleAutoEvaluateTrigger);
             _context.OnAnyCollectionChanged(HandleAutoEvaluateTrigger);
+            _context.OnAnySignalRaised(HandleAutoEvaluateTrigger);
         }
 
         /// <summary>
@@ -504,6 +506,7 @@ namespace Faolline.GraphQuest
             _dirtyDuringEvaluate = false;
             _context.OffAnyParameterChanged(HandleAutoEvaluateTrigger);
             _context.OffAnyCollectionChanged(HandleAutoEvaluateTrigger);
+            _context.OffAnySignalRaised(HandleAutoEvaluateTrigger);
         }
 
         private void HandleAutoEvaluateTrigger(string _)

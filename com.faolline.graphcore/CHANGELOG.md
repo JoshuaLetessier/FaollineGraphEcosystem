@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
 ## [0.23.0]
 
 ### Added
+- **`BaseContext.OnAnySignalRaised` / `OffAnySignalRaised`** — wildcard subscription to every raised signal
+  (receives the signal name), mirroring `OnAnyParameterChanged` / `OnAnyCollectionChanged`. Fires after the
+  per-name `OnSignal` handlers. Lets a reactive consumer re-derive on any signal without knowing the name in
+  advance — the seam `QuestEvaluator.EnableAutoEvaluate` now uses so signal-gated quests auto-evaluate.
 - **`BaseNodeData.ResumeIfSignalAlreadyRaised` (opt-in).** An await-signal node with this flag set resumes
   immediately — instead of parking in `WaitingForSignal` forever — when the awaited signal was ALREADY raised
   in the context (`HasSignalBeenRaised`) before the runner reached the node, provided the `ResumeConditions`

@@ -115,6 +115,65 @@ namespace Faolline.GraphQuest.Tests
         }
 
         [Test]
+        public void EnableAutoEvaluate_FiresOnSignalRaised()
+        {
+            var signal = ScriptableObject.CreateInstance<SignalName>();
+            signal.name = "boss_defeated";
+            var completeCond = ScriptableObject.CreateInstance<SignalRaisedCondition>();
+            completeCond.Signal = signal;
+
+            var quest = QuestBuilder.Create("signal_test")
+                .AddObjective("obj_sig")
+                    .Named("Beat the boss")
+                    .CompleteWhen(completeCond)
+                .Build();
+            var ctx = new BaseContext();
+            try
+            {
+                var eval = new QuestEvaluator(quest, ctx);
+                eval.EnableAutoEvaluate();
+
+                QuestState? reported = null;
+                eval.OnObjectiveStateChanged += (id, state) => { if (id == "obj_sig") reported = state; };
+
+                ctx.RaiseSignal("boss_defeated");
+
+                Assert.AreEqual(QuestState.Completed, reported,
+                    "A signal-only quest must auto-evaluate when a signal is raised (SignalRaisedCondition).");
+            }
+            finally { Object.DestroyImmediate(quest); }
+        }
+
+        [Test]
+        public void DisableAutoEvaluate_StopsSignalAutoEvaluation()
+        {
+            var signal = ScriptableObject.CreateInstance<SignalName>();
+            signal.name = "ping";
+            var completeCond = ScriptableObject.CreateInstance<SignalRaisedCondition>();
+            completeCond.Signal = signal;
+
+            var quest = QuestBuilder.Create("signal_off_test")
+                .AddObjective("obj_sig")
+                    .CompleteWhen(completeCond)
+                .Build();
+            var ctx = new BaseContext();
+            try
+            {
+                var eval = new QuestEvaluator(quest, ctx);
+                eval.EnableAutoEvaluate();
+                eval.DisableAutoEvaluate();
+
+                int changeCount = 0;
+                eval.OnObjectiveStateChanged += (_, __) => changeCount++;
+
+                ctx.RaiseSignal("ping");
+
+                Assert.AreEqual(0, changeCount, "Should not auto-evaluate on a signal after disable.");
+            }
+            finally { Object.DestroyImmediate(quest); }
+        }
+
+        [Test]
         public void AutoEvaluate_DoesNotTickTimers()
         {
             var completeCond = ScriptableObject.CreateInstance<BoolCondition>();
