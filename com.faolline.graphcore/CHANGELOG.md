@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.26.0]
+
+### Added
+- **Multi-signal await (OR).** A node can now wait for several signals at once: `BaseNodeData.AwaitSignals`
+  (extra `SignalName` list) plus the existing single `AwaitSignalName` form the awaited set, exposed as
+  `AwaitSignalNames`. The runner subscribes to all of them and resumes on the **first** awaited signal that
+  passes `ResumeConditions` — so "resume on interact OR win" needs no consumer double-raise. Composes as
+  OR-triggers × AND-gate (`ResumeConditions`) × NOT (`NotCondition`). A single await is just a one-element set
+  (fully back-compatible). (Dogfood finding.)
+
 ## [0.25.0]
 
 ### Added
