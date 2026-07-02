@@ -463,10 +463,22 @@ namespace Faolline.GraphCore
             // or directly on the context (e.g. a dialogue end callback calling context.RaiseSignal).
             if (!string.IsNullOrEmpty(node.AwaitSignalName))
             {
-                _state = RunnerState.WaitingForSignal;
-                SubscribeContextSignal(node.AwaitSignalName);
-                OnWaitingForSignal?.Invoke(node, node.AwaitSignalName);
-                return;
+                // Opt-in: a signal that already fired ahead of the cursor (recorded in the context's
+                // raised-signal history) resumes the node immediately instead of parking forever — provided
+                // the ResumeConditions gate also passes. Off by default (live-only park).
+                bool alreadySatisfied = node.ResumeIfSignalAlreadyRaised
+                    && _context != null
+                    && _context.HasSignalBeenRaised(node.AwaitSignalName)
+                    && ResumeConditionsPass(node);
+
+                if (!alreadySatisfied)
+                {
+                    _state = RunnerState.WaitingForSignal;
+                    SubscribeContextSignal(node.AwaitSignalName);
+                    OnWaitingForSignal?.Invoke(node, node.AwaitSignalName);
+                    return;
+                }
+                // else: fall through to normal node-ready completion (no park).
             }
 
             // Time wait: hold here until enough host-fed time has elapsed (Tick).

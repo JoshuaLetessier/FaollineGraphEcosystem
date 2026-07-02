@@ -39,6 +39,8 @@ namespace Faolline.GraphCore
         private string _awaitSignal = string.Empty;
         [SerializeField, Tooltip("Extra conditions an await-signal must satisfy to resume this node. All must pass (AND). Unlike Entry Conditions (checked once on arrival), these are re-checked every time the signal fires — the node stays parked until the context satisfies them.")]
         private List<BaseCondition> _resumeConditions = new List<BaseCondition>();
+        [SerializeField, Tooltip("When ON, if the awaited signal was ALREADY raised in the context before the runner reached this node, resume immediately instead of parking forever. The signal's raised-history is consulted (so a reward or shortcut that fired ahead of the cursor is not lost). ResumeConditions still gate the resume. Default OFF (live-only: only a raise that happens while parked resumes).")]
+        private bool _resumeIfSignalAlreadyRaised;
         [SerializeField, Tooltip("Seconds the node waits before advancing (0 = no wait). If an await signal is also set, the signal takes precedence and this duration is ignored.")]
         private float  _waitDuration;
 
@@ -93,6 +95,19 @@ namespace Faolline.GraphCore
         /// conditions. Never null.
         /// </summary>
         public List<BaseCondition> ResumeConditions => _resumeConditions;
+
+        /// <summary>
+        /// Opt-in: when <c>true</c>, entering this node with a non-empty <see cref="AwaitSignalName"/> resumes
+        /// immediately (no park) if that signal has ALREADY been raised in the context
+        /// (<see cref="BaseContext.HasSignalBeenRaised"/>) and the <see cref="ResumeConditions"/> gate passes.
+        /// Guards against a signal that fired ahead of the cursor (e.g. a quest reward) parking the flow forever.
+        /// Default <c>false</c> keeps the live-only behaviour: only a raise while parked resumes the node.
+        /// </summary>
+        public bool ResumeIfSignalAlreadyRaised
+        {
+            get => _resumeIfSignalAlreadyRaised;
+            set => _resumeIfSignalAlreadyRaised = value;
+        }
 
         /// <summary>Actions executed when the runtime enters this node. Never null.</summary>
         public List<BaseAction> OnEnterActions => _onEnterActions;

@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.23.0]
+
+### Added
+- **`BaseNodeData.ResumeIfSignalAlreadyRaised` (opt-in).** An await-signal node with this flag set resumes
+  immediately — instead of parking in `WaitingForSignal` forever — when the awaited signal was ALREADY raised
+  in the context (`HasSignalBeenRaised`) before the runner reached the node, provided the `ResumeConditions`
+  gate also passes. Fixes the live-only await footgun where a signal that fired ahead of the cursor (e.g. a
+  quest reward that short-circuits) froze the flow even though the raised-history knew about it. Default
+  `false` keeps the existing live-only behaviour.
+
 ## [0.22.1]
 
 ### Fixed
