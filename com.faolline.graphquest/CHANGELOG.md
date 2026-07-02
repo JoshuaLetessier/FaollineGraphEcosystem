@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.0]
+
+### Added
+- **`QuestEvaluator.ResetObjective(id)`** — rewinds a SINGLE objective (the granular counterpart to `Reset`):
+  clears it from the completed/failed/rewarded sets and disarms its time limit, so it returns to Active/Locked
+  and its one-shot reward can fire again, leaving siblings and other quests untouched. Enables per-objective
+  retry (e.g. a timed objective the player can re-attempt). Rewinds the quest's own bookkeeping only — reset
+  the world inputs the conditions read for a genuine retry. (Cryptique dogfood backlog.)
+
 ## [0.6.0]
 
 ### Added
