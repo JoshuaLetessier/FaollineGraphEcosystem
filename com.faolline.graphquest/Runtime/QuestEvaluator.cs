@@ -246,6 +246,36 @@ namespace Faolline.GraphQuest
             _reactive.Reevaluate();
         }
 
+        /// <summary>
+        /// Rewinds a SINGLE objective for replay/retry — the granular counterpart to <see cref="Reset"/>. Clears
+        /// <paramref name="objectiveId"/> from this quest's completed/failed/rewarded sets and disarms its time
+        /// limit (so a timed objective re-arms fresh on the next <see cref="Evaluate(float)"/>), then re-derives.
+        /// The objective returns to Active/Locked and its one-shot reward can fire again. Other objectives and
+        /// other quests sharing the context are untouched. No-op for a null/empty id.
+        /// <para>
+        /// Like <see cref="Reset"/>, this rewinds the quest's OWN bookkeeping only — not the world values the
+        /// completion/fail conditions read. If those still hold, the next <see cref="Evaluate()"/> re-completes
+        /// the objective; reset the relevant world inputs too for a genuine retry. When
+        /// <see cref="EnableAutoEvaluate"/> is active the collection changes here re-derive automatically;
+        /// otherwise call <see cref="Evaluate()"/> to emit the updated states.
+        /// </para>
+        /// </summary>
+        public void ResetObjective(string objectiveId)
+        {
+            if (_context == null || string.IsNullOrEmpty(objectiveId)) return;
+            _context.RemoveFromCollection(_completedKey, objectiveId);
+            _context.RemoveFromCollection(_failedKey, objectiveId);
+            _context.RemoveFromCollection(_rewardedKey, objectiveId);
+
+            var obj = FindObjective(objectiveId);
+            if (obj != null && obj.TimeLimitSeconds > 0f)
+                _context.Set<float>(QuestContextKeys.DeadlineKey(_questId, objectiveId), float.NaN);
+
+            _lastObjectiveStates.Remove(objectiveId);
+            _questStateKnown = false;   // un-completing an objective can change the quest aggregate
+            _reactive.Reevaluate();
+        }
+
         /// <summary>The current derived state of <paramref name="objectiveId"/>.</summary>
         public QuestState GetObjectiveState(string objectiveId)
         {
