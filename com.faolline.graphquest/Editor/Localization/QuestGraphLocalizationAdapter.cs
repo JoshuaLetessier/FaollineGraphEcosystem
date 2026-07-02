@@ -17,7 +17,11 @@ namespace Faolline.GraphQuest.Editor
             if (graph == null) return 0;
             int count = 0;
 
-            var questId = graph.QuestId;
+            // Use the effective id (QuestId, else GraphId) — the SAME resolution QuestEvaluator uses to look up
+            // quest_<id> / quest_<id>_desc. Keying off the raw (possibly empty) QuestId here made an
+            // editor-authored quest with no QuestId emit nothing while the evaluator queried quest_<GraphId>,
+            // yielding a permanent localization-audit miss. Dogfood finding.
+            var questId = graph.ResolveQuestId();
             var locData = GraphLocalizationDataUtility.Find(graph);
             int graphFlags = locData != null ? (int)locData.DefaultFlags : (int)LocalizedAssetFlags.Text;
             if (!string.IsNullOrEmpty(questId))

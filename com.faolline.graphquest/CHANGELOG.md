@@ -11,6 +11,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
   parameter and collection changes, so a quest gated purely on `SignalRaisedCondition` stayed frozen (a
   signal is neither a parameter nor a collection). It now also subscribes to `BaseContext.OnAnySignalRaised`
   (graphcore 0.23.0), so signal-only quests derive automatically. Requires graphcore ≥ 0.23.0.
+- **Localization adapter keys off the effective quest id, not the raw QuestId.** A quest authored with no
+  explicit `QuestId` (relying on the `GraphId` fallback) made `QuestGraphLocalizationAdapter` emit no keys,
+  while `QuestEvaluator` looked up `quest_<GraphId>` — a permanent localization-audit miss. Both now resolve
+  the id through the new `QuestGraph.ResolveQuestId()` (QuestId, else GraphId), so emitted and queried keys
+  can never drift.
+
+### Added
+- **`QuestGraph.ResolveQuestId()`** — the single source of truth for a quest's effective logical id.
 
 ## [0.4.0]
 

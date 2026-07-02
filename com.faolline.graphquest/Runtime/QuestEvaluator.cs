@@ -54,11 +54,9 @@ namespace Faolline.GraphQuest
             _context = context;
             var ctx = LocalizationContext.Current;
             if (ctx?.Provider != null) _localization = ctx.Provider;
-            // Scope by the explicit QuestId; fall back to the graph's stable GraphId for editor-authored quests
-            // that have no QuestId set, so their context collections never collide with an unscoped default.
-            _questId = quest == null ? string.Empty
-                     : !string.IsNullOrEmpty(quest.QuestId) ? quest.QuestId
-                     : quest.GraphId;
+            // Scope by the effective quest id (explicit QuestId, else the graph's stable GraphId) — the SAME
+            // resolution the localization adapter uses, so emitted and queried keys never drift.
+            _questId = quest == null ? string.Empty : quest.ResolveQuestId();
             _completedKey = QuestContextKeys.CompletedSet(_questId);
             _failedKey = QuestContextKeys.FailedSet(_questId);
             _rewardedKey = QuestContextKeys.RewardedSet(_questId);
