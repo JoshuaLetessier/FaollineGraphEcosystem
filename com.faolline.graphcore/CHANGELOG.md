@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.24.0]
+
+### Added
+- **`GraphValidator` flags sub-graph signal deadlocks.** A `SubGraphNodeData` on a fresh context (Inherit
+  Parent Context off, no scope) whose target graph awaits a signal that nothing inside it raises can never
+  resume — the parent/host raises that signal on a different context. The validator now warns, naming the
+  signal, and suggests enabling Inherit Parent Context / Opens Scope. Self-contained signal loops (the
+  sub-graph raises what it awaits) are not flagged. Catches the "isolated sub-graph" authoring footgun
+  statically. (Dogfood finding.)
+- **`GraphValidator` flags shadowed branches.** On an auto-advanced (non-choice) node, an unconditioned
+  outgoing edge that is not last makes every branch after it unreachable — the runner takes the first passing
+  edge and an unconditioned edge always passes. The validator warns and points to the fix (add a condition,
+  or move it last as the default/else branch — which is the supported way to author a fallback). Choice-node
+  edges route by port id, so they are exempt. (Dogfood finding.)
+
 ## [0.23.0]
 
 ### Added
