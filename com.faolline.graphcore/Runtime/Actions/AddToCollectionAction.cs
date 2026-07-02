@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Faolline.GraphCore
 {
@@ -10,10 +11,13 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Actions/Add To Collection", fileName = "AddToCollectionAction")]
     public class AddToCollectionAction : BaseAction
     {
-        [SerializeField, Tooltip("The collection to add the value to.")]
+        // FormerlySerializedAs recovers assets authored before the 0.22 asset-only refactor, which renamed
+        // _collectionAsset → _collection and _valueAsset → _entry (the raw-string _collectionKey / _value
+        // fallbacks were intentionally dropped and cannot be migrated to assets).
+        [SerializeField, FormerlySerializedAs("_collectionAsset"), Tooltip("The collection to add the value to.")]
         private CollectionName _collection;
 
-        [SerializeField, Tooltip("The entry to add. Drag a CollectionEntry asset (or a subclass like an inventory item).")]
+        [SerializeField, FormerlySerializedAs("_valueAsset"), Tooltip("The entry to add. Drag a CollectionEntry asset (or a subclass like an inventory item).")]
         private CollectionEntry _entry;
 
         public CollectionName Collection { get => _collection; set => _collection = value; }

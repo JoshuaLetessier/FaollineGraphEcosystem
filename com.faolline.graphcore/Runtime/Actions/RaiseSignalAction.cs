@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace Faolline.GraphCore
 {
@@ -10,7 +11,10 @@ namespace Faolline.GraphCore
     [CreateAssetMenu(menuName = "Faolline/Actions/Raise Signal", fileName = "RaiseSignalAction")]
     public class RaiseSignalAction : BaseAction
     {
-        [SerializeField, Tooltip("The signal to raise. Drag a SignalName asset.")]
+        // FormerlySerializedAs recovers assets authored before the 0.22 asset-only refactor, which renamed
+        // _signalAsset → _signal (the raw-string _signalRaw fallback was intentionally dropped and cannot be
+        // migrated to a SignalName asset).
+        [SerializeField, FormerlySerializedAs("_signalAsset"), Tooltip("The signal to raise. Drag a SignalName asset.")]
         private SignalName _signal;
 
         public SignalName Signal { get => _signal; set => _signal = value; }
