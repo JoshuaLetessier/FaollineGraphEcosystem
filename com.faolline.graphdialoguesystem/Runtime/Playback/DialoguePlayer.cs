@@ -328,6 +328,24 @@ namespace Faolline.GraphDialogue
             while (_runner.State == RunnerState.NodeReady && !_stuck && guard++ < MaxDrainSteps)
             {
                 var node = _runner.CurrentNode;
+
+                // Router choice node (condition branches, no player-facing DialogueChoice options): auto-resolve
+                // by taking the first branch whose condition passes, then keep draining — never shown as buttons.
+                // Done here (state == NodeReady) so ChooseById is valid; a dead router (no branch passes) is stuck.
+                if (node is ChoiceNodeData router && DialoguePresenter.IsRouter(router))
+                {
+                    var branchId = _presenter.ResolveRouterBranchId(router, _context);
+                    if (string.IsNullOrEmpty(branchId))
+                    {
+                        Debug.LogWarning($"[GraphDialogue] Router '{router.Id}' has no branch whose condition " +
+                                         $"passes — playback stuck. Add a default (unconditional) branch.");
+                        _stuck = true;
+                        break;
+                    }
+                    _runner.ChooseById(branchId);
+                    continue;
+                }
+
                 if (node is ChoiceNodeData || node is DialogueLineNodeData)
                 {
                     EmitForCurrentNode();

@@ -54,6 +54,28 @@ namespace Faolline.GraphDialogue.Tests
         }
 
         /// <summary>
+        /// Start → Router (plain BaseChoice branches, NOT DialogueChoice) → "a"→End(Completed),
+        /// "b"→End(Cancelled). Each branch is gated by the matching condition. A router is auto-resolved by
+        /// condition, never shown as a player prompt.
+        /// </summary>
+        public static DialogueGraph WithRouter(BaseCondition condA, BaseCondition condB)
+        {
+            var g = ScriptableObject.CreateInstance<DialogueGraph>();
+            var s = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
+            var c = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
+            c.Choices.Add(new BaseChoice { Id = "a", Condition = condA });
+            c.Choices.Add(new BaseChoice { Id = "b", Condition = condB });
+            var e1 = new EndNodeData { Id = "e1", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
+            var e2 = new EndNodeData { Id = "e2", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Cancelled };
+            g.AddNode(s); g.AddNode(c); g.AddNode(e1); g.AddNode(e2);
+            g.AddEdge(new BaseEdgeData { Id = "es", FromNodeId = "s", ToNodeId = "c", PortName = "out" });
+            g.AddEdge(new BaseEdgeData { Id = "ea", FromNodeId = "c", ToNodeId = "e1", PortName = "a" });
+            g.AddEdge(new BaseEdgeData { Id = "eb", FromNodeId = "c", ToNodeId = "e2", PortName = "b" });
+            g.EntryNodeId = "s";
+            return g;
+        }
+
+        /// <summary>
         /// Start → Choice "a"→End(Completed, "persuaded"), "b"→End(Completed, "rejected").
         /// Both share the same EndReason; the OutcomeLabel distinguishes them.
         /// </summary>

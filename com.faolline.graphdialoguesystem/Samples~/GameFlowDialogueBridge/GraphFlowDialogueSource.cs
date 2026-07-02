@@ -49,6 +49,7 @@ namespace Faolline.GraphDialogue.Samples.GameFlowBridge
             _driver = driver ?? throw new ArgumentNullException(nameof(driver));
             _presenter = presenter ?? throw new ArgumentNullException(nameof(presenter));
             _driver.OnNodeEntered += HandleNodeEntered;
+            _driver.OnNodeCompleted += HandleNodeCompleted;
             _driver.OnStuck += HandleStuck;
         }
 
@@ -56,6 +57,7 @@ namespace Faolline.GraphDialogue.Samples.GameFlowBridge
         public void Teardown()
         {
             _driver.OnNodeEntered -= HandleNodeEntered;
+            _driver.OnNodeCompleted -= HandleNodeCompleted;
             _driver.OnStuck -= HandleStuck;
         }
 
@@ -67,6 +69,12 @@ namespace Faolline.GraphDialogue.Samples.GameFlowBridge
 
         private void HandleNodeEntered(BaseNodeData node)
         {
+            // A router choice node (condition branches, no player-facing DialogueChoice options) is never shown:
+            // it is auto-resolved on completion (see HandleNodeCompleted), not rendered as buttons. Skip it here
+            // so it neither draws a choice prompt nor ends the dialogue segment.
+            if (node is ChoiceNodeData choiceNode && DialoguePresenter.IsRouter(choiceNode))
+                return;
+
             var step = _presenter.Resolve(node, _driver.Context);
 
             if (step == null)
@@ -94,6 +102,17 @@ namespace Faolline.GraphDialogue.Samples.GameFlowBridge
                 case LineStep line: OnLine?.Invoke(line); break;
                 case ChoiceStep choice: OnChoices?.Invoke(choice); break;
             }
+        }
+
+        // Auto-resolve a router choice node once the runner has completed it (ChooseById requires NodeReady,
+        // which OnNodeCompleted guarantees — routing on OnNodeEntered would be a no-op). Takes the first branch
+        // whose condition passes; a dead router surfaces as stuck via the driver.
+        private void HandleNodeCompleted(BaseNodeData node)
+        {
+            if (!(node is ChoiceNodeData choiceNode) || !DialoguePresenter.IsRouter(choiceNode)) return;
+            var branchId = _presenter.ResolveRouterBranchId(choiceNode, _driver.Context);
+            if (!string.IsNullOrEmpty(branchId))
+                _driver.ChooseById(branchId);
         }
 
         private void HandleStuck() => OnStuck?.Invoke();

@@ -4,6 +4,24 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.12.0]
+
+### Fixed
+- **Router choice nodes are auto-resolved, not shown as player prompts.** `DialoguePresenter.ResolveChoice`
+  rendered EVERY `ChoiceNodeData` as buttons, so a condition-branching router (authored with plain
+  `BaseChoice` options rather than the player-facing `DialogueChoice`) leaked to the UI as `#choice_<id>`
+  buttons. `DialoguePlayer.Drain` now detects a router and auto-takes the first branch whose condition passes
+  (a dead router — no branch passes — becomes stuck with a diagnostic), only pausing on real player choices.
+
+### Added
+- **`DialoguePresenter.IsRouter(ChoiceNodeData)`** — classifies a choice node as a router (has options and
+  none is a `DialogueChoice`) vs a player prompt.
+- **`DialoguePresenter.ResolveRouterBranchId(node, context)`** — the first router branch whose condition
+  passes (or null); warns when more than one passes at once (ambiguous sibling conditions). A driver resumes
+  with `ChooseById(id)`, which requires `NodeReady` — route on OnNodeCompleted, not OnNodeEntered.
+- **`GameFlowDialogueBridge` sample** routes flow-embedded routers on `OnNodeCompleted` instead of drawing
+  them, mirroring the standalone player.
+
 ## [0.11.0]
 
 ### Added
