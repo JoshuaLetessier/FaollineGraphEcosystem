@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.22.1]
+
+### Fixed
+- **Renamed action fields keep `[FormerlySerializedAs]` so pre-0.22 assets survive.** The 0.22 asset-only
+  refactor renamed `RaiseSignalAction._signalAsset → _signal` and `AddToCollectionAction._collectionAsset →
+  _collection` / `_valueAsset → _entry` without serialization aliases, so assets authored earlier deserialized
+  to null and the action silently became a no-op. The attributes are restored. (The dropped raw-string
+  fallbacks — `_signalRaw`, `_collectionKey`, `_value` — cannot be migrated to asset references and are not
+  recovered.)
+
 ## [0.21.0]
 
 ### Added
