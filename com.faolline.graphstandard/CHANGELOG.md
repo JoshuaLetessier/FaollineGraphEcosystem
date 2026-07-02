@@ -4,6 +4,13 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.14.0]
+
+### Added
+- **`GraphBuilder.AddGraphLink(target, note)`** — fluent builder support for the non-executing
+  `GraphLinkNodeData` documentary reference, replacing the raw `graph.AddNode(new GraphLinkNodeData{…})`
+  boilerplate. Left unconnected by default (it is authoring metadata, never run). (Cryptique dogfood backlog.)
+
 ## [0.13.0]
 
 ### Added
