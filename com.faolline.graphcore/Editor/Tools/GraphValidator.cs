@@ -110,9 +110,54 @@ namespace Faolline.GraphCore.Editor
                         }
                     }
                 }
+
+                // Sub-graph on a FRESH context (Inherit off, no scope) that awaits a signal never raised inside
+                // itself: the signal can only come from the parent/host, which writes a DIFFERENT context, so the
+                // await can never resume — a guaranteed deadlock. (A self-contained subgraph that raises what it
+                // awaits is fine on a fresh context, so we only flag the truly-external awaits.)
+                if (n is SubGraphNodeData sub && sub.TargetGraph != null
+                    && !sub.InheritParentContext && !sub.OpensScope)
+                {
+                    foreach (var signal in ExternalAwaitedSignals(sub.TargetGraph))
+                        report.Issues.Add(new GraphIssue(GraphIssueSeverity.Warning, n.Id,
+                            $"Sub-graph '{Label(n)}' runs on a fresh context (Inherit Parent Context off, no " +
+                            $"scope) but its target awaits signal '{signal}' that nothing inside it raises — the " +
+                            $"signal from the parent/host can never cross into the fresh context, so it deadlocks. " +
+                            $"Enable Inherit Parent Context (or Opens Scope) if that signal must reach it."));
+                }
             }
 
             return report;
+        }
+
+        // Signal names the graph AWAITS but never RAISES within itself — so they must arrive from outside.
+        // Only inspects the given graph's own nodes (one level; nested sub-graphs are validated separately).
+        private static IEnumerable<string> ExternalAwaitedSignals(BaseGraph graph)
+        {
+            var awaited = new HashSet<string>();
+            var raised = new HashSet<string>();
+            if (graph?.Nodes == null) return awaited;
+
+            foreach (var node in graph.Nodes)
+            {
+                if (node == null) continue;
+                if (!string.IsNullOrEmpty(node.AwaitSignalName)) awaited.Add(node.AwaitSignalName);
+                CollectRaised(node.OnEnterActions, raised);
+                CollectRaised(node.OnExitActions, raised);
+            }
+            awaited.ExceptWith(raised);
+            return awaited;
+        }
+
+        private static void CollectRaised(List<BaseAction> actions, HashSet<string> into)
+        {
+            if (actions == null) return;
+            foreach (var a in actions)
+                if (a is RaiseSignalAction rs && rs.Signal != null)
+                {
+                    string name = (string)rs.Signal;
+                    if (!string.IsNullOrEmpty(name)) into.Add(name);
+                }
         }
 
         private static string Label(BaseNodeData n) => string.IsNullOrEmpty(n.Title) ? n.Id : n.Title;

@@ -10,12 +10,17 @@ namespace Faolline.GraphCore.Tests
     public class GraphValidatorTests
     {
         private BaseGraph _graph;
+        private readonly System.Collections.Generic.List<Object> _tracked = new System.Collections.Generic.List<Object>();
 
         [TearDown]
         public void TearDown()
         {
             if (_graph != null) Object.DestroyImmediate(_graph);
+            foreach (var o in _tracked) if (o != null) Object.DestroyImmediate(o);
+            _tracked.Clear();
         }
+
+        private T Track<T>(T o) where T : Object { _tracked.Add(o); return o; }
 
         private BaseGraph NewGraph() => _graph = ScriptableObject.CreateInstance<BaseGraph>();
 
@@ -136,6 +141,74 @@ namespace Faolline.GraphCore.Tests
         public void NullGraph_IsError()
         {
             Assert.IsTrue(HasError(GraphValidator.Validate(null), "null"));
+        }
+
+        // ── Sub-graph signal isolation (#5) ───────────────────────────────────
+
+        // A target graph whose single statement node awaits <awaitSignal>, optionally raising <raiseSignal>
+        // on enter (pass null to raise nothing → the await is external).
+        private BaseGraph TargetAwaiting(string awaitSignal, string raiseSignal = null)
+        {
+            var g = Track(ScriptableObject.CreateInstance<BaseGraph>());
+            var node = new StatementNodeData
+            {
+                Id = "await", NodeType = StatementNodeData.NodeTypeId, AwaitSignalName = awaitSignal
+            };
+            if (!string.IsNullOrEmpty(raiseSignal))
+            {
+                var sig = Track(ScriptableObject.CreateInstance<SignalName>()); sig.name = raiseSignal;
+                var raise = Track(ScriptableObject.CreateInstance<RaiseSignalAction>()); raise.Signal = sig;
+                node.OnEnterActions.Add(raise);
+            }
+            g.AddNode(node);
+            g.EntryNodeId = "await";
+            return g;
+        }
+
+        private BaseGraph HostWithSubGraph(BaseGraph target, bool inherit, bool scope)
+        {
+            var g = NewGraph();
+            g.AddNode(Start("s"));
+            g.AddNode(new SubGraphNodeData
+            {
+                Id = "sub", NodeType = SubGraphNodeData.NodeTypeId,
+                TargetGraph = target, InheritParentContext = inherit, OpensScope = scope
+            });
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "sub"));
+            return g;
+        }
+
+        [Test]
+        public void FreshContextSubgraph_AwaitingExternalSignal_IsWarning()
+        {
+            var host = HostWithSubGraph(TargetAwaiting("ext"), inherit: false, scope: false);
+            Assert.IsTrue(HasWarning(GraphValidator.Validate(host), "can never cross into the fresh context"));
+        }
+
+        [Test]
+        public void InheritingSubgraph_AwaitingExternalSignal_NoWarning()
+        {
+            var host = HostWithSubGraph(TargetAwaiting("ext"), inherit: true, scope: false);
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(host), "fresh context"),
+                "inheriting the parent context lets the signal reach the sub-graph");
+        }
+
+        [Test]
+        public void ScopedSubgraph_AwaitingExternalSignal_NoWarning()
+        {
+            var host = HostWithSubGraph(TargetAwaiting("ext"), inherit: false, scope: true);
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(host), "fresh context"),
+                "a scoped sub-graph reads through to parent values/signals");
+        }
+
+        [Test]
+        public void FreshContextSubgraph_AwaitingSelfRaisedSignal_NoWarning()
+        {
+            // The sub-graph raises the very signal it awaits, so a fresh context is self-sufficient.
+            var host = HostWithSubGraph(TargetAwaiting("loop", raiseSignal: "loop"), inherit: false, scope: false);
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(host), "fresh context"),
+                "a self-contained signal loop needs no parent context");
         }
     }
 }
