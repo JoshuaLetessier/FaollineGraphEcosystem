@@ -19,6 +19,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
 
 ### Added
 - **`QuestGraph.ResolveQuestId()`** — the single source of truth for a quest's effective logical id.
+- **`QuestGraphValidator` (Editor) — static quest-aware validation.** A quest is a reactive objective DAG with
+  no Start/End, so the core `GraphValidator` does not apply. The new validator reports the quest authoring
+  mistakes that otherwise fail silently at runtime: no objectives (Error), an objective with no Completion
+  Condition that can never auto-complete (Warning), an unreachable k-of-N prerequisite gate (Error), and an
+  unreachable or non-positive `Threshold` completion rule (Error / Warning). Reuses graphcore's
+  `GraphValidationReport` / `GraphIssue`. Menu: `Faolline ▸ Quest ▸ Validate Selected Quest`.
 
 ## [0.4.0]
 
