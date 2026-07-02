@@ -210,5 +210,57 @@ namespace Faolline.GraphCore.Tests
             Assert.IsFalse(HasWarning(GraphValidator.Validate(host), "fresh context"),
                 "a self-contained signal loop needs no parent context");
         }
+
+        // ── Unconditioned-edge shadowing (#8) ─────────────────────────────────
+
+        private static StatementNodeData St(string id) => new StatementNodeData { Id = id, NodeType = StatementNodeData.NodeTypeId };
+        private BaseEdgeData Gated(string from, string to, string port)
+        {
+            var e = Edge(from, to, port);
+            e.Condition = Track(ScriptableObject.CreateInstance<AlwaysTrueCondition>());
+            return e;
+        }
+
+        [Test]
+        public void UnconditionedEdgeBeforeConditioned_IsWarning()
+        {
+            var g = NewGraph();
+            g.AddNode(Start("s")); g.AddNode(St("r")); g.AddNode(End("a")); g.AddNode(End("b"));
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "r"));
+            g.AddEdge(Edge("r", "a", "1"));          // unconditioned, FIRST → shadows "b"
+            g.AddEdge(Gated("r", "b", "2"));
+            Assert.IsTrue(HasWarning(GraphValidator.Validate(g), "unreachable"));
+        }
+
+        [Test]
+        public void UnconditionedEdgeLast_NoShadowWarning()
+        {
+            var g = NewGraph();
+            g.AddNode(Start("s")); g.AddNode(St("r")); g.AddNode(End("a")); g.AddNode(End("b"));
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "r"));
+            g.AddEdge(Gated("r", "a", "1"));
+            g.AddEdge(Edge("r", "b", "2"));          // unconditioned, LAST → valid default/else branch
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(g), "unreachable"),
+                "an unconditioned edge placed last is the valid default branch");
+        }
+
+        [Test]
+        public void ChoiceNode_UnconditionedEdges_NoShadowWarning()
+        {
+            // Choice edges route by port (ChooseById), so edge order does not shadow anything.
+            var g = NewGraph();
+            var c = Choice("c");
+            c.Choices.Add(new BaseChoice { Id = "a" });
+            c.Choices.Add(new BaseChoice { Id = "b" });
+            g.AddNode(Start("s")); g.AddNode(c); g.AddNode(End("ea")); g.AddNode(End("eb"));
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "c"));
+            g.AddEdge(Edge("c", "ea", "a"));
+            g.AddEdge(Edge("c", "eb", "b"));
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(g), "unreachable"),
+                "choice edges route by port id, not condition order");
+        }
     }
 }

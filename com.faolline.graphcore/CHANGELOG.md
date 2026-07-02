@@ -13,6 +13,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
   signal, and suggests enabling Inherit Parent Context / Opens Scope. Self-contained signal loops (the
   sub-graph raises what it awaits) are not flagged. Catches the "isolated sub-graph" authoring footgun
   statically. (Dogfood finding.)
+- **`GraphValidator` flags shadowed branches.** On an auto-advanced (non-choice) node, an unconditioned
+  outgoing edge that is not last makes every branch after it unreachable — the runner takes the first passing
+  edge and an unconditioned edge always passes. The validator warns and points to the fix (add a condition,
+  or move it last as the default/else branch — which is the supported way to author a fallback). Choice-node
+  edges route by port id, so they are exempt. (Dogfood finding.)
 
 ## [0.23.0]
 

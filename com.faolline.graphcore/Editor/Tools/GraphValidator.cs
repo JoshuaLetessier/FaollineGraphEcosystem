@@ -111,6 +111,24 @@ namespace Faolline.GraphCore.Editor
                     }
                 }
 
+                // Auto-advanced node (NOT a choice — choices route by ChooseById/port, order-independent): an
+                // unconditioned outgoing edge that is not LAST shadows every edge after it, because the runner
+                // takes the first edge whose condition passes and an unconditioned edge always passes. The later
+                // branches are then dead. (An unconditioned edge placed LAST is the valid default/else branch.)
+                if (!(n is ChoiceNodeData))
+                {
+                    var outs = edges.Where(e => e.FromNodeId == n.Id).ToList();
+                    if (outs.Count > 1)
+                    {
+                        int firstOpen = outs.FindIndex(e => e.Condition == null);
+                        if (firstOpen >= 0 && firstOpen < outs.Count - 1)
+                            report.Issues.Add(new GraphIssue(GraphIssueSeverity.Warning, n.Id,
+                                $"Node '{Label(n)}' has an unconditioned outgoing edge that is not last, so the " +
+                                $"{outs.Count - 1 - firstOpen} branch(es) after it are unreachable (the runner takes " +
+                                $"the first passing edge). Add a condition to it, or move it last as the default branch."));
+                    }
+                }
+
                 // Sub-graph on a FRESH context (Inherit off, no scope) that awaits a signal never raised inside
                 // itself: the signal can only come from the parent/host, which writes a DIFFERENT context, so the
                 // await can never resume — a guaranteed deadlock. (A self-contained subgraph that raises what it
