@@ -89,7 +89,10 @@ namespace Faolline.GraphCore.Editor
 
             foreach (var n in nodes)
             {
-                if (nodes.Count > 1 && !connected.Contains(n.Id))
+                // GraphLink is a non-executing documentary annotation — being unconnected is its normal state,
+                // so exempt it from the isolated-node warning (a false positive there would teach consumers to
+                // ignore validator warnings, killing its value).
+                if (nodes.Count > 1 && !connected.Contains(n.Id) && !(n is GraphLinkNodeData))
                     report.Issues.Add(new GraphIssue(GraphIssueSeverity.Warning, n.Id, $"Isolated node '{Label(n)}' (no connection)."));
 
                 if (n is ChoiceNodeData choice)

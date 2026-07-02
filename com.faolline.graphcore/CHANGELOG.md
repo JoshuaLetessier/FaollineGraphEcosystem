@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.26.1]
+
+### Fixed
+- **`GraphValidator` no longer flags a `GraphLinkNodeData` as an isolated node.** A GraphLink is a
+  non-executing documentary annotation, so being unconnected is its normal state; the false-positive
+  "Isolated node" warning is now suppressed for it (regular disconnected nodes still warn). Left unfixed it
+  would train consumers to ignore validator warnings. (Dogfood finding.)
+
 ## [0.26.0]
 
 ### Added
