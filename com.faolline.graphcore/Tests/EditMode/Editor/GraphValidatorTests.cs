@@ -96,6 +96,19 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
+        public void IsolatedGraphLink_IsNotWarning()
+        {
+            // GraphLink is a non-executing annotation — being unconnected is normal, so it must NOT warn.
+            var g = NewGraph();
+            g.AddNode(Start("s")); g.AddNode(End("e"));
+            g.AddNode(new GraphLinkNodeData { Id = "note", NodeType = GraphLinkNodeData.NodeTypeId });
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "e"));
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(g), "Isolated node"),
+                "a disconnected GraphLink annotation must not raise the isolated-node warning");
+        }
+
+        [Test]
         public void ChoiceWithoutOptions_IsError()
         {
             var g = NewGraph();
