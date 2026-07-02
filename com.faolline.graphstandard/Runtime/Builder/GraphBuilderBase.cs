@@ -42,6 +42,20 @@ namespace Faolline.GraphStandard
             => Add(new EndNodeData { NodeType = EndNodeData.NodeTypeId, EndReason = reason }, title);
 
         /// <summary>
+        /// Adds a <see cref="GraphLinkNodeData"/> — a NON-executing documentary reference to
+        /// <paramref name="target"/> with an optional <paramref name="note"/>. Pure authoring metadata (never
+        /// run), so it normally stays unconnected; use it to make composition visible (e.g. "this flow relates
+        /// to these quests"). Replaces the raw <c>graph.AddNode(new GraphLinkNodeData{…})</c> boilerplate.
+        /// </summary>
+        public GraphNodeBuilder AddGraphLink(BaseGraph target = null, string note = null)
+            => Add(new GraphLinkNodeData
+            {
+                NodeType = GraphLinkNodeData.NodeTypeId,
+                TargetGraph = target,
+                Note = note
+            }, null);   // GraphLink displays its Note, not a Title
+
+        /// <summary>
         /// Connects <paramref name="from"/> to <paramref name="to"/>. For a Choice <paramref name="from"/>, a
         /// <paramref name="portName"/> matching a choice's <see cref="BaseChoice.Title"/> is resolved to that
         /// choice's id (the routing key); otherwise the port is used literally (default "out").

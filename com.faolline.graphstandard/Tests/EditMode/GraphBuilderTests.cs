@@ -57,6 +57,26 @@ namespace Faolline.GraphStandard.Tests
         }
 
         [Test]
+        public void AddGraphLink_AddsNonExecutingReference_Unconnected()
+        {
+            var target = Track(ScriptableObject.CreateInstance<BaseGraph>());
+            var b = new GraphBuilder<BaseGraph>();
+            var start = b.AddStart("Start").AsEntry();
+            var end = b.AddEnd("End");
+            start.To(end);
+            b.AddGraphLink(target, "see the quest graph");   // documentary, left unconnected
+            var g = Track(b.Build());
+
+            var link = g.Nodes.OfType<GraphLinkNodeData>().Single();
+            Assert.AreSame(target, link.TargetGraph);
+            Assert.AreEqual("see the quest graph", link.Note);
+            Assert.AreEqual(GraphLinkNodeData.NodeTypeId, link.NodeType);
+            Assert.IsFalse(g.Edges.Any(e => e.FromNodeId == link.Id || e.ToNodeId == link.Id),
+                "a GraphLink is documentary — it stays unconnected");
+            Assert.AreEqual(1, g.Edges.Count, "only the start→end edge exists");
+        }
+
+        [Test]
         public void Build_ReturnsRequestedGraphType()
         {
             var g = Track(new GraphBuilder<BaseGraph>().Build());
