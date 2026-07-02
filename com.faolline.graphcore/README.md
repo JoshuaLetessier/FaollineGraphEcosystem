@@ -388,13 +388,52 @@ given node (e.g. restoring a saved session) instead of the entry node.
 `BaseContext` is more than a typed blackboard:
 
 - **Parameters** — `Set/Get/TryGet/Has` for `bool`/`int`/`float`/`string`/`Vector2`/`Vector3`/`Color`, with `OnParameterChanged`.
-- **Signals** — `RaiseSignal(name[, payload])`, `OnSignal`/`OffSignal`, `TryGetLastSignal` (0.4.0).
+- **Signals** — `RaiseSignal(name[, payload])`, `OnSignal`/`OffSignal`, `TryGetLastSignal` (0.4.0),
+  `HasSignalBeenRaised`/`ForgetSignal` (durable history, 0.22.0), and `OnAnySignalRaised`/`OffAnySignalRaised`
+  (wildcard, fires after per-name handlers, 0.23.0).
 - **Collections** (0.4.0) — named string-sets for save-friendly state (inventory, visited rooms, a
   completed-set): `AddToCollection`/`RemoveFromCollection`/`CollectionContains`/`CollectionCount`/
   `GetCollection`/`ClearCollection`/`OnCollectionChanged`/`GetAllCollections`. Deep-copied by `DeepClone`.
 - **Scoped (global + local) contexts** (0.3.0) — a sub-graph can ride the parent context with a fresh
   **local overlay** (`BeginLocalContext`/`EndLocalContext`); reads fall through to global, writes land local
   and are discarded when the scope ends. Used by `SubGraphNodeData.OpensScope`.
+
+## Authoring patterns
+
+A few idioms the runtime and the `GraphValidator` (Editor) are built around — following them keeps graphs
+readable and lets the validator catch mistakes before play.
+
+### Default / "else" branch = an unconditioned edge, placed last
+
+An auto-advanced node (anything but a choice node) leaves through the **first outgoing edge whose condition
+passes**. An edge with no condition always passes, so:
+
+- To add a fallback branch, give it **no condition** and make it the **last** outgoing edge — it runs only
+  when every earlier (conditioned) branch failed. That is the supported "else"/default.
+- An unconditioned edge that is **not** last makes every branch after it unreachable. `GraphValidator` warns
+  about this ("…branch(es) after it are unreachable…").
+- If two conditioned branches can be true at once, the first still wins; make sibling conditions mutually
+  exclusive (`AndCondition`/`NotCondition`) or rely on the ordered default. A router that resolves >1 branch
+  logs a warning at runtime.
+
+(Choice nodes are different: their edges are picked by port id via `ChooseById`, so edge order does not matter.)
+
+### Graph-driven gameplay UI (the signal seam)
+
+Keep the graph the source of truth for **when** a piece of gameplay UI appears, without the graph depending on
+the UI. Put a `RaiseSignalAction` on the node that should trigger it; the consumer subscribes on the shared
+context and reveals its own UI:
+
+```csharp
+// Authoring: the "Play a round?" node's OnEnter raises a RaiseSignalAction("StartDiceGame").
+// Consumer (a MonoBehaviour, never referenced by the graph):
+context.OnSignal("StartDiceGame", _ => dicePanel.Show());
+```
+
+The panel is inert until the flow reaches that node. The graph carries **intent** (a named signal); the
+consumer owns the **presentation** — the same separation the dialogue/quest libs use. Pair with
+`SignalRaisedCondition` if a later branch should gate on "the round was played", and note that a
+`QuestEvaluator` with `EnableAutoEvaluate()` now re-derives on raised signals (0.23.0).
 
 ## Assembly Definitions
 
