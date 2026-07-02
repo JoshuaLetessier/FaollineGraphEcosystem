@@ -3,6 +3,7 @@ using Faolline.GraphLocalization;
 using Faolline.GraphCore;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace Faolline.GraphDialogue.Tests
 {
@@ -84,6 +85,58 @@ namespace Faolline.GraphDialogue.Tests
             // default: no fallback (the bare #key marker, not the Title)
             var noFallback = new DialoguePresenter(emptyProvider);
             Assert.AreNotEqual("Bonjour aventurier", noFallback.ResolveLine(line, ctx).ResolvedText);
+        }
+
+        private sealed class TrueCond : BaseCondition { public override bool Evaluate(BaseContext c) => true; }
+
+        [Test]
+        public void IsRouter_AllBaseChoice_True_AnyDialogueChoice_False()
+        {
+            var router = new ChoiceNodeData { Id = "r", NodeType = ChoiceNodeData.NodeTypeId };
+            router.Choices.Add(new BaseChoice { Id = "x" });
+            router.Choices.Add(new BaseChoice { Id = "y" });
+            Assert.IsTrue(DialoguePresenter.IsRouter(router), "all-BaseChoice node is a router");
+
+            var prompt = new ChoiceNodeData { Id = "p", NodeType = ChoiceNodeData.NodeTypeId };
+            prompt.Choices.Add(new DialogueChoice { Id = "a" });
+            prompt.Choices.Add(new BaseChoice { Id = "b" });
+            Assert.IsFalse(DialoguePresenter.IsRouter(prompt), "any DialogueChoice present → player prompt, not a router");
+
+            var empty = new ChoiceNodeData { Id = "e", NodeType = ChoiceNodeData.NodeTypeId };
+            Assert.IsFalse(DialoguePresenter.IsRouter(empty), "an empty choice node is not a router");
+        }
+
+        [Test]
+        public void ResolveRouterBranchId_ReturnsFirstPassingBranch()
+        {
+            var router = new ChoiceNodeData { Id = "r", NodeType = ChoiceNodeData.NodeTypeId };
+            router.Choices.Add(new BaseChoice { Id = "a", Condition = ScriptableObject.CreateInstance<FalseCond>() });
+            router.Choices.Add(new BaseChoice { Id = "b" });   // null condition → passes
+            var presenter = new DialoguePresenter(new CsvLocalizationProvider("Key,en\n", "en"));
+
+            Assert.AreEqual("b", presenter.ResolveRouterBranchId(router, new BaseContext()));
+        }
+
+        [Test]
+        public void ResolveRouterBranchId_NoBranchPasses_ReturnsNull()
+        {
+            var router = new ChoiceNodeData { Id = "r", NodeType = ChoiceNodeData.NodeTypeId };
+            router.Choices.Add(new BaseChoice { Id = "a", Condition = ScriptableObject.CreateInstance<FalseCond>() });
+            var presenter = new DialoguePresenter(new CsvLocalizationProvider("Key,en\n", "en"));
+
+            Assert.IsNull(presenter.ResolveRouterBranchId(router, new BaseContext()));
+        }
+
+        [Test]
+        public void ResolveRouterBranchId_MultiplePass_WarnsAndTakesFirst()
+        {
+            var router = new ChoiceNodeData { Id = "r", NodeType = ChoiceNodeData.NodeTypeId };
+            router.Choices.Add(new BaseChoice { Id = "a", Condition = ScriptableObject.CreateInstance<TrueCond>() });
+            router.Choices.Add(new BaseChoice { Id = "b", Condition = ScriptableObject.CreateInstance<TrueCond>() });
+            var presenter = new DialoguePresenter(new CsvLocalizationProvider("Key,en\n", "en"));
+
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex(@"\[GraphDialogue\] Router 'r' has 2 branches"));
+            Assert.AreEqual("a", presenter.ResolveRouterBranchId(router, new BaseContext()));
         }
 
         [Test]

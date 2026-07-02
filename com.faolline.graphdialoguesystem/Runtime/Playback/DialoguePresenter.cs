@@ -85,6 +85,58 @@ namespace Faolline.GraphDialogue
             return new LineStep(line.Id, line.SpeakerKey, speakerName, text, line.ExpressionKey, voice);
         }
 
+        /// <summary>
+        /// True when <paramref name="node"/> is a <em>router</em>: a choice node that branches by condition and
+        /// must NOT be shown to the player. A router has at least one option and none of its options is a
+        /// <see cref="DialogueChoice"/> (they are plain <see cref="BaseChoice"/> branches). Player-facing choice
+        /// nodes authored through the dialogue builder/editor always use <see cref="DialogueChoice"/>, so a node
+        /// carrying only bare <see cref="BaseChoice"/> options is an auto-routed switch, not a prompt. An empty
+        /// choice node is not a router (it is a dead end handled elsewhere).
+        /// </summary>
+        public static bool IsRouter(ChoiceNodeData node)
+        {
+            if (node == null) return false;
+            bool any = false;
+            foreach (var c in node.Choices)
+            {
+                if (c == null) continue;
+                any = true;
+                if (c is DialogueChoice) return false;   // a player-facing option present → not a router
+            }
+            return any;
+        }
+
+        /// <summary>
+        /// For a <see cref="IsRouter">router</see> node, the <c>Id</c> of the first branch whose
+        /// <see cref="BaseChoice.Condition"/> passes (a null condition always passes), or <c>null</c> when no
+        /// branch is available. Logs a <c>[GraphDialogue]</c> warning when more than one branch passes at once:
+        /// the first still wins, but simultaneously-true sibling conditions mean the author's "first available"
+        /// intent is ambiguous (use mutually-exclusive And/Not conditions, an explicit priority, or a default
+        /// branch). A driver resumes the router with <c>ChooseById(returnedId)</c> — which requires the runner
+        /// to be at <see cref="RunnerState.NodeReady"/> (route on OnNodeCompleted, not OnNodeEntered).
+        /// </summary>
+        public string ResolveRouterBranchId(ChoiceNodeData node, BaseContext context)
+        {
+            if (node == null) return null;
+            string first = null;
+            int passing = 0;
+            foreach (var c in node.Choices)
+            {
+                if (c == null) continue;
+                if (c.Condition == null || c.Condition.Evaluate(context))
+                {
+                    if (first == null) first = c.Id;
+                    passing++;
+                }
+            }
+            if (passing > 1)
+                Debug.LogWarning(
+                    $"[GraphDialogue] Router '{node.Id}' has {passing} branches whose conditions pass at once; " +
+                    $"taking the first ('{first}'). Make sibling branch conditions mutually exclusive (And/Not), " +
+                    $"give an explicit priority, or add a default branch.");
+            return first;
+        }
+
         /// <summary>Options with resolved label + availability (each option's condition against the context).</summary>
         public ChoiceStep ResolveChoice(ChoiceNodeData choiceNode, BaseContext context)
         {
