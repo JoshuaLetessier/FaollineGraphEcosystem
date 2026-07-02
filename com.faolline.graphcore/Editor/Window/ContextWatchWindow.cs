@@ -75,7 +75,7 @@ namespace Faolline.GraphCore.Editor
                 foreach (var kvp in allParams)
                 {
                     EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField(kvp.Key, GUILayout.Width(200));
+                    EditorGUILayout.LabelField(new GUIContent(KeyLabel(kvp.Key), kvp.Key), GUILayout.Width(200));
                     EditorGUILayout.LabelField(TypeLabel(kvp.Value), GUILayout.Width(60));
                     EditorGUILayout.LabelField(ValueLabel(kvp.Value));
                     EditorGUILayout.EndHorizontal();
@@ -98,12 +98,25 @@ namespace Faolline.GraphCore.Editor
                 foreach (var kvp in allCollections)
                 {
                     EditorGUILayout.BeginHorizontal();
-                    EditorGUILayout.LabelField(kvp.Key, GUILayout.Width(200));
-                    EditorGUILayout.LabelField(string.Join(", ", kvp.Value));
+                    EditorGUILayout.LabelField(new GUIContent(KeyLabel(kvp.Key), kvp.Key), GUILayout.Width(200));
+                    EditorGUILayout.LabelField(EntriesLabel(kvp.Key, kvp.Value));
                     EditorGUILayout.EndHorizontal();
                 }
             }
             EditorGUILayout.EndScrollView();
+        }
+
+        // A registered resolver's friendly label for a key, else the raw key (shown as tooltip either way).
+        private static string KeyLabel(string key)
+            => ContextKeyLabelRegistry.LabelForKey(key) ?? key;
+
+        // Each entry resolved through the registry (e.g. objective guid → objective title), raw entry as fallback.
+        private static string EntriesLabel(string collectionKey, IEnumerable<string> entries)
+        {
+            var parts = new List<string>();
+            foreach (var e in entries)
+                parts.Add(ContextKeyLabelRegistry.LabelForEntry(collectionKey, e) ?? e);
+            return string.Join(", ", parts);
         }
 
         private static string TypeLabel(object value)

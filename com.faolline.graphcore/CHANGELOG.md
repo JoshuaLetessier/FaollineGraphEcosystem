@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.25.0]
+
+### Added
+- **`ContextKeyLabelRegistry` + `IContextLabelResolver` (Editor).** An opt-in seam (mirrors
+  `NodeTypeColorRegistry`) that lets downstream libs turn their opaque scoped context keys and collection
+  entries into human-readable labels in editor tooling. The **Context Watch** window now shows a resolver's
+  label (raw key as tooltip) instead of the bare key/guid. graphcore stays domain-neutral — it ships the
+  registry empty; a lib registers its resolver (e.g. graphquest names `quest_completed:<id>` and objective
+  guids). (Dogfood finding.)
+
 ## [0.24.0]
 
 ### Added

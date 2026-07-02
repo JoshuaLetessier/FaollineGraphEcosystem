@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.0]
+
+### Added
+- **Readable quest keys in Context Watch.** `QuestContextLabelResolver` registers with graphcore's
+  `ContextKeyLabelRegistry` (0.25.0) so the Context Watch window shows quest/objective titles instead of raw
+  scoped keys and guids: `quest_completed:<id>` → "Quest '…' · completed", objective guids → objective titles,
+  `quest_done` entries → quest titles, the `quest_deadline:…` param → quest + objective. Requires graphcore ≥ 0.25.0.
+
 ## [0.5.0]
 
 ### Fixed
