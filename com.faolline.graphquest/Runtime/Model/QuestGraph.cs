@@ -36,6 +36,15 @@ namespace Faolline.GraphQuest
         /// <summary>Stable logical id (scopes the quest's context collections). Set by <see cref="QuestBuilder"/>.</summary>
         public string QuestId { get => _questId; set => _questId = value ?? string.Empty; }
 
+        /// <summary>
+        /// The effective logical id for this quest: the explicit <see cref="QuestId"/> when set, otherwise the
+        /// graph's stable <see cref="BaseGraph.GraphId"/>. This is the single source of truth both
+        /// <c>QuestEvaluator</c> (context-key scoping + localization lookup) and the localization adapter
+        /// (localization key emission) use, so an editor-authored quest that left <see cref="QuestId"/> empty
+        /// never has its emitted keys drift from the keys the evaluator queries.
+        /// </summary>
+        public string ResolveQuestId() => string.IsNullOrEmpty(_questId) ? GraphId : _questId;
+
         /// <summary>Display title for a quest journal UI. Falls back to <see cref="QuestId"/> when empty. Never null.</summary>
         public string DisplayName
         {

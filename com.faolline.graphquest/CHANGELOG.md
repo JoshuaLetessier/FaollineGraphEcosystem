@@ -4,6 +4,18 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0]
+
+### Fixed
+- **Localization adapter keys off the effective quest id, not the raw QuestId.** A quest authored with no
+  explicit `QuestId` (relying on the `GraphId` fallback) made `QuestGraphLocalizationAdapter` emit no keys,
+  while `QuestEvaluator` looked up `quest_<GraphId>` — a permanent localization-audit miss. Both now resolve
+  the id through the new `QuestGraph.ResolveQuestId()` (QuestId, else GraphId), so emitted and queried keys
+  can never drift.
+
+### Added
+- **`QuestGraph.ResolveQuestId()`** — the single source of truth for a quest's effective logical id.
+
 ## [0.4.0]
 
 ### Added

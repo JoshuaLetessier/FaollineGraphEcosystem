@@ -1,6 +1,6 @@
 {
   "name": "com.faolline.graphquest",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "displayName": "Faolline GraphQuest",
   "description": "Quest & objective domain library above com.faolline.graphcore and com.faolline.graphstandard. Quests and objectives whose states (Locked/Active/Completed/Failed) are derived from the shared BaseContext: prerequisite gating (linear chains AND DAGs, on graphstandard's ReactiveEvaluator), completion/fail conditions (graphcore BaseConditions), and one-shot reward hooks (graphcore BaseActions). Code-first fluent builder. All state lives in context collections, so it persists for free through com.faolline.graphsave and runs against any host context (no gameflow dependency).",
   "unity": "6000.0",
