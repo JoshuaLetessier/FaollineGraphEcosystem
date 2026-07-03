@@ -66,6 +66,42 @@ quest.Evaluate();   // find_clue -> Completed, pick_lock -> Active, ...
 See [the spec quickstart](../specs/029-graph-quest/quickstart.md) for the full walkthrough (gating, rewards-once,
 save/restore, host context).
 
+## The observe / derive contract (don't double-write "completed")
+
+`QuestEvaluator` **observes** your game state and **derives** quest state from it — it never writes back into
+your game's data. Your game owns the world (e.g. a `solvedPuzzles` collection, a `boss_defeated` flag); each
+objective's `CompletionCondition` reads that world, and the evaluator records the *derived* result into its own
+scoped bookkeeping (`quest_completed:<questId>`, etc.). So it is normal and correct to see **two** "done"
+signals — your game's own (`solvedPuzzles`) and the quest's derived set — and you should **not** try to keep
+them in sync by hand:
+
+```csharp
+// Game code writes ONLY its own world state:
+context.AddToCollection("solvedPuzzles", "altar");
+
+// The objective observes it — you never write quest_completed yourself:
+QuestBuilder.Create("temple")
+    .AddObjective("altar").CompleteWhen(new CollectionContainsCondition { /* solvedPuzzles ∋ altar */ })
+    .Build();
+
+eval.Evaluate();  // derives quest_completed:temple ∋ altar from the world
+```
+
+**Why the separation is deliberate — don't "fix" it with a `MarkCompleted`:**
+
+- **Idempotence & replay.** Because completion is *re-derived* every `Evaluate()`, a pass over unchanged state
+  produces no duplicate transitions, and "back = re-pass" (rewinding the world re-derives the quest). A
+  direct `MarkCompleted(objectiveId)` write would make quest state mutable out-of-band and break both.
+- **One source of truth.** The world is authoritative; the quest is a projection. Two writers for the same
+  fact is exactly the bug you'd be inviting.
+- **Retry is still granular.** To replay one objective, rewind its *world inputs* and call
+  `QuestEvaluator.ResetObjective(id)` (clears the derived bookkeeping + re-arms its timer) — you still never
+  write the completed-set directly.
+
+If you genuinely need an imperative "mark this done" (no observable world fact backs it), model that fact
+explicitly — e.g. set a `bool` the objective's `CompletionCondition` reads — rather than writing the quest's
+derived set.
+
 ## Persistence & host
 
 All quest state lives in `BaseContext` collections, so a `com.faolline.graphsave` context snapshot restores quest

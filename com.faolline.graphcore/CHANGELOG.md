@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.26.2]
+
+### Changed
+- **`BaseRunner` warns once when history saturates.** When traversal exceeds `BaseGraph.HistoryDepth` the
+  oldest step is auto-trimmed (bounded memory, unchanged) — but it used to be silent, so an author who
+  expected `GoBack`/`GoBackToCheckpoint` to rewind further got no signal. It now logs a one-shot
+  `[GraphCore]` warning the first time it trims in a run (re-arms on `Start`/`StartFrom`). (Cryptique dogfood.)
+
 ## [0.26.1]
 
 ### Fixed
