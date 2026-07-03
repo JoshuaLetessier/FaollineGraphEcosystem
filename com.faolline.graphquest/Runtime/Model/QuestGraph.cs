@@ -1,5 +1,6 @@
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLocalization;
 
 namespace Faolline.GraphQuest
 {
@@ -11,11 +12,16 @@ namespace Faolline.GraphQuest
     /// </summary>
     [CreateAssetMenu(menuName = "GraphQuest/Quest Graph", fileName = "NewQuest")]
     [Icon("Packages/com.faolline.graphcore/Editor/Icons/ico_graph_quest.png")]
-    public sealed class QuestGraph : BaseGraph
+    public sealed class QuestGraph : BaseGraph, ILocalizedGraph
     {
         [Header("Identity")]
         [SerializeField, Tooltip("Stable logical id scoping this quest's context collections. Set once by QuestBuilder; do not change after objectives reference it.")]
         private string _questId = string.Empty;
+
+        [SerializeField] private GraphLocalizationFlags _localizationFlags = new GraphLocalizationFlags();
+
+        /// <summary>Inline localization flags (default + per-node overrides). Never null. See <see cref="ILocalizedGraph"/>.</summary>
+        public GraphLocalizationFlags LocalizationFlags => _localizationFlags;
 
         [Header("Display")]
         [SerializeField, Tooltip("Display title for a quest journal UI. Falls back to Quest Id when empty.")]

@@ -64,5 +64,28 @@ namespace Faolline.GraphQuest.Tests
 
             Assert.Contains(QuestLocalizationKeys.ForQuest("rescue"), keys);
         }
+
+        [Test]
+        public void QuestGraph_CarriesInlineLocalizationFlags_NeverNull()
+        {
+            var quest = TrackGraph(QuestBuilder.Create("rescue").AddObjective("o").CompleteWhen(Flag("x")).Build());
+            Assert.IsInstanceOf<ILocalizedGraph>(quest, "a QuestGraph opts into inline localization flags");
+            Assert.IsNotNull(quest.LocalizationFlags);
+        }
+
+        [Test]
+        public void Adapter_RespectsInlineNodeFlags_OmitsTextExcludedObjective()
+        {
+            var quest = TrackGraph(QuestBuilder.Create("rescue")
+                .AddObjective("find").Named("Find the clue").CompleteWhen(Flag("x"))
+                .Build());
+            // Turn OFF Text on the objective via the inline flags → the adapter must not emit its key.
+            quest.LocalizationFlags.SetFlags("find", LocalizedAssetFlags.None);
+
+            var keys = ExtractKeys(quest, out _);
+
+            Assert.IsFalse(keys.Contains(QuestLocalizationKeys.ForObjective("find")),
+                "an objective with Text excluded (inline flags) must not emit its objective key");
+        }
     }
 }

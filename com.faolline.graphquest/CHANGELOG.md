@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.8.0]
+
+### Changed
+- **`QuestGraph` carries localization flags inline** (implements `ILocalizedGraph` with a serialized
+  `GraphLocalizationFlags` field), replacing the removed per-graph `GraphLocalizationData` companion asset;
+  `QuestGraphLocalizationAdapter` reads the graph's inline flags. Requires graphlocalization ≥ 0.6.0. Re-set
+  per-objective asset flags in the graph inspector if you used them.
+
 ## [0.7.0]
 
 ### Added

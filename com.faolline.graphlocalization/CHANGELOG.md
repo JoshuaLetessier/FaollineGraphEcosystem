@@ -4,6 +4,20 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.0]
+
+### Changed (breaking)
+- **Localization flags are now inline on the graph, not a companion asset.** The per-graph
+  `GraphLocalizationData` ScriptableObject (one `_Localization.asset` beside every graph) and
+  `GraphLocalizationDataUtility` are **removed**. A graph opts into localization by implementing the new
+  `ILocalizedGraph` and holding a serialized `GraphLocalizationFlags` field — the same self-contained
+  subclass-extension pattern as `DialogueGraph.Speakers`, so graphcore stays localization-agnostic and there
+  are no orphan companion files. The inspector section, auto-builder, and per-lib adapters read/write the
+  inline flags. Re-set flags in the graph inspector (they persist into the graph asset).
+
+### Added
+- **`GraphLocalizationFlags`** (embeddable serializable) + **`ILocalizedGraph`** interface.
+
 ## [0.5.0]
 
 ### Added
