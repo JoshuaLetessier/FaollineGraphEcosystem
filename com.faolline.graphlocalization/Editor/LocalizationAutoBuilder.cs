@@ -59,8 +59,8 @@ namespace Faolline.GraphLocalization.Editor
             if (path.Contains("Localization") || path.Contains("Resources")) return false;
 
             var obj = AssetDatabase.LoadMainAssetAtPath(path);
+            // A localizable graph now carries its flags inline, so saving the graph asset is the rebuild trigger.
             if (obj is GraphCore.BaseGraph) return true;
-            if (obj is GraphLocalizationData) return true;
             return false;
         }
 

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLocalization;
 
 namespace Faolline.GraphDialogue
 {
@@ -13,14 +14,19 @@ namespace Faolline.GraphDialogue
     /// </summary>
     [CreateAssetMenu(menuName = "GraphDialogue/Dialogue Graph", fileName = "NewDialogueGraph")]
     [Icon("Packages/com.faolline.graphcore/Editor/Icons/ico_graph_dialogue.png")]
-    public class DialogueGraph : BaseGraph
+    public class DialogueGraph : BaseGraph, ILocalizedGraph
     {
         [SerializeField, Tooltip("Speakers used by this dialogue. Line nodes pick from this list; the " +
             "DialogueDriver reads it so you don't have to assign speakers separately on the scene.")]
         private List<Speaker> _speakers = new List<Speaker>();
 
+        [SerializeField] private GraphLocalizationFlags _localizationFlags = new GraphLocalizationFlags();
+
         /// <summary>Speakers available to this dialogue's line nodes (assigned in the graph inspector).</summary>
         public IReadOnlyList<Speaker> Speakers => _speakers;
+
+        /// <summary>Inline localization flags (default + per-node overrides). Never null. See <see cref="ILocalizedGraph"/>.</summary>
+        public GraphLocalizationFlags LocalizationFlags => _localizationFlags;
 
         /// <summary>Adds a speaker to the dialogue (no-op for null or duplicates).</summary>
         public void AddSpeaker(Speaker speaker)

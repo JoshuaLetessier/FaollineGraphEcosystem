@@ -22,8 +22,8 @@ namespace Faolline.GraphQuest.Editor
             // editor-authored quest with no QuestId emit nothing while the evaluator queried quest_<GraphId>,
             // yielding a permanent localization-audit miss. Dogfood finding.
             var questId = graph.ResolveQuestId();
-            var locData = GraphLocalizationDataUtility.Find(graph);
-            int graphFlags = locData != null ? (int)locData.DefaultFlags : (int)LocalizedAssetFlags.Text;
+            var locData = graph.LocalizationFlags;   // inline flags (ILocalizedGraph); never null
+            int graphFlags = (int)locData.DefaultFlags;
             if (!string.IsNullOrEmpty(questId))
             {
                 var nameKey = QuestLocalizationKeys.ForQuest(questId);
@@ -44,7 +44,7 @@ namespace Faolline.GraphQuest.Editor
             {
                 if (!(node is ObjectiveNodeData obj)) continue;
                 if (string.IsNullOrEmpty(obj.Id)) continue;
-                var flags = locData != null ? locData.GetFlags(obj.Id) : LocalizedAssetFlags.Text;
+                var flags = locData.GetFlags(obj.Id);
                 bool wantsText = (flags & LocalizedAssetFlags.Text) != 0;
                 int rawFlags = (int)flags;
 

@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.13.0]
+
+### Changed
+- **`DialogueGraph` carries localization flags inline** (implements `ILocalizedGraph` with a serialized
+  `GraphLocalizationFlags` field, alongside its speaker list), replacing the removed per-graph
+  `GraphLocalizationData` companion asset. The dialogue localization adapter reads the graph's inline flags.
+  Requires graphlocalization ≥ 0.6.0. Re-set per-node asset flags in the graph inspector if you used them.
+
 ## [0.12.1]
 
 ### Fixed

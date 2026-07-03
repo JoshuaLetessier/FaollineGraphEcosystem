@@ -34,9 +34,9 @@ namespace Faolline.GraphLocalization.Editor
         private static void BuildNodeSection(BaseNodeData node, VisualElement parent,
             BaseGraph graph, Action markDirty)
         {
-            if (node == null || graph == null) return;
-            var locData = GraphLocalizationDataUtility.GetOrCreate(graph);
-            if (locData == null) return;
+            if (node == null) return;
+            if (!(graph is ILocalizedGraph localized)) return;   // only graphs that opt in carry localization flags
+            var locData = localized.LocalizationFlags;
 
             var container = new Foldout { text = "Localized Assets", value = false };
             container.style.marginTop = 4;
@@ -52,7 +52,7 @@ namespace Faolline.GraphLocalization.Editor
                     var flags = (int)locData.GetFlags(node.Id);
                     flags = e.newValue ? flags | flagValue : flags & ~flagValue;
                     locData.SetFlags(node.Id, (LocalizedAssetFlags)flags);
-                    EditorUtility.SetDirty(locData);
+                    EditorUtility.SetDirty(graph);   // flags are embedded on the graph asset now
                 });
                 container.Add(toggle);
             }
@@ -62,9 +62,8 @@ namespace Faolline.GraphLocalization.Editor
 
         private static void BuildGraphSection(BaseGraph graph, VisualElement parent, Action markDirty)
         {
-            if (graph == null) return;
-            var locData = GraphLocalizationDataUtility.GetOrCreate(graph);
-            if (locData == null) return;
+            if (!(graph is ILocalizedGraph localized)) return;
+            var locData = localized.LocalizationFlags;
 
             var foldout = new Foldout { text = "Localization (Graph)", value = true };
             foldout.style.marginTop = 4;
@@ -79,7 +78,7 @@ namespace Faolline.GraphLocalization.Editor
                 {
                     var flags = (int)locData.DefaultFlags;
                     locData.DefaultFlags = (LocalizedAssetFlags)(e.newValue ? flags | flagValue : flags & ~flagValue);
-                    EditorUtility.SetDirty(locData);
+                    EditorUtility.SetDirty(graph);
                 });
                 foldout.Add(toggle);
             }
@@ -90,7 +89,7 @@ namespace Faolline.GraphLocalization.Editor
                 foreach (var n in graph.Nodes)
                     if (n != null && !string.IsNullOrEmpty(n.Id)) nodeIds.Add(n.Id);
                 locData.ApplyDefaultToAll(nodeIds);
-                EditorUtility.SetDirty(locData);
+                EditorUtility.SetDirty(graph);
                 Debug.Log($"[GraphLocalization] Applied {locData.DefaultFlags} to {nodeIds.Count} nodes.");
             })
             { text = "Apply to all nodes" };
