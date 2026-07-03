@@ -204,6 +204,69 @@ namespace Faolline.GraphCore.Tests
                 Assert.DoesNotThrow(() => runner.GoBack());
         }
 
+        // ── Saturation warning ─────────────────────────────────────────────────
+
+        private static int CountSaturationWarnings(System.Action body)
+        {
+            int warnings = 0;
+            Application.LogCallback handler = (msg, stack, type) =>
+            { if (type == LogType.Warning && msg.Contains("History saturated")) warnings++; };
+            Application.logMessageReceived += handler;
+            try { body(); }
+            finally { Application.logMessageReceived -= handler; }
+            return warnings;
+        }
+
+        [Test]
+        public void History_Saturation_WarnsExactlyOnce()
+        {
+            var graph = Track(BuildChainGraph(8)); // n0…n7
+            graph.HistoryDepth = 2;
+
+            int warnings = CountSaturationWarnings(() =>
+            {
+                var runner = new BaseRunner();
+                runner.Start(graph, new BaseContext(), new NodeExecutorRegistry());
+                for (int i = 0; i < 5; i++) runner.Proceed();   // several trims past the cap
+            });
+
+            Assert.AreEqual(1, warnings, "history saturation warns once per run, not on every trim");
+        }
+
+        [Test]
+        public void History_Saturation_Unlimited_NeverWarns()
+        {
+            var graph = Track(BuildChainGraph(8));
+            graph.HistoryDepth = 0; // unlimited → never trims → never warns
+
+            int warnings = CountSaturationWarnings(() =>
+            {
+                var runner = new BaseRunner();
+                runner.Start(graph, new BaseContext(), new NodeExecutorRegistry());
+                for (int i = 0; i < 5; i++) runner.Proceed();
+            });
+
+            Assert.AreEqual(0, warnings);
+        }
+
+        [Test]
+        public void History_Saturation_WarningReArmsOnFreshStart()
+        {
+            var graph = Track(BuildChainGraph(8));
+            graph.HistoryDepth = 2;
+            var runner = new BaseRunner();
+
+            int warnings = CountSaturationWarnings(() =>
+            {
+                runner.Start(graph, new BaseContext(), new NodeExecutorRegistry());
+                for (int i = 0; i < 5; i++) runner.Proceed();
+                runner.Start(graph, new BaseContext(), new NodeExecutorRegistry());   // new run re-arms the one-shot
+                for (int i = 0; i < 5; i++) runner.Proceed();
+            });
+
+            Assert.AreEqual(2, warnings, "the one-shot re-arms on a fresh Start");
+        }
+
         // ── Helpers ───────────────────────────────────────────────────────────
 
         /// <summary>

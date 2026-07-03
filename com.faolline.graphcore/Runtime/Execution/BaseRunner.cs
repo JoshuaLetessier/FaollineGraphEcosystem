@@ -150,6 +150,7 @@ namespace Faolline.GraphCore
         private float _waitRemaining;
         private List<string> _subscribedSignalNames;
         private Action<SignalArgs> _contextSignalBridge;
+        private bool _historySaturationWarned;
 
         // ── Events ─────────────────────────────────────────────────────────────
 
@@ -213,6 +214,7 @@ namespace Faolline.GraphCore
             _rootGraph = graph;
             _graphStack.Clear();
             _history.Clear();
+            _historySaturationWarned = false;
             ClearIndexes();
 
             var rootFrame = new GraphExecutionState
@@ -248,6 +250,7 @@ namespace Faolline.GraphCore
             _rootGraph = graph;
             _graphStack.Clear();
             _history.Clear();
+            _historySaturationWarned = false;
             ClearIndexes();
 
             var frame = new GraphExecutionState
@@ -690,10 +693,22 @@ namespace Faolline.GraphCore
 
             _history.Add(entry);
 
-            // Cap history using the root graph's HistoryDepth (0 = unlimited)
+            // Cap history using the root graph's HistoryDepth (0 = unlimited). Auto-trimming the oldest step is
+            // the intended bounded-memory behaviour, but it used to be silent — warn ONCE per run the first time
+            // it happens so an author who expected to rewind further knows they hit the cap.
             var depth = _rootGraph != null ? _rootGraph.HistoryDepth : 0;
             if (depth > 0 && _history.Count > depth)
+            {
                 _history.RemoveAt(0);
+                if (!_historySaturationWarned)
+                {
+                    _historySaturationWarned = true;
+                    UnityEngine.Debug.LogWarning(
+                        $"[GraphCore] History saturated at HistoryDepth={depth}: the oldest step is now being " +
+                        $"dropped, so GoBack/GoBackToCheckpoint can only reach the last {depth} step(s). Raise " +
+                        $"BaseGraph.HistoryDepth (0 = unlimited) if you need to rewind further.");
+                }
+            }
         }
 
         private void RestoreEntry(int index)
