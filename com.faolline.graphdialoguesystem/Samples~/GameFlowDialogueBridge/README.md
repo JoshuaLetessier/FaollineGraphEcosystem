@@ -29,8 +29,12 @@ assembly with a cross-lib dependency. **Requires both packages installed** in yo
    standalone `DialogueDriver` — see the **Dialogue UI** sample.
 3. Add `FlowDialogueBridge` to a scene object; assign the `GraphFlowDriver`, the view, and every `Speaker`
    any reachable dialogue subgraph uses (there's no single `DialogueGraph` asset here to read speakers
-   from, unlike `DialogueDriver.ActiveSpeakers`).
-4. Boot the flow (`GraphFlowDriver.Boot()` / `BootOnStart`). When the flow enters a dialogue node, the
+   from, unlike `DialogueDriver.ActiveSpeakers`). If the driver is a persistent cross-scene one (booted in
+   another scene with *Persist Across Scenes*), leave the field empty — the bridge falls back to
+   `GraphFlowDriver.Active` at Awake.
+4. To let the player advance lines, wire a "Continue" button (or your input handler) to the bridge's
+   public `Advance()` — same skip-typewriter-then-step behaviour as `DialogueDriver`.
+5. Boot the flow (`GraphFlowDriver.Boot()` / `BootOnStart`). When the flow enters a dialogue node, the
    bridge shows it through your view; when it exits back to a non-dialogue node, the view clears and the
    flow's own `AutoAdvance` setting resumes.
 

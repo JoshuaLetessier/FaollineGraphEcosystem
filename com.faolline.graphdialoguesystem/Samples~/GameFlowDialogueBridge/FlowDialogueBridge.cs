@@ -20,7 +20,8 @@ namespace Faolline.GraphDialogue.Samples.GameFlowBridge
     public class FlowDialogueBridge : MonoBehaviour
     {
         [Header("Setup")]
-        [SerializeField] private GraphFlowDriver driver;
+        [SerializeField, Tooltip("The flow driver to bridge. Leave empty to use the persistent cross-scene GraphFlowDriver.Active at Awake.")]
+        private GraphFlowDriver driver;
         [SerializeField, Tooltip("A component implementing IDialogueView (Canvas or UI Toolkit view).")]
         private MonoBehaviour viewBehaviour;
         [SerializeField, Tooltip("Every speaker used by any dialogue subgraph this flow can reach.")]
@@ -56,9 +57,13 @@ namespace Faolline.GraphDialogue.Samples.GameFlowBridge
 
         private void Awake()
         {
+            // A flow driver often lives in another scene (a persistent boot driver spanning scene
+            // loads), which the inspector cannot reference — fall back to the active one.
+            if (driver == null) driver = GraphFlowDriver.Active;
             if (driver == null)
             {
-                Debug.LogError("[GraphDialogue] FlowDialogueBridge: no GraphFlowDriver assigned.");
+                Debug.LogError("[GraphDialogue] FlowDialogueBridge: no GraphFlowDriver assigned " +
+                    "and no persistent GraphFlowDriver.Active to fall back to.");
                 return;
             }
 
@@ -72,6 +77,13 @@ namespace Faolline.GraphDialogue.Samples.GameFlowBridge
             _controller = new DialoguePlaybackController(
                 _source, () => View, autoAdvance, autoAdvanceDelay, choiceTimeout, voiceSource);
         }
+
+        /// <summary>
+        /// Advances the current line (completes the typewriter first, then steps) — wire a
+        /// "Continue" button or an input handler here. Ignored while awaiting a choice, exactly
+        /// like <see cref="DialoguePlaybackController.Advance"/>.
+        /// </summary>
+        public void Advance() => _controller?.Advance();
 
         private void Update() => _controller?.Tick(Time.time);
 

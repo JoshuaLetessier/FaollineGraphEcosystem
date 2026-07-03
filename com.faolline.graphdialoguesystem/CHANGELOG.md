@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.12.1]
+
+### Fixed
+- **GameFlowDialogueBridge sample: usable with a persistent cross-scene driver.** `FlowDialogueBridge`
+  now falls back to `GraphFlowDriver.Active` when no driver is assigned (a boot-scene driver with
+  *Persist Across Scenes* cannot be referenced from another scene's inspector), and exposes a public
+  `Advance()` passthrough so a "Continue" button can advance lines without reaching into the private
+  playback controller. Both were required in every real consumer wiring (tavern-demo dogfood, finding 4).
+
 ## [0.12.0]
 
 ### Fixed
