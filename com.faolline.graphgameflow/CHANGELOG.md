@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.8.1]
+
+### Fixed
+- **Declared the `com.faolline.graphsave` dependency (≥ 0.5.0).** The Runtime assembly has always referenced
+  `com.faolline.graphsave.Runtime` (the `GraphFlowDriver.Boot(GraphRunSnapshot, …)` restore path), but the
+  manifest never declared it — installing graphgameflow without graphsave failed to compile. The 0.5.0 floor
+  is the first graphsave that restores the raised-signal history, which the load-game path relies on.
+
 ## [0.8.0]
 
 ### Added

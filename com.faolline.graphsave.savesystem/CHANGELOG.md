@@ -4,6 +4,12 @@ All notable changes to **com.faolline.graphsave.savesystem** are documented here
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.3]
+
+### Changed
+- **Dependency floor `com.faolline.savesystem.core` `0.0.0` → `1.0.0`** — a real floor instead of the
+  accept-anything placeholder. No code change.
+
 ## [0.1.2]
 
 ### Changed

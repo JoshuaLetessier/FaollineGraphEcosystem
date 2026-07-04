@@ -4,6 +4,22 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.1]
+
+### Fixed
+- **Dependency floor corrected `0.17.0` → `0.22.0`.** `GraphRunSnapshot` has used graphcore's signal-history
+  API (`GetAllRaisedSignals` / `RestoreSignalHistory`, introduced in graphcore 0.22.0) since 0.5.0, but the
+  manifest still declared the 0.17.0 floor — a consumer resolving graphcore 0.17–0.21 would not compile.
+
+## [0.5.0]
+
+### Added
+- **Raised-signal history in the snapshot.** `GraphRunSnapshot` now captures every signal name raised in the
+  context (`RaisedSignals`) and restores it on `ApplyTo`/`Restore` via `BaseContext.RestoreSignalHistory`, so
+  `HasSignalBeenRaised`-based logic (e.g. `ResumeIfSignalAlreadyRaised` awaits, `SignalRaisedCondition` gates)
+  survives a save/load. Requires graphcore ≥ 0.22.0.
+  *(Entry added retroactively in 0.5.1 — it was missing when 0.5.0 shipped.)*
+
 ## [0.4.0]
 
 ### Added

@@ -1,6 +1,6 @@
 # Faolline GraphSave — UnitySaveSystem Bridge
 
-**Version**: 0.1.2 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphsave` ≥ 0.3.2, `com.faolline.savesystem.core`
+**Version**: 0.1.3 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphsave` ≥ 0.3.2, `com.faolline.savesystem.core` ≥ 1.0.0
 
 Thin bridge that adapts a UnitySaveSystem backend (`ISaveSystem<T>`) to graphsave's
 `IGraphSaveStore` contract. Install this only if you want to use UnitySaveSystem for persistence;
