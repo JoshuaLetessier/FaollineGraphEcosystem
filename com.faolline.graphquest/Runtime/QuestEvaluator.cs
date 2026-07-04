@@ -525,6 +525,14 @@ namespace Faolline.GraphQuest
         }
 
         /// <summary>
+        /// Unregisters the wrapped <see cref="ReactiveEvaluator"/>'s editor live-state probe. A host that
+        /// discards this evaluator (teardown, rebuilding it over the same quest graph) should call this so
+        /// the dead evaluator's probe does not shadow the new one in the graph editor. No-op outside the
+        /// editor. Pair with <see cref="DisableAutoEvaluate"/> when tearing down.
+        /// </summary>
+        public void DetachEditorProbe() => _reactive.DetachEditorProbe();
+
+        /// <summary>
         /// Disables auto-evaluate and unsubscribes from context changes. Idempotent.
         /// </summary>
         public void DisableAutoEvaluate()

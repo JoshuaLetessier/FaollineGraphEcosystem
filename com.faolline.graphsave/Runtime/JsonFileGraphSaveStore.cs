@@ -60,6 +60,16 @@ namespace Faolline.GraphSave
             if (File.Exists(path)) File.Delete(path);
         }
 
-        private string SlotPath(string slot) => Path.Combine(_rootPath, slot + ".json");
+        // Slot names become file names: replace path separators and invalid filename characters so a slot
+        // like "../other" or "a/b" cannot escape the store folder or fail on Windows.
+        private string SlotPath(string slot)
+        {
+            var invalid = Path.GetInvalidFileNameChars();
+            var chars = slot.ToCharArray();
+            for (int i = 0; i < chars.Length; i++)
+                if (System.Array.IndexOf(invalid, chars[i]) >= 0 || chars[i] == '/' || chars[i] == '\\')
+                    chars[i] = '_';
+            return Path.Combine(_rootPath, new string(chars) + ".json");
+        }
     }
 }

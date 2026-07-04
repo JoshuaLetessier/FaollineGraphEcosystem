@@ -218,7 +218,7 @@ namespace Faolline.GraphCore
             if (!_supportedTypes.Contains(typeof(T)))
                 throw new ArgumentException(
                     $"[GraphCore] Unsupported signal payload type: {typeof(T).Name}. " +
-                    "Supported types: bool, int, float, string.");
+                    "Supported types: bool, int, float, string, Vector2, Vector3, Color.");
             RaiseSignalInternal(name, true, payload);
         }
 

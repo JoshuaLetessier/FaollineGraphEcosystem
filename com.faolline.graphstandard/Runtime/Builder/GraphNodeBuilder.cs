@@ -75,6 +75,31 @@ namespace Faolline.GraphStandard
         public GraphNodeBuilder Await(string signalName) { Node.AwaitSignalName = signalName; return this; }
 
         /// <summary>
+        /// Parks the runner on this node until ANY of the named signals is raised (logical OR — the runner
+        /// resumes on the first one that passes the resume conditions). The code-first counterpart of
+        /// graphcore's multi-await: the first name becomes the primary await (unless one is already set),
+        /// the rest go to <see cref="BaseNodeData.AwaitSignalNamesExtra"/>, de-duplicated. Null/blank names
+        /// log a warning and are skipped.
+        /// </summary>
+        public GraphNodeBuilder Await(params string[] signalNames)
+        {
+            if (signalNames == null) return this;
+            foreach (var name in signalNames)
+            {
+                if (string.IsNullOrWhiteSpace(name))
+                {
+                    Debug.LogWarning("[GraphStandard] GraphNodeBuilder.Await: null/blank signal name skipped.");
+                    continue;
+                }
+                if (string.IsNullOrEmpty(Node.AwaitSignalName))
+                    Node.AwaitSignalName = name;
+                else if (Node.AwaitSignalName != name && !Node.AwaitSignalNamesExtra.Contains(name))
+                    Node.AwaitSignalNamesExtra.Add(name);
+            }
+            return this;
+        }
+
+        /// <summary>
         /// Appends resume conditions to this await node: a matching signal resumes the node only if all pass
         /// (AND). A raise that fails the gate is ignored and the node stays parked (re-armable). Pair with
         /// <see cref="Await(string)"/>.

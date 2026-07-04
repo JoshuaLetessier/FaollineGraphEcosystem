@@ -4,6 +4,24 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.15.0]
+
+### Added
+- **`GraphNodeBuilder.Await(params string[])`** — multi-signal OR await for the code-first path. The first
+  name becomes the primary await, the rest go to graphcore 0.27.0's `BaseNodeData.AwaitSignalNamesExtra`
+  (plain strings, so a built graph saved to an asset keeps its multi-await). The runner resumes on the first
+  awaited signal that passes the resume conditions. The single-string `Await` keeps its exact behaviour.
+- **`ReactiveEvaluator.DetachEditorProbe()` / `FlowRunner.DetachEditorProbe()`** — unregister the engine's
+  editor live-state probe. A host that discards an engine (teardown, rebuilding it over the same graph) must
+  call this so the dead engine's probe does not shadow the new one in the graph editor. No-op in player builds.
+
+### Changed
+- **Dependency floor `com.faolline.graphcore` `0.20.0` → `0.27.0`** (the builder writes
+  `AwaitSignalNamesExtra`).
+
+### Fixed
+- Removed a duplicated XML doc block on `GraphBuilderBase.Edge`.
+
 ## [0.14.0]
 
 ### Added

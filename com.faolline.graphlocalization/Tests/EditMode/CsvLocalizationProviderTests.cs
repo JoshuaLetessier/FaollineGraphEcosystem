@@ -74,6 +74,30 @@ namespace Faolline.GraphLocalization.Tests
         }
 
         [Test]
+        public void Resolve_QuotedFieldWithNewline_IsParsed()
+        {
+            var csv = "Key,en,fr\n" +
+                      "dlg.multi,\"Hello\nfriend\",\"Bonjour\nl'ami\"\n" +
+                      "dlg.next,After,Apres\n";
+            var p = new CsvLocalizationProvider(csv, "en");
+            Assert.AreEqual("Hello\nfriend", p.Resolve("dlg.multi", "en"));
+            Assert.AreEqual("Bonjour\nl'ami", p.Resolve("dlg.multi", "fr"));
+            Assert.AreEqual("After", p.Resolve("dlg.next", "en"), "The row after a multi-line field must still parse.");
+        }
+
+        [Test]
+        public void Resolve_CrLfLineEndings_AndBlankLines_AreHandled()
+        {
+            var csv = "Key,en\r\n" +
+                      "dlg.hi,Hello\r\n" +
+                      "\r\n" +
+                      "dlg.bye,Goodbye\r\n";
+            var p = new CsvLocalizationProvider(csv, "en");
+            Assert.AreEqual("Hello", p.Resolve("dlg.hi", "en"));
+            Assert.AreEqual("Goodbye", p.Resolve("dlg.bye", "en"));
+        }
+
+        [Test]
         public void LocalizationSettings_SetLocale_PropagatesToProvider()
         {
             var p = new CsvLocalizationProvider(Csv, "en");

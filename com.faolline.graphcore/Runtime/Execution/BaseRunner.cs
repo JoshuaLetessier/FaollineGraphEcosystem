@@ -137,6 +137,20 @@ namespace Faolline.GraphCore
         }
 #endif
 
+        /// <summary>
+        /// Unregisters this runner's editor live-cursor probe from <see cref="GraphRunMonitor"/>. A host MUST
+        /// call this when it discards the runner (stop, teardown, replacing it with a new run of the same
+        /// graph): probes registered by <see cref="Start"/> otherwise outlive the run, and — because the graph
+        /// editor takes the FIRST probe answering for a graph — a dead run's probe shadows the live one on
+        /// replay. No-op outside the editor and before <see cref="Start"/>; compiled empty in player builds.
+        /// </summary>
+        public void DetachEditorProbe()
+        {
+#if UNITY_EDITOR
+            EditorUnwireProbe();
+#endif
+        }
+
         // ── Internal fields ────────────────────────────────────────────────────
 
         private readonly Stack<GraphExecutionState> _graphStack =

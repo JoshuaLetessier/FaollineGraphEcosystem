@@ -39,6 +39,8 @@ namespace Faolline.GraphCore
         private string _awaitSignal = string.Empty;
         [SerializeField, Tooltip("Additional signals to wait for (logical OR): the node resumes on the FIRST of any awaited signal that passes the Resume Conditions. Combine with the single await field above.")]
         private List<SignalName> _awaitSignals = new List<SignalName>();
+        [SerializeField, Tooltip("Additional raw signal name strings to wait for (logical OR), the code-first counterpart of the SignalName asset list above. Serializes as plain strings, so a code-built graph saved to an asset keeps its multi-await intact.")]
+        private List<string> _awaitSignalNamesExtra = new List<string>();
         [SerializeField, Tooltip("Extra conditions an await-signal must satisfy to resume this node. All must pass (AND). Unlike Entry Conditions (checked once on arrival), these are re-checked every time the signal fires — the node stays parked until the context satisfies them.")]
         private List<BaseCondition> _resumeConditions = new List<BaseCondition>();
         [SerializeField, Tooltip("When ON, if the awaited signal was ALREADY raised in the context before the runner reached this node, resume immediately instead of parking forever. The signal's raised-history is consulted (so a reward or shortcut that fired ahead of the cursor is not lost). ResumeConditions still gate the resume. Default OFF (live-only: only a raise that happens while parked resumes).")]
@@ -153,8 +155,9 @@ namespace Faolline.GraphCore
 
         /// <summary>
         /// Every signal name this node waits for, as a logical OR: the union of <see cref="AwaitSignalName"/>
-        /// (when non-empty) and the extra <c>_awaitSignals</c> assets, de-duplicated, primary first. The runner
-        /// parks while this is non-empty and resumes on the FIRST awaited signal that passes
+        /// (when non-empty), the extra <c>_awaitSignals</c> assets, and the extra
+        /// <see cref="AwaitSignalNamesExtra"/> strings — de-duplicated, primary first. The runner parks while
+        /// this is non-empty and resumes on the FIRST awaited signal that passes
         /// <see cref="ResumeConditions"/>. A single await is just a one-element set (back-compat). Never null.
         /// </summary>
         public IReadOnlyList<string> AwaitSignalNames
@@ -171,12 +174,22 @@ namespace Faolline.GraphCore
                         var n = (string)s;
                         if (!string.IsNullOrEmpty(n) && !names.Contains(n)) names.Add(n);
                     }
+                if (_awaitSignalNamesExtra != null)
+                    foreach (var n in _awaitSignalNamesExtra)
+                        if (!string.IsNullOrEmpty(n) && !names.Contains(n)) names.Add(n);
                 return names;
             }
         }
 
         /// <summary>The extra OR-await signal assets (beyond <see cref="AwaitSignalName"/>). Never null.</summary>
         public List<SignalName> AwaitSignals => _awaitSignals ??= new List<SignalName>();
+
+        /// <summary>
+        /// The extra OR-await signal names as raw strings — the code-first counterpart of
+        /// <see cref="AwaitSignals"/> (assets suit the visual editor; strings serialize plainly and need no
+        /// asset). Both lists merge into <see cref="AwaitSignalNames"/>. Never null.
+        /// </summary>
+        public List<string> AwaitSignalNamesExtra => _awaitSignalNamesExtra ??= new List<string>();
 
         /// <summary>
         /// When greater than zero, entering this node holds execution (<see cref="RunnerState.WaitingForTime"/>)

@@ -34,6 +34,10 @@ namespace Faolline.GraphCore
             if (probe != null && _map.TryGetValue(probe, out var ctx)) return ctx;
             return null;
         }
+
+        /// <summary>Removes every mapping. Editor infrastructure: called when Play mode exits (see
+        /// <see cref="GraphRunMonitor.Clear"/>).</summary>
+        public static void Clear() => _map.Clear();
     }
 }
 #endif

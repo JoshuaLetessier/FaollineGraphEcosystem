@@ -57,6 +57,41 @@ namespace Faolline.GraphStandard.Tests
         }
 
         [Test]
+        public void Await_MultipleNames_SetsPrimaryAndStringExtras_Deduped()
+        {
+            var b = new GraphBuilder<BaseGraph>();
+            var start = b.AddStart("Start").AsEntry();
+            var room  = b.AddStatement("Room").Await("A", "B", "C", "A");   // dup collapsed
+            var end   = b.AddEnd("End");
+            start.To(room); room.To(end);
+            var g = Track(b.Build());
+
+            var node = g.Nodes.First(n => n.Title == "Room");
+            Assert.AreEqual("A", node.AwaitSignalName, "first name becomes the primary await.");
+            CollectionAssert.AreEqual(new[] { "A", "B", "C" }, node.AwaitSignalNames.ToArray());
+        }
+
+        [Test]
+        public void Await_MultipleNames_RunnerResumesOnAnyOfThem()
+        {
+            var b = new GraphBuilder<BaseGraph>();
+            var start = b.AddStart("Start").AsEntry();
+            var room  = b.AddStatement("Room").Await("left", "right");
+            var end   = b.AddEnd("End");
+            start.To(room); room.To(end);
+            var g = Track(b.Build());
+
+            var runner = new BaseRunner();
+            runner.Start(g, new BaseContext(), new NodeExecutorRegistry());
+            runner.Proceed();                                        // start → room, parks
+            Assert.AreEqual(RunnerState.WaitingForSignal, runner.State);
+
+            runner.RaiseSignal("right");                             // the OR-extra resumes the node
+            Assert.AreEqual(RunnerState.NodeReady, runner.State);
+            Assert.IsInstanceOf<EndNodeData>(runner.CurrentNode);
+        }
+
+        [Test]
         public void AddGraphLink_AddsNonExecutingReference_Unconnected()
         {
             var target = Track(ScriptableObject.CreateInstance<BaseGraph>());

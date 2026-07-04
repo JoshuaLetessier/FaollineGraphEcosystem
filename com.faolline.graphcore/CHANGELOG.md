@@ -4,6 +4,30 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.27.0]
+
+### Added
+- **`BaseNodeData.AwaitSignalNamesExtra`** — extra OR-await signal names as raw strings, the code-first
+  counterpart of the `AwaitSignals` asset list (assets suit the visual editor; strings serialize plainly in
+  the graph asset and need no `SignalName` sub-asset). Both lists merge into `AwaitSignalNames`, de-duplicated,
+  primary first; the runner is untouched. Surfaced by graphstandard 0.15.0's `Await(params string[])` builder.
+- **`BaseRunner.DetachEditorProbe()`** — unregisters the runner's editor live-cursor probe. A host MUST call
+  it when discarding a runner (stop, teardown, replacing it with a new run): the graph editor takes the FIRST
+  probe answering for a graph, so a dead run's probe would otherwise shadow the live one on replay (and the
+  probe kept the runner/graph/context reachable for the whole session). No-op in player builds.
+- **`GraphRunMonitor.Clear()` / `GraphRunContextRegistry.Clear()` + play-mode purge.** A new editor hook
+  (`GraphRunMonitorPlayModeReset`) empties both registries when Play mode exits, so probes a host forgot to
+  detach — or leftovers surviving a disabled domain reload (Enter Play Mode Options) — never shadow the next
+  session's runs.
+
+### Fixed
+- **The subgraph-signal-deadlock lint understands multi-await (OR).** `GraphValidator` previously collected
+  only the primary `AwaitSignalName`; it now evaluates the full `AwaitSignalNames` union per node and only
+  reports a node when NONE of its awaited names is raised inside the graph — a node awaiting
+  {internal, external} is not a deadlock.
+- **`RaiseSignal<T>` error message listed only 4 of the 7 supported payload types.** The check has accepted
+  `Vector2`/`Vector3`/`Color` since the payload types were widened; the exception text now says so.
+
 ## [0.26.2]
 
 ### Changed

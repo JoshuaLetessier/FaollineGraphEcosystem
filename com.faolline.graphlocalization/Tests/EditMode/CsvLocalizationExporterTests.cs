@@ -103,5 +103,47 @@ namespace Faolline.GraphLocalization.Tests
             StringAssert.Contains("Key,en,fr", csv);
             StringAssert.DoesNotContain("Hallo", csv);
         }
+
+        [Test]
+        public void BuildCsv_MultiLineValue_SurvivesMergeRebuild()
+        {
+            // A translation containing a newline (multi-line dialogue text, or a translator's
+            // spreadsheet cell) must survive the merge-preserve pass of the next rebuild.
+            var desired = Keys(("line_a", "Hello\nfriend"), ("line_b", "Bye"));
+            var firstBuild = CsvLocalizationExporter.BuildCsv(null, desired,
+                new[] { "en" }, "en", out _, out _);
+
+            var rebuild = CsvLocalizationExporter.BuildCsv(firstBuild, desired,
+                new[] { "en" }, "en", out var coverage, out var removed);
+
+            Assert.AreEqual(0, removed, "The multi-line row must not be read as extra orphan rows.");
+            Assert.AreEqual(("en", 2, 2), coverage[0]);
+            StringAssert.Contains("\"Hello\nfriend\"", rebuild);
+        }
+
+        [Test]
+        public void BuildCsv_MultiLineValue_RoundTripsThroughCsvProvider()
+        {
+            var desired = Keys(("line_a", "Hello\nfriend"));
+            var csv = CsvLocalizationExporter.BuildCsv(null, desired,
+                new[] { "en" }, "en", out _, out _);
+
+            var provider = new CsvLocalizationProvider(csv, "en");
+            Assert.AreEqual("Hello\nfriend", provider.Resolve("line_a", "en"));
+        }
+
+        [Test]
+        public void BuildCsv_CarriageReturnValue_IsQuotedAndPreserved()
+        {
+            var desired = Keys(("line_a", "Hello\r\nfriend"));
+            var csv = CsvLocalizationExporter.BuildCsv(null, desired,
+                new[] { "en" }, "en", out _, out _);
+
+            StringAssert.Contains("\"Hello\r\nfriend\"", csv);
+            var rebuild = CsvLocalizationExporter.BuildCsv(csv, desired,
+                new[] { "en" }, "en", out var coverage, out var removed);
+            Assert.AreEqual(0, removed);
+            Assert.AreEqual(("en", 1, 1), coverage[0]);
+        }
     }
 }

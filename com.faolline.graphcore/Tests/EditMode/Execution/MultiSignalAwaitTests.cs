@@ -71,6 +71,30 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
+        public void AwaitSignalNames_IncludesStringExtras_Deduped()
+        {
+            _room.AwaitSignalName = "A";               // primary (raw)
+            _room.AwaitSignals.Add(Sig("B"));          // asset extra
+            _room.AwaitSignalNamesExtra.Add("C");      // string extra (code-first)
+            _room.AwaitSignalNamesExtra.Add("A");      // duplicate of primary → collapsed
+            CollectionAssert.AreEqual(new[] { "A", "B", "C" }, _room.AwaitSignalNames.ToArray());
+        }
+
+        [Test]
+        public void ResumesOnStringExtraSignal()
+        {
+            _room.AwaitSignalName = "A";
+            _room.AwaitSignalNamesExtra.Add("B");
+            _runner.Start(_graph, _ctx, _registry);
+            _runner.Proceed();                       // start → room, parks (await A|B)
+            Assert.AreEqual(RunnerState.WaitingForSignal, _runner.State);
+
+            _runner.RaiseSignal("B");                // the string extra resumes, same as an asset extra
+            Assert.AreEqual(RunnerState.NodeReady, _runner.State);
+            Assert.AreEqual("done", _runner.CurrentNode.Id);
+        }
+
+        [Test]
         public void ResumesOnFirstSignal()
         {
             ParkAwaitingAOrB();

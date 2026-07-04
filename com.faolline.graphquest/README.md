@@ -1,6 +1,6 @@
 # Faolline GraphQuest
 
-**Version**: 0.4.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore`, `com.faolline.graphstandard`, `com.faolline.graphlocalization`
+**Version**: 0.9.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore`, `com.faolline.graphstandard`, `com.faolline.graphlocalization`
 
 `com.faolline.graphquest` — a **quest & objective** domain library above
 [`com.faolline.graphcore`](../com.faolline.graphcore) and [`com.faolline.graphstandard`](../com.faolline.graphstandard).

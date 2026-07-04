@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
   `com.faolline.graphsave.Runtime` (the `GraphFlowDriver.Boot(GraphRunSnapshot, …)` restore path), but the
   manifest never declared it — installing graphgameflow without graphsave failed to compile. The 0.5.0 floor
   is the first graphsave that restores the raised-signal history, which the load-game path relies on.
+- **Editor live-cursor probe detached on `Stop()` and re-`Boot()`.** The driver now calls
+  `BaseRunner.DetachEditorProbe()` (graphcore 0.27.0) when it stops or replaces its runner, so a dead run no
+  longer shadows the next run's cursor in the graph editor. Dependency floor `com.faolline.graphcore`
+  `0.26.0` → `0.27.0`.
 
 ## [0.8.0]
 

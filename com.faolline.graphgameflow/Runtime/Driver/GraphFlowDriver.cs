@@ -184,6 +184,7 @@ namespace Faolline.GraphGameFlow
 
             snapshot.ApplyTo(_context, replaceCollections: true);
 
+            _runner?.DetachEditorProbe();   // an earlier run's probe must not shadow the new one
             _runner = new BaseRunner();
             Subscribe();
             _running = true;
@@ -233,6 +234,7 @@ namespace Faolline.GraphGameFlow
                 _context.InitFromGraph(_graph);
             }
 
+            _runner?.DetachEditorProbe();   // an earlier run's probe must not shadow the new one
             _runner = new BaseRunner();
             Subscribe();
             _running = true;
@@ -282,10 +284,13 @@ namespace Faolline.GraphGameFlow
         /// <summary>
         /// Detaches the driver from the runner and stops it running, so no further runner callback reaches
         /// this driver. Called automatically by <c>OnDestroy</c>; also callable to halt a flow explicitly.
+        /// Also unregisters the runner's editor live-cursor probe so the dead run stops painting the graph
+        /// editor.
         /// </summary>
         public void Stop()
         {
             Unsubscribe();
+            _runner?.DetachEditorProbe();
             _running = false;
         }
 

@@ -245,7 +245,8 @@ namespace Faolline.GraphDialogue
         }
 
         /// <summary>Raises a named signal into the dialogue, resuming a matching await. Mirrors
-        /// <see cref="GraphFlowDriver.RaiseSignal(string)"/>. No-op when the player is not waiting.</summary>
+        /// <c>GraphFlowDriver.RaiseSignal(string)</c> in com.faolline.graphgameflow (not referenced by this
+        /// assembly). No-op when the player is not waiting.</summary>
         public void RaiseSignal(string name)
         {
             _runner.RaiseSignal(name);
@@ -275,6 +276,14 @@ namespace Faolline.GraphDialogue
 
         /// <summary>True while the dialogue is parked awaiting elapsed time.</summary>
         public bool IsWaitingForTime => _runner.State == RunnerState.WaitingForTime;
+
+        /// <summary>
+        /// Unregisters this player's editor live-cursor probe (see <see cref="BaseRunner.DetachEditorProbe"/>).
+        /// A host MUST call this when it discards the player (stop, teardown, replacing it with a new one for
+        /// the same graph) — otherwise the dead run's probe shadows the next run's cursor in the graph editor.
+        /// No-op outside the editor.
+        /// </summary>
+        public void DetachEditorProbe() => _runner.DetachEditorProbe();
 
         /// <summary>Steps back one entry, restoring prior context values.</summary>
         public void Back()

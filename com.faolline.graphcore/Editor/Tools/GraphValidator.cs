@@ -153,21 +153,35 @@ namespace Faolline.GraphCore.Editor
 
         // Signal names the graph AWAITS but never RAISES within itself — so they must arrive from outside.
         // Only inspects the given graph's own nodes (one level; nested sub-graphs are validated separately).
+        // Multi-await is a logical OR: a node deadlocks only when NONE of its awaited names is raised inside
+        // the graph, so a node awaiting {internal, external} is fine and reports nothing.
         private static IEnumerable<string> ExternalAwaitedSignals(BaseGraph graph)
         {
-            var awaited = new HashSet<string>();
-            var raised = new HashSet<string>();
-            if (graph?.Nodes == null) return awaited;
+            var result = new List<string>();
+            if (graph?.Nodes == null) return result;
 
+            var raised = new HashSet<string>();
             foreach (var node in graph.Nodes)
             {
                 if (node == null) continue;
-                if (!string.IsNullOrEmpty(node.AwaitSignalName)) awaited.Add(node.AwaitSignalName);
                 CollectRaised(node.OnEnterActions, raised);
                 CollectRaised(node.OnExitActions, raised);
             }
-            awaited.ExceptWith(raised);
-            return awaited;
+
+            var seen = new HashSet<string>();
+            foreach (var node in graph.Nodes)
+            {
+                if (node == null) continue;
+                var names = node.AwaitSignalNames;
+                if (names.Count == 0) continue;
+                bool anyInternal = false;
+                foreach (var n in names)
+                    if (raised.Contains(n)) { anyInternal = true; break; }
+                if (anyInternal) continue;
+                foreach (var n in names)
+                    if (seen.Add(n)) result.Add(n);
+            }
+            return result;
         }
 
         private static void CollectRaised(List<BaseAction> actions, HashSet<string> into)

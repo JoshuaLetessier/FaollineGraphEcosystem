@@ -15,6 +15,23 @@ namespace Faolline.GraphDialogue
         private static DialoguePlayer _player;
         private static Action<EndStep> _onEndedCallback;
 
+#if UNITY_EDITOR
+        // With Enter Play Mode Options (domain reload disabled), statics survive the Edit/Play boundary:
+        // without this reset, the previous session's active player and every UI subscriber (now destroyed
+        // scene objects) would leak into the next session. Editor-only — a player build always starts fresh.
+        [UnityEngine.RuntimeInitializeOnLoadMethod(UnityEngine.RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            _player = null;                 // no StopInternal: its handlers reference destroyed objects
+            _onEndedCallback = null;
+            OnDialogueStarted = null;
+            OnLine = null;
+            OnChoices = null;
+            OnEnded = null;
+            OnStuck = null;
+        }
+#endif
+
         /// <summary>The currently playing player, or null when idle.</summary>
         public static DialoguePlayer ActivePlayer => _player;
 
@@ -113,6 +130,7 @@ namespace Faolline.GraphDialogue
                 _player.OnChoices -= HandleChoices;
                 _player.OnEnded -= HandleEnded;
                 _player.OnStuck -= HandleStuck;
+                _player.DetachEditorProbe();
             }
             _player = null;
             _onEndedCallback = null;

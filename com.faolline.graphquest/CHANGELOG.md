@@ -4,6 +4,17 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.9.0]
+
+### Added
+- **`QuestEvaluator.DetachEditorProbe()`** — pass-through to the wrapped `ReactiveEvaluator` (graphstandard
+  0.15.0), for hosts that tear an evaluator down and rebuild it over the same quest graph. Pair with
+  `DisableAutoEvaluate` on teardown.
+
+### Changed
+- **Dependency floor `com.faolline.graphstandard` `0.12.1` → `0.15.0`** (uses
+  `ReactiveEvaluator.DetachEditorProbe`).
+
 ## [0.8.0]
 
 ### Changed

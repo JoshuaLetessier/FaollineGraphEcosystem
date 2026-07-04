@@ -4,6 +4,23 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.14.0]
+
+### Added
+- **`DialoguePlayer.DetachEditorProbe()`** — unregisters the player's editor live-cursor probe (see graphcore
+  0.27.0). `DialogueBus` (on stop/end) and the UI `DialogueDriver` (on teardown/restart) now call it, so a
+  finished or force-stopped dialogue no longer shadows the next run of the same graph in the graph editor.
+
+### Fixed
+- **`DialogueBus` statics reset on Play.** With Enter Play Mode Options (domain reload disabled), the bus kept
+  the previous session's active player and every static event subscriber (destroyed scene objects) alive into
+  the next session. A `RuntimeInitializeOnLoadMethod(SubsystemRegistration)` reset (editor-only) clears them.
+- Corrected an unresolvable `<see cref>` to gameflow's `GraphFlowDriver` in `DialoguePlayer` docs (the
+  assembly does not reference graphgameflow).
+
+### Changed
+- **Dependency floor `com.faolline.graphcore` `0.20.0` → `0.27.0`** (uses `BaseRunner.DetachEditorProbe`).
+
 ## [0.13.0]
 
 ### Changed

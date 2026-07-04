@@ -194,6 +194,20 @@ namespace Faolline.GraphStandard
         }
 #endif
 
+        /// <summary>
+        /// Unregisters this evaluator's editor live-state probe from <see cref="GraphRunMonitor"/>. A host
+        /// that discards the evaluator (teardown, replacing it with a new one over the same graph) MUST call
+        /// this — the graph editor takes the first probe answering for a graph, so a dead evaluator's probe
+        /// would shadow the live one. No-op outside the editor and before <see cref="Start"/>; compiled empty
+        /// in player builds.
+        /// </summary>
+        public void DetachEditorProbe()
+        {
+#if UNITY_EDITOR
+            if (_runProbe != null) GraphRunMonitor.Unregister(_runProbe);
+#endif
+        }
+
         /// <summary>The ids of all nodes currently <see cref="ReactiveNodeState.Available"/>.</summary>
         public IReadOnlyCollection<string> AvailableNodeIds => CollectByState(ReactiveNodeState.Available);
 

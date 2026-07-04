@@ -42,6 +42,18 @@ namespace Faolline.GraphCore
 
         /// <summary>Signals that a registered probe's active node or status changed (moves the editor cursor).</summary>
         public static void NotifyChanged() => Changed?.Invoke();
+
+        /// <summary>
+        /// Removes every registered probe. Editor infrastructure: called when Play mode exits so probes from
+        /// the finished session (including ones a host forgot to detach, or leftovers surviving a disabled
+        /// domain reload) never shadow the next session's runs. Raises <see cref="Changed"/> when non-empty.
+        /// </summary>
+        public static void Clear()
+        {
+            if (_probes.Count == 0) return;
+            _probes.Clear();
+            Changed?.Invoke();
+        }
     }
 }
 #endif

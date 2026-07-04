@@ -292,6 +292,7 @@ namespace Faolline.GraphDialogue.UI
                 _controller.Teardown();
                 _controller = null;
             }
+            _player?.DetachEditorProbe();
             _player = null;
         }
     }

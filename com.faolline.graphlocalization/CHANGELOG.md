@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.1]
+
+### Fixed
+- **Multi-line CSV values no longer corrupt the round-trip.** `CsvLocalizationExporter.Escape` correctly
+  quoted fields containing newlines, but both CSV readers (`CsvLocalizationProvider` and the exporter's own
+  merge-preserve parser) split the text on `\n` BEFORE parsing quotes — so a translation containing a line
+  break (multi-line dialogue text, or a translator's spreadsheet cell) broke the row on the next read:
+  unresolvable keys at runtime and corrupted/dropped rows on the next rebuild. Both readers now use a
+  full-text RFC4180 tokenizer (quoted fields may contain commas, doubled quotes, and newlines), and
+  `Escape` also quotes fields containing `\r`.
+- **`LocalizationContext` statics reset on Play.** With Enter Play Mode Options (domain reload disabled), the
+  ambient settings survived the Edit/Play boundary, so a session reused whatever provider edit-mode tooling
+  last left there instead of loading fresh from the settings asset. A
+  `RuntimeInitializeOnLoadMethod(SubsystemRegistration)` reset (editor-only) clears it.
+
 ## [0.6.0]
 
 ### Changed (breaking)

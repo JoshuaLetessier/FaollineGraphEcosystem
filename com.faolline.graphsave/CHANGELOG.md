@@ -10,6 +10,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
 - **Dependency floor corrected `0.17.0` → `0.22.0`.** `GraphRunSnapshot` has used graphcore's signal-history
   API (`GetAllRaisedSignals` / `RestoreSignalHistory`, introduced in graphcore 0.22.0) since 0.5.0, but the
   manifest still declared the 0.17.0 floor — a consumer resolving graphcore 0.17–0.21 would not compile.
+- **`JsonFileGraphSaveStore` sanitizes slot names.** Path separators and invalid filename characters in a
+  slot (e.g. `"../other"`, `"a/b"`) are replaced with `_`, so a slot can neither escape the store folder nor
+  fail on Windows-invalid characters.
 
 ## [0.5.0]
 

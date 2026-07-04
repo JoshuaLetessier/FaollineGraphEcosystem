@@ -175,19 +175,16 @@ namespace Faolline.GraphLocalization.Editor
         {
             locales = new List<string>();
             var table = new Dictionary<string, Dictionary<string, string>>();
-            if (string.IsNullOrEmpty(csv)) return table;
+            var records = ParseRecords(csv);
+            if (records.Count == 0) return table;
 
-            var lines = csv.Replace("\r\n", "\n").Replace("\r", "\n").Split('\n');
-            if (lines.Length == 0) return table;
-
-            var header = ParseLine(lines[0]);
+            var header = records[0];
             if (header.Count < 2) return table;
             for (int c = 1; c < header.Count; c++) locales.Add(header[c].Trim());
 
-            for (int i = 1; i < lines.Length; i++)
+            for (int i = 1; i < records.Count; i++)
             {
-                if (string.IsNullOrWhiteSpace(lines[i])) continue;
-                var cols = ParseLine(lines[i]);
+                var cols = records[i];
                 if (cols.Count == 0) continue;
                 var key = cols[0].Trim();
                 if (string.IsNullOrEmpty(key)) continue;
@@ -200,35 +197,51 @@ namespace Faolline.GraphLocalization.Editor
             return table;
         }
 
-        private static List<string> ParseLine(string line)
+        // Full-text RFC4180 tokenizer. Unlike a Split('\n')-then-parse approach, a quoted field may contain
+        // commas, doubled quotes AND newlines — required so a multi-line value written by Escape survives the
+        // merge-preserve pass of the next rebuild instead of corrupting the row.
+        // Kept in sync with the identical copy in CsvLocalizationProvider (runtime assembly).
+        private static List<List<string>> ParseRecords(string csvText)
         {
-            var result = new List<string>();
-            if (line == null) { result.Add(string.Empty); return result; }
+            var records = new List<List<string>>();
+            if (string.IsNullOrEmpty(csvText)) return records;
+
+            var row = new List<string>();
             var sb = new StringBuilder();
             bool inQuotes = false;
-            for (int i = 0; i < line.Length; i++)
+
+            void EndCell() { row.Add(sb.ToString()); sb.Clear(); }
+            void EndRecord()
             {
-                char ch = line[i];
+                EndCell();
+                // A blank/whitespace-only line parses as a single blank cell — skip it.
+                if (row.Count > 1 || row[0].Trim().Length > 0)
+                    records.Add(new List<string>(row));
+                row.Clear();
+            }
+
+            for (int i = 0; i < csvText.Length; i++)
+            {
+                char ch = csvText[i];
                 if (inQuotes)
                 {
-                    if (ch == '"') { if (i + 1 < line.Length && line[i + 1] == '"') { sb.Append('"'); i++; } else inQuotes = false; }
+                    if (ch == '"') { if (i + 1 < csvText.Length && csvText[i + 1] == '"') { sb.Append('"'); i++; } else inQuotes = false; }
                     else sb.Append(ch);
                 }
-                else
-                {
-                    if (ch == ',') { result.Add(sb.ToString()); sb.Clear(); }
-                    else if (ch == '"') inQuotes = true;
-                    else sb.Append(ch);
-                }
+                else if (ch == '"') inQuotes = true;
+                else if (ch == ',') EndCell();
+                else if (ch == '\r') { if (i + 1 >= csvText.Length || csvText[i + 1] != '\n') EndRecord(); }   // lone \r ends the record; \r\n defers to the \n
+                else if (ch == '\n') EndRecord();
+                else sb.Append(ch);
             }
-            result.Add(sb.ToString());
-            return result;
+            if (sb.Length > 0 || row.Count > 0) EndRecord();
+            return records;
         }
 
         private static string Escape(string field)
         {
             field ??= string.Empty;
-            if (field.IndexOf(',') >= 0 || field.IndexOf('"') >= 0 || field.IndexOf('\n') >= 0)
+            if (field.IndexOf(',') >= 0 || field.IndexOf('"') >= 0 || field.IndexOf('\n') >= 0 || field.IndexOf('\r') >= 0)
                 return "\"" + field.Replace("\"", "\"\"") + "\"";
             return field;
         }
