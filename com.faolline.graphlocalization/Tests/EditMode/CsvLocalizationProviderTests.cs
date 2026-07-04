@@ -30,11 +30,12 @@ namespace Faolline.GraphLocalization.Tests
         }
 
         [Test]
-        public void Resolve_MissingKey_ReturnsFallback_AndWarns()
+        public void Resolve_MissingKey_ReturnsFallback_Silently()
         {
             var p = new CsvLocalizationProvider(Csv, "en");
-            LogAssert.Expect(LogType.Warning, new Regex("not found"));
+            // No provider-side log: the #key marker is the signal; StrictMode owners decide how loudly to react.
             Assert.AreEqual("#dlg.nope", p.Resolve("dlg.nope", "en"));
+            LogAssert.NoUnexpectedReceived();
         }
 
         [Test]

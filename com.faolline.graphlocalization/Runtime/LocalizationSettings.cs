@@ -41,6 +41,32 @@ namespace Faolline.GraphLocalization
             }
         }
 
-        public string Resolve(string key) => Provider.Resolve(key, _currentLocale);
+        private System.Collections.Generic.HashSet<string> _auditedMissing;
+
+        /// <summary>
+        /// Resolves <paramref name="key"/> in the current locale, applying <see cref="StrictMode"/> when the
+        /// key is missing: Permissive returns the <c>#key</c> marker silently; Audit warns once per key+locale
+        /// and returns the marker; Strict throws a <see cref="LocalizationException"/>. (Providers themselves
+        /// never log — the marker is the signal; this is the layer that decides how loudly to react.)
+        /// </summary>
+        public string Resolve(string key)
+        {
+            var value = Provider.Resolve(key, _currentLocale);
+            if (string.IsNullOrEmpty(key) || value != $"#{key}") return value;
+
+            switch (StrictMode)
+            {
+                case LocalizationStrictMode.Strict:
+                    throw new LocalizationException(key, _currentLocale);
+                case LocalizationStrictMode.Audit:
+                    var stamp = $"{_currentLocale} {key}";
+                    if ((_auditedMissing ??= new System.Collections.Generic.HashSet<string>()).Add(stamp))
+                        UnityEngine.Debug.LogWarning(
+                            $"[GraphLocalization] Missing localization key '{key}' for locale '{_currentLocale}'.");
+                    break;
+                // Permissive: return the marker silently.
+            }
+            return value;
+        }
     }
 }

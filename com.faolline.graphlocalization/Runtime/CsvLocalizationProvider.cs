@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Text;
-using UnityEngine;
 
 namespace Faolline.GraphLocalization
 {
@@ -33,6 +32,10 @@ namespace Faolline.GraphLocalization
         /// </summary>
         public void Append(string csvText) => Parse(csvText);
 
+        // A missing key returns the "#key" marker SILENTLY: the marker is the signal, and how loudly to react
+        // belongs to the layer that knows the LocalizationStrictMode (LocalizationSettings.Resolve, or a
+        // consumer like DialoguePresenter) — Permissive there means genuinely silent, and Audit already
+        // warns once per key without this provider double-logging on every lookup.
         public string Resolve(string key, string locale)
         {
             if (string.IsNullOrEmpty(key)) return string.Empty;
@@ -42,7 +45,6 @@ namespace Faolline.GraphLocalization
                 !string.IsNullOrEmpty(text))
                 return text;
 
-            Debug.LogWarning($"[GraphLocalization] Key '{key}' not found for locale '{locale ?? _currentLocale}'.");
             return $"#{key}";
         }
 

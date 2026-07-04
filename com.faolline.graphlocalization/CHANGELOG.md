@@ -4,6 +4,17 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.2]
+
+### Changed
+- **Missing-key reaction now belongs to the StrictMode owner, not the provider.**
+  `CsvLocalizationProvider.Resolve` no longer logs a warning on a missing key — it returns the `#key`
+  marker silently (the marker IS the signal). Previously `Permissive` was never actually silent, the
+  warning double-logged next to `DialoguePresenter`'s own Audit warning, and a UI re-resolving per frame
+  could spam the console. `LocalizationSettings.Resolve` now applies `StrictMode` itself: Permissive is
+  silent, Audit warns once per key+locale, Strict throws `LocalizationException` — the same semantics
+  `DialoguePresenter` already had.
+
 ## [0.6.1]
 
 ### Fixed

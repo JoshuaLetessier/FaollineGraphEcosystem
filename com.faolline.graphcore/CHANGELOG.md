@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.28.0]
+
+### Added
+- **Duplicate-GraphId detector (editor).** Duplicating a graph asset (Ctrl+D, file copy) copies the
+  serialized `GraphId` — `OnEnable` only assigns when empty — so two assets silently shared an id that
+  SubGraph cycle detection and save/localization keys rely on. A new `GraphIdDuplicateDetector`
+  (AssetPostprocessor) now scans on graph-asset import and regenerates the duplicate's id: the asset that
+  was NOT just imported keeps its id, and every regeneration logs both paths + ids so an intentional
+  replace-workflow can be spotted and reverted. Manual pass: `Faolline ▸ Graph ▸ Fix Duplicate GraphIds`.
+
 ## [0.27.0]
 
 ### Added

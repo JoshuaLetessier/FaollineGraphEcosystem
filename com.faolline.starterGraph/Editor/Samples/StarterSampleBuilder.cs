@@ -21,9 +21,26 @@ namespace Faolline.StarterGraph.Editor
         public static void CreateSample()
         {
             EnsureFolder();
+            var g = CreateSampleAt(SamplePath);
 
+            Selection.activeObject = g;
+            EditorGUIUtility.PingObject(g);
+            Debug.Log($"[StarterGraph] Minimal sample created: {SamplePath}. Open it, press Run → it pauses at the " +
+                      "Choice (Left is gated by the Flag bool parameter, Right is always available). Taking Left " +
+                      "toggles the flag (ToggleBoolAction) so the gate flips on GoBack. It exercises the template's " +
+                      "pattern to copy: graph + typed context + node + action + condition + choice.");
+        }
+
+        /// <summary>
+        /// Builds the sample graph asset at <paramref name="assetPath"/> (its parent folder must exist) and
+        /// returns it. The path-parameterised core of <see cref="CreateSample"/>: tests generate into a temp
+        /// folder through this, instead of rewriting the committed sample asset in place (which regenerated
+        /// its GraphId — meant to be stable — on every test run).
+        /// </summary>
+        public static StarterGraph CreateSampleAt(string assetPath)
+        {
             var g = ScriptableObject.CreateInstance<StarterGraph>();
-            AssetDatabase.CreateAsset(g, SamplePath);
+            AssetDatabase.CreateAsset(g, assetPath);
 
             // Typed parameter: seeded into the StarterContext on run (InitFromGraph) — gates the Left option.
             g.AddParameter(ParameterData.Bool(StarterContextKeys.Flag, true));
@@ -64,12 +81,7 @@ namespace Faolline.StarterGraph.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Selection.activeObject = g;
-            EditorGUIUtility.PingObject(g);
-            Debug.Log($"[StarterGraph] Minimal sample created: {SamplePath}. Open it, press Run → it pauses at the " +
-                      "Choice (Left is gated by the Flag bool parameter, Right is always available). Taking Left " +
-                      "toggles the flag (ToggleBoolAction) so the gate flips on GoBack. It exercises the template's " +
-                      "pattern to copy: graph + typed context + node + action + condition + choice.");
+            return g;
         }
 
         // ── Helpers ─────────────────────────────────────────────────────────────
