@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.2]
+
+### Fixed
+- **`JsonFileGraphSaveStore` resolves `persistentDataPath` lazily.** The constructor called
+  `Application.persistentDataPath`, which Unity forbids during MonoBehaviour construction — so
+  `new JsonFileGraphSaveStore()` as a field initializer threw. The path is now resolved on first
+  Save/Load/Exists/Delete; the constructor stores only the sub-folder string. (Consumer dogfood finding.)
+
 ## [0.5.1]
 
 ### Fixed

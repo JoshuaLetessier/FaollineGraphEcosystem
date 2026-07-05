@@ -275,5 +275,87 @@ namespace Faolline.GraphCore.Tests
             Assert.IsFalse(HasWarning(GraphValidator.Validate(g), "unreachable"),
                 "choice edges route by port id, not condition order");
         }
+
+        // ── Circular await (the "cupboard" deadlock) ─────────────────────
+
+        private static StatementNodeData Stmt(string id)
+            => new StatementNodeData { Id = id, NodeType = StatementNodeData.NodeTypeId };
+
+        private RaiseSignalAction Raise(string name)
+        {
+            var sig = Track(ScriptableObject.CreateInstance<SignalName>()); sig.name = name;
+            var raise = Track(ScriptableObject.CreateInstance<RaiseSignalAction>()); raise.Signal = sig;
+            return raise;
+        }
+
+        // s → a(await "open") → b(raises "open" on enter) → e : the only raiser sits BEHIND the await.
+        private BaseGraph CircularGraph(out StatementNodeData awaiting)
+        {
+            var g = NewGraph();
+            awaiting = Stmt("a"); awaiting.AwaitSignalName = "open";
+            var b = Stmt("b"); b.OnEnterActions.Add(Raise("open"));
+            g.AddNode(Start("s")); g.AddNode(awaiting); g.AddNode(b); g.AddNode(End("e"));
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "a")); g.AddEdge(Edge("a", "b")); g.AddEdge(Edge("b", "e"));
+            return g;
+        }
+
+        [Test]
+        public void CircularAwait_RaiserOnlyDownstream_Warns()
+        {
+            var g = CircularGraph(out _);
+            Assert.IsTrue(HasWarning(GraphValidator.Validate(g), "Circular await"),
+                "a raiser reachable only through the awaiting node can never fire");
+        }
+
+        [Test]
+        public void CircularAwait_RaiserOnOwnExit_Warns()
+        {
+            // The cupboard shape exactly: the awaiting node's own completion raises the awaited signal.
+            var g = NewGraph();
+            var a = Stmt("a"); a.AwaitSignalName = "open"; a.OnExitActions.Add(Raise("open"));
+            g.AddNode(Start("s")); g.AddNode(a); g.AddNode(End("e"));
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "a")); g.AddEdge(Edge("a", "e"));
+            Assert.IsTrue(HasWarning(GraphValidator.Validate(g), "Circular await"),
+                "exit-actions run AFTER the resume, so they cannot resume their own node");
+        }
+
+        [Test]
+        public void CircularAwait_RaiserBeforeTheAwait_NoWarning()
+        {
+            var g = NewGraph();
+            var s = Start("s"); s.OnExitActions.Add(Raise("open"));
+            var a = Stmt("a"); a.AwaitSignalName = "open";
+            g.AddNode(s); g.AddNode(a); g.AddNode(End("e"));
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "a")); g.AddEdge(Edge("a", "e"));
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(g), "Circular await"),
+                "a raiser that runs before the await is reachable — not circular");
+        }
+
+        [Test]
+        public void CircularAwait_SignalNeverRaisedInternally_NoWarning()
+        {
+            var g = NewGraph();
+            var a = Stmt("a"); a.AwaitSignalName = "host_signal";
+            g.AddNode(Start("s")); g.AddNode(a); g.AddNode(End("e"));
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "a")); g.AddEdge(Edge("a", "e"));
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(g), "Circular await"),
+                "an await on a signal the graph never raises is the normal host-raised pattern");
+        }
+
+        [Test]
+        public void CircularAwait_OrAwait_OneNameResumable_NoWarning()
+        {
+            // a awaits open OR help; "help" is raised before the await, "open" only behind it.
+            var g = CircularGraph(out var awaiting);
+            awaiting.AwaitSignalNamesExtra.Add("help");
+            var start = g.Nodes.First(n => n.Id == "s");
+            start.OnExitActions.Add(Raise("help"));
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(g), "Circular await"),
+                "OR-await resumes on the first name that can fire — one resumable name is enough");
+        }
     }
 }

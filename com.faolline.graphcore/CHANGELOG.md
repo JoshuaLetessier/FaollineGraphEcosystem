@@ -4,6 +4,24 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.29.0]
+
+### Added
+- **Circular-await lint.** `GraphValidator` now detects the "cupboard" deadlock: a node that awaits a signal
+  whose every internal raiser runs only AFTER that node resumes (its own exit-actions, or nodes reachable
+  only through it). Reachability is computed from the entry with the awaiting node absorbing; OR-awaits pass
+  if ANY awaited name can fire before the resume; a name the graph never raises stays exempt (host-raised
+  pattern). (Consumer dogfood finding.)
+
+### Changed
+- **History-saturation warning deferred to the first BLOCKED rewind.** The 0.26.2 warning fired on every
+  20+ step run — even in games that never rewind — because it triggered on the trim itself. Trimming at
+  `HistoryDepth` is now silent again; the (once per run) warning fires from `GoBack`/`GoBackToCheckpoint`
+  when a rewind actually hits the trimmed boundary. (Consumer dogfood finding.)
+- **Editor assembly is now `autoReferenced`.** A consumer editor script WITHOUT its own asmdef
+  (plain `Assets/Editor/`) can now call `GraphValidator` etc. directly — previously the assembly was
+  invisible to the predefined assemblies and reachable only via reflection. (Consumer dogfood finding.)
+
 ## [0.28.0]
 
 ### Added

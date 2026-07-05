@@ -165,6 +165,7 @@ namespace Faolline.GraphCore
         private List<string> _subscribedSignalNames;
         private Action<SignalArgs> _contextSignalBridge;
         private bool _historySaturationWarned;
+        private bool _historyTrimmed;
 
         // ── Events ─────────────────────────────────────────────────────────────
 
@@ -229,6 +230,7 @@ namespace Faolline.GraphCore
             _graphStack.Clear();
             _history.Clear();
             _historySaturationWarned = false;
+            _historyTrimmed = false;
             ClearIndexes();
 
             var rootFrame = new GraphExecutionState
@@ -265,6 +267,7 @@ namespace Faolline.GraphCore
             _graphStack.Clear();
             _history.Clear();
             _historySaturationWarned = false;
+            _historyTrimmed = false;
             ClearIndexes();
 
             var frame = new GraphExecutionState
@@ -308,7 +311,11 @@ namespace Faolline.GraphCore
         /// </summary>
         public void GoBack()
         {
-            if (_history.Count == 0) return;
+            if (_history.Count == 0)
+            {
+                WarnIfSaturationBlockedRewind("GoBack");
+                return;
+            }
             RestoreEntry(_history.Count - 1);
         }
 
@@ -328,6 +335,21 @@ namespace Faolline.GraphCore
                     return;
                 }
             }
+            WarnIfSaturationBlockedRewind("GoBackToCheckpoint");
+        }
+
+        // The warning fires only when a rewind ACTUALLY hits the trimmed boundary — not on every long run
+        // (auto-trimming at HistoryDepth is the intended bounded-memory behaviour and games that never
+        // rewind should not be nagged about it). Once per run.
+        private void WarnIfSaturationBlockedRewind(string operation)
+        {
+            if (!_historyTrimmed || _historySaturationWarned) return;
+            _historySaturationWarned = true;
+            var depth = _rootGraph != null ? _rootGraph.HistoryDepth : 0;
+            UnityEngine.Debug.LogWarning(
+                $"[GraphCore] {operation} could not rewind further: history is capped at HistoryDepth={depth} " +
+                $"and older steps have been dropped. Raise BaseGraph.HistoryDepth (0 = unlimited) if this run " +
+                $"needs deeper rewind.");
         }
 
         // ── Signals ────────────────────────────────────────────────────────────
@@ -707,21 +729,15 @@ namespace Faolline.GraphCore
 
             _history.Add(entry);
 
-            // Cap history using the root graph's HistoryDepth (0 = unlimited). Auto-trimming the oldest step is
-            // the intended bounded-memory behaviour, but it used to be silent — warn ONCE per run the first time
-            // it happens so an author who expected to rewind further knows they hit the cap.
+            // Cap history using the root graph's HistoryDepth (0 = unlimited). Auto-trimming the oldest step
+            // is the intended bounded-memory behaviour and stays SILENT — any 20+ step run saturates, and a
+            // game that never rewinds should not be nagged. The trim is only remembered here; the warning
+            // fires from GoBack/GoBackToCheckpoint the first time a rewind actually hits the cap.
             var depth = _rootGraph != null ? _rootGraph.HistoryDepth : 0;
             if (depth > 0 && _history.Count > depth)
             {
                 _history.RemoveAt(0);
-                if (!_historySaturationWarned)
-                {
-                    _historySaturationWarned = true;
-                    UnityEngine.Debug.LogWarning(
-                        $"[GraphCore] History saturated at HistoryDepth={depth}: the oldest step is now being " +
-                        $"dropped, so GoBack/GoBackToCheckpoint can only reach the last {depth} step(s). Raise " +
-                        $"BaseGraph.HistoryDepth (0 = unlimited) if you need to rewind further.");
-                }
+                _historyTrimmed = true;
             }
         }
 

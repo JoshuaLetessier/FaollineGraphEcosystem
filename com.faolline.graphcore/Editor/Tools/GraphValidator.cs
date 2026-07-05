@@ -148,7 +148,89 @@ namespace Faolline.GraphCore.Editor
                 }
             }
 
+            CheckCircularAwaits(graph, nodes, edges, report);
+
             return report;
+        }
+
+        // ── Circular await ───────────────────────────────────────────────────
+        // An awaiting node parks BEFORE its exit-actions run and before anything downstream executes. So an
+        // internal raiser of the awaited signal only helps if it can run WITHOUT the awaiting node resuming:
+        // it must be reachable from the entry with the awaiting node treated as absorbing (can be entered,
+        // never left). If the signal IS raised in this graph but every raiser sits on the awaiting node's own
+        // exit-actions or strictly behind it, the await can never resume from inside the graph — the
+        // "cupboard" deadlock (a flow that awaits a signal only its own completion raises). A name never
+        // raised internally stays exempt: it is presumed to come from the host (the normal await pattern;
+        // the fresh-context sub-graph lint above covers the isolated case).
+        private static void CheckCircularAwaits(BaseGraph graph, List<BaseNodeData> nodes,
+            List<BaseEdgeData> edges, GraphValidationReport report)
+        {
+            if (string.IsNullOrEmpty(graph.EntryNodeId)) return;   // no entry → no reachability to reason about
+
+            var raisedAnywhere = new HashSet<string>();
+            foreach (var n in nodes)
+            {
+                CollectRaised(n.OnEnterActions, raisedAnywhere);
+                CollectRaised(n.OnExitActions, raisedAnywhere);
+            }
+            if (raisedAnywhere.Count == 0) return;
+
+            var byId = new Dictionary<string, BaseNodeData>();
+            foreach (var n in nodes)
+                if (!string.IsNullOrEmpty(n.Id) && !byId.ContainsKey(n.Id)) byId[n.Id] = n;
+
+            var adjacency = new Dictionary<string, List<string>>();
+            foreach (var e in edges)
+            {
+                if (string.IsNullOrEmpty(e.FromNodeId) || string.IsNullOrEmpty(e.ToNodeId)) continue;
+                if (!adjacency.TryGetValue(e.FromNodeId, out var list)) adjacency[e.FromNodeId] = list = new List<string>();
+                list.Add(e.ToNodeId);
+            }
+
+            foreach (var awaiting in nodes)
+            {
+                var names = awaiting.AwaitSignalNames;
+                if (names.Count == 0) continue;
+                // Any awaited name never raised internally → presumed host-raised → resumable; skip.
+                if (names.Any(x => !raisedAnywhere.Contains(x))) continue;
+
+                var beforeResume = RaisedBeforeResume(graph, byId, adjacency, awaiting);
+                // OR-await: resumable if ANY awaited name can be raised before the node resumes.
+                if (names.Any(x => beforeResume.Contains(x))) continue;
+
+                report.Issues.Add(new GraphIssue(GraphIssueSeverity.Warning, awaiting.Id,
+                    $"Circular await on node '{Label(awaiting)}': it awaits " +
+                    $"'{string.Join("' / '", names)}', and every raiser of {(names.Count > 1 ? "those signals" : "that signal")} " +
+                    $"in this graph runs only AFTER this node resumes (its own exit-actions, or nodes behind it) — " +
+                    $"the await can never resume from inside the graph. Raise the signal before/parallel to this " +
+                    $"node, or from the host."));
+            }
+        }
+
+        // Every signal raisable from the entry while <paramref name="awaiting"/> is parked: enter-actions of
+        // all reachable nodes (the awaiting node's own enter-actions run before it parks), exit-actions of all
+        // reachable nodes EXCEPT the awaiting one, with the awaiting node absorbing traversal.
+        private static HashSet<string> RaisedBeforeResume(BaseGraph graph,
+            Dictionary<string, BaseNodeData> byId, Dictionary<string, List<string>> adjacency, BaseNodeData awaiting)
+        {
+            var raised = new HashSet<string>();
+            var visited = new HashSet<string>();
+            var queue = new Queue<string>();
+            queue.Enqueue(graph.EntryNodeId);
+
+            while (queue.Count > 0)
+            {
+                var id = queue.Dequeue();
+                if (!visited.Add(id) || !byId.TryGetValue(id, out var node)) continue;
+
+                CollectRaised(node.OnEnterActions, raised);
+                if (ReferenceEquals(node, awaiting)) continue;   // absorbing: no exit-actions, no traversal out
+                CollectRaised(node.OnExitActions, raised);
+
+                if (adjacency.TryGetValue(id, out var next))
+                    foreach (var to in next) queue.Enqueue(to);
+            }
+            return raised;
         }
 
         // Signal names the graph AWAITS but never RAISES within itself — so they must arrive from outside.

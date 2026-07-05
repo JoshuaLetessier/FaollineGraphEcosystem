@@ -184,7 +184,7 @@ namespace Faolline.GraphLocalization.Editor
                 return null;
             }
 
-            var result = method.Invoke(null, new object[] { libName, db, validation, generateStringTables, generateAssetTables }) as string[];
+            var result = method.Invoke(null, new object[] { libName, db, validation, generateStringTables, generateAssetTables, settingsAsset.UnitySourceLocale }) as string[];
             Debug.Log($"[LocalizationBuilderCore] [{libName}] Phase 2 complete. " +
                 $"Collections: {(result != null ? string.Join(", ", result) : "(none)")}");
             return result;

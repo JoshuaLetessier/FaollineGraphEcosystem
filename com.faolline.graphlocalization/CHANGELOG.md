@@ -4,6 +4,26 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.0]
+
+### Added
+- **`Unity Source Locale` setting.** UnityLocalization mode now declares which locale the authored text is
+  written in (`LocalizationSettingsAsset.UnitySourceLocale`), like CSV mode's first-locale convention. The
+  syncer resolves: explicit setting → Project Locale → first configured locale, and the last fallback now
+  WARNS — it is an alphabetical accident that silently filed French authored text under 'en'.
+  (Consumer dogfood finding.)
+
+### Fixed
+- **`UnityLocalizationProvider` self-initializes and stops failing silently.** Unity Localization loads its
+  locales asynchronously; before that, `SetLocale`/`CurrentLocale` silently no-oped — worst in a player
+  build, where an early `SetLocale` from a boot script never applied. The provider now blocks once on
+  `InitializationOperation` before touching locales, and `SetLocale` warns when the locale is unknown or
+  none are available. (Consumer dogfood finding.)
+
+### Changed
+- **Editor assemblies are now `autoReferenced`** (main + Localization.Unity.Editor), so consumer editor
+  scripts without an asmdef can reach the build/validation entry points.
+
 ## [0.6.2]
 
 ### Changed

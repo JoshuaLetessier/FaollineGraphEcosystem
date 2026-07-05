@@ -1,6 +1,6 @@
 # com.faolline.graphlocalization
 
-**Version**: 0.6.2 — **Unity**: 6000.x — no required dependencies
+**Version**: 0.7.0 — **Unity**: 6000.x — no required dependencies
 
 Provider-agnostic localization for the Faolline graph ecosystem. Resolves localized text at runtime
 through a pluggable `ILocalizationProvider`, and builds translation tables from your graphs at edit

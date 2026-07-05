@@ -1,6 +1,6 @@
 # com.faolline.starterGraph
 
-**Version**: 0.3.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.18.0
+**Version**: 0.3.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.18.0
 
 **Internal verification package — not for distribution.**
 

@@ -204,13 +204,13 @@ namespace Faolline.GraphCore.Tests
                 Assert.DoesNotThrow(() => runner.GoBack());
         }
 
-        // ── Saturation warning ─────────────────────────────────────────────────
+        // ── Saturation warning (deferred: fires on the first BLOCKED rewind, never on the trim itself) ──
 
         private static int CountSaturationWarnings(System.Action body)
         {
             int warnings = 0;
             Application.LogCallback handler = (msg, stack, type) =>
-            { if (type == LogType.Warning && msg.Contains("History saturated")) warnings++; };
+            { if (type == LogType.Warning && msg.Contains("could not rewind further")) warnings++; };
             Application.logMessageReceived += handler;
             try { body(); }
             finally { Application.logMessageReceived -= handler; }
@@ -218,7 +218,7 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void History_Saturation_WarnsExactlyOnce()
+        public void History_Saturation_TrimAloneIsSilent_LongRunWithoutRewindNeverWarns()
         {
             var graph = Track(BuildChainGraph(8)); // n0…n7
             graph.HistoryDepth = 2;
@@ -227,23 +227,60 @@ namespace Faolline.GraphCore.Tests
             {
                 var runner = new BaseRunner();
                 runner.Start(graph, new BaseContext(), new NodeExecutorRegistry());
-                for (int i = 0; i < 5; i++) runner.Proceed();   // several trims past the cap
+                for (int i = 0; i < 5; i++) runner.Proceed();   // several trims past the cap — no rewind
             });
 
-            Assert.AreEqual(1, warnings, "history saturation warns once per run, not on every trim");
+            Assert.AreEqual(0, warnings, "a game that never rewinds must not be nagged about the cap");
         }
 
         [Test]
-        public void History_Saturation_Unlimited_NeverWarns()
+        public void History_Saturation_WarnsOnceWhenGoBackHitsTheCap()
         {
             var graph = Track(BuildChainGraph(8));
-            graph.HistoryDepth = 0; // unlimited → never trims → never warns
+            graph.HistoryDepth = 2;
 
             int warnings = CountSaturationWarnings(() =>
             {
                 var runner = new BaseRunner();
                 runner.Start(graph, new BaseContext(), new NodeExecutorRegistry());
                 for (int i = 0; i < 5; i++) runner.Proceed();
+                runner.GoBack(); runner.GoBack();   // consume the 2 kept entries — silent
+                runner.GoBack();                    // blocked by the trimmed boundary → warn
+                runner.GoBack();                    // still blocked → once per run, no repeat
+            });
+
+            Assert.AreEqual(1, warnings, "warns once, on the first rewind that hits the trimmed boundary");
+        }
+
+        [Test]
+        public void History_Saturation_GoBackToCheckpointBlockedByTrim_Warns()
+        {
+            var graph = Track(BuildChainGraph(8)); // no checkpoint anywhere
+            graph.HistoryDepth = 2;
+
+            int warnings = CountSaturationWarnings(() =>
+            {
+                var runner = new BaseRunner();
+                runner.Start(graph, new BaseContext(), new NodeExecutorRegistry());
+                for (int i = 0; i < 5; i++) runner.Proceed();
+                runner.GoBackToCheckpoint();        // nothing found in the capped window + trims occurred → warn
+            });
+
+            Assert.AreEqual(1, warnings);
+        }
+
+        [Test]
+        public void History_Saturation_Unlimited_ExhaustedGoBackStaysSilent()
+        {
+            var graph = Track(BuildChainGraph(8));
+            graph.HistoryDepth = 0; // unlimited → never trims → a GoBack past the genuine start is a plain no-op
+
+            int warnings = CountSaturationWarnings(() =>
+            {
+                var runner = new BaseRunner();
+                runner.Start(graph, new BaseContext(), new NodeExecutorRegistry());
+                for (int i = 0; i < 5; i++) runner.Proceed();
+                for (int i = 0; i < 7; i++) runner.GoBack();   // exhausts history, then no-ops
             });
 
             Assert.AreEqual(0, warnings);
@@ -260,8 +297,10 @@ namespace Faolline.GraphCore.Tests
             {
                 runner.Start(graph, new BaseContext(), new NodeExecutorRegistry());
                 for (int i = 0; i < 5; i++) runner.Proceed();
+                for (int i = 0; i < 3; i++) runner.GoBack();                          // 3rd is blocked → warn
                 runner.Start(graph, new BaseContext(), new NodeExecutorRegistry());   // new run re-arms the one-shot
                 for (int i = 0; i < 5; i++) runner.Proceed();
+                for (int i = 0; i < 3; i++) runner.GoBack();                          // blocked again → warn again
             });
 
             Assert.AreEqual(2, warnings, "the one-shot re-arms on a fresh Start");

@@ -28,7 +28,8 @@ namespace Faolline.GraphLocalization.Unity.Editor
         /// Asset Tables are created per flag type (Audio, Sprite, etc.) only for keys with matching flags.
         /// </summary>
         public static string[] SyncDatabase(string libName, LocalizationDatabase database,
-            LocaleValidationMode validation, bool generateStringTables, bool generateAssetTables)
+            LocaleValidationMode validation, bool generateStringTables, bool generateAssetTables,
+            string sourceLocaleCode = null)
         {
             if (database == null) return System.Array.Empty<string>();
 
@@ -40,7 +41,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
             }
 
             var libFolder = EnsureLibFolder(libName);
-            var sourceLocale = GetSourceLocale(locales);
+            var sourceLocale = GetSourceLocale(libName, locales, sourceLocaleCode);
             var report = new SyncReport(libName);
             var managed = new List<StringTableCollection>();
             var desiredNames = new HashSet<string>(StringComparer.Ordinal);
@@ -335,10 +336,29 @@ namespace Faolline.GraphLocalization.Unity.Editor
 
         // ── Helpers ───────────────────────────────────────────────────────────────
 
-        private static Locale GetSourceLocale(IList<Locale> locales)
+        // Resolution order: the explicit code from LocalizationSettingsAsset.UnitySourceLocale, then the
+        // Project Locale, then the first configured locale — the last one WITH a warning, because it is an
+        // alphabetical accident: authored French text would silently be filed as the 'en' source column.
+        private static Locale GetSourceLocale(string libName, IList<Locale> locales, string sourceLocaleCode)
         {
+            if (!string.IsNullOrEmpty(sourceLocaleCode) && locales != null)
+            {
+                foreach (var l in locales)
+                    if (l != null && l.Identifier.Code == sourceLocaleCode) return l;
+                Debug.LogWarning($"[UnityLocalizationSyncer] [{libName}] Unity Source Locale '{sourceLocaleCode}' " +
+                    "(from the localization settings) is not among the project's locales " +
+                    "(Project Settings ▸ Localization); falling back.");
+            }
             try { var p = UnityLocalizationSettings.ProjectLocale; if (p != null) return p; } catch { }
-            return locales?.Count > 0 ? locales[0] : null;
+            if (locales?.Count > 0)
+            {
+                Debug.LogWarning($"[UnityLocalizationSyncer] [{libName}] No source locale declared: neither the " +
+                    "settings' Unity Source Locale nor a Project Locale is set. Using the FIRST configured " +
+                    $"locale ('{locales[0].Identifier.Code}') as the source — authored text will be pre-filled " +
+                    "into that column. Set one of the two if this is not the authoring language.");
+                return locales[0];
+            }
+            return null;
         }
 
         private static int Pct(int n, int d) => d <= 0 ? 100 : Mathf.RoundToInt(100f * n / d);

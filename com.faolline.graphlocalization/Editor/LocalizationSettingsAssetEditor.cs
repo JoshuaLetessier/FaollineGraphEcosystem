@@ -29,11 +29,13 @@ namespace Faolline.GraphLocalization.Editor
 
         private SerializedProperty _csvLocales;
         private SerializedProperty _csvOutputFolder;
+        private SerializedProperty _unitySourceLocale;
 
         private void OnEnable()
         {
             _mode = serializedObject.FindProperty("_mode");
             _tableMode = serializedObject.FindProperty("_unityTableMode");
+            _unitySourceLocale = serializedObject.FindProperty("_unitySourceLocale");
             _localeValidation = serializedObject.FindProperty("_localeValidation");
             _playerStrictMode = serializedObject.FindProperty("_playerStrictMode");
             _csvLocales = serializedObject.FindProperty("_csvLocales");
@@ -49,10 +51,13 @@ namespace Faolline.GraphLocalization.Editor
             if (_mode.enumValueIndex == (int)LocalizationMode.UnityLocalization)
             {
                 EditorGUILayout.PropertyField(_tableMode, new GUIContent("Tables To Generate"));
+                EditorGUILayout.PropertyField(_unitySourceLocale, new GUIContent("Source Locale"));
                 EditorGUILayout.HelpBox("Build All Tables generates:\n" +
                     "• Text — String Tables only (classic text).\n" +
                     "• Asset — Asset Tables per type (Audio, Sprite…), only for flagged nodes.\n" +
-                    "• Both — String Tables + per-type Asset Tables.",
+                    "• Both — String Tables + per-type Asset Tables.\n" +
+                    "Source Locale = the language the authored text is written in (its column is pre-filled). " +
+                    "Empty: Project Locale, else first configured locale (with a build warning).",
                     MessageType.None);
             }
             else // Csv

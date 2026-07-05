@@ -55,17 +55,22 @@ namespace Faolline.GraphDialogue.Samples.GameFlowBridge
             }
         }
 
-        private void Awake()
+        private bool _bound;
+        private float _unboundTime;
+        private bool _warnedNoDriver;
+
+        private void Awake() => TryBind();
+
+        // LAZY bind: a flow driver often lives in another scene (a persistent boot driver spanning scene
+        // loads) or Awakes after this component — binding only at Awake made the bridge fail permanently
+        // when the game scene was played directly, and made it fragile to Awake order even mono-scene.
+        // Update keeps retrying until the driver exists, and warns once if it never shows up.
+        private bool TryBind()
         {
-            // A flow driver often lives in another scene (a persistent boot driver spanning scene
-            // loads), which the inspector cannot reference — fall back to the active one.
-            if (driver == null) driver = GraphFlowDriver.Active;
-            if (driver == null)
-            {
-                Debug.LogError("[GraphDialogue] FlowDialogueBridge: no GraphFlowDriver assigned " +
-                    "and no persistent GraphFlowDriver.Active to fall back to.");
-                return;
-            }
+            if (_bound) return true;
+            var target = driver != null ? driver : GraphFlowDriver.Active;
+            if (target == null) return false;
+            driver = target;
 
             View?.BindSpeakers(speakers);
 
@@ -76,6 +81,8 @@ namespace Faolline.GraphDialogue.Samples.GameFlowBridge
             _source = new GraphFlowDialogueSource(driver, presenter);
             _controller = new DialoguePlaybackController(
                 _source, () => View, autoAdvance, autoAdvanceDelay, choiceTimeout, voiceSource);
+            _bound = true;
+            return true;
         }
 
         /// <summary>
@@ -85,7 +92,23 @@ namespace Faolline.GraphDialogue.Samples.GameFlowBridge
         /// </summary>
         public void Advance() => _controller?.Advance();
 
-        private void Update() => _controller?.Tick(Time.time);
+        private void Update()
+        {
+            if (!TryBind())
+            {
+                _unboundTime += Time.unscaledDeltaTime;
+                if (_unboundTime > 1f && !_warnedNoDriver)
+                {
+                    _warnedNoDriver = true;
+                    Debug.LogWarning("[GraphDialogue] FlowDialogueBridge: still no GraphFlowDriver after 1s — " +
+                        "assign one in the inspector, or make sure a persistent driver " +
+                        "(GraphFlowDriver.Active) gets created (are you playing the game scene without the " +
+                        "boot scene?). The bridge will bind automatically if one appears.", this);
+                }
+                return;
+            }
+            _controller?.Tick(Time.time);
+        }
 
         private void OnDestroy()
         {

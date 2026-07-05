@@ -262,6 +262,13 @@ namespace Faolline.GraphDialogue.UI
 
         // ── Rendering (implemented by concrete views) ───────────────────────────────
 
+        /// <summary>
+        /// Clears the view on scene start so the authoring placeholders (the "Speaker" / "Line goes here."
+        /// texts left in the UXML/prefab for layout work) are never visible before the first real line.
+        /// Override if a subclass needs its own <c>Start</c>; call <c>base.Start()</c> to keep the clear.
+        /// </summary>
+        protected virtual void Start() => HideAll();
+
         /// <inheritdoc/>
         public abstract void ShowLine(LineStep step);
 

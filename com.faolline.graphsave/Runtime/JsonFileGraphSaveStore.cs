@@ -15,22 +15,29 @@ namespace Faolline.GraphSave
     /// </summary>
     public class JsonFileGraphSaveStore : IGraphSaveStore
     {
-        private readonly string _rootPath;
+        private readonly string _subFolder;
+        private string _rootPath;
+
+        // persistentDataPath is resolved LAZILY (first Save/Load/Exists/Delete), not in the constructor:
+        // Unity forbids calling it during MonoBehaviour construction, so `new JsonFileGraphSaveStore()`
+        // as a field initializer threw. The constructor stores only the plain sub-folder string.
+        private string RootPath => _rootPath ??= Path.Combine(Application.persistentDataPath, _subFolder);
 
         /// <summary>
         /// Creates a store writing to <see cref="Application.persistentDataPath"/>/<paramref name="subFolder"/>.
+        /// Safe to use as a MonoBehaviour field initializer — the path is resolved on first use, not here.
         /// </summary>
         /// <param name="subFolder">Subfolder under persistentDataPath (default <c>"GraphSaves"</c>).</param>
         public JsonFileGraphSaveStore(string subFolder = "GraphSaves")
         {
-            _rootPath = Path.Combine(Application.persistentDataPath, subFolder);
+            _subFolder = subFolder;
         }
 
         /// <inheritdoc/>
         public void Save(string slot, GraphRunSnapshot snapshot)
         {
             if (string.IsNullOrEmpty(slot) || snapshot == null) return;
-            Directory.CreateDirectory(_rootPath);
+            Directory.CreateDirectory(RootPath);
             var json = JsonUtility.ToJson(snapshot, prettyPrint: true);
             File.WriteAllText(SlotPath(slot), json);
         }
@@ -69,7 +76,7 @@ namespace Faolline.GraphSave
             for (int i = 0; i < chars.Length; i++)
                 if (System.Array.IndexOf(invalid, chars[i]) >= 0 || chars[i] == '/' || chars[i] == '\\')
                     chars[i] = '_';
-            return Path.Combine(_rootPath, new string(chars) + ".json");
+            return Path.Combine(RootPath, new string(chars) + ".json");
         }
     }
 }

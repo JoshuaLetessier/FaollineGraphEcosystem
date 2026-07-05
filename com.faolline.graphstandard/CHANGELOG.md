@@ -4,6 +4,12 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.15.1]
+
+### Changed
+- **Editor assembly is now `autoReferenced`** — a consumer editor script without its own asmdef can call the
+  editor tooling directly (previously reachable only via reflection). No code change.
+
 ## [0.15.0]
 
 ### Added

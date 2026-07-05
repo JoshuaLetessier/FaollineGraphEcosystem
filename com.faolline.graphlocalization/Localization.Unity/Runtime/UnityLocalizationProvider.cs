@@ -32,10 +32,30 @@ namespace Faolline.GraphLocalization.Unity
         /// <summary>Back-compat single-collection constructor.</summary>
         public UnityLocalizationProvider(string tableCollectionName) : this(null, tableCollectionName) { }
 
+        // Unity Localization loads its locales asynchronously: before initialization completes,
+        // AvailableLocales is empty and SelectedLocale null — an early SetLocale used to no-op SILENTLY
+        // (worst in a player build, where a locale set from a boot script simply never applied). We block
+        // once on the initialization handle (the documented synchronous pattern) before touching locales.
+        private bool _initAttempted;
+
+        private void EnsureInitialized()
+        {
+            if (_initAttempted) return;
+            _initAttempted = true;
+            try { UnityLocalizationSettings.InitializationOperation.WaitForCompletion(); }
+            catch (System.Exception e)
+            {
+                UnityEngine.Debug.LogWarning(
+                    $"[GraphLocalization] Unity Localization failed to initialize: {e.Message}. " +
+                    "Locale queries/changes may not apply.");
+            }
+        }
+
         public string CurrentLocale
         {
             get
             {
+                EnsureInitialized();
                 var locale = UnityLocalizationSettings.SelectedLocale;
                 return locale != null ? locale.Identifier.Code : "en";
             }
@@ -44,10 +64,28 @@ namespace Faolline.GraphLocalization.Unity
         public void SetLocale(string locale)
         {
             if (string.IsNullOrEmpty(locale)) return;
+            EnsureInitialized();
             var available = UnityLocalizationSettings.AvailableLocales;
-            if (available == null) return;
+            if (available == null || available.Locales == null || available.Locales.Count == 0)
+            {
+                UnityEngine.Debug.LogWarning(
+                    $"[GraphLocalization] SetLocale('{locale}') ignored: Unity Localization has no available " +
+                    "locales (initialization failed, or no locales are configured in Project Settings ▸ " +
+                    "Localization).");
+                return;
+            }
             var target = available.GetLocale(new UnityEngine.Localization.LocaleIdentifier(locale));
-            if (target != null) UnityLocalizationSettings.SelectedLocale = target;
+            if (target != null)
+            {
+                UnityLocalizationSettings.SelectedLocale = target;
+                return;
+            }
+            var codes = new List<string>();
+            foreach (var l in available.Locales)
+                if (l != null) codes.Add(l.Identifier.Code);
+            UnityEngine.Debug.LogWarning(
+                $"[GraphLocalization] SetLocale('{locale}') ignored: no such locale among the project's " +
+                $"({string.Join(", ", codes)}).");
         }
 
         private bool _warnedNoCollections;

@@ -4,6 +4,25 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.15.0]
+
+### Added
+- **Views clear themselves on scene start.** `DialogueViewBase` gains a `protected virtual Start()` calling
+  `HideAll()`, so the authoring placeholders ("Speaker" / "Line goes here.") left in the UXML/prefab are
+  never visible before the first real line. Subclasses that define their own `Start` should call
+  `base.Start()`. (Consumer dogfood finding.)
+
+### Fixed (samples)
+- **`DialogueView.uxml` now references its own stylesheet** (`<Style src="DialogueView.uss"/>`) — no more
+  consumer-side glue to attach the USS.
+- **`FlowDialogueBridge` lazy-binds its driver.** Binding only at `Awake` failed permanently when the game
+  scene was played directly (no persistent `GraphFlowDriver.Active` yet) and was fragile to Awake order
+  even mono-scene. The bridge now retries each frame until a driver exists and warns once after 1s.
+  (Consumer dogfood finding.)
+
+### Changed
+- **Editor assembly is now `autoReferenced`** (consumer editor scripts without an asmdef can reach it).
+
 ## [0.14.0]
 
 ### Added

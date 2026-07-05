@@ -21,6 +21,13 @@ namespace Faolline.GraphLocalization
             "• Both: String + mirror Asset Tables.")]
         private UnityTableMode _unityTableMode = UnityTableMode.Text;
 
+        [SerializeField, Tooltip("UnityLocalization mode: locale code of the SOURCE language — the language the " +
+            "authored node/choice/speaker text is written in; the build pre-fills that locale's table column. " +
+            "Empty: falls back to the Project Locale (Project Settings ▸ Localization), else the first " +
+            "configured locale WITH a warning — an alphabetical accident can silently file French authored " +
+            "text under 'en'. (CSV mode instead uses the first entry of Csv Locales.)")]
+        private string _unitySourceLocale = string.Empty;
+
         [Header("CSV mode")]
         [SerializeField, Tooltip("Locale codes to generate as columns in the CSV files (Csv mode). " +
             "The first locale is the source — its column is pre-filled with the node/choice/speaker " +
@@ -65,6 +72,12 @@ namespace Faolline.GraphLocalization
         public bool GeneratesAssetTables => _unityTableMode != UnityTableMode.Text;
         public LocaleValidationMode LocaleValidation => _localeValidation;
         public LocalizationStrictMode PlayerStrictMode => _playerStrictMode;
+
+        /// <summary>
+        /// UnityLocalization mode: locale code of the source language (authored text). Empty means
+        /// "resolve at build time": Project Locale, else first configured locale with a warning.
+        /// </summary>
+        public string UnitySourceLocale => _unitySourceLocale ?? string.Empty;
 
         /// <summary>Locale codes generated as CSV columns (Csv mode). First is the source locale.</summary>
         public IReadOnlyList<string> CsvLocales => _csvLocales;
