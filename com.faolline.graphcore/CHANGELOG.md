@@ -4,7 +4,33 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.29.0]
+## [0.30.0]
+
+### Changed (breaking)
+- **`CollectionEntry.Key` / `CollectionName.Key` are now stable GUIDs, never editable.** Both previously
+  exposed an editable `_key` string that fell back to the asset's file name when empty — the same
+  instability class as the `BaseGraph.GraphId` duplicate-on-copy bug: renaming the asset silently changed
+  the value stored in a context collection, and two independently-typed keys could collide by accident or
+  typo. `Key` is now assigned once in `OnEnable` (mirroring `GraphId`) and can never be edited or duplicated
+  onto another asset by a Ctrl+D (each copy gets a fresh id the same way a duplicated `BaseGraph` does).
+  Two calls that must refer to the SAME collection/entry now do so by referencing the SAME asset — never by
+  two assets that happen to share a typed/named string.
+- **`CollectionEntry.Title` / `CollectionName.Title`** (new): an optional, purely cosmetic display label for
+  editor tooling (Context Watch, etc.) — falls back to the asset name when empty. Never used as the stored
+  key; renaming it (or the asset) never changes what a save file or `CollectionContainsCondition` sees.
+
+### Migration
+- The old `_key` field is recovered via `[FormerlySerializedAs]` into the new (hidden) id field:
+  - An asset that had an **explicit non-empty `_key`** (deliberately typed by an author) keeps that exact
+    string as its `Key` going forward — just no longer editable.
+  - An asset that relied on the **empty-key/name-fallback** behaviour (the common case — most authors never
+    touched the field) gets a **fresh random GUID** the first time it loads after upgrading: that "identity"
+    was never actually stored in the asset (it was derived from the file name at runtime each time), so
+    there is nothing to preserve. Any save data or hardcoded literal compared against a former
+    name-fallback value needs updating to the new GUID (or, better, to compare against the asset's `.Key`
+    rather than a literal).
+
+
 
 ### Added
 - **Circular-await lint.** `GraphValidator` now detects the "cupboard" deadlock: a node that awaits a signal

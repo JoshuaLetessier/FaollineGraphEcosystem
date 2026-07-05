@@ -10,39 +10,37 @@ namespace Faolline.GraphStandard.Tests
     /// CollectionCountAtLeastCondition) and the reactive-hosting pattern they complete (a Linear flow records
     /// completion → a ReactiveEvaluator over the SAME context derives k-of-N unlocks, bridged by
     /// OnCollectionChanged → Reevaluate).
+    /// <para>
+    /// CollectionName/CollectionEntry.Key is a stable GUID assigned in OnEnable (not a name-fallback string),
+    /// so two calls that must refer to the SAME collection/entry share the SAME asset instance — never two
+    /// instances constructed with an equal label.
+    /// </para>
     /// </summary>
     public class CollectionPrimitivesTests
     {
-        private static CollectionName Col(string key)
-        {
-            var c = ScriptableObject.CreateInstance<CollectionName>(); c.name = key; return c;
-        }
+        private static CollectionName Col() => ScriptableObject.CreateInstance<CollectionName>();
+        private static CollectionEntry Entry() => ScriptableObject.CreateInstance<CollectionEntry>();
 
-        private static CollectionEntry Entry(string key)
-        {
-            var e = ScriptableObject.CreateInstance<CollectionEntry>(); e.name = key; return e;
-        }
-
-        private static AddToCollectionAction Add(string key, string value)
+        private static AddToCollectionAction Add(CollectionName col, CollectionEntry entry)
         {
             var a = ScriptableObject.CreateInstance<AddToCollectionAction>();
-            a.Collection = Col(key);
-            a.Entry = Entry(value);
+            a.Collection = col;
+            a.Entry = entry;
             return a;
         }
 
-        private static CollectionContainsCondition Contains(string key, string value)
+        private static CollectionContainsCondition Contains(CollectionName col, CollectionEntry entry)
         {
             var c = ScriptableObject.CreateInstance<CollectionContainsCondition>();
-            c.Collection = Col(key);
-            c.Entry = Entry(value);
+            c.Collection = col;
+            c.Entry = entry;
             return c;
         }
 
-        private static CollectionCountAtLeastCondition CountAtLeast(string key, int threshold)
+        private static CollectionCountAtLeastCondition CountAtLeast(CollectionName col, int threshold)
         {
             var c = ScriptableObject.CreateInstance<CollectionCountAtLeastCondition>();
-            c.Collection = Col(key);
+            c.Collection = col;
             c.Threshold = threshold;
             return c;
         }
@@ -53,29 +51,32 @@ namespace Faolline.GraphStandard.Tests
         public void AddToCollection_RecordsValue()
         {
             var ctx = new BaseContext();
-            Add("completed", "a").Execute(ctx);
-            Assert.IsTrue(ctx.CollectionContains("completed", "a"));
+            var col = Col(); var a = Entry();
+            Add(col, a).Execute(ctx);
+            Assert.IsTrue(ctx.CollectionContains(col.Key, a.Key));
         }
 
         [Test]
         public void AddToCollection_IsIdempotent()
         {
             var ctx = new BaseContext();
-            var action = Add("completed", "a");
+            var col = Col(); var a = Entry();
+            var action = Add(col, a);
             action.Execute(ctx);
             action.Execute(ctx);
-            Assert.AreEqual(1, ctx.CollectionCount("completed"));
+            Assert.AreEqual(1, ctx.CollectionCount(col.Key));
         }
 
         [Test]
-        public void AddToCollection_EmptyKeyOrValue_IsNoOp()
+        public void AddToCollection_NullCollectionOrEntry_IsNoOp()
         {
+            // Key is always a non-empty GUID once the asset exists — the only way to hit the guard now
+            // is an unassigned (null) Collection or Entry reference.
             var ctx = new BaseContext();
-            Add("", "a").Execute(ctx);
-            Add("completed", "").Execute(ctx);
-            Add("   ", "a").Execute(ctx);
-            Assert.AreEqual(0, ctx.CollectionCount("completed"));
-            Assert.AreEqual(0, ctx.CollectionCount(""));
+            var col = Col(); var a = Entry();
+            Add(null, a).Execute(ctx);
+            Add(col, null).Execute(ctx);
+            Assert.AreEqual(0, ctx.CollectionCount(col.Key));
         }
 
         // ── US2: gate on collection state ──────────────────────────────────────
@@ -84,24 +85,26 @@ namespace Faolline.GraphStandard.Tests
         public void Contains_TrueOnlyWhenPresent()
         {
             var ctx = new BaseContext();
-            var cond = Contains("completed", "a");
+            var col = Col(); var a = Entry(); var b = Entry();
+            var cond = Contains(col, a);
             Assert.IsFalse(cond.Evaluate(ctx), "absent collection ⇒ false");
-            ctx.AddToCollection("completed", "a");
+            ctx.AddToCollection(col.Key, a.Key);
             Assert.IsTrue(cond.Evaluate(ctx));
-            Assert.IsFalse(Contains("completed", "b").Evaluate(ctx));
+            Assert.IsFalse(Contains(col, b).Evaluate(ctx));
         }
 
         [Test]
         public void CountAtLeast_TrueWhenCountReachesThreshold()
         {
             var ctx = new BaseContext();
-            var cond = CountAtLeast("completed", 2);
+            var col = Col();
+            var cond = CountAtLeast(col, 2);
             Assert.IsFalse(cond.Evaluate(ctx));
-            ctx.AddToCollection("completed", "a");
+            ctx.AddToCollection(col.Key, "a");
             Assert.IsFalse(cond.Evaluate(ctx), "1 < 2");
-            ctx.AddToCollection("completed", "b");
+            ctx.AddToCollection(col.Key, "b");
             Assert.IsTrue(cond.Evaluate(ctx), "2 >= 2");
-            ctx.AddToCollection("completed", "c");
+            ctx.AddToCollection(col.Key, "c");
             Assert.IsTrue(cond.Evaluate(ctx), "3 >= 2");
         }
 
@@ -109,14 +112,14 @@ namespace Faolline.GraphStandard.Tests
         public void CountAtLeast_ZeroThreshold_AlwaysTrue_EvenAbsent()
         {
             var ctx = new BaseContext();
-            Assert.IsTrue(CountAtLeast("never-touched", 0).Evaluate(ctx));
+            Assert.IsTrue(CountAtLeast(Col(), 0).Evaluate(ctx));
         }
 
         [Test]
         public void CountAtLeast_PositiveThreshold_FalseOnAbsentKey()
         {
             var ctx = new BaseContext();
-            Assert.IsFalse(CountAtLeast("never-touched", 1).Evaluate(ctx));
+            Assert.IsFalse(CountAtLeast(Col(), 1).Evaluate(ctx));
         }
 
         // ── US3: host a reactive progression on the shared context ─────────────
@@ -124,20 +127,27 @@ namespace Faolline.GraphStandard.Tests
         [Test]
         public void ReactiveHostingPattern_ActionWrites_EvaluatorUnlocksAtThreshold()
         {
-            // progression: p1,p2,p3 are prerequisites of "exit"; 2-of-3 unlocks it.
+            // progression: p1,p2,p3 are prerequisites of "exit"; 2-of-3 unlocks it. p1/p3 are node ids
+            // taken from CollectionEntry.Key itself (stable GUID) — the reactive evaluator matches
+            // prerequisite completion by exact string equality, so the SAME identity must be used as the
+            // node id AND as the entry the stock action writes.
+            var p1 = Entry(); var p3 = Entry();
             var graph = ScriptableObject.CreateInstance<BaseGraph>();
-            foreach (var id in new[] { "p1", "p2", "p3", "exit" })
-                graph.AddNode(new StatementNodeData { Id = id, NodeType = StatementNodeData.NodeTypeId });
-            graph.AddEdge(new BaseEdgeData { Id = "e1", FromNodeId = "p1", ToNodeId = "exit" });
-            graph.AddEdge(new BaseEdgeData { Id = "e2", FromNodeId = "p2", ToNodeId = "exit" });
-            graph.AddEdge(new BaseEdgeData { Id = "e3", FromNodeId = "p3", ToNodeId = "exit" });
+            graph.AddNode(new StatementNodeData { Id = p1.Key, NodeType = StatementNodeData.NodeTypeId });
+            graph.AddNode(new StatementNodeData { Id = "p2", NodeType = StatementNodeData.NodeTypeId });
+            graph.AddNode(new StatementNodeData { Id = p3.Key, NodeType = StatementNodeData.NodeTypeId });
+            graph.AddNode(new StatementNodeData { Id = "exit", NodeType = StatementNodeData.NodeTypeId });
+            graph.AddEdge(new BaseEdgeData { Id = "e1", FromNodeId = p1.Key, ToNodeId = "exit" });
+            graph.AddEdge(new BaseEdgeData { Id = "e2", FromNodeId = "p2",   ToNodeId = "exit" });
+            graph.AddEdge(new BaseEdgeData { Id = "e3", FromNodeId = p3.Key, ToNodeId = "exit" });
 
             var ctx = new BaseContext();
-            var evaluator = new ReactiveEvaluator(graph, ctx, "completed",
+            var col = Col();
+            var evaluator = new ReactiveEvaluator(graph, ctx, col.Key,
                 new Dictionary<string, int> { ["exit"] = 2 });
 
             // The two-line bridge: a write into "completed" re-derives the progression.
-            ctx.OnCollectionChanged("completed", _ => evaluator.Reevaluate());
+            ctx.OnCollectionChanged(col.Key, _ => evaluator.Reevaluate());
 
             int exitAvailable = 0;
             evaluator.OnNodeAvailable += id => { if (id == "exit") exitAvailable++; };
@@ -146,12 +156,12 @@ namespace Faolline.GraphStandard.Tests
             Assert.AreEqual(ReactiveNodeState.Locked, evaluator.GetState("exit"));
 
             // Linear flow records the first prerequisite via the stock action.
-            Add("completed", "p1").Execute(ctx);
+            Add(col, p1).Execute(ctx);
             Assert.AreEqual(ReactiveNodeState.Locked, evaluator.GetState("exit"), "1 of 2 — still locked");
             Assert.AreEqual(0, exitAvailable);
 
             // Second prerequisite crosses the threshold.
-            Add("completed", "p3").Execute(ctx);
+            Add(col, p3).Execute(ctx);
             Assert.AreEqual(ReactiveNodeState.Available, evaluator.GetState("exit"), "2 of 2 — unlocked");
             Assert.AreEqual(1, exitAvailable, "availability event raised exactly once");
 
@@ -163,27 +173,28 @@ namespace Faolline.GraphStandard.Tests
         {
             // The same completed-set also gates a Linear edge directly.
             var ctx = new BaseContext();
-            var gate = CountAtLeast("completed", 2);
-            Add("completed", "p1").Execute(ctx);
+            var col = Col();
+            var gate = CountAtLeast(col, 2);
+            Add(col, Entry()).Execute(ctx);
             Assert.IsFalse(gate.Evaluate(ctx));
-            Add("completed", "p2").Execute(ctx);
+            Add(col, Entry()).Execute(ctx);
             Assert.IsTrue(gate.Evaluate(ctx));
         }
 
         // ── US4: remove / clear collections from a node ───────────────────────
 
-        private static RemoveFromCollectionAction Remove(string key, string value)
+        private static RemoveFromCollectionAction Remove(CollectionName col, CollectionEntry entry)
         {
             var a = ScriptableObject.CreateInstance<RemoveFromCollectionAction>();
-            a.Collection = Col(key);
-            a.Entry = Entry(value);
+            a.Collection = col;
+            a.Entry = entry;
             return a;
         }
 
-        private static ClearCollectionAction Clear(string key)
+        private static ClearCollectionAction Clear(CollectionName col)
         {
             var a = ScriptableObject.CreateInstance<ClearCollectionAction>();
-            a.Collection = Col(key);
+            a.Collection = col;
             return a;
         }
 
@@ -191,48 +202,53 @@ namespace Faolline.GraphStandard.Tests
         public void RemoveFromCollection_RemovesValue()
         {
             var ctx = new BaseContext();
-            ctx.AddToCollection("inv", "sword");
-            ctx.AddToCollection("inv", "shield");
-            Remove("inv", "sword").Execute(ctx);
-            Assert.IsFalse(ctx.CollectionContains("inv", "sword"));
-            Assert.IsTrue(ctx.CollectionContains("inv", "shield"));
+            var col = Col(); var sword = Entry(); var shield = Entry();
+            ctx.AddToCollection(col.Key, sword.Key);
+            ctx.AddToCollection(col.Key, shield.Key);
+            Remove(col, sword).Execute(ctx);
+            Assert.IsFalse(ctx.CollectionContains(col.Key, sword.Key));
+            Assert.IsTrue(ctx.CollectionContains(col.Key, shield.Key));
         }
 
         [Test]
         public void RemoveFromCollection_AbsentValue_IsNoOp()
         {
             var ctx = new BaseContext();
-            Remove("inv", "missing").Execute(ctx);
-            Assert.AreEqual(0, ctx.CollectionCount("inv"));
+            var col = Col();
+            Remove(col, Entry()).Execute(ctx);
+            Assert.AreEqual(0, ctx.CollectionCount(col.Key));
         }
 
         [Test]
-        public void RemoveFromCollection_EmptyKeyOrValue_IsNoOp()
+        public void RemoveFromCollection_NullCollectionOrEntry_IsNoOp()
         {
             var ctx = new BaseContext();
-            ctx.AddToCollection("inv", "sword");
-            Remove("", "sword").Execute(ctx);
-            Remove("inv", "").Execute(ctx);
-            Assert.IsTrue(ctx.CollectionContains("inv", "sword"));
+            var col = Col(); var sword = Entry();
+            ctx.AddToCollection(col.Key, sword.Key);
+            Remove(null, sword).Execute(ctx);
+            Remove(col, null).Execute(ctx);
+            Assert.IsTrue(ctx.CollectionContains(col.Key, sword.Key));
         }
 
         [Test]
         public void ClearCollection_EmptiesSet()
         {
             var ctx = new BaseContext();
-            ctx.AddToCollection("inv", "a");
-            ctx.AddToCollection("inv", "b");
-            Clear("inv").Execute(ctx);
-            Assert.AreEqual(0, ctx.CollectionCount("inv"));
+            var col = Col();
+            ctx.AddToCollection(col.Key, "a");
+            ctx.AddToCollection(col.Key, "b");
+            Clear(col).Execute(ctx);
+            Assert.AreEqual(0, ctx.CollectionCount(col.Key));
         }
 
         [Test]
-        public void ClearCollection_EmptyKey_IsNoOp()
+        public void ClearCollection_NullCollection_IsNoOp()
         {
             var ctx = new BaseContext();
-            ctx.AddToCollection("inv", "a");
-            Clear("").Execute(ctx);
-            Assert.AreEqual(1, ctx.CollectionCount("inv"));
+            var col = Col();
+            ctx.AddToCollection(col.Key, "a");
+            Clear(null).Execute(ctx);
+            Assert.AreEqual(1, ctx.CollectionCount(col.Key));
         }
     }
 }

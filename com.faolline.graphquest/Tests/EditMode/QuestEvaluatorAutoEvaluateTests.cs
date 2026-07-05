@@ -45,6 +45,8 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void EnableAutoEvaluate_FiresOnCollectionChange()
         {
+            // CollectionName/CollectionEntry.Key is a stable GUID (not a name-fallback string), so read
+            // .Key back below instead of the (purely cosmetic) asset names.
             var itemsCol = ScriptableObject.CreateInstance<CollectionName>(); itemsCol.name = "items";
             var keyEntry = ScriptableObject.CreateInstance<CollectionEntry>(); keyEntry.name = "key";
             var containsCond = ScriptableObject.CreateInstance<Faolline.GraphStandard.CollectionContainsCondition>();
@@ -64,7 +66,7 @@ namespace Faolline.GraphQuest.Tests
                 QuestState? reported = null;
                 eval.OnObjectiveStateChanged += (id, state) => { if (id == "obj_coll") reported = state; };
 
-                ctx.AddToCollection("items", "key");
+                ctx.AddToCollection(itemsCol.Key, keyEntry.Key);
 
                 Assert.AreEqual(QuestState.Completed, reported);
             }
