@@ -4,7 +4,26 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
-## [0.30.0]
+## [0.31.0]
+
+### Added
+- **`IStableGuidIdentity`** — the interface generalizing the "stable GUID, assigned once, never editable"
+  pattern first introduced for `BaseGraph.GraphId` (0.28.0) and just extended to
+  `CollectionEntry`/`CollectionName.Key` (0.30.0). A type exposes `StableId` + `StableIdFieldName`
+  (typically both explicit implementations, kept out of its normal public surface) and is automatically
+  picked up by the duplicate detector below — no per-type code needed anywhere else.
+
+### Changed
+- **`GraphIdDuplicateDetector` generalized and renamed `StableIdDuplicateDetector`.** It now scans every
+  `ScriptableObject` type implementing `IStableGuidIdentity` (discovered via `TypeCache`, currently
+  `BaseGraph`, `CollectionEntry`, `CollectionName`) instead of only `BaseGraph`, closing the same
+  duplicate-on-copy hole for the two collection types introduced in 0.30.0. Duplicates are still scoped
+  strictly PER CONCRETE TYPE — a `BaseGraph` and a `CollectionEntry` coincidentally sharing a GUID string is
+  not a collision, since they are never compared to each other. Menu renamed
+  `Faolline ▸ Graph ▸ Fix Duplicate GraphIds` → `Faolline ▸ Graph ▸ Fix Duplicate Stable Ids`.
+  `ScanAndFix(HashSet<string>)`'s signature and behavior are unchanged, only the class name moved.
+
+
 
 ### Changed (breaking)
 - **`CollectionEntry.Key` / `CollectionName.Key` are now stable GUIDs, never editable.** Both previously

@@ -11,7 +11,7 @@ namespace Faolline.GraphCore
     // No [CreateAssetMenu] — consumers create typed graphs (DialogueGraph, GameFlowGraph, etc.), not raw BaseGraph.
     [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphcore/README.md")]
     [Icon("Packages/com.faolline.graphcore/Editor/Icons/ico_graph_base.png")]
-    public class BaseGraph : ScriptableObject
+    public class BaseGraph : ScriptableObject, IStableGuidIdentity
     {
         [SerializeField, HideInInspector] private string             _graphId;
         [SerializeReference] private List<BaseNodeData> _nodes      = new List<BaseNodeData>();
@@ -34,6 +34,12 @@ namespace Faolline.GraphCore
         /// <c>OnEnable</c> and never overwritten. Read-only.
         /// </summary>
         public string GraphId => _graphId;
+
+        // Explicit implementation: kept out of BaseGraph's normal public surface (GraphId already exposes
+        // this under its own name). Lets the editor's stable-id duplicate detector discover this type via
+        // IStableGuidIdentity with no per-type code in the detector.
+        string IStableGuidIdentity.StableId => _graphId;
+        string IStableGuidIdentity.StableIdFieldName => nameof(_graphId);
 
         /// <summary>All nodes in this graph.</summary>
         public IReadOnlyList<BaseNodeData> Nodes => _nodes;

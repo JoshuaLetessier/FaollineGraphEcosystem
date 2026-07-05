@@ -19,7 +19,7 @@ namespace Faolline.GraphCore
     /// </para>
     /// </summary>
     [CreateAssetMenu(menuName = "Faolline/Collection Entry", fileName = "NewEntry")]
-    public class CollectionEntry : ScriptableObject
+    public class CollectionEntry : ScriptableObject, IStableGuidIdentity
     {
         // FormerlySerializedAs recovers an asset authored before this fix that had an EXPLICIT non-empty
         // _key: that string becomes the stable id as-is (no longer editable going forward). An asset that
@@ -43,6 +43,12 @@ namespace Faolline.GraphCore
         /// editable — renaming or duplicating the asset never changes it.
         /// </summary>
         public string Key => _id;
+
+        // Explicit implementation: discoverable by the editor's stable-id duplicate detector with no
+        // per-type code in the detector itself. Kept out of the normal public surface (Key already exposes
+        // this under its own name).
+        string IStableGuidIdentity.StableId => _id;
+        string IStableGuidIdentity.StableIdFieldName => nameof(_id);
 
         /// <summary>Human-readable label for editor tooling. Falls back to the asset name when empty. Never the stored key.</summary>
         public string Title => string.IsNullOrEmpty(_title) ? name : _title;

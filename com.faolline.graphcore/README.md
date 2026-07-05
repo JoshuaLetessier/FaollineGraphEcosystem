@@ -1,6 +1,6 @@
 # com.faolline.graphcore
 
-**Version**: 0.30.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
+**Version**: 0.31.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
 
 Shared foundation library for graph-based systems in the Faolline ecosystem. Provides the
 **data layer** (graph structure, nodes, edges, parameters) and the **execution runtime**
