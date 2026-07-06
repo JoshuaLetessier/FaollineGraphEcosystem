@@ -574,5 +574,86 @@ namespace Faolline.GraphGameFlow.Tests
             d.RaiseSignal("unlock");
             Assert.AreEqual(EndReason.Completed, ended, "signal resolved the await and the flow completed.");
         }
+
+        // ── Auto-advance pump: iterative, not recursive (a cycle with no pause node must not crash) ──
+
+        [Test]
+        public void AutoAdvance_LongPassThroughChain_CompletesInOneBoot()
+        {
+            // A long linear chain (no pause anywhere) must still auto-advance start-to-end in a single
+            // Boot() call — proves the iterative drain handles ordinary long chains exactly like the old
+            // recursive one did, just without growing the call stack.
+            const int chainLength = 300;
+            var g = NewGraph("start");
+            g.AddNode(Start("start"));
+            var prev = "start";
+            for (int i = 0; i < chainLength; i++)
+            {
+                var id = "n" + i;
+                g.AddNode(St(id));
+                g.AddEdge(new BaseEdgeData { FromNodeId = prev, ToNodeId = id });
+                prev = id;
+            }
+            g.AddNode(End("end"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = prev, ToNodeId = "end" });
+            var d = NewDriver(g, autoAdvance: true);
+
+            EndReason? ended = null;
+            d.OnEnded += r => ended = r;
+            var enteredCount = 0;
+            d.OnNodeEntered += _ => enteredCount++;
+
+            d.Boot();
+
+            Assert.AreEqual(EndReason.Completed, ended);
+            Assert.AreEqual(chainLength + 2, enteredCount, "start + every chain node + end all fire OnNodeEntered, in order, exactly once.");
+        }
+
+        [Test]
+        public void AutoAdvance_CycleWithNoPauseNode_StopsAtCapInsteadOfCrashing()
+        {
+            // a -> b -> a, forever, with no await/wait/choice/end anywhere on the loop: the historical
+            // recursive implementation would grow the native call stack without bound (an uncatchable
+            // StackOverflowException). The iterative drain must instead stop at MaxAutoAdvanceSteps and warn.
+            var g = NewGraph("start");
+            g.AddNode(Start("start"));
+            g.AddNode(St("a"));
+            g.AddNode(St("b"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "a" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "a", ToNodeId = "b" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "b", ToNodeId = "a" });
+            var d = NewDriver(g, autoAdvance: true);
+
+            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("Auto-advance exceeded"));
+            Assert.DoesNotThrow(() => d.Boot(), "a pause-free cycle must stop cleanly, never crash.");
+
+            Assert.IsTrue(d.IsRunning, "the flow is still alive — stopped, not ended, not crashed.");
+            Assert.IsTrue(d.Runner.CurrentNode.Id == "a" || d.Runner.CurrentNode.Id == "b",
+                "the runner is left parked somewhere on the cycle, in a consistent state.");
+        }
+
+        [Test]
+        public void AutoAdvance_CycleBrokenByAwait_NeverHitsTheCap()
+        {
+            // The same shape as above, but "b" awaits a signal — a legitimate game-shell loop (documented
+            // pattern: a looping flow bounded by HistoryDepth). This must run indefinitely fine and never
+            // trip the safety cap, since each lap genuinely pauses.
+            var g = NewGraph("start");
+            var b = St("b"); b.AwaitSignalName = "tick";
+            g.AddNode(Start("start"));
+            g.AddNode(St("a"));
+            g.AddNode(b);
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "a" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "a", ToNodeId = "b" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "b", ToNodeId = "a" });
+            var d = NewDriver(g, autoAdvance: true);
+
+            d.Boot();
+            for (int i = 0; i < 50; i++) d.RaiseSignal("tick");   // 50 laps — well past MaxAutoAdvanceSteps if it were buggy
+
+            LogAssert.NoUnexpectedReceived();
+            Assert.IsTrue(d.IsRunning);
+            Assert.AreEqual("b", d.Runner.CurrentNode.Id, "parked back on the await after each lap.");
+        }
     }
 }

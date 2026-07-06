@@ -4,6 +4,23 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.9.0]
+
+### Fixed
+- **Auto-advance is now iterative, not recursive — a cycle with no pause node can no longer crash the
+  editor/player.** `HandleNodeCompleted` used to call `BaseRunner.Proceed()` directly from inside the
+  runner's own `OnNodeCompleted` event, so every pass-through node added a frame to the native call stack
+  (`Proceed → EnterCurrentNode → OnNodeCompleted → HandleNodeCompleted → Proceed → …`). Graphgameflow
+  explicitly supports cyclic "game-shell" flows (0.4.0, bounded by `HistoryDepth`) — but that pattern only
+  works because the loop has an await/wait somewhere; a cycle authored WITHOUT one recursed until the
+  native call stack overflowed: an uncatchable `StackOverflowException`, not a recoverable exception.
+  `HandleNodeCompleted` now only sets a pending flag; a new `DrainAutoAdvance()` iteratively pumps it (flat
+  call stack, any chain length) from every top-level entry point (`Boot`, `Boot(snapshot)`, `Advance`,
+  `ChooseById`, `RaiseSignal`, `Tick`). A genuine pause-free cycle now stops after 1000 auto-advanced steps
+  with a `[GraphGameFlow]` warning instead of crashing — mirrors `DialoguePlayer.MaxDrainSteps`. Observable
+  behavior for every existing flow is unchanged: `OnNodeCompleted`/`OnNodeEntered` still fire once per node,
+  in the same order, whether reached through the loop or the old recursion.
+
 ## [0.8.2]
 
 ### Changed

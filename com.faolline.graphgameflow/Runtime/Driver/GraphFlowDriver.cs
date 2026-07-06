@@ -32,10 +32,15 @@ namespace Faolline.GraphGameFlow
         [SerializeField, Tooltip("When enabled, the driver uses Time.unscaledDeltaTime instead of Time.deltaTime. Enable for flows that must keep running when Time.timeScale is 0 (pause menus, cutscene overlays).")]
         private bool      _useUnscaledTime = false;
 
+        // Cap on the auto-advance pump below — a cycle with no pause node (no await/wait/choice/end on the
+        // loop) would otherwise auto-advance forever. Matches DialoguePlayer.MaxDrainSteps.
+        private const int MaxAutoAdvanceSteps = 1000;
+
         private BaseRunner      _runner;
         private GameFlowContext _context;
         private ISceneLoader    _sceneLoader;
         private bool            _running;
+        private bool            _autoAdvancePending;
         private float           _waitTotal;
         private float           _waitElapsed;
 
@@ -188,9 +193,11 @@ namespace Faolline.GraphGameFlow
             _runner = new BaseRunner();
             Subscribe();
             _running = true;
+            _autoAdvancePending = false;
 
             var nodeId = string.IsNullOrEmpty(snapshot.CurrentNodeId) ? _graph.EntryNodeId : snapshot.CurrentNodeId;
             _runner.StartFrom(_graph, nodeId, _context, registry ?? new NodeExecutorRegistry());
+            DrainAutoAdvance();
         }
 
         /// <summary>
@@ -238,7 +245,9 @@ namespace Faolline.GraphGameFlow
             _runner = new BaseRunner();
             Subscribe();
             _running = true;
+            _autoAdvancePending = false;
             _runner.Start(_graph, _context, registry ?? new NodeExecutorRegistry());
+            DrainAutoAdvance();
         }
 
         /// <summary>Forwards <paramref name="deltaSeconds"/> of elapsed time to the runner. dt ≤ 0 is ignored.</summary>
@@ -247,6 +256,7 @@ namespace Faolline.GraphGameFlow
             if (!_running || deltaSeconds <= 0f) return;
             if (_runner.State == RunnerState.WaitingForTime) _waitElapsed += deltaSeconds;
             _runner.Tick(deltaSeconds);
+            DrainAutoAdvance();
         }
 
         /// <summary>Advances the flow (manual advance, or programmatic). No-op when not running.</summary>
@@ -254,6 +264,7 @@ namespace Faolline.GraphGameFlow
         {
             if (!_running) return;
             _runner.Proceed();
+            DrainAutoAdvance();
         }
 
         /// <summary>
@@ -265,6 +276,7 @@ namespace Faolline.GraphGameFlow
         {
             if (!_running) return;
             _runner.ChooseById(id);
+            DrainAutoAdvance();
         }
 
         /// <summary>Raises a named signal into the running flow, resuming a matching await. No-op when not running.</summary>
@@ -272,6 +284,7 @@ namespace Faolline.GraphGameFlow
         {
             if (!_running) return;
             _runner.RaiseSignal(name);
+            DrainAutoAdvance();
         }
 
         /// <summary>As <see cref="RaiseSignal(string)"/>, carrying a scalar payload.</summary>
@@ -279,6 +292,7 @@ namespace Faolline.GraphGameFlow
         {
             if (!_running) return;
             _runner.RaiseSignal<T>(name, payload);
+            DrainAutoAdvance();
         }
 
         /// <summary>
@@ -323,7 +337,36 @@ namespace Faolline.GraphGameFlow
         {
             OnNodeCompleted?.Invoke(node);
             // A choice requires a deliberate pick (ChooseById); never auto-resolve it by first-passing-edge.
-            if (_autoAdvance && !(node is ChoiceNodeData)) _runner.Proceed();
+            // Only a FLAG is set here — the actual Proceed() happens in DrainAutoAdvance's loop, called by
+            // every public entry point after the runner call that might trigger this handler. Calling
+            // Proceed() directly from inside this event handler would recurse (Proceed → EnterCurrentNode →
+            // OnNodeCompleted → this handler → Proceed → …), and a cycle with no pause node on it would
+            // recurse until the native call stack overflows — an uncatchable, unrecoverable editor/player
+            // crash. The iterative pump below turns that into a bounded loop instead.
+            if (_autoAdvance && !(node is ChoiceNodeData)) _autoAdvancePending = true;
+        }
+
+        // Iteratively drains auto-advance requests queued by HandleNodeCompleted. Call once after any
+        // top-level runner call that can complete a node (Start/StartFrom/Proceed/ChooseById/RaiseSignal/
+        // Tick). Flat call stack regardless of how many pass-through nodes chain in one pass; a genuine
+        // cycle with no pause node stops at MaxAutoAdvanceSteps with a warning instead of a stack overflow.
+        private void DrainAutoAdvance()
+        {
+            int guard = 0;
+            while (_autoAdvancePending && _running && guard++ < MaxAutoAdvanceSteps)
+            {
+                _autoAdvancePending = false;
+                _runner.Proceed();
+            }
+            if (_autoAdvancePending && guard >= MaxAutoAdvanceSteps)
+            {
+                _autoAdvancePending = false;
+                Debug.LogWarning(
+                    $"[GraphGameFlow] Auto-advance exceeded {MaxAutoAdvanceSteps} steps in one pass — likely " +
+                    "a cycle with no pause node (no await-signal, timed wait, choice, or end anywhere on the " +
+                    "loop). Stopping here instead of advancing forever. Add a pause point on the cycle, or " +
+                    "disable AutoAdvance and drive this stretch of the flow manually.");
+            }
         }
 
         private void HandleEnded(EndReason reason)
