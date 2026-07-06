@@ -4,6 +4,34 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.32.0]
+
+### Added
+- **Collections support quantities (stacking).** `BaseContext.AddToCollection(key, item, count)` /
+  `RemoveFromCollection(key, item, count)` add/subtract units of an item on top of its existing quantity
+  (inventory-style stacking) — additive, never idempotent, and always fire `OnCollectionChanged` on a real
+  quantity change (even when the item already existed). The existing 2-argument overloads are UNCHANGED:
+  still a plain idempotent "ensure present" / "remove entirely" pair, so every pre-existing caller keeps its
+  exact behaviour. `CollectionItemCount(key, item)` reads a specific item's quantity;
+  `GetCollectionWithCounts(key)` returns every (item, quantity) pair. `CollectionCount(key)` keeps its
+  existing meaning — the DISTINCT item count, unaffected by quantity.
+- **Collections preserve insertion order.** `GetCollection(key)` (now `IReadOnlyList<string>`, widened from
+  `IReadOnlyCollection<string>`) and `GetAllCollections()` yield distinct items in the order they were first
+  added, instead of an arbitrary hash-set order. A removed-then-re-added item is treated as a fresh
+  insertion (moves to the end) — re-adding an item still present never reorders it. No known consumer
+  depended on the old arbitrary order, so this is additive, not a behavior break.
+- **`AddToCollectionAction` / `RemoveFromCollectionAction` gain a `Stack` toggle + `Count` field.** OFF
+  (default — matches every asset authored before this option existed) keeps the classic idempotent
+  add / whole-stack remove. ON adds/subtracts `Count` units instead.
+
+### Changed
+- **`GetAllCollections()` does not capture quantities** — it mirrors the pre-0.32.0 shape (distinct
+  membership only) so existing save-format consumers (`com.faolline.graphsave`'s `GraphRunSnapshot`) keep
+  compiling and behaving unchanged. A stacked item's quantity beyond 1 is **not** round-tripped through a
+  `GraphRunSnapshot` save/restore yet — a consumer relying on graphsave for persistence and adopting
+  stacking should be aware a restored game currently sees quantity capped at 1 for any previously-stacked
+  item. Extending `GraphRunSnapshot` to also capture quantities is a natural, not-yet-done follow-up.
+
 ## [0.31.0]
 
 ### Added

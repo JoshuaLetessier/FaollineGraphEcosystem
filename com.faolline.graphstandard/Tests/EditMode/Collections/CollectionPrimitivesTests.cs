@@ -250,5 +250,107 @@ namespace Faolline.GraphStandard.Tests
             Clear(null).Execute(ctx);
             Assert.AreEqual(1, ctx.CollectionCount(col.Key));
         }
+
+        // ── US5: stacking (quantities) via the action's opt-in Stack toggle ────
+
+        private static CollectionItemCountAtLeastCondition ItemCountAtLeast(
+            CollectionName col, CollectionEntry entry, int threshold)
+        {
+            var c = ScriptableObject.CreateInstance<CollectionItemCountAtLeastCondition>();
+            c.Collection = col;
+            c.Entry = entry;
+            c.Threshold = threshold;
+            return c;
+        }
+
+        [Test]
+        public void AddToCollectionAction_StackOff_IsPlainIdempotentAdd_MatchingPreExistingAssets()
+        {
+            // Stack defaults false — every asset authored before this option existed deserializes with
+            // Stack == false, so behaviour must be byte-for-byte the classic idempotent Add.
+            var ctx = new BaseContext();
+            var col = Col(); var potion = Entry();
+            var action = Add(col, potion);
+            Assert.IsFalse(action.Stack, "Stack must default OFF for back-compat.");
+
+            action.Execute(ctx);
+            action.Execute(ctx);
+
+            Assert.AreEqual(1, ctx.CollectionItemCount(col.Key, potion.Key));
+        }
+
+        [Test]
+        public void AddToCollectionAction_StackOn_AddsQuantity()
+        {
+            var ctx = new BaseContext();
+            var col = Col(); var potion = Entry();
+            var action = Add(col, potion);
+            action.Stack = true;
+            action.Count = 3;
+
+            action.Execute(ctx);
+            action.Execute(ctx);
+
+            Assert.AreEqual(6, ctx.CollectionItemCount(col.Key, potion.Key));
+            Assert.AreEqual(1, ctx.CollectionCount(col.Key), "still one distinct entry");
+        }
+
+        [Test]
+        public void RemoveFromCollectionAction_StackOff_RemovesWholeStack_MatchingPreExistingAssets()
+        {
+            var ctx = new BaseContext();
+            var col = Col(); var arrow = Entry();
+            ctx.AddToCollection(col.Key, arrow.Key, 99);
+
+            var action = Remove(col, arrow);
+            Assert.IsFalse(action.Stack, "Stack must default OFF for back-compat.");
+            action.Execute(ctx);
+
+            Assert.AreEqual(0, ctx.CollectionItemCount(col.Key, arrow.Key));
+        }
+
+        [Test]
+        public void RemoveFromCollectionAction_StackOn_Decrements()
+        {
+            var ctx = new BaseContext();
+            var col = Col(); var arrow = Entry();
+            ctx.AddToCollection(col.Key, arrow.Key, 10);
+
+            var action = Remove(col, arrow);
+            action.Stack = true;
+            action.Count = 4;
+            action.Execute(ctx);
+
+            Assert.AreEqual(6, ctx.CollectionItemCount(col.Key, arrow.Key));
+        }
+
+        [Test]
+        public void ItemCountAtLeast_GatesOnQuantity_NotDistinctCount()
+        {
+            var ctx = new BaseContext();
+            var col = Col(); var potion = Entry();
+            var cond = ItemCountAtLeast(col, potion, 3);
+
+            Assert.IsFalse(cond.Evaluate(ctx), "absent ⇒ false");
+            ctx.AddToCollection(col.Key, potion.Key, 2);
+            Assert.IsFalse(cond.Evaluate(ctx), "2 < 3");
+            ctx.AddToCollection(col.Key, potion.Key, 1);
+            Assert.IsTrue(cond.Evaluate(ctx), "3 >= 3");
+        }
+
+        [Test]
+        public void ItemCountAtLeast_ZeroThreshold_AlwaysTrue_EvenAbsent()
+        {
+            var ctx = new BaseContext();
+            Assert.IsTrue(ItemCountAtLeast(Col(), Entry(), 0).Evaluate(ctx));
+        }
+
+        [Test]
+        public void ItemCountAtLeast_NullCollectionOrEntry_FallsBackToThresholdCheck()
+        {
+            var ctx = new BaseContext();
+            Assert.IsTrue(ItemCountAtLeast(null, Entry(), 0).Evaluate(ctx));
+            Assert.IsFalse(ItemCountAtLeast(null, Entry(), 1).Evaluate(ctx));
+        }
     }
 }

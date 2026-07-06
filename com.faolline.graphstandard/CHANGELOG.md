@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.16.0]
+
+### Added
+- **`CollectionItemCountAtLeastCondition`** — gates on a SPECIFIC entry's quantity (e.g. "has at least 3
+  potions"), reading `BaseContext.CollectionItemCount` (graphcore 0.32.0's stacking API). The per-item
+  counterpart of `CollectionCountAtLeastCondition`, which counts DISTINCT entries instead.
+
+### Changed
+- Dependency floor `com.faolline.graphcore` `0.27.0` → `0.32.0` (stacking/quantities API).
+
 ## [0.15.1]
 
 ### Changed

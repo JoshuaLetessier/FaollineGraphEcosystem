@@ -48,12 +48,83 @@ namespace Faolline.GraphCore
         private Dictionary<string, SignalArgs> _lastSignals;
         private HashSet<string> _raisedSignals;
 
-        // ── Collections (0.5.0) ────────────────────────────────────────────────
-        // Named string-SETS, in a keyspace independent from _params. DURABLE state (unlike signals):
+        // ── Collections (0.5.0; ordered + quantities since 0.31.0) ──────────────
+        // Named string collections, in a keyspace independent from _params. DURABLE state (unlike signals):
         // captured by DeepClone/CopyValuesFrom and exposed via GetAllCollections for saving. Global-only:
         // never routed through the local-context overlay. Both dictionaries are lazily allocated.
-        private Dictionary<string, HashSet<string>> _collections;
+        //
+        // Each bucket is an ORDERED multiset: distinct items in insertion order, each with a quantity ≥ 1.
+        // The two-tier API keeps the original set semantics as the default and adds stacking as an
+        // explicit opt-in:
+        //   • AddToCollection(key, item)        — ensure-present, idempotent (unchanged since 0.5.0).
+        //   • AddToCollection(key, item, count) — additive: +count to the item's quantity (stacking).
+        //   • RemoveFromCollection(key, item)        — remove the item entirely, whatever its quantity.
+        //   • RemoveFromCollection(key, item, count) — decrement by count, removing at/under zero.
+        // CollectionCount stays the DISTINCT item count (unchanged meaning); CollectionItemCount reads one
+        // item's quantity. GetCollection now yields distinct items in insertion order (was arbitrary
+        // hash-set order) — no consumer visibly depended on the old order, so this is not a behavior break.
+        private Dictionary<string, CollectionBucket> _collections;
         private Dictionary<string, List<Action<string>>> _collectionSubs;
+
+        // Ordered multiset: a List for insertion order + a Dictionary for O(1) quantity lookups. Collections
+        // are small in practice (dozens of entries, narrative rhythm, never per-frame), so the O(n)
+        // list-removal on a full item removal is not a concern at this scale.
+        private sealed class CollectionBucket
+        {
+            private readonly List<string> _order = new List<string>();
+            private readonly Dictionary<string, int> _counts = new Dictionary<string, int>(StringComparer.Ordinal);
+
+            public int DistinctCount => _order.Count;
+            public IReadOnlyList<string> Order => _order;
+
+            public int CountOf(string item) => _counts.TryGetValue(item, out var c) ? c : 0;
+            public bool Contains(string item) => _counts.ContainsKey(item);
+
+            /// <summary>Ensures the item is present at quantity ≥ 1. Returns true only if newly inserted.</summary>
+            public bool EnsurePresent(string item)
+            {
+                if (_counts.ContainsKey(item)) return false;
+                _counts[item] = 1;
+                _order.Add(item);
+                return true;
+            }
+
+            /// <summary>Adds <paramref name="count"/> (≥ 1) to the item's quantity, inserting it if absent.</summary>
+            public void Increment(string item, int count)
+            {
+                if (_counts.TryGetValue(item, out var cur)) _counts[item] = cur + count;
+                else { _counts[item] = count; _order.Add(item); }
+            }
+
+            /// <summary>Removes the item entirely, whatever its quantity. Returns true if it was present.</summary>
+            public bool RemoveAll(string item)
+            {
+                if (!_counts.Remove(item)) return false;
+                _order.Remove(item);
+                return true;
+            }
+
+            /// <summary>Decrements the item's quantity by <paramref name="count"/> (≥ 1), removing it entirely
+            /// at or under zero. Returns true when the quantity actually changed (item was present).</summary>
+            public bool Decrement(string item, int count)
+            {
+                if (!_counts.TryGetValue(item, out var cur)) return false;
+                var next = cur - count;
+                if (next <= 0) { _counts.Remove(item); _order.Remove(item); }
+                else _counts[item] = next;
+                return true;
+            }
+
+            public void Clear() { _order.Clear(); _counts.Clear(); }
+
+            public CollectionBucket Clone()
+            {
+                var c = new CollectionBucket();
+                c._order.AddRange(_order);
+                foreach (var kv in _counts) c._counts[kv.Key] = kv.Value;
+                return c;
+            }
+        }
 
         // ── Supported types ────────────────────────────────────────────────────
 
@@ -449,10 +520,15 @@ namespace Faolline.GraphCore
         // ── Collections ────────────────────────────────────────────────────────
 
         /// <summary>
-        /// Adds <paramref name="item"/> to the named string-set <paramref name="key"/> (created on first
-        /// add). Idempotent — adding an element already present is a no-op. Fires
-        /// <see cref="OnCollectionChanged"/> only when the element is newly added. Collections are global
-        /// state, independent of the local-context overlay.
+        /// Ensures <paramref name="item"/> is present in the named collection <paramref name="key"/>
+        /// (created on first add), at quantity ≥ 1. Idempotent — adding an element already present is a
+        /// no-op (its quantity is untouched). Fires <see cref="OnCollectionChanged"/> only when the element
+        /// is newly added. Collections are global state, independent of the local-context overlay.
+        /// <para>
+        /// For stacking (recording repeat pickups of the same item, e.g. inventory quantities), use
+        /// <see cref="AddToCollection(string, string, int)"/> instead — this overload always stays a plain
+        /// membership check, exactly as before quantities existed.
+        /// </para>
         /// </summary>
         public void AddToCollection(string key, string item)
         {
@@ -462,20 +538,43 @@ namespace Faolline.GraphCore
                     "[GraphCore] AddToCollection called with a null/empty key or null item; ignored.");
                 return;
             }
-            _collections ??= new Dictionary<string, HashSet<string>>();
-            if (!_collections.TryGetValue(key, out var set))
-            {
-                set = new HashSet<string>();
-                _collections[key] = set;
-            }
-            if (set.Add(item))
+            _collections ??= new Dictionary<string, CollectionBucket>();
+            if (!_collections.TryGetValue(key, out var bucket))
+                _collections[key] = bucket = new CollectionBucket();
+            if (bucket.EnsurePresent(item))
                 FireCollectionChanged(key);
         }
 
         /// <summary>
-        /// Removes <paramref name="item"/> from collection <paramref name="key"/>. No-op when the item or
-        /// the collection is absent. Fires <see cref="OnCollectionChanged"/> only when an element is
-        /// actually removed.
+        /// Adds <paramref name="count"/> units of <paramref name="item"/> to collection <paramref name="key"/>
+        /// (creating both on first use), stacking onto any quantity already there. Unlike the 2-argument
+        /// overload this is NOT idempotent — every call with <paramref name="count"/> ≥ 1 is a real quantity
+        /// change and fires <see cref="OnCollectionChanged"/>, even when the item already existed. A
+        /// <paramref name="count"/> ≤ 0 logs a warning and is a no-op. Read the running total with
+        /// <see cref="CollectionItemCount"/>; <see cref="CollectionCount"/> still reports the DISTINCT item
+        /// count, unaffected by quantity.
+        /// </summary>
+        public void AddToCollection(string key, string item, int count)
+        {
+            if (string.IsNullOrEmpty(key) || item == null || count <= 0)
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[GraphCore] AddToCollection called with a null/empty key, null item, or non-positive " +
+                    "count; ignored.");
+                return;
+            }
+            _collections ??= new Dictionary<string, CollectionBucket>();
+            if (!_collections.TryGetValue(key, out var bucket))
+                _collections[key] = bucket = new CollectionBucket();
+            bucket.Increment(item, count);
+            FireCollectionChanged(key);
+        }
+
+        /// <summary>
+        /// Removes <paramref name="item"/> from collection <paramref name="key"/> entirely, whatever its
+        /// quantity. No-op when the item or the collection is absent. Fires <see cref="OnCollectionChanged"/>
+        /// only when an element is actually removed. For decrementing a stack by a specific amount instead
+        /// of clearing it outright, use <see cref="RemoveFromCollection(string, string, int)"/>.
         /// </summary>
         public void RemoveFromCollection(string key, string item)
         {
@@ -485,33 +584,74 @@ namespace Faolline.GraphCore
                     "[GraphCore] RemoveFromCollection called with a null/empty key or null item; ignored.");
                 return;
             }
-            if (_collections != null && _collections.TryGetValue(key, out var set) && set.Remove(item))
+            if (_collections != null && _collections.TryGetValue(key, out var bucket) && bucket.RemoveAll(item))
                 FireCollectionChanged(key);
         }
 
-        /// <summary>Returns <c>true</c> when collection <paramref name="key"/> contains <paramref name="item"/>.</summary>
+        /// <summary>
+        /// Removes <paramref name="count"/> units of <paramref name="item"/> from collection
+        /// <paramref name="key"/>, clamped at zero — the item is dropped entirely once its quantity reaches
+        /// zero. No-op when absent. A <paramref name="count"/> ≤ 0 logs a warning and is a no-op. Fires
+        /// <see cref="OnCollectionChanged"/> whenever the quantity actually changes.
+        /// </summary>
+        public void RemoveFromCollection(string key, string item, int count)
+        {
+            if (string.IsNullOrEmpty(key) || item == null || count <= 0)
+            {
+                UnityEngine.Debug.LogWarning(
+                    "[GraphCore] RemoveFromCollection called with a null/empty key, null item, or " +
+                    "non-positive count; ignored.");
+                return;
+            }
+            if (_collections != null && _collections.TryGetValue(key, out var bucket) && bucket.Decrement(item, count))
+                FireCollectionChanged(key);
+        }
+
+        /// <summary>Returns <c>true</c> when collection <paramref name="key"/> contains <paramref name="item"/> (quantity ≥ 1).</summary>
         public bool CollectionContains(string key, string item)
             => item != null && _collections != null &&
-               _collections.TryGetValue(key, out var set) && set.Contains(item);
+               _collections.TryGetValue(key, out var bucket) && bucket.Contains(item);
 
-        /// <summary>Returns the number of elements in collection <paramref name="key"/> (0 when absent).</summary>
+        /// <summary>Returns the number of DISTINCT items in collection <paramref name="key"/> (0 when absent) — unaffected by quantity.</summary>
         public int CollectionCount(string key)
-            => (_collections != null && _collections.TryGetValue(key, out var set)) ? set.Count : 0;
+            => (_collections != null && _collections.TryGetValue(key, out var bucket)) ? bucket.DistinctCount : 0;
+
+        /// <summary>Returns the quantity of <paramref name="item"/> in collection <paramref name="key"/> (0 when absent).</summary>
+        public int CollectionItemCount(string key, string item)
+            => (item != null && _collections != null && _collections.TryGetValue(key, out var bucket))
+                ? bucket.CountOf(item) : 0;
 
         /// <summary>
-        /// Returns a read-only snapshot (copy) of the members of collection <paramref name="key"/>. Empty
-        /// (never null) when the collection is absent. Mutating the result never affects context state.
+        /// Returns a read-only snapshot (copy) of the DISTINCT members of collection <paramref name="key"/>,
+        /// in insertion order. Empty (never null) when the collection is absent. Mutating the result never
+        /// affects context state. Pair with <see cref="CollectionItemCount"/> for per-item quantities, or
+        /// use <see cref="GetCollectionWithCounts"/> for both in one call.
         /// </summary>
-        public IReadOnlyCollection<string> GetCollection(string key)
+        public IReadOnlyList<string> GetCollection(string key)
         {
-            if (_collections != null && _collections.TryGetValue(key, out var set))
-                return new List<string>(set);
+            if (_collections != null && _collections.TryGetValue(key, out var bucket))
+                return new List<string>(bucket.Order);
             return System.Array.Empty<string>();
         }
 
         /// <summary>
+        /// Returns a read-only snapshot of collection <paramref name="key"/> as (item, quantity) pairs, in
+        /// insertion order. Empty (never null) when the collection is absent.
+        /// </summary>
+        public IReadOnlyList<(string Item, int Count)> GetCollectionWithCounts(string key)
+        {
+            if (_collections == null || !_collections.TryGetValue(key, out var bucket))
+                return System.Array.Empty<(string, int)>();
+            var result = new List<(string, int)>(bucket.DistinctCount);
+            foreach (var item in bucket.Order)
+                result.Add((item, bucket.CountOf(item)));
+            return result;
+        }
+
+        /// <summary>
         /// Empties collection <paramref name="key"/>. No-op when already empty or absent; fires
-        /// <see cref="OnCollectionChanged"/> when it had at least one member.
+        /// <see cref="OnCollectionChanged"/> when it had at least one member. Drops every item's quantity,
+        /// not just its membership.
         /// </summary>
         public void ClearCollection(string key)
         {
@@ -521,23 +661,30 @@ namespace Faolline.GraphCore
                     "[GraphCore] ClearCollection called with a null or empty key; ignored.");
                 return;
             }
-            if (_collections != null && _collections.TryGetValue(key, out var set) && set.Count > 0)
+            if (_collections != null && _collections.TryGetValue(key, out var bucket) && bucket.DistinctCount > 0)
             {
-                set.Clear();
+                bucket.Clear();
                 FireCollectionChanged(key);
             }
         }
 
         /// <summary>
-        /// Returns a read-only snapshot of all collections (key → members, as copies) for serialization.
-        /// Parallel to <see cref="GetAllParameters"/>, which remains scalar-only. Empty when none exist.
+        /// Returns a read-only snapshot of all collections (key → distinct members in insertion order, as
+        /// copies) for serialization. Parallel to <see cref="GetAllParameters"/>, which remains scalar-only.
+        /// Empty when none exist.
+        /// <para>
+        /// <b>Quantities are not captured here</b> — this mirrors the pre-0.31.0 shape (distinct membership
+        /// only) so existing save-format consumers (e.g. <c>GraphRunSnapshot</c>) keep working unchanged.
+        /// A stacked item's quantity beyond 1 is NOT round-tripped through this method; a consumer that
+        /// needs quantities in its own persistence must read <see cref="GetCollectionWithCounts"/> directly.
+        /// </para>
         /// </summary>
         public IReadOnlyDictionary<string, IReadOnlyCollection<string>> GetAllCollections()
         {
             var result = new Dictionary<string, IReadOnlyCollection<string>>();
             if (_collections != null)
                 foreach (var kvp in _collections)
-                    result[kvp.Key] = new List<string>(kvp.Value);
+                    result[kvp.Key] = new List<string>(kvp.Value.Order);
             return new System.Collections.ObjectModel.ReadOnlyDictionary<string, IReadOnlyCollection<string>>(result);
         }
 
@@ -632,12 +779,12 @@ namespace Faolline.GraphCore
                     clone._local[kvp.Key] = kvp.Value;
                 clone._localActive = true;
             }
-            // Collections are durable state — deep-copy each set (independent of the source).
+            // Collections are durable state — deep-copy each bucket (order + quantities), independent of the source.
             if (_collections != null)
             {
-                clone._collections = new Dictionary<string, HashSet<string>>();
+                clone._collections = new Dictionary<string, CollectionBucket>();
                 foreach (var kvp in _collections)
-                    clone._collections[kvp.Key] = new HashSet<string>(kvp.Value);
+                    clone._collections[kvp.Key] = kvp.Value.Clone();
             }
             // Signal history is durable state — copy the set.
             if (_raisedSignals != null)
@@ -683,9 +830,9 @@ namespace Faolline.GraphCore
             // Restore collections (durable state) as independent copies. Subscribers are preserved.
             if (source._collections != null)
             {
-                _collections = new Dictionary<string, HashSet<string>>();
+                _collections = new Dictionary<string, CollectionBucket>();
                 foreach (var kvp in source._collections)
-                    _collections[kvp.Key] = new HashSet<string>(kvp.Value);
+                    _collections[kvp.Key] = kvp.Value.Clone();
             }
             else
             {
