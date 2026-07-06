@@ -26,7 +26,7 @@ namespace Faolline.GraphSave
         /// <summary>The context's typed parameters, flattened for serialization.</summary>
         public List<Param> Parameters = new List<Param>();
 
-        /// <summary>The context's named string collections.</summary>
+        /// <summary>The context's named string collections, with their item quantities.</summary>
         public List<Collection> Collections = new List<Collection>();
 
         /// <summary>Every signal name that had been raised at least once in the context at capture time.</summary>
@@ -41,15 +41,27 @@ namespace Faolline.GraphSave
             public string Value;  // every value is flattened to an invariant string (vectors/color: comma-separated components)
         }
 
-        /// <summary>One named string collection from the context.</summary>
+        /// <summary>
+        /// One named string collection from the context: distinct items in insertion order, plus their
+        /// quantities (graphcore 0.32.0 stacking). <see cref="Counts"/> is a NEW, additive field — a
+        /// snapshot captured before it existed deserializes it as an empty list; <see cref="ApplyTo"/>
+        /// treats a missing/absent count as quantity 1, exactly the pre-stacking behavior. Old save files
+        /// keep loading unchanged.
+        /// </summary>
         [Serializable]
         public class Collection
         {
             public string Key;
             public List<string> Items = new List<string>();
+
+            /// <summary>
+            /// Parallel to <see cref="Items"/> (same index = same item). Absent, short, or a non-positive
+            /// entry all mean "quantity 1" — the pre-0.6.0 behavior for that item.
+            /// </summary>
+            public List<int> Counts = new List<int>();
         }
 
-        /// <summary>Captures <paramref name="context"/>'s parameters + collections, tagged with the graph/node ids.</summary>
+        /// <summary>Captures <paramref name="context"/>'s parameters + collections (with quantities), tagged with the graph/node ids.</summary>
         public static GraphRunSnapshot Capture(BaseContext context, string graphId = null, string currentNodeId = null)
         {
             var snapshot = new GraphRunSnapshot { GraphId = graphId, CurrentNodeId = currentNodeId };
@@ -58,10 +70,16 @@ namespace Faolline.GraphSave
                 foreach (var kv in context.GetAllParameters())
                     snapshot.Parameters.Add(ToParam(kv.Key, kv.Value));
 
-                foreach (var kv in context.GetAllCollections())
+                // GetAllCollections() gives the key set for free; the actual (item, quantity) pairs come
+                // from GetCollectionWithCounts (graphcore 0.32.0) so a stacked item's quantity round-trips.
+                foreach (var key in context.GetAllCollections().Keys)
                 {
-                    var collection = new Collection { Key = kv.Key };
-                    if (kv.Value != null) collection.Items.AddRange(kv.Value);
+                    var collection = new Collection { Key = key };
+                    foreach (var (item, count) in context.GetCollectionWithCounts(key))
+                    {
+                        collection.Items.Add(item);
+                        collection.Counts.Add(count);
+                    }
                     snapshot.Collections.Add(collection);
                 }
 
@@ -84,6 +102,14 @@ namespace Faolline.GraphSave
         /// already-populated context can double entries. Pass <paramref name="replaceCollections"/> = <c>true</c>
         /// to clear each captured collection key first, making the snapshot authoritative (what <see cref="Restore"/>
         /// does). Default <c>false</c> keeps the additive behavior.
+        /// <para>
+        /// <b>Quantities and merge mode:</b> an item captured at quantity &gt; 1 is applied via the additive
+        /// stacking overload, which is never idempotent (graphcore 0.32.0). With <paramref name="replaceCollections"/>
+        /// = <c>false</c>, calling <see cref="ApplyTo"/> more than once with the SAME snapshot stacks that
+        /// quantity again each time. This is a non-issue with <c>true</c> (the default <see cref="Restore"/>
+        /// path) since each call starts from an empty collection; a merge-mode consumer that needs idempotent
+        /// re-apply should clear the affected collections itself first.
+        /// </para>
         /// </summary>
         public void ApplyTo(BaseContext context, bool replaceCollections = false)
         {
@@ -93,11 +119,15 @@ namespace Faolline.GraphSave
 
             foreach (var c in Collections)
             {
-                if (c == null) continue;
+                if (c == null || c.Items == null) continue;
                 if (replaceCollections) context.ClearCollection(c.Key);
-                if (c.Items != null)
-                    foreach (var item in c.Items)
-                        context.AddToCollection(c.Key, item);
+                for (int i = 0; i < c.Items.Count; i++)
+                {
+                    var item = c.Items[i];
+                    var count = (c.Counts != null && i < c.Counts.Count) ? c.Counts[i] : 1;
+                    if (count > 1) context.AddToCollection(c.Key, item, count);
+                    else context.AddToCollection(c.Key, item);
+                }
             }
 
             if (RaisedSignals != null && RaisedSignals.Count > 0)

@@ -4,6 +4,23 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.0]
+
+### Added
+- **`GraphRunSnapshot` captures and restores collection quantities (graphcore 0.32.0 stacking).**
+  `Collection` gains a new `Counts` field, parallel to `Items` — additive, so a save file written before this
+  version deserializes it as an empty list, and `ApplyTo` treats an absent/short/non-positive count as
+  quantity 1 (the exact pre-0.6.0 behavior). No existing save loses data or changes behavior. `Capture` reads
+  quantities via `BaseContext.GetCollectionWithCounts`; `ApplyTo` uses the additive stacking overload for any
+  item captured at quantity > 1.
+- **Documented caveat**: in merge mode (`ApplyTo(context, replaceCollections: false)`, the non-default), an
+  item captured at quantity > 1 is applied via the ADDITIVE overload — re-applying the same snapshot twice
+  in merge mode stacks that quantity again each time. Not an issue with `replaceCollections: true` (used by
+  `Restore()` and the one real consumer, `GraphFlowDriver`), since each call starts from a cleared collection.
+
+### Changed
+- Dependency floor `com.faolline.graphcore` `0.22.0` → `0.32.0` (`GetCollectionWithCounts`).
+
 ## [0.5.2]
 
 ### Fixed

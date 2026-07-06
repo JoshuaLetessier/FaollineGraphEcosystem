@@ -398,6 +398,89 @@ namespace Faolline.GraphSave.Tests
             finally { Object.DestroyImmediate(graph); }
         }
 
+        // ── Quantities (0.6.0) ─────────────────────────────────────────────────
+
+        [Test]
+        public void Capture_And_ApplyTo_RoundTripsQuantities()
+        {
+            var ctx = new BaseContext();
+            ctx.AddToCollection("inv", "sword");          // quantity 1
+            ctx.AddToCollection("inv", "potion", 5);      // quantity 5
+
+            var snap = GraphRunSnapshot.Capture(ctx);
+            var restored = new BaseContext();
+            snap.ApplyTo(restored);
+
+            Assert.AreEqual(1, restored.CollectionItemCount("inv", "sword"));
+            Assert.AreEqual(5, restored.CollectionItemCount("inv", "potion"));
+            Assert.AreEqual(2, restored.CollectionCount("inv"), "distinct count unaffected by quantity");
+        }
+
+        [Test]
+        public void JsonUtility_RoundTrip_PreservesQuantities()
+        {
+            var ctx = new BaseContext();
+            ctx.AddToCollection("inv", "arrow", 20);
+
+            var snap = GraphRunSnapshot.Capture(ctx);
+            var json = JsonUtility.ToJson(snap);
+            var back = JsonUtility.FromJson<GraphRunSnapshot>(json);
+
+            var ctx2 = new BaseContext();
+            back.ApplyTo(ctx2);
+            Assert.AreEqual(20, ctx2.CollectionItemCount("inv", "arrow"));
+        }
+
+        [Test]
+        public void ApplyTo_OldSnapshotWithoutCounts_TreatsEveryItemAsQuantityOne()
+        {
+            // Simulates a save file written before Counts existed: the field is present (JsonUtility default)
+            // but empty — every item must resolve to quantity 1, exactly the pre-0.6.0 behavior.
+            var snap = new GraphRunSnapshot();
+            snap.Collections.Add(new GraphRunSnapshot.Collection { Key = "inv", Items = { "sword", "potion" } });
+            Assert.AreEqual(0, snap.Collections[0].Counts.Count, "simulates a pre-0.6.0 snapshot with no Counts data");
+
+            var ctx = new BaseContext();
+            snap.ApplyTo(ctx);
+
+            Assert.AreEqual(1, ctx.CollectionItemCount("inv", "sword"));
+            Assert.AreEqual(1, ctx.CollectionItemCount("inv", "potion"));
+        }
+
+        [Test]
+        public void ApplyTo_ReplaceCollections_QuantityIsAuthoritative()
+        {
+            var ctx = new BaseContext();
+            ctx.AddToCollection("inv", "potion", 99);   // stale pre-existing quantity
+
+            var snap = new GraphRunSnapshot();
+            snap.Collections.Add(new GraphRunSnapshot.Collection
+            {
+                Key = "inv", Items = { "potion" }, Counts = { 3 }
+            });
+
+            snap.ApplyTo(ctx, replaceCollections: true);
+
+            Assert.AreEqual(3, ctx.CollectionItemCount("inv", "potion"), "replace makes the snapshot's quantity authoritative");
+        }
+
+        [Test]
+        public void ApplyTo_MergeMode_QuantityStacksOnRepeatedApply_DocumentedCaveat()
+        {
+            // Documents the caveat in ApplyTo's XML doc: merge mode (replaceCollections: false) uses the
+            // additive stacking overload for quantities, so re-applying the SAME snapshot twice doubles it.
+            // Restore() and the one real consumer (GraphFlowDriver) always use replaceCollections: true,
+            // which does not have this property (each call starts from a cleared collection).
+            var snap = new GraphRunSnapshot();
+            snap.Collections.Add(new GraphRunSnapshot.Collection { Key = "inv", Items = { "potion" }, Counts = { 2 } });
+
+            var ctx = new BaseContext();
+            snap.ApplyTo(ctx);
+            snap.ApplyTo(ctx);
+
+            Assert.AreEqual(4, ctx.CollectionItemCount("inv", "potion"), "merge mode stacks quantities on repeat apply — documented, not a bug");
+        }
+
         // In-memory store that mirrors a real one by going through JSON, exercising the serializable contract.
         private sealed class MemoryStore : IGraphSaveStore
         {
