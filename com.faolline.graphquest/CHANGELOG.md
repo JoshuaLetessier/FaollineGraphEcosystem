@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.9.2]
+
+### Fixed
+- **`QuestEvaluator.ResolveWithFallback` no longer mistakes a genuine translation for a missing key just
+  because it starts with `#`.** It compared `resolved.StartsWith("#")` instead of the exact `"#{key}"`
+  missing-key marker for that specific key — a translated quest/objective name or description starting with
+  `#` (a hashtag, "#1 Hunter", a room number) was silently replaced by the authored fallback text instead of
+  showing the real translation. Now compares the exact marker, matching how `LocalizationSettings.Resolve`
+  already does it.
+
 ## [0.9.1]
 
 ### Changed

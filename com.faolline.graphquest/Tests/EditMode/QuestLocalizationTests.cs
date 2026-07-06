@@ -67,5 +67,23 @@ namespace Faolline.GraphQuest.Tests
 
             Assert.AreEqual("raw_id", ev.GetObjectives()[0].DisplayName, "no matching key → falls back to authored text (the id)");
         }
+
+        [Test]
+        public void TranslationStartingWithHash_IsNotMistakenForAMissingKey()
+        {
+            // A genuine translation that happens to start with '#' (a hashtag, a room number, "#1 Hunter")
+            // must resolve as-is — the missing-key check compares the EXACT "#key" marker for this key, not
+            // a bare StartsWith("#").
+            var csv = "Key,en\n" +
+                      "quest_hash,#1 Hunter\n";
+            var provider = new CsvLocalizationProvider(csv, "en");
+            var quest = TrackGraph(QuestBuilder.Create("hash").Named("Hunter")
+                .AddObjective("obj").CompleteWhen(Flag("x")).Build());
+            var ev = new QuestEvaluator(quest, new QuestContext()).UseLocalization(provider);
+            ev.Evaluate();
+
+            Assert.AreEqual("#1 Hunter", ev.DisplayName,
+                "a translation starting with '#' must not be treated as a missing-key marker");
+        }
     }
 }
