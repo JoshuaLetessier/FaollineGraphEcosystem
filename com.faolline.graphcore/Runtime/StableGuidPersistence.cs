@@ -1,4 +1,5 @@
 #if UNITY_EDITOR
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 
@@ -38,6 +39,50 @@ namespace Faolline.GraphCore
             EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssetIfDirty(asset);
         }
+
+        /// <summary>
+        /// SYNCHRONOUSLY flushes every <see cref="IStableGuidIdentity"/> asset in the project to disk,
+        /// persisting any GUID that <c>OnEnable</c> assigned in memory but never wrote. Returns the number of
+        /// assets touched. Unlike <see cref="ScheduleSave"/> (which defers to the next editor tick), this
+        /// runs immediately — so it works under an automated <c>-batchmode -executeMethod … -quit</c> run,
+        /// where the process exits before any deferred tick fires (exactly the pipeline that exposes the
+        /// unpersisted-GUID bug on a migrated project). Run it once after migrating a pre-existing project, or
+        /// as a CI step before generating constants / building saves:
+        /// <c>-executeMethod Faolline.GraphCore.StableGuidPersistence.PersistAll</c>. A brand-new project that
+        /// only ever creates assets through the Create menu never needs it (those persist their GUID at
+        /// creation).
+        /// <para>
+        /// Discovers types via <see cref="TypeCache"/> (no per-type code) and de-duplicates by asset path, so
+        /// a graph and its embedded signal sub-assets are saved once through the parent.
+        /// </para>
+        /// </summary>
+        public static int PersistAll()
+        {
+            var paths = new HashSet<string>();
+            foreach (var type in TypeCache.GetTypesDerivedFrom<ScriptableObject>())
+            {
+                if (type.IsAbstract || !typeof(IStableGuidIdentity).IsAssignableFrom(type)) continue;
+                foreach (var guid in AssetDatabase.FindAssets($"t:{type.Name}"))
+                    paths.Add(AssetDatabase.GUIDToAssetPath(guid));
+            }
+
+            int count = 0;
+            foreach (var path in paths)
+            {
+                if (AssetDatabase.LoadAssetAtPath<ScriptableObject>(path) is IStableGuidIdentity id
+                    && !string.IsNullOrEmpty(id.StableId))
+                {
+                    EditorUtility.SetDirty((Object)id);
+                    count++;
+                }
+            }
+            if (count > 0) AssetDatabase.SaveAssets();
+            return count;
+        }
+
+        [MenuItem("Faolline/Graph/Persist Stable Ids")]
+        private static void PersistAllMenu()
+            => Debug.Log($"[GraphCore] Persisted {PersistAll()} stable-GUID asset(s) to disk.");
     }
 }
 #endif

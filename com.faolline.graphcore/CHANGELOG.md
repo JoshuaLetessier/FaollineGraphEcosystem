@@ -4,6 +4,20 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.33.2]
+
+### Added
+- **`StableGuidPersistence.PersistAll()` + menu `Faolline ▸ Graph ▸ Persist Stable Ids`** — synchronously
+  flushes every `IStableGuidIdentity` asset (`SignalName`, `CollectionEntry`, `CollectionName`, `BaseGraph`)
+  to disk, persisting any GUID that `OnEnable` assigned in memory but never wrote. This is the deterministic
+  remedy for the 0.33.1 bug's exact trigger: the 0.33.1 auto-heal uses `EditorApplication.delayCall`, which
+  fires on the next editor tick — so it self-heals a normal interactive session, but a one-shot
+  `-batchmode -executeMethod … -quit` (CI, or scripted asset generation) exits *before* any tick and never
+  persists. `PersistAll` runs immediately, so it works under `-quit`:
+  `-executeMethod Faolline.GraphCore.StableGuidPersistence.PersistAll`. Run it once after migrating a
+  pre-existing project, or as a CI step before generating constants / building saves. A brand-new project
+  that only creates assets through the Create menu never needs it (those persist their GUID at creation).
+
 ## [0.33.1]
 
 ### Fixed
