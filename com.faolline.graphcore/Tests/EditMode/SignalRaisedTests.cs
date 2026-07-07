@@ -5,10 +5,9 @@ namespace Faolline.GraphCore.Tests
 {
     public class SignalRaisedTests
     {
-        private static SignalName Sig(string name)
-        {
-            var s = ScriptableObject.CreateInstance<SignalName>(); s.name = name; return s;
-        }
+        // Asset signals key on their GUID (islands); tests that pair an asset with a raise/check pass the
+        // asset itself (implicit → GUID), not a raw literal.
+        private static SignalName Sig(string name) => SignalName.Create(name);
 
         // ── HasSignalBeenRaised ────────────────────────────────────────────────
 
@@ -116,7 +115,7 @@ namespace Faolline.GraphCore.Tests
             var cond = ScriptableObject.CreateInstance<SignalRaisedCondition>();
             cond.Signal = sig;
             var ctx = new BaseContext();
-            ctx.RaiseSignal("npc_met");
+            ctx.RaiseSignal(sig);
             Assert.IsTrue(cond.Evaluate(ctx));
             Object.DestroyImmediate(cond);
             Object.DestroyImmediate(sig);
@@ -152,9 +151,9 @@ namespace Faolline.GraphCore.Tests
             var action = ScriptableObject.CreateInstance<ForgetSignalAction>();
             action.Signal = sig;
             var ctx = new BaseContext();
-            ctx.RaiseSignal("npc_met");
+            ctx.RaiseSignal(sig);
             action.Execute(ctx);
-            Assert.IsFalse(ctx.HasSignalBeenRaised("npc_met"));
+            Assert.IsFalse(ctx.HasSignalBeenRaised(sig));
             Object.DestroyImmediate(action);
             Object.DestroyImmediate(sig);
         }
@@ -190,7 +189,7 @@ namespace Faolline.GraphCore.Tests
             Assert.IsFalse(secondTimeCond.Evaluate(ctx), "First time: should NOT take replay branch");
 
             // Dialogue ends — raise the signal (RaiseSignalAction fires on exit).
-            ctx.RaiseSignal("dice_player_met");
+            ctx.RaiseSignal(npcMet);
 
             // Second visit: signal is in history.
             Assert.IsFalse(firstTimeCond.Evaluate(ctx), "Second time: should NOT take first-interaction branch");

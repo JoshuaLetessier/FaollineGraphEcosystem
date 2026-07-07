@@ -158,19 +158,19 @@ namespace Faolline.GraphCore.Tests
 
         // ── Sub-graph signal isolation (#5) ───────────────────────────────────
 
-        // A target graph whose single statement node awaits <awaitSignal>, optionally raising <raiseSignal>
-        // on enter (pass null to raise nothing → the await is external).
-        private BaseGraph TargetAwaiting(string awaitSignal, string raiseSignal = null)
+        // A target graph whose single statement node awaits an asset signal (GUID). With selfRaise, it
+        // raises the SAME asset on enter (a self-contained loop); otherwise the await is external. Awaits go
+        // through the asset (AwaitSignals) — islands: a graph-internal raise is an asset/GUID, so a matching
+        // internal await must be an asset too.
+        private BaseGraph TargetAwaiting(string awaitDisplay, bool selfRaise = false)
         {
             var g = Track(ScriptableObject.CreateInstance<BaseGraph>());
-            var node = new StatementNodeData
+            var awaitSig = Track(SignalName.Create(awaitDisplay));
+            var node = new StatementNodeData { Id = "await", NodeType = StatementNodeData.NodeTypeId };
+            node.AwaitSignals.Add(awaitSig);
+            if (selfRaise)
             {
-                Id = "await", NodeType = StatementNodeData.NodeTypeId, AwaitSignalName = awaitSignal
-            };
-            if (!string.IsNullOrEmpty(raiseSignal))
-            {
-                var sig = Track(ScriptableObject.CreateInstance<SignalName>()); sig.name = raiseSignal;
-                var raise = Track(ScriptableObject.CreateInstance<RaiseSignalAction>()); raise.Signal = sig;
+                var raise = Track(ScriptableObject.CreateInstance<RaiseSignalAction>()); raise.Signal = awaitSig;
                 node.OnEnterActions.Add(raise);
             }
             g.AddNode(node);
@@ -219,7 +219,7 @@ namespace Faolline.GraphCore.Tests
         public void FreshContextSubgraph_AwaitingSelfRaisedSignal_NoWarning()
         {
             // The sub-graph raises the very signal it awaits, so a fresh context is self-sufficient.
-            var host = HostWithSubGraph(TargetAwaiting("loop", raiseSignal: "loop"), inherit: false, scope: false);
+            var host = HostWithSubGraph(TargetAwaiting("loop", selfRaise: true), inherit: false, scope: false);
             Assert.IsFalse(HasWarning(GraphValidator.Validate(host), "fresh context"),
                 "a self-contained signal loop needs no parent context");
         }
@@ -281,29 +281,26 @@ namespace Faolline.GraphCore.Tests
         private static StatementNodeData Stmt(string id)
             => new StatementNodeData { Id = id, NodeType = StatementNodeData.NodeTypeId };
 
-        private RaiseSignalAction Raise(string name)
+        private SignalName Sig(string display) => Track(SignalName.Create(display));
+
+        // The only way a graph node raises a signal is via an asset (RaiseSignalAction) → the GUID.
+        private RaiseSignalAction Raise(SignalName sig)
         {
-            var sig = Track(ScriptableObject.CreateInstance<SignalName>()); sig.name = name;
             var raise = Track(ScriptableObject.CreateInstance<RaiseSignalAction>()); raise.Signal = sig;
             return raise;
-        }
-
-        // s → a(await "open") → b(raises "open" on enter) → e : the only raiser sits BEHIND the await.
-        private BaseGraph CircularGraph(out StatementNodeData awaiting)
-        {
-            var g = NewGraph();
-            awaiting = Stmt("a"); awaiting.AwaitSignalName = "open";
-            var b = Stmt("b"); b.OnEnterActions.Add(Raise("open"));
-            g.AddNode(Start("s")); g.AddNode(awaiting); g.AddNode(b); g.AddNode(End("e"));
-            g.EntryNodeId = "s";
-            g.AddEdge(Edge("s", "a")); g.AddEdge(Edge("a", "b")); g.AddEdge(Edge("b", "e"));
-            return g;
         }
 
         [Test]
         public void CircularAwait_RaiserOnlyDownstream_Warns()
         {
-            var g = CircularGraph(out _);
+            // s → a(await open) → b(raises open on enter) → e : the only raiser sits BEHIND the await.
+            var g = NewGraph();
+            var open = Sig("open");
+            var a = Stmt("a"); a.AwaitSignals.Add(open);
+            var b = Stmt("b"); b.OnEnterActions.Add(Raise(open));
+            g.AddNode(Start("s")); g.AddNode(a); g.AddNode(b); g.AddNode(End("e"));
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "a")); g.AddEdge(Edge("a", "b")); g.AddEdge(Edge("b", "e"));
             Assert.IsTrue(HasWarning(GraphValidator.Validate(g), "Circular await"),
                 "a raiser reachable only through the awaiting node can never fire");
         }
@@ -313,7 +310,8 @@ namespace Faolline.GraphCore.Tests
         {
             // The cupboard shape exactly: the awaiting node's own completion raises the awaited signal.
             var g = NewGraph();
-            var a = Stmt("a"); a.AwaitSignalName = "open"; a.OnExitActions.Add(Raise("open"));
+            var open = Sig("open");
+            var a = Stmt("a"); a.AwaitSignals.Add(open); a.OnExitActions.Add(Raise(open));
             g.AddNode(Start("s")); g.AddNode(a); g.AddNode(End("e"));
             g.EntryNodeId = "s";
             g.AddEdge(Edge("s", "a")); g.AddEdge(Edge("a", "e"));
@@ -325,8 +323,9 @@ namespace Faolline.GraphCore.Tests
         public void CircularAwait_RaiserBeforeTheAwait_NoWarning()
         {
             var g = NewGraph();
-            var s = Start("s"); s.OnExitActions.Add(Raise("open"));
-            var a = Stmt("a"); a.AwaitSignalName = "open";
+            var open = Sig("open");
+            var s = Start("s"); s.OnExitActions.Add(Raise(open));
+            var a = Stmt("a"); a.AwaitSignals.Add(open);
             g.AddNode(s); g.AddNode(a); g.AddNode(End("e"));
             g.EntryNodeId = "s";
             g.AddEdge(Edge("s", "a")); g.AddEdge(Edge("a", "e"));
@@ -338,7 +337,7 @@ namespace Faolline.GraphCore.Tests
         public void CircularAwait_SignalNeverRaisedInternally_NoWarning()
         {
             var g = NewGraph();
-            var a = Stmt("a"); a.AwaitSignalName = "host_signal";
+            var a = Stmt("a"); a.AwaitSignals.Add(Sig("host_signal"));   // awaited, never raised in-graph
             g.AddNode(Start("s")); g.AddNode(a); g.AddNode(End("e"));
             g.EntryNodeId = "s";
             g.AddEdge(Edge("s", "a")); g.AddEdge(Edge("a", "e"));
@@ -349,11 +348,16 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void CircularAwait_OrAwait_OneNameResumable_NoWarning()
         {
-            // a awaits open OR help; "help" is raised before the await, "open" only behind it.
-            var g = CircularGraph(out var awaiting);
-            awaiting.AwaitSignalNamesExtra.Add("help");
-            var start = g.Nodes.First(n => n.Id == "s");
-            start.OnExitActions.Add(Raise("help"));
+            // a awaits open OR help; help is raised before the await, open only behind it.
+            var g = NewGraph();
+            var open = Sig("open");
+            var help = Sig("help");
+            var a = Stmt("a"); a.AwaitSignals.Add(open); a.AwaitSignals.Add(help);
+            var b = Stmt("b"); b.OnEnterActions.Add(Raise(open));
+            var s = Start("s"); s.OnExitActions.Add(Raise(help));
+            g.AddNode(s); g.AddNode(a); g.AddNode(b); g.AddNode(End("e"));
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "a")); g.AddEdge(Edge("a", "b")); g.AddEdge(Edge("b", "e"));
             Assert.IsFalse(HasWarning(GraphValidator.Validate(g), "Circular await"),
                 "OR-await resumes on the first name that can fire — one resumable name is enough");
         }

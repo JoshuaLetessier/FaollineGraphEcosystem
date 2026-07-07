@@ -82,14 +82,14 @@ namespace Faolline.GraphGameFlow.Tests
             var triggerGo = new GameObject("Trigger");
             _go.Add(triggerGo);
             var trigger = triggerGo.AddComponent<ContextTrigger>();
-            SetSignal(trigger, "my_signal");
+            var sig = SetSignal(trigger, "my_signal");
 
             string received = null;
-            driver.Context.OnSignal("my_signal", args => received = args.Name);
+            driver.Context.OnSignal(sig, args => received = args.Name);   // asset → GUID (islands)
 
             trigger.Fire();
 
-            Assert.AreEqual("my_signal", received);
+            Assert.AreEqual((string)sig, received);   // the raised GUID
         }
 
         [Test]
@@ -243,13 +243,13 @@ namespace Faolline.GraphGameFlow.Tests
             field.SetValue(trigger, new List<BaseAction>(actions));
         }
 
-        private static void SetSignal(ContextTrigger trigger, string signal)
+        private static SignalName SetSignal(ContextTrigger trigger, string signal)
         {
-            var sig = ScriptableObject.CreateInstance<SignalName>();
-            sig.name = signal;
+            var sig = SignalName.Create(signal);   // asset signal keys on its GUID (islands)
             var field = typeof(ContextTrigger).GetField("_signal",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             field.SetValue(trigger, sig);
+            return sig;
         }
 
         private static void SetFireOnce(ContextTrigger trigger, bool value)

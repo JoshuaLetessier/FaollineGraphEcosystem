@@ -7,7 +7,10 @@ namespace Faolline.GraphCore.Tests
 {
     /// <summary>
     /// Multi-signal await (#12 / Option A): a node can wait for several signals as a logical OR — it resumes
-    /// on the FIRST awaited signal that passes ResumeConditions. Graph: start → room(await A|B) → done → end.
+    /// on the FIRST awaited signal that passes ResumeConditions. Asset signals key on their GUID (islands),
+    /// so an await and its raise pair the SAME asset instance; the raw-string channel (AwaitSignalName /
+    /// AwaitSignalNamesExtra + RaiseSignal(literal)) is separate and keys on literals.
+    /// Graph: start → room(await A|B) → done → end.
     /// </summary>
     public class MultiSignalAwaitTests
     {
@@ -16,11 +19,12 @@ namespace Faolline.GraphCore.Tests
         private NodeExecutorRegistry _registry;
         private BaseRunner           _runner;
         private StatementNodeData    _room;
+        private SignalName           _sigA, _sigB;
         private readonly List<UnityEngine.Object> _so = new List<UnityEngine.Object>();
 
         private SignalName Sig(string name)
         {
-            var s = ScriptableObject.CreateInstance<SignalName>(); s.name = name; _so.Add(s);
+            var s = SignalName.Create(name); _so.Add(s);
             return s;
         }
 
@@ -53,8 +57,10 @@ namespace Faolline.GraphCore.Tests
 
         private void ParkAwaitingAOrB()
         {
-            _room.AwaitSignals.Add(Sig("A"));
-            _room.AwaitSignals.Add(Sig("B"));
+            _sigA = Sig("A");
+            _sigB = Sig("B");
+            _room.AwaitSignals.Add(_sigA);
+            _room.AwaitSignals.Add(_sigB);
             _runner.Start(_graph, _ctx, _registry);
             _runner.Proceed();                       // start → room, parks (await A|B)
             Assert.AreEqual(RunnerState.WaitingForSignal, _runner.State);
@@ -62,34 +68,37 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void AwaitSignalNames_UnionsPrimaryAndExtras_Deduped()
+        public void AwaitSignalNames_UnionsPrimaryAndAssetExtras_Deduped()
         {
-            _room.AwaitSignalName = "A";               // primary (raw)
-            _room.AwaitSignals.Add(Sig("B"));
-            _room.AwaitSignals.Add(Sig("A"));          // duplicate of primary → collapsed
-            CollectionAssert.AreEqual(new[] { "A", "B" }, _room.AwaitSignalNames.ToArray());
+            var sigB = Sig("B");
+            _room.AwaitSignalName = "raw_primary";     // primary (raw literal channel)
+            _room.AwaitSignals.Add(sigB);
+            _room.AwaitSignals.Add(sigB);              // same asset twice → collapsed on its GUID
+            CollectionAssert.AreEqual(new[] { "raw_primary", sigB.Key }, _room.AwaitSignalNames.ToArray());
         }
 
         [Test]
-        public void AwaitSignalNames_IncludesStringExtras_Deduped()
+        public void AwaitSignalNames_UnionsRawAndAsset_DedupWithinEachKind()
         {
-            _room.AwaitSignalName = "A";               // primary (raw)
-            _room.AwaitSignals.Add(Sig("B"));          // asset extra
-            _room.AwaitSignalNamesExtra.Add("C");      // string extra (code-first)
-            _room.AwaitSignalNamesExtra.Add("A");      // duplicate of primary → collapsed
-            CollectionAssert.AreEqual(new[] { "A", "B", "C" }, _room.AwaitSignalNames.ToArray());
+            var sigB = Sig("B");
+            _room.AwaitSignalName = "A";               // primary (raw literal)
+            _room.AwaitSignals.Add(sigB);              // asset extra → GUID
+            _room.AwaitSignalNamesExtra.Add("C");      // string extra
+            _room.AwaitSignalNamesExtra.Add("A");      // duplicate of the raw primary → collapsed (both literals)
+            // A raw "A" and an asset display-named "A" would NOT dedup — different channels, different keys.
+            CollectionAssert.AreEqual(new[] { "A", sigB.Key, "C" }, _room.AwaitSignalNames.ToArray());
         }
 
         [Test]
         public void ResumesOnStringExtraSignal()
         {
-            _room.AwaitSignalName = "A";
+            _room.AwaitSignalName = "A";               // all raw literal channel
             _room.AwaitSignalNamesExtra.Add("B");
             _runner.Start(_graph, _ctx, _registry);
             _runner.Proceed();                       // start → room, parks (await A|B)
             Assert.AreEqual(RunnerState.WaitingForSignal, _runner.State);
 
-            _runner.RaiseSignal("B");                // the string extra resumes, same as an asset extra
+            _runner.RaiseSignal("B");                // the raw string extra resumes
             Assert.AreEqual(RunnerState.NodeReady, _runner.State);
             Assert.AreEqual("done", _runner.CurrentNode.Id);
         }
@@ -98,7 +107,7 @@ namespace Faolline.GraphCore.Tests
         public void ResumesOnFirstSignal()
         {
             ParkAwaitingAOrB();
-            _runner.RaiseSignal("A");
+            _runner.RaiseSignal(_sigA);
             Assert.AreEqual(RunnerState.NodeReady, _runner.State);
             Assert.AreEqual("done", _runner.CurrentNode.Id);
         }
@@ -107,7 +116,7 @@ namespace Faolline.GraphCore.Tests
         public void ResumesOnOtherSignal()
         {
             ParkAwaitingAOrB();
-            _runner.RaiseSignal("B");                  // the OTHER awaited signal also resumes
+            _runner.RaiseSignal(_sigB);                // the OTHER awaited signal also resumes
             Assert.AreEqual(RunnerState.NodeReady, _runner.State);
             Assert.AreEqual("done", _runner.CurrentNode.Id);
         }
@@ -116,9 +125,19 @@ namespace Faolline.GraphCore.Tests
         public void NonAwaitedSignal_KeepsWaiting()
         {
             ParkAwaitingAOrB();
-            _runner.RaiseSignal("C");
+            _runner.RaiseSignal("C");                  // a raw literal is not one of the awaited GUIDs
             Assert.AreEqual(RunnerState.WaitingForSignal, _runner.State);
             Assert.AreEqual("room", _runner.CurrentNode.Id);
+        }
+
+        [Test]
+        public void RawRaise_DoesNotWakeAssetAwait_Islands()
+        {
+            // Islands: a raw literal matching an asset's DISPLAY name does not wake an asset await.
+            ParkAwaitingAOrB();
+            _runner.RaiseSignal("A");                  // the display name of _sigA, but a raw literal
+            Assert.AreEqual(RunnerState.WaitingForSignal, _runner.State,
+                "a raw literal must not cross into the GUID-keyed asset channel");
         }
 
         [Test]
@@ -128,11 +147,11 @@ namespace Faolline.GraphCore.Tests
             _room.ResumeConditions.Add(gate);
             ParkAwaitingAOrB();
 
-            _runner.RaiseSignal("A");                  // gate false → ignored
+            _runner.RaiseSignal(_sigA);                // gate false → ignored
             Assert.AreEqual(RunnerState.WaitingForSignal, _runner.State);
 
             gate.Open = true;
-            _runner.RaiseSignal("B");                  // now any awaited signal resumes
+            _runner.RaiseSignal(_sigB);                // now any awaited signal resumes
             Assert.AreEqual("done", _runner.CurrentNode.Id);
         }
 
@@ -140,7 +159,7 @@ namespace Faolline.GraphCore.Tests
         public void ContextRaise_AlsoResumes_ForAnyAwaitedName()
         {
             ParkAwaitingAOrB();
-            _ctx.RaiseSignal("B");                     // raised directly on the context (not via runner)
+            _ctx.RaiseSignal(_sigB);                   // raised directly on the context (not via runner)
             Assert.AreEqual(RunnerState.NodeReady, _runner.State);
             Assert.AreEqual("done", _runner.CurrentNode.Id);
         }

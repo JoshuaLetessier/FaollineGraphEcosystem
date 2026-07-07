@@ -4,6 +4,39 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.33.0]
+
+Signal identity re-base (spec `032-signal-identity-rebase`). Unpublished ecosystem — clean break, no
+migration (re-generate consumer content).
+
+### Changed (breaking)
+- **`SignalName` identity is now a stable GUID (`Key`), not a human string.** `SignalName` adopts the exact
+  model of `CollectionEntry`/`CollectionName`/`BaseGraph.GraphId`: a GUID assigned once in `OnEnable`, never
+  editable, is what gets raised/awaited/matched/saved. `(string)SignalName` now returns that GUID (was the
+  display name). `_name` becomes a **cosmetic** `DisplayName` — rename it (or the asset file) freely; the
+  data (awaits/raises/saves) keeps matching on the unchanged GUID. `SignalName` implements
+  `IStableGuidIdentity`, so the duplicate detector regenerates a Ctrl+D copy's GUID. Closes the old
+  file-name-drift bug (renaming an asset silently changed the raised string and broke saved history).
+- **Islands.** Asset signals key on the GUID; the raw-string channel (`RaiseSignal(literal)` and the raw
+  `AwaitSignalName` field) keys on literals. The two do NOT cross — a raw `RaiseSignal("advance")` no longer
+  wakes a node awaiting a `SignalName` asset. To raise an asset signal from code, use the generated constant
+  or a held `SignalName` reference (implicit → GUID).
+
+### Added
+- **`SignalConstantsGenerator`** (editor) — `Faolline ▸ Signals ▸ Generate Constants` scans the project's
+  `SignalName` assets and generates a `GraphSignals` static class of `const string`s: the symbol derives from
+  each signal's `DisplayName` (compile-checked, e.g. `GraphSignals.PlayerInteracted`), the value is its GUID.
+  This is the load-bearing bridge for raising asset signals from pure host code. Renaming a signal changes
+  only the symbol (stale code fails to compile — the intended, safe rename), never the value. A symbol
+  collision (two display names sanitizing to the same identifier) is a **blocking error**, never a silent
+  merge. The generator ships in graphcore; the generated class lives in the consumer project (zero deps).
+- **`SignalName.Create(displayName)`** — factory for runtime/test signals with a fresh GUID and a display
+  label.
+
+### Notes
+- **Label resolver (spec FR-009) deferred**: the Context Watch window does not surface signals today (only
+  parameters and collections), so there is no signal GUID to label. Revisit if signal history is added there.
+
 ## [0.32.0]
 
 ### Added

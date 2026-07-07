@@ -12,7 +12,7 @@ namespace Faolline.GraphCore.Tests
 
         // ── RaiseSignalAction ─────────────────────────────────────────────────
 
-        private static SignalName Sig(string n) { var s = ScriptableObject.CreateInstance<SignalName>(); s.name = n; return s; }
+        private static SignalName Sig(string n) => SignalName.Create(n);
 
         [Test]
         public void RaiseSignalAction_RaisesNamedSignal()
@@ -21,7 +21,8 @@ namespace Faolline.GraphCore.Tests
             var sig = Sig("door_open");
             a.Signal = sig;
             bool received = false;
-            _ctx.OnSignal("door_open", _ => received = true);
+            // Asset signals key on the GUID (islands) — subscribe on the asset, not a raw literal.
+            _ctx.OnSignal(sig, _ => received = true);
             try
             {
                 a.Execute(_ctx);

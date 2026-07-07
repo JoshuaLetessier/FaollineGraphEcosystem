@@ -119,6 +119,24 @@ namespace Faolline.GraphCore.Tests
             Assert.IsTrue(a.Key == originalId || b.Key == originalId);
         }
 
+        // ── SignalName ────────────────────────────────────────────────────
+
+        [Test]
+        public void SignalName_ScanAndFix_RegeneratesOneDuplicate_KeepsTheOther()
+        {
+            var a = CreateAt<SignalName>("SigA");
+            var b = CreateAt<SignalName>("SigB");
+            ForceSameId(a, b, "_id");
+            var originalId = a.Key;
+
+            LogAssert.Expect(LogType.Warning, new Regex("Duplicate SignalName id"));
+            int fixedCount = StableIdDuplicateDetector.ScanAndFix(null);
+
+            Assert.AreEqual(1, fixedCount);
+            Assert.AreNotEqual(a.Key, b.Key);
+            Assert.IsTrue(a.Key == originalId || b.Key == originalId);
+        }
+
         // ── Cross-type scoping ────────────────────────────────────────────
 
         [Test]
