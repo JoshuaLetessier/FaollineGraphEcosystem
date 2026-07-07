@@ -4,6 +4,23 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.33.1]
+
+### Fixed
+- **Stable-GUID identities are now persisted to disk when assigned in `OnEnable` (finding 23).** A GUID
+  assigned in `OnEnable` (when the id field is empty) reached memory but never disk — assigning a serialized
+  field in code does not mark the asset dirty, so Unity never wrote it back. An asset created via the Create
+  menu was fine (its `OnEnable` runs before the asset is first serialized), but an asset that reached an empty
+  id another way — a pre-existing asset from before its id field existed, or one whose old id field
+  deserialized empty — **re-derived a different random GUID every session**. Invisible within one run (all
+  references share the live instance) but desyncing anything that crosses a session boundary: a generated
+  `GraphSignals` constant, and, worse, a save file whose `RaisedSignals` reloaded in a session that never
+  explicitly saved the asset would see an already-fired signal silently "un-fire". A new editor-only
+  `StableGuidPersistence.ScheduleSave` (called from `OnEnable` right after a fresh assignment) flushes it to
+  disk on the next editor tick, for persistent assets only (runtime/test instances and player builds are
+  skipped). Applied to all four stable-GUID types — `SignalName`, `CollectionEntry`, `CollectionName`,
+  `BaseGraph` — which all shared this latent bug. (Consumer dogfood finding.)
+
 ## [0.33.0]
 
 Signal identity re-base (spec `032-signal-identity-rebase`). Unpublished ecosystem — clean break, no

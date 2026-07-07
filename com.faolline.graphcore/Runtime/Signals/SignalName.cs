@@ -38,7 +38,12 @@ namespace Faolline.GraphCore
         private void OnEnable()
         {
             if (string.IsNullOrEmpty(_id))
+            {
                 _id = Guid.NewGuid().ToString("D");
+#if UNITY_EDITOR
+                StableGuidPersistence.ScheduleSave(this);   // persist the assignment — see StableGuidPersistence
+#endif
+            }
         }
 
         /// <summary>
