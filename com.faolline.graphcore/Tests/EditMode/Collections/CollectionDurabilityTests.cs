@@ -4,7 +4,7 @@ namespace Faolline.GraphCore.Tests
 {
     /// <summary>
     /// US2 (context layer) — durability: DeepClone produces independent copies, GetAllCollections snapshots
-    /// all collections, and GetAllParameters stays scalar-only (collections excluded).
+    /// all collections, and GetAllVariables stays scalar-only (collections excluded).
     /// </summary>
     public class CollectionDurabilityTests
     {
@@ -43,7 +43,7 @@ namespace Faolline.GraphCore.Tests
             ctx.Set<int>("gold", 5);
             ctx.AddToCollection("items", "a");
 
-            var scalars = ctx.GetAllParameters();
+            var scalars = ctx.GetAllVariables();
             Assert.IsTrue(scalars.ContainsKey("gold"));
             Assert.IsFalse(scalars.ContainsKey("items"), "Collections must not leak into the scalar snapshot.");
         }

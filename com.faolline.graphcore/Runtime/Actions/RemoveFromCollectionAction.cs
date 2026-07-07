@@ -11,7 +11,7 @@ namespace Faolline.GraphCore
     public class RemoveFromCollectionAction : BaseAction
     {
         [SerializeField, Tooltip("The collection to remove the value from.")]
-        private CollectionName _collection;
+        private CollectionDef _collection;
 
         [SerializeField, Tooltip("The entry to remove.")]
         private CollectionEntry _entry;
@@ -24,7 +24,7 @@ namespace Faolline.GraphCore
         [SerializeField, Min(1), Tooltip("Units subtracted when Stack is ON. Ignored when Stack is OFF.")]
         private int _count = 1;
 
-        public CollectionName Collection { get => _collection; set => _collection = value; }
+        public CollectionDef Collection { get => _collection; set => _collection = value; }
         public CollectionEntry Entry { get => _entry; set => _entry = value; }
         public bool Stack { get => _stack; set => _stack = value; }
         public int Count { get => _count; set => _count = value; }

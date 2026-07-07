@@ -7,13 +7,13 @@ namespace Faolline.GraphCore.Editor
 {
     /// <summary>
     /// Detects, for EVERY <c>ScriptableObject</c> type implementing <see cref="IStableGuidIdentity"/>
-    /// (<see cref="BaseGraph"/>, <see cref="CollectionEntry"/>, <see cref="CollectionName"/>, and any future
+    /// (<see cref="BaseGraph"/>, <see cref="CollectionEntry"/>, <see cref="CollectionDef"/>, and any future
     /// type — discovered via <see cref="TypeCache"/>, no per-type code needed here), assets that share the
     /// same stable id, and regenerates the duplicates' ids. The id is assigned once (typically in
     /// <c>OnEnable</c>, only when empty) and meant to be stable — but duplicating an asset (Ctrl+D, or a file
     /// copy outside the editor) copies the serialized id, so two assets silently share it: for a
     /// <see cref="BaseGraph"/> that means false-positive SubGraph cycle detection and ambiguous save keys;
-    /// for a <see cref="CollectionEntry"/>/<see cref="CollectionName"/>, two "different" items/buckets that
+    /// for a <see cref="CollectionEntry"/>/<see cref="CollectionDef"/>, two "different" items/buckets that
     /// silently collide in a context collection. Duplicates are scoped PER CONCRETE TYPE — a
     /// <see cref="BaseGraph"/> and a <see cref="CollectionEntry"/> coincidentally sharing a GUID string is
     /// not a collision (they are never compared to each other).

@@ -19,12 +19,12 @@ namespace Faolline.GraphCore.Tests
         private NodeExecutorRegistry _registry;
         private BaseRunner           _runner;
         private StatementNodeData    _room;
-        private SignalName           _sigA, _sigB;
+        private SignalDef           _sigA, _sigB;
         private readonly List<UnityEngine.Object> _so = new List<UnityEngine.Object>();
 
-        private SignalName Sig(string name)
+        private SignalDef Sig(string name)
         {
-            var s = SignalName.Create(name); _so.Add(s);
+            var s = SignalDef.Create(name); _so.Add(s);
             return s;
         }
 

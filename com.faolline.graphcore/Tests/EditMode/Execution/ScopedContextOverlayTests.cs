@@ -26,16 +26,16 @@ namespace Faolline.GraphCore.Tests
         private BaseGraph Track(BaseGraph g) { _graphs.Add(g); return g; }
         private T TrackObj<T>(T o) where T : Object { _objs.Add(o); return o; }
 
-        // Builds a graph that references each ParameterName (via an inert ResumeConditions probe on one node),
+        // Builds a graph that references each VariableDef (via an inert ResumeConditions probe on one node),
         // so BeginLocalContext(graph)/InitFromGraph discovers them and seeds their asset defaults.
-        private BaseGraph GraphReferencing(params ParameterName[] parameters)
+        private BaseGraph GraphReferencing(params VariableDef[] parameters)
         {
             var g = Track(ScriptableObject.CreateInstance<BaseGraph>());
             var node = new StatementNodeData { Id = "n", NodeType = StatementNodeData.NodeTypeId };
             foreach (var p in parameters)
             {
                 var probe = TrackObj(ScriptableObject.CreateInstance<IntCondition>()); // type irrelevant to seeding
-                probe.Parameter = p;
+                probe.Variable = p;
                 node.ResumeConditions.Add(probe);
             }
             g.AddNode(node);
@@ -77,7 +77,7 @@ namespace Faolline.GraphCore.Tests
         public void Read_LocalShadows_Global()
         {
             var ctx = new BaseContext();
-            var gold = TrackObj(ParameterName.Int("Gold", 99));
+            var gold = TrackObj(VariableDef.Int("Gold", 99));
             ctx.Set<int>(gold, 7);
             // Seed a genuine local shadow from a graph that references Gold (default 99):
             var g = GraphReferencing(gold);
@@ -125,7 +125,7 @@ namespace Faolline.GraphCore.Tests
         public void Write_LocalShadow_DoesNotAffectGlobal()
         {
             var ctx = new BaseContext();
-            var gold = TrackObj(ParameterName.Int("Gold", 1));
+            var gold = TrackObj(VariableDef.Int("Gold", 1));
             ctx.Set<int>(gold, 7);
             var g = GraphReferencing(gold);
             ctx.BeginLocalContext(g);     // local shadow Gold=1
@@ -141,8 +141,8 @@ namespace Faolline.GraphCore.Tests
         public void BeginLocalContext_Seed_SeedsLocalFromGraphParameters()
         {
             var ctx = new BaseContext();
-            var step = TrackObj(ParameterName.Int("Step", 3));
-            var flag = TrackObj(ParameterName.Bool("Flag", true));
+            var step = TrackObj(VariableDef.Int("Step", 3));
+            var flag = TrackObj(VariableDef.Bool("Flag", true));
             var g = GraphReferencing(step, flag);
 
             ctx.BeginLocalContext(g);
@@ -163,7 +163,7 @@ namespace Faolline.GraphCore.Tests
             ctx.BeginLocalContext();
             ctx.Set<int>("Tmp", 9);      // local scratch
 
-            var all = ctx.GetAllParameters();
+            var all = ctx.GetAllVariables();
             Assert.IsTrue(all.ContainsKey("Gold"));
             Assert.IsFalse(all.ContainsKey("Tmp"), "Persistence snapshot must exclude local scratch.");
         }
@@ -176,8 +176,8 @@ namespace Faolline.GraphCore.Tests
             var ctx = new BaseContext();
             ctx.Set<int>("Gold", 0);     // global-resident
             int globalHits = 0, localHits = 0;
-            ctx.OnParameterChanged("Gold", _ => globalHits++);
-            ctx.OnParameterChanged("Tmp",  _ => localHits++);
+            ctx.OnVariableChanged("Gold", _ => globalHits++);
+            ctx.OnVariableChanged("Tmp",  _ => localHits++);
 
             ctx.BeginLocalContext();
             ctx.Set<int>("Gold", 1);     // routes global

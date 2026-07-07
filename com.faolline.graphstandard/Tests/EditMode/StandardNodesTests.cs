@@ -13,10 +13,10 @@ namespace Faolline.GraphStandard.Tests
         public void IntCondition_ComparesViaOperator()
         {
             var ctx = new BaseContext();
-            var score = ParameterName.Int("score");
+            var score = VariableDef.Int("score");
             ctx.Set<int>(score, 5);
             var c = New<IntCondition>();
-            c.Parameter = score; c.Operator = ComparisonOperator.GreaterOrEqual; c.ExpectedValue = 3;
+            c.Variable = score; c.Operator = ComparisonOperator.GreaterOrEqual; c.ExpectedValue = 3;
             Assert.IsTrue(c.Evaluate(ctx), "5 >= 3");
             c.ExpectedValue = 9;
             Assert.IsFalse(c.Evaluate(ctx), "5 >= 9 is false");
@@ -26,9 +26,9 @@ namespace Faolline.GraphStandard.Tests
         [Test]
         public void IntCondition_MissingKey_IsFalse()
         {
-            var absent = ParameterName.Int("absent");
+            var absent = VariableDef.Int("absent");
             var c = New<IntCondition>();
-            c.Parameter = absent;
+            c.Variable = absent;
             Assert.IsFalse(c.Evaluate(new BaseContext()));
             Object.DestroyImmediate(c); Object.DestroyImmediate(absent);
         }
@@ -37,10 +37,10 @@ namespace Faolline.GraphStandard.Tests
         public void FloatCondition_Compares()
         {
             var ctx = new BaseContext();
-            var ratio = ParameterName.Float("ratio");
+            var ratio = VariableDef.Float("ratio");
             ctx.Set<float>(ratio, 0.3f);
             var c = New<FloatCondition>();
-            c.Parameter = ratio; c.Operator = ComparisonOperator.Less; c.ExpectedValue = 0.5f;
+            c.Variable = ratio; c.Operator = ComparisonOperator.Less; c.ExpectedValue = 0.5f;
             Assert.IsTrue(c.Evaluate(ctx));
             Object.DestroyImmediate(c); Object.DestroyImmediate(ratio);
         }
@@ -49,15 +49,15 @@ namespace Faolline.GraphStandard.Tests
         public void BoolAndString_Conditions()
         {
             var ctx = new BaseContext();
-            var open = ParameterName.Bool("open");
-            var name = ParameterName.String("name");
+            var open = VariableDef.Bool("open");
+            var name = VariableDef.String("name");
             ctx.Set<bool>(open, true);
             ctx.Set<string>(name, "hero");
 
-            var b = New<BoolCondition>(); b.Parameter = open; b.ExpectedValue = true;
+            var b = New<BoolCondition>(); b.Variable = open; b.ExpectedValue = true;
             Assert.IsTrue(b.Evaluate(ctx));
 
-            var s = New<StringCondition>(); s.Parameter = name; s.ExpectedValue = "villain";
+            var s = New<StringCondition>(); s.Variable = name; s.ExpectedValue = "villain";
             Assert.IsFalse(s.Evaluate(ctx), "hero != villain");
             s.Negate = true;
             Assert.IsTrue(s.Evaluate(ctx), "negate flips inequality to pass");
@@ -80,15 +80,15 @@ namespace Faolline.GraphStandard.Tests
         public void SetActions_WriteContext_ReadBackByCondition()
         {
             var ctx = new BaseContext();
-            var pi = ParameterName.Int("i");
-            var pf = ParameterName.Float("f");
-            var ps = ParameterName.String("s");
-            var pb = ParameterName.Bool("b");
+            var pi = VariableDef.Int("i");
+            var pf = VariableDef.Float("f");
+            var ps = VariableDef.String("s");
+            var pb = VariableDef.Bool("b");
 
-            var setI = New<SetIntAction>();    setI.Parameter = pi; setI.Value = 7;    setI.Execute(ctx);
-            var setF = New<SetFloatAction>();  setF.Parameter = pf; setF.Value = 1.5f; setF.Execute(ctx);
-            var setS = New<SetStringAction>(); setS.Parameter = ps; setS.Value = "x";  setS.Execute(ctx);
-            var setB = New<SetBoolAction>();   setB.Parameter = pb; setB.Value = true; setB.Execute(ctx);
+            var setI = New<SetIntAction>();    setI.Variable = pi; setI.Value = 7;    setI.Execute(ctx);
+            var setF = New<SetFloatAction>();  setF.Variable = pf; setF.Value = 1.5f; setF.Execute(ctx);
+            var setS = New<SetStringAction>(); setS.Variable = ps; setS.Value = "x";  setS.Execute(ctx);
+            var setB = New<SetBoolAction>();   setB.Variable = pb; setB.Value = true; setB.Execute(ctx);
 
             Assert.IsTrue(ctx.TryGet<int>(pi, out var i) && i == 7);
             Assert.IsTrue(ctx.TryGet<float>(pf, out var f) && Mathf.Approximately(f, 1.5f));

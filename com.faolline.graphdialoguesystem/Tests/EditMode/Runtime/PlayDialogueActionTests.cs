@@ -17,7 +17,7 @@ namespace Faolline.GraphDialogue.Tests
             var graph = DialoguePlayerTestGraphs.Linear();
             var action = ScriptableObject.CreateInstance<PlayDialogueAction>();
             action.DialogueGraph = graph;
-            action.SignalName = "test_done";
+            action.SignalDef = "test_done";
             try
             {
                 var ctx = new BaseContext();
@@ -57,7 +57,7 @@ namespace Faolline.GraphDialogue.Tests
             var graph = DialoguePlayerTestGraphs.Linear();
             var action = ScriptableObject.CreateInstance<PlayDialogueAction>();
             action.DialogueGraph = graph;
-            action.SignalName = "";
+            action.SignalDef = "";
             try
             {
                 var ctx = new BaseContext();

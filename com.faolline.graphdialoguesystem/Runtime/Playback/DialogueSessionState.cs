@@ -56,7 +56,7 @@ namespace Faolline.GraphDialogue
 
             if (context != null)
             {
-                foreach (var kvp in context.GetAllParameters())
+                foreach (var kvp in context.GetAllVariables())
                 {
                     var entry = SerializeValue(kvp.Key, kvp.Value);
                     if (entry != null) state.ContextValues.Add(entry);

@@ -3,7 +3,7 @@ namespace Faolline.GraphCore
     /// <summary>
     /// Implemented by <c>ScriptableObject</c> types whose identity is a GUID assigned once (typically in
     /// <c>OnEnable</c>, only when empty) and never editable afterwards — <see cref="BaseGraph"/>,
-    /// <see cref="CollectionEntry"/>, <see cref="CollectionName"/>. Duplicating such an asset (Ctrl+D, or a
+    /// <see cref="CollectionEntry"/>, <see cref="CollectionDef"/>. Duplicating such an asset (Ctrl+D, or a
     /// file copy outside the editor) copies the serialized id field, so two assets can silently share an
     /// identity that other systems (cycle detection, context collection keys, save data) assume is unique.
     /// <para>

@@ -14,9 +14,9 @@ namespace Faolline.GraphDialogue.Tests
         public void SetBool_Writes()
         {
             var ctx = new DialogueContext();
-            var k = ParameterName.Bool("k");
+            var k = VariableDef.Bool("k");
             var a = Make<SetBoolAction>();
-            a.Parameter = k; a.Value = true;
+            a.Variable = k; a.Value = true;
             a.Execute(ctx);
             Assert.IsTrue(ctx.Get<bool>(k));
         }
@@ -25,9 +25,9 @@ namespace Faolline.GraphDialogue.Tests
         public void SetInt_Writes()
         {
             var ctx = new DialogueContext();
-            var k = ParameterName.Int("k");
+            var k = VariableDef.Int("k");
             var a = Make<SetIntAction>();
-            a.Parameter = k; a.Value = 42;
+            a.Variable = k; a.Value = 42;
             a.Execute(ctx);
             Assert.AreEqual(42, ctx.Get<int>(k));
         }
@@ -36,9 +36,9 @@ namespace Faolline.GraphDialogue.Tests
         public void SetFloat_Writes()
         {
             var ctx = new DialogueContext();
-            var k = ParameterName.Float("k");
+            var k = VariableDef.Float("k");
             var a = Make<SetFloatAction>();
-            a.Parameter = k; a.Value = 1.25f;
+            a.Variable = k; a.Value = 1.25f;
             a.Execute(ctx);
             Assert.AreEqual(1.25f, ctx.Get<float>(k));
         }
@@ -47,9 +47,9 @@ namespace Faolline.GraphDialogue.Tests
         public void SetString_Writes()
         {
             var ctx = new DialogueContext();
-            var k = ParameterName.String("k");
+            var k = VariableDef.String("k");
             var a = Make<SetStringAction>();
-            a.Parameter = k; a.Value = "v";
+            a.Variable = k; a.Value = "v";
             a.Execute(ctx);
             Assert.AreEqual("v", ctx.Get<string>(k));
         }

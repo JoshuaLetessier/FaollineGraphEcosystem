@@ -165,7 +165,7 @@ namespace Faolline.GraphCore.Tests
         private BaseGraph TargetAwaiting(string awaitDisplay, bool selfRaise = false)
         {
             var g = Track(ScriptableObject.CreateInstance<BaseGraph>());
-            var awaitSig = Track(SignalName.Create(awaitDisplay));
+            var awaitSig = Track(SignalDef.Create(awaitDisplay));
             var node = new StatementNodeData { Id = "await", NodeType = StatementNodeData.NodeTypeId };
             node.AwaitSignals.Add(awaitSig);
             if (selfRaise)
@@ -281,10 +281,10 @@ namespace Faolline.GraphCore.Tests
         private static StatementNodeData Stmt(string id)
             => new StatementNodeData { Id = id, NodeType = StatementNodeData.NodeTypeId };
 
-        private SignalName Sig(string display) => Track(SignalName.Create(display));
+        private SignalDef Sig(string display) => Track(SignalDef.Create(display));
 
         // The only way a graph node raises a signal is via an asset (RaiseSignalAction) → the GUID.
-        private RaiseSignalAction Raise(SignalName sig)
+        private RaiseSignalAction Raise(SignalDef sig)
         {
             var raise = Track(ScriptableObject.CreateInstance<RaiseSignalAction>()); raise.Signal = sig;
             return raise;

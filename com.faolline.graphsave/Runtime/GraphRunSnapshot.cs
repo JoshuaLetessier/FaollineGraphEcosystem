@@ -24,7 +24,7 @@ namespace Faolline.GraphSave
         public string CurrentNodeId;
 
         /// <summary>The context's typed parameters, flattened for serialization.</summary>
-        public List<Param> Parameters = new List<Param>();
+        public List<Param> Variables = new List<Param>();
 
         /// <summary>The context's named string collections, with their item quantities.</summary>
         public List<Collection> Collections = new List<Collection>();
@@ -67,8 +67,8 @@ namespace Faolline.GraphSave
             var snapshot = new GraphRunSnapshot { GraphId = graphId, CurrentNodeId = currentNodeId };
             if (context != null)
             {
-                foreach (var kv in context.GetAllParameters())
-                    snapshot.Parameters.Add(ToParam(kv.Key, kv.Value));
+                foreach (var kv in context.GetAllVariables())
+                    snapshot.Variables.Add(ToParam(kv.Key, kv.Value));
 
                 // GetAllCollections() gives the key set for free; the actual (item, quantity) pairs come
                 // from GetCollectionWithCounts (graphcore 0.32.0) so a stacked item's quantity round-trips.
@@ -97,7 +97,7 @@ namespace Faolline.GraphSave
             => Capture(context, runner?.CurrentGraph?.GraphId, runner?.CurrentNode?.Id);
 
         /// <summary>
-        /// Writes this snapshot's parameters and collections back into <paramref name="context"/>. Parameters
+        /// Writes this snapshot's parameters and collections back into <paramref name="context"/>. Variables
         /// overwrite (a <c>Set</c>); collections, by default, are MERGED (items are added) — so applying onto an
         /// already-populated context can double entries. Pass <paramref name="replaceCollections"/> = <c>true</c>
         /// to clear each captured collection key first, making the snapshot authoritative (what <see cref="Restore"/>
@@ -115,7 +115,7 @@ namespace Faolline.GraphSave
         {
             if (context == null) return;
 
-            foreach (var p in Parameters) ApplyParam(context, p);
+            foreach (var p in Variables) ApplyParam(context, p);
 
             foreach (var c in Collections)
             {

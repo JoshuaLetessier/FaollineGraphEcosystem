@@ -13,7 +13,7 @@ namespace Faolline.GraphCore.Tests
     /// Duplicating an <see cref="IStableGuidIdentity"/> asset (Ctrl+D, or a file copy) copies its serialized
     /// stable-id field — the detector must find the shared id and regenerate the duplicate's, keeping the
     /// original's intact, scoped separately per concrete type (<see cref="BaseGraph"/>,
-    /// <see cref="CollectionEntry"/>, <see cref="CollectionName"/>).
+    /// <see cref="CollectionEntry"/>, <see cref="CollectionDef"/>).
     /// </summary>
     public class StableIdDuplicateDetectorTests
     {
@@ -101,17 +101,17 @@ namespace Faolline.GraphCore.Tests
             Assert.IsTrue(a.Key == originalId || b.Key == originalId);
         }
 
-        // ── CollectionName ────────────────────────────────────────────────
+        // ── CollectionDef ────────────────────────────────────────────────
 
         [Test]
         public void CollectionName_ScanAndFix_RegeneratesOneDuplicate_KeepsTheOther()
         {
-            var a = CreateAt<CollectionName>("ColA");
-            var b = CreateAt<CollectionName>("ColB");
+            var a = CreateAt<CollectionDef>("ColA");
+            var b = CreateAt<CollectionDef>("ColB");
             ForceSameId(a, b, "_id");
             var originalId = a.Key;
 
-            LogAssert.Expect(LogType.Warning, new Regex("Duplicate CollectionName id"));
+            LogAssert.Expect(LogType.Warning, new Regex("Duplicate CollectionDef id"));
             int fixedCount = StableIdDuplicateDetector.ScanAndFix(null);
 
             Assert.AreEqual(1, fixedCount);
@@ -119,17 +119,17 @@ namespace Faolline.GraphCore.Tests
             Assert.IsTrue(a.Key == originalId || b.Key == originalId);
         }
 
-        // ── SignalName ────────────────────────────────────────────────────
+        // ── SignalDef ────────────────────────────────────────────────────
 
         [Test]
         public void SignalName_ScanAndFix_RegeneratesOneDuplicate_KeepsTheOther()
         {
-            var a = CreateAt<SignalName>("SigA");
-            var b = CreateAt<SignalName>("SigB");
+            var a = CreateAt<SignalDef>("SigA");
+            var b = CreateAt<SignalDef>("SigB");
             ForceSameId(a, b, "_id");
             var originalId = a.Key;
 
-            LogAssert.Expect(LogType.Warning, new Regex("Duplicate SignalName id"));
+            LogAssert.Expect(LogType.Warning, new Regex("Duplicate SignalDef id"));
             int fixedCount = StableIdDuplicateDetector.ScanAndFix(null);
 
             Assert.AreEqual(1, fixedCount);

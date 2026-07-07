@@ -6,7 +6,7 @@ namespace Faolline.GraphCore.Editor
 {
     /// <summary>
     /// Shared pure core for the identity-constants generators (<c>GraphSignals</c> from
-    /// <see cref="SignalConstantsGenerator"/>, <c>GraphParams</c> from <see cref="ParameterConstantsGenerator"/>).
+    /// <see cref="SignalConstantsGenerator"/>, <c>GraphVariables</c> from <see cref="VariableConstantsGenerator"/>).
     /// Turns a set of (display name → stable GUID) pairs into a <c>const string</c> class: the SYMBOL is the
     /// PascalCase-sanitized display name (rename-safe: renaming breaks stale code at compile), the VALUE is the
     /// GUID (the runtime key; never changes on rename). Symbol collisions are a blocking error, never a silent

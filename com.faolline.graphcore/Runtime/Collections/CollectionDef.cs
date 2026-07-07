@@ -23,7 +23,7 @@ namespace Faolline.GraphCore
     /// </para>
     /// </summary>
     [CreateAssetMenu(menuName = "Faolline/Collection Name", fileName = "NewCollection")]
-    public class CollectionName : ScriptableObject, IStableGuidIdentity
+    public class CollectionDef : ScriptableObject, IStableGuidIdentity
     {
         // FormerlySerializedAs recovers an asset authored before this fix that had an EXPLICIT non-empty
         // _key: that string becomes the stable id as-is (no longer editable going forward). An asset that
@@ -76,7 +76,7 @@ namespace Faolline.GraphCore
         public bool IsValidEntry(string value)
             => !HasEntries || _entries.Contains(value);
 
-        public static implicit operator string(CollectionName collection)
+        public static implicit operator string(CollectionDef collection)
             => collection != null ? collection.Key : string.Empty;
     }
 }

@@ -10,11 +10,11 @@ namespace Faolline.GraphDialogue.Tests
     public class DialoguePlayerHistoryTests
     {
         // Start â†’ L1(enter Counter=1, checkpoint) â†’ L2(enter Counter=2) â†’ End
-        private static DialogueGraph Build(out SetIntAction a1, out SetIntAction a2, out ParameterName counter)
+        private static DialogueGraph Build(out SetIntAction a1, out SetIntAction a2, out VariableDef counter)
         {
-            counter = ParameterName.Int("counter");
-            a1 = ScriptableObject.CreateInstance<SetIntAction>(); a1.Parameter = counter; a1.Value = 1;
-            a2 = ScriptableObject.CreateInstance<SetIntAction>(); a2.Parameter = counter; a2.Value = 2;
+            counter = VariableDef.Int("counter");
+            a1 = ScriptableObject.CreateInstance<SetIntAction>(); a1.Variable = counter; a1.Value = 1;
+            a2 = ScriptableObject.CreateInstance<SetIntAction>(); a2.Variable = counter; a2.Value = 2;
 
             var g = ScriptableObject.CreateInstance<DialogueGraph>();
             var s = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };

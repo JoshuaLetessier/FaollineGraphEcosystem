@@ -17,7 +17,7 @@ namespace Faolline.GraphDialogue
             if (string.IsNullOrEmpty(text) || context == null || text.IndexOf('{') < 0)
                 return text;
 
-            var values = context.GetAllParameters();
+            var values = context.GetAllVariables();
             var sb = new StringBuilder(text.Length);
 
             for (int i = 0; i < text.Length; i++)

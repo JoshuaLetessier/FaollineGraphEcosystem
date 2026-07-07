@@ -97,11 +97,11 @@ namespace Faolline.GraphDialogue.Tests
         public void SaveAndRestore_ResumesFromSameNode_WithRestoredContext()
         {
             // Build: Start → L1(checkpoint, set counter=1) → L2(set counter=2) → End
-            var counter = ParameterName.Int("counter");
+            var counter = VariableDef.Int("counter");
             var a1 = ScriptableObject.CreateInstance<SetIntAction>();
-            a1.Parameter = counter; a1.Value = 1;
+            a1.Variable = counter; a1.Value = 1;
             var a2 = ScriptableObject.CreateInstance<SetIntAction>();
-            a2.Parameter = counter; a2.Value = 2;
+            a2.Variable = counter; a2.Value = 2;
 
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
             try

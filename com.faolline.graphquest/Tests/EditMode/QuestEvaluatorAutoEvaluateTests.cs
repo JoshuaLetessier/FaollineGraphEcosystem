@@ -10,7 +10,7 @@ namespace Faolline.GraphQuest.Tests
     public class QuestEvaluatorAutoEvaluateTests
     {
         // Governed parameters key on a GUID (islands): a condition and the ctx.Set that satisfies it must use the
-        // SAME ParameterName instance. Tracked and destroyed per-test.
+        // SAME VariableDef instance. Tracked and destroyed per-test.
         private readonly List<Object> _created = new List<Object>();
         private T Track<T>(T o) where T : Object { if (o != null) _created.Add(o); return o; }
 
@@ -21,10 +21,10 @@ namespace Faolline.GraphQuest.Tests
             _created.Clear();
         }
 
-        private QuestGraph QuestCompletingOn(ParameterName flag)
+        private QuestGraph QuestCompletingOn(VariableDef flag)
         {
             var completeCond = ScriptableObject.CreateInstance<BoolCondition>();
-            completeCond.Parameter = flag;
+            completeCond.Variable = flag;
             completeCond.ExpectedValue = true;
 
             return QuestBuilder.Create("auto_test")
@@ -38,7 +38,7 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void EnableAutoEvaluate_FiresOnParameterChange()
         {
-            var taskDone = Track(ParameterName.Bool("task_done"));
+            var taskDone = Track(VariableDef.Bool("task_done"));
             var quest = QuestCompletingOn(taskDone);
             var ctx = new BaseContext();
             try
@@ -59,9 +59,9 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void EnableAutoEvaluate_FiresOnCollectionChange()
         {
-            // CollectionName/CollectionEntry.Key is a stable GUID (not a name-fallback string), so read
+            // CollectionDef/CollectionEntry.Key is a stable GUID (not a name-fallback string), so read
             // .Key back below instead of the (purely cosmetic) asset names.
-            var itemsCol = ScriptableObject.CreateInstance<CollectionName>(); itemsCol.name = "items";
+            var itemsCol = ScriptableObject.CreateInstance<CollectionDef>(); itemsCol.name = "items";
             var keyEntry = ScriptableObject.CreateInstance<CollectionEntry>(); keyEntry.name = "key";
             var containsCond = ScriptableObject.CreateInstance<Faolline.GraphStandard.CollectionContainsCondition>();
             containsCond.Collection = itemsCol;
@@ -90,7 +90,7 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void DisableAutoEvaluate_StopsAutoEvaluation()
         {
-            var taskDone = Track(ParameterName.Bool("task_done"));
+            var taskDone = Track(VariableDef.Bool("task_done"));
             var quest = QuestCompletingOn(taskDone);
             var ctx = new BaseContext();
             try
@@ -113,7 +113,7 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void EnableAutoEvaluate_Twice_IsIdempotent()
         {
-            var taskDone = Track(ParameterName.Bool("task_done"));
+            var taskDone = Track(VariableDef.Bool("task_done"));
             var quest = QuestCompletingOn(taskDone);
             var ctx = new BaseContext();
             try
@@ -135,7 +135,7 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void EnableAutoEvaluate_FiresOnSignalRaised()
         {
-            var signal = SignalName.Create("boss_defeated");   // asset signal keys on its GUID (islands)
+            var signal = SignalDef.Create("boss_defeated");   // asset signal keys on its GUID (islands)
             var completeCond = ScriptableObject.CreateInstance<SignalRaisedCondition>();
             completeCond.Signal = signal;
 
@@ -164,7 +164,7 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void DisableAutoEvaluate_StopsSignalAutoEvaluation()
         {
-            var signal = SignalName.Create("ping");   // asset signal keys on its GUID (islands)
+            var signal = SignalDef.Create("ping");   // asset signal keys on its GUID (islands)
             var completeCond = ScriptableObject.CreateInstance<SignalRaisedCondition>();
             completeCond.Signal = signal;
 
@@ -192,9 +192,9 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void AutoEvaluate_DoesNotTickTimers()
         {
-            var timedDone = Track(ParameterName.Bool("timed_done"));
+            var timedDone = Track(VariableDef.Bool("timed_done"));
             var completeCond = ScriptableObject.CreateInstance<BoolCondition>();
-            completeCond.Parameter = timedDone;
+            completeCond.Variable = timedDone;
             completeCond.ExpectedValue = true;
 
             var quest = QuestBuilder.Create("timer_test")
@@ -221,14 +221,14 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void AutoEvaluate_ReEntrancyGuard_CoalescesIntoSingleReEvaluate()
         {
-            var done = Track(ParameterName.Bool("done"));
-            var rewarded = Track(ParameterName.Bool("rewarded"));
+            var done = Track(VariableDef.Bool("done"));
+            var rewarded = Track(VariableDef.Bool("rewarded"));
             var completeCond = ScriptableObject.CreateInstance<BoolCondition>();
-            completeCond.Parameter = done;
+            completeCond.Variable = done;
             completeCond.ExpectedValue = true;
 
             var rewardAction = ScriptableObject.CreateInstance<SetBoolAction>();
-            rewardAction.Parameter = rewarded;
+            rewardAction.Variable = rewarded;
             rewardAction.Value = true;
 
             var quest = QuestBuilder.Create("reentry_test")

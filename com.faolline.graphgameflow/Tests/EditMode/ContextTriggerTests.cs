@@ -60,9 +60,9 @@ namespace Faolline.GraphGameFlow.Tests
         public void Fire_ExecutesActionsOnContext()
         {
             var driver = CreateActiveDriver();
-            var testFlag = ParameterName.Bool("test_flag"); _so.Add(testFlag);
+            var testFlag = VariableDef.Bool("test_flag"); _so.Add(testFlag);
             var action = ScriptableObject.CreateInstance<SetBoolAction>();
-            action.Parameter = testFlag; action.Value = true;
+            action.Variable = testFlag; action.Value = true;
             _so.Add(action);
 
             var triggerGo = new GameObject("Trigger");
@@ -97,9 +97,9 @@ namespace Faolline.GraphGameFlow.Tests
         public void FireOnce_PreventsDoubleFire()
         {
             var driver = CreateActiveDriver();
-            var counter = ParameterName.Int("counter"); _so.Add(counter);
+            var counter = VariableDef.Int("counter"); _so.Add(counter);
             var action = ScriptableObject.CreateInstance<AddIntAction>();
-            action.Parameter = counter; action.Value = 1;
+            action.Variable = counter; action.Value = 1;
             _so.Add(action);
 
             var triggerGo = new GameObject("Trigger");
@@ -121,9 +121,9 @@ namespace Faolline.GraphGameFlow.Tests
         public void ResetTrigger_AllowsRefire()
         {
             var driver = CreateActiveDriver();
-            var counter = ParameterName.Int("counter"); _so.Add(counter);
+            var counter = VariableDef.Int("counter"); _so.Add(counter);
             var action = ScriptableObject.CreateInstance<AddIntAction>();
-            action.Parameter = counter; action.Value = 1;
+            action.Variable = counter; action.Value = 1;
             _so.Add(action);
 
             var triggerGo = new GameObject("Trigger");
@@ -184,14 +184,14 @@ namespace Faolline.GraphGameFlow.Tests
         public void Guard_BlocksFireWhenFalse()
         {
             var driver = CreateActiveDriver();
-            var guardedFlag = ParameterName.Bool("guarded_flag"); _so.Add(guardedFlag);
-            var hasKey = ParameterName.Bool("has_key"); _so.Add(hasKey);
+            var guardedFlag = VariableDef.Bool("guarded_flag"); _so.Add(guardedFlag);
+            var hasKey = VariableDef.Bool("has_key"); _so.Add(hasKey);
             var action = ScriptableObject.CreateInstance<SetBoolAction>();
-            action.Parameter = guardedFlag; action.Value = true;
+            action.Variable = guardedFlag; action.Value = true;
             _so.Add(action);
 
             var guard = ScriptableObject.CreateInstance<BoolCondition>();
-            guard.Parameter = hasKey; guard.ExpectedValue = true;
+            guard.Variable = hasKey; guard.ExpectedValue = true;
             _so.Add(guard);
 
             var triggerGo = new GameObject("Trigger");
@@ -215,14 +215,14 @@ namespace Faolline.GraphGameFlow.Tests
         public void Guard_DoesNotConsumeFireOnce_WhenBlocked()
         {
             var driver = CreateActiveDriver();
-            var count = ParameterName.Int("count"); _so.Add(count);
-            var ready = ParameterName.Bool("ready"); _so.Add(ready);
+            var count = VariableDef.Int("count"); _so.Add(count);
+            var ready = VariableDef.Bool("ready"); _so.Add(ready);
             var action = ScriptableObject.CreateInstance<AddIntAction>();
-            action.Parameter = count; action.Value = 1;
+            action.Variable = count; action.Value = 1;
             _so.Add(action);
 
             var guard = ScriptableObject.CreateInstance<BoolCondition>();
-            guard.Parameter = ready; guard.ExpectedValue = true;
+            guard.Variable = ready; guard.ExpectedValue = true;
             _so.Add(guard);
 
             var triggerGo = new GameObject("Trigger");
@@ -250,9 +250,9 @@ namespace Faolline.GraphGameFlow.Tests
             field.SetValue(trigger, new List<BaseAction>(actions));
         }
 
-        private static SignalName SetSignal(ContextTrigger trigger, string signal)
+        private static SignalDef SetSignal(ContextTrigger trigger, string signal)
         {
-            var sig = SignalName.Create(signal);   // asset signal keys on its GUID (islands)
+            var sig = SignalDef.Create(signal);   // asset signal keys on its GUID (islands)
             var field = typeof(ContextTrigger).GetField("_signal",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             field.SetValue(trigger, sig);

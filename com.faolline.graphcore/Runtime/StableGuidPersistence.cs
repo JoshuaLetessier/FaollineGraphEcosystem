@@ -19,7 +19,7 @@ namespace Faolline.GraphCore
     /// <para>
     /// <see cref="ScheduleSave"/> is called from <c>OnEnable</c> right after a fresh assignment. It defers to
     /// <see cref="EditorApplication.delayCall"/> (writing during <c>OnEnable</c>/import is unsafe), and only
-    /// persists real on-disk assets — runtime instances (tests, <c>SignalName.Create</c>) are skipped, and the
+    /// persists real on-disk assets — runtime instances (tests, <c>SignalDef.Create</c>) are skipped, and the
     /// whole file compiles out of player builds.
     /// </para>
     /// </summary>

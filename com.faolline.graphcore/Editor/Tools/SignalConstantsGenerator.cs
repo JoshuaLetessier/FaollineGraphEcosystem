@@ -9,10 +9,10 @@ namespace Faolline.GraphCore.Editor
 {
     /// <summary>
     /// Generates a <c>GraphSignals</c> static class of <c>const string</c>s from the project's
-    /// <see cref="SignalName"/> assets — the compile-checked bridge for raising asset signals from pure host
-    /// code. Each constant's SYMBOL is derived from the signal's <see cref="SignalName.DisplayName"/> (legible
+    /// <see cref="SignalDef"/> assets — the compile-checked bridge for raising asset signals from pure host
+    /// code. Each constant's SYMBOL is derived from the signal's <see cref="SignalDef.DisplayName"/> (legible
     /// in code, e.g. <c>GraphSignals.PlayerInteracted</c>) and its VALUE is the signal's stable GUID
-    /// (<see cref="SignalName.Key"/>, the runtime key). Renaming a signal's display name changes only the
+    /// (<see cref="SignalDef.Key"/>, the runtime key). Renaming a signal's display name changes only the
     /// symbol (breaking stale code at compile — the intended, safe rename), never the value/GUID (awaits,
     /// raises, and saves keep matching). Menu: <c>Faolline ▸ Signals ▸ Generate Constants</c>.
     /// <para>
@@ -32,17 +32,17 @@ namespace Faolline.GraphCore.Editor
         private static void GenerateMenu()
         {
             var signals = new List<(string displayName, string guid)>();
-            foreach (var guid in AssetDatabase.FindAssets($"t:{nameof(SignalName)}"))
+            foreach (var guid in AssetDatabase.FindAssets($"t:{nameof(SignalDef)}"))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
-                var sig = AssetDatabase.LoadAssetAtPath<SignalName>(path);
+                var sig = AssetDatabase.LoadAssetAtPath<SignalDef>(path);
                 if (sig != null && !string.IsNullOrEmpty(sig.Key))
                     signals.Add((sig.DisplayName, sig.Key));
             }
 
             if (signals.Count == 0)
             {
-                Debug.Log("[GraphCore] No SignalName assets found — nothing to generate.");
+                Debug.Log("[GraphCore] No SignalDef assets found — nothing to generate.");
                 return;
             }
 
@@ -65,7 +65,7 @@ namespace Faolline.GraphCore.Editor
         /// Returns <c>false</c> without producing source when two display names sanitize to the same symbol
         /// (a blocking collision — never a silent merge or auto-suffix); <paramref name="errors"/> then lists
         /// each collision. Otherwise <paramref name="source"/> is the file text. Delegates to the shared
-        /// <see cref="ConstantsGeneratorCore"/> (see also <see cref="ParameterConstantsGenerator"/>).
+        /// <see cref="ConstantsGeneratorCore"/> (see also <see cref="VariableConstantsGenerator"/>).
         /// </summary>
         public static bool TryBuildSource(
             IReadOnlyList<(string displayName, string guid)> signals, out string source, out List<string> errors)

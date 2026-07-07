@@ -12,7 +12,7 @@ namespace Faolline.GraphCore.Tests
 
         // ── RaiseSignalAction ─────────────────────────────────────────────────
 
-        private static SignalName Sig(string n) => SignalName.Create(n);
+        private static SignalDef Sig(string n) => SignalDef.Create(n);
 
         [Test]
         public void RaiseSignalAction_RaisesNamedSignal()
@@ -44,10 +44,10 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void ToggleBool_FlipsValue()
         {
-            var flag = ParameterName.Bool("flag");
+            var flag = VariableDef.Bool("flag");
             _ctx.Set<bool>(flag, false);
             var a = ScriptableObject.CreateInstance<ToggleBoolAction>();
-            a.Parameter = flag;
+            a.Variable = flag;
             try
             {
                 a.Execute(_ctx);
@@ -61,9 +61,9 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void ToggleBool_AbsentKey_SetsTrue()
         {
-            var flag = ParameterName.Bool("new_flag");
+            var flag = VariableDef.Bool("new_flag");
             var a = ScriptableObject.CreateInstance<ToggleBoolAction>();
-            a.Parameter = flag;
+            a.Variable = flag;
             try
             {
                 a.Execute(_ctx);
@@ -77,9 +77,9 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void SetRandomInt_ValueInRange()
         {
-            var roll = ParameterName.Int("roll");
+            var roll = VariableDef.Int("roll");
             var a = ScriptableObject.CreateInstance<SetRandomIntAction>();
-            a.Parameter = roll;
+            a.Variable = roll;
             a.Min = 1;
             a.Max = 6;
             try

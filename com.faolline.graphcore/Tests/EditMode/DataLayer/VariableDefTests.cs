@@ -3,42 +3,42 @@ using UnityEngine;
 
 namespace Faolline.GraphCore.Tests
 {
-    public class ParameterNameTests
+    public class VariableDefTests
     {
-        // ── ParameterType enum ────────────────────────────────────────────────
+        // ── VariableType enum ────────────────────────────────────────────────
 
         [Test]
         public void ParameterType_HasExactlySevenValues()
         {
             // The four primitives plus the three serialization-friendly Unity value types.
             // Object/GameObject references are intentionally excluded (they need a stable-id scheme).
-            Assert.AreEqual(7, System.Enum.GetValues(typeof(ParameterType)).Length,
-                "ParameterType must have exactly 7 values (bool/int/float/string + Vector2/Vector3/Color).");
+            Assert.AreEqual(7, System.Enum.GetValues(typeof(VariableType)).Length,
+                "VariableType must have exactly 7 values (bool/int/float/string + Vector2/Vector3/Color).");
         }
 
         [Test]
         public void ParameterType_HasCorrectIntegerValues()
         {
-            Assert.AreEqual(0, (int)ParameterType.Bool);
-            Assert.AreEqual(1, (int)ParameterType.Int);
-            Assert.AreEqual(2, (int)ParameterType.Float);
-            Assert.AreEqual(3, (int)ParameterType.String);
-            Assert.AreEqual(4, (int)ParameterType.Vector2);
-            Assert.AreEqual(5, (int)ParameterType.Vector3);
-            Assert.AreEqual(6, (int)ParameterType.Color);
+            Assert.AreEqual(0, (int)VariableType.Bool);
+            Assert.AreEqual(1, (int)VariableType.Int);
+            Assert.AreEqual(2, (int)VariableType.Float);
+            Assert.AreEqual(3, (int)VariableType.String);
+            Assert.AreEqual(4, (int)VariableType.Vector2);
+            Assert.AreEqual(5, (int)VariableType.Vector3);
+            Assert.AreEqual(6, (int)VariableType.Color);
         }
 
-        // ── ParameterName identity ────────────────────────────────────────────
+        // ── VariableDef identity ────────────────────────────────────────────
 
         [Test]
         public void Factory_AssignsGuidKey_TypeAndDefault()
         {
-            var p = ParameterName.Int("Hp", 100);
+            var p = VariableDef.Int("Hp", 100);
             try
             {
                 Assert.IsFalse(string.IsNullOrEmpty(p.Key), "Key (GUID) is assigned in OnEnable.");
                 Assert.AreEqual("Hp", p.DisplayName);
-                Assert.AreEqual(ParameterType.Int, p.Type);
+                Assert.AreEqual(VariableType.Int, p.Type);
                 Assert.AreEqual(100, p.DefaultValueBoxed);
                 Assert.AreEqual(p.Key, (string)p, "implicit string conversion yields the GUID key.");
             }
@@ -48,8 +48,8 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void TwoFactoryCalls_SameDisplayName_HaveDistinctGuids()
         {
-            var a = ParameterName.Bool("flag");
-            var b = ParameterName.Bool("flag");
+            var a = VariableDef.Bool("flag");
+            var b = VariableDef.Bool("flag");
             try
             {
                 Assert.AreNotEqual(a.Key, b.Key, "identity is the GUID, not the display name.");
@@ -60,7 +60,7 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void DisplayName_FallsBackToAssetName_WhenNoLabel()
         {
-            var p = ScriptableObject.CreateInstance<ParameterName>();
+            var p = ScriptableObject.CreateInstance<VariableDef>();
             p.name = "AssetFileName";
             try { Assert.AreEqual("AssetFileName", p.DisplayName); }
             finally { Object.DestroyImmediate(p); }
@@ -69,7 +69,7 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void ImplementsStableGuidIdentity()
         {
-            var p = ParameterName.Float("speed", 1.5f);
+            var p = VariableDef.Float("speed", 1.5f);
             try
             {
                 var id = (IStableGuidIdentity)p;
@@ -82,9 +82,9 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void DefaultValueBoxed_MatchesType()
         {
-            var s = ParameterName.String("name", "Hero");
-            var v = ParameterName.Vector2("pos", new Vector2(1, 2));
-            var c = ParameterName.Color("tint", Color.red);
+            var s = VariableDef.String("name", "Hero");
+            var v = VariableDef.Vector2("pos", new Vector2(1, 2));
+            var c = VariableDef.Color("tint", Color.red);
             try
             {
                 Assert.AreEqual("Hero", s.DefaultValueBoxed);
@@ -97,7 +97,7 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void NullParameterName_ImplicitString_IsEmpty()
         {
-            ParameterName p = null;
+            VariableDef p = null;
             Assert.AreEqual(string.Empty, (string)p);
         }
     }

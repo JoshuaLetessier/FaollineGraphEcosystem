@@ -12,9 +12,9 @@ namespace Faolline.GraphCore
     [Icon("Packages/com.faolline.graphcore/Editor/Icons/ico_action.png")]
     public class ForgetSignalAction : BaseAction
     {
-        [SerializeField] private SignalName _signal;
+        [SerializeField] private SignalDef _signal;
 
-        public SignalName Signal { get => _signal; set => _signal = value; }
+        public SignalDef Signal { get => _signal; set => _signal = value; }
 
         public override void Execute(BaseContext context)
         {

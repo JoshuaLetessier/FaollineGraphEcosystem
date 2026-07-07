@@ -4,6 +4,30 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.35.0]
+
+### Changed / Breaking — vocabulary rename (no behaviour change)
+
+The three context-primitive identity assets lose the misleading `Name` suffix (their identity is a GUID, not a
+name), and "parameter" becomes **"variable"** everywhere (it's a mutable runtime value that varies, not a
+passed-in setting). Pure rename — zero logic change; the full EditMode suite passes unchanged.
+
+- **Asset types:** `SignalName` → **`SignalDef`**, `CollectionName` → **`CollectionDef`**, `ParameterName` →
+  **`VariableDef`** (`CollectionEntry` unchanged). Renamed via `git mv` keeping each file's `.meta` GUID, so
+  **existing assets keep their script link** — no `[MovedFrom]` needed.
+- **Parameter → Variable** across the board: `ParameterType` → `VariableType`, `GraphParams` →
+  `GraphVariables` (generated class + menu `Faolline ▸ Variables ▸ Generate Constants`),
+  `IParameterReferencing` → `IVariableReferencing`, `ParameterReference` → `VariableReference`,
+  `GraphParameterScanner` → `GraphVariableScanner`, `ParameterConstantsGenerator` → `VariableConstantsGenerator`.
+  Action/condition field `Parameter` → `Variable`; `ReferencedParameters` → `ReferencedVariables`.
+- **`BaseContext` value-store API:** `GetAllParameters` → `GetAllVariables`, `OnParameterChanged` →
+  `OnVariableChanged`, `OnAnyParameterChanged` → `OnAnyVariableChanged`, `OffParameterChanged` →
+  `OffVariableChanged`. The generic `Set/Get/TryGet<T>` are unchanged (they never said "parameter").
+- The raw-string escape hatch (`context.Set<int>("hp", …)`) and the graphTest `Test*` doubles' raw `ParameterKey`
+  API are deliberately **untouched** — they are the islands escape hatch, not the governed vocabulary.
+
+Downstream packages bump their graphcore floor to `0.35.0`.
+
 ## [0.34.0]
 
 Parameter identity re-base (spec `033-parameter-identity-rebase`). Applies the proven `032` signal model to the

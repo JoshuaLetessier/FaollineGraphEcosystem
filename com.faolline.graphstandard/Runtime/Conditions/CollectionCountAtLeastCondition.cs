@@ -11,11 +11,11 @@ namespace Faolline.GraphStandard
     public class CollectionCountAtLeastCondition : BaseCondition
     {
         [SerializeField, Tooltip("The collection whose cardinality is checked.")]
-        private CollectionName _collection;
+        private CollectionDef _collection;
         [SerializeField, Tooltip("Minimum element count that satisfies this condition. 0 = always satisfied.")]
         private int _threshold;
 
-        public CollectionName Collection { get => _collection; set => _collection = value; }
+        public CollectionDef Collection { get => _collection; set => _collection = value; }
         public int Threshold { get => _threshold; set => _threshold = value; }
 
         public override bool Evaluate(BaseContext context)

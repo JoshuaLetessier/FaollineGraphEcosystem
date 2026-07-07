@@ -13,11 +13,11 @@ namespace Faolline.GraphCore
     {
         // FormerlySerializedAs recovers assets authored before the 0.22 asset-only refactor, which renamed
         // _signalAsset → _signal (the raw-string _signalRaw fallback was intentionally dropped and cannot be
-        // migrated to a SignalName asset).
-        [SerializeField, FormerlySerializedAs("_signalAsset"), Tooltip("The signal to raise. Drag a SignalName asset.")]
-        private SignalName _signal;
+        // migrated to a SignalDef asset).
+        [SerializeField, FormerlySerializedAs("_signalAsset"), Tooltip("The signal to raise. Drag a SignalDef asset.")]
+        private SignalDef _signal;
 
-        public SignalName Signal { get => _signal; set => _signal = value; }
+        public SignalDef Signal { get => _signal; set => _signal = value; }
 
         public override void Execute(BaseContext context)
         {

@@ -11,7 +11,7 @@ namespace Faolline.StarterGraph.Tests
     public class StarterWindowExecutionTests
     {
         private StarterGraphEditorWindow _window;
-        private ParameterName _flag;
+        private VariableDef _flag;
 
         [SetUp]    public void SetUp()    => _window = ScriptableObject.CreateInstance<StarterGraphEditorWindow>();
         [TearDown] public void TearDown()
@@ -21,13 +21,13 @@ namespace Faolline.StarterGraph.Tests
         }
 
         // Start → Setup → Choice(Left gated by the Flag bool param, Right always) → A/B → End.
-        // The gating value comes from the Flag ParameterName's default (true), seeded via InitFromGraph because
+        // The gating value comes from the Flag VariableDef's default (true), seeded via InitFromGraph because
         // the choice condition references it — so no context-mutating action is needed.
         private StarterGraph BuildChoiceGraph(out BoolCondition cond)
         {
-            _flag = ParameterName.Bool(StarterContextKeys.Flag, true);
+            _flag = VariableDef.Bool(StarterContextKeys.Flag, true);
             cond = ScriptableObject.CreateInstance<BoolCondition>();
-            cond.Parameter = _flag; cond.ExpectedValue = true;
+            cond.Variable = _flag; cond.ExpectedValue = true;
 
             var g = ScriptableObject.CreateInstance<StarterGraph>();
 

@@ -62,10 +62,10 @@ namespace Faolline.GraphCore.Editor
 
             EditorGUILayout.Space(4);
 
-            // Parameters
-            EditorGUILayout.LabelField("Parameters", EditorStyles.boldLabel);
+            // Variables
+            EditorGUILayout.LabelField("Variables", EditorStyles.boldLabel);
             _scrollParams = EditorGUILayout.BeginScrollView(_scrollParams, GUILayout.MaxHeight(300));
-            var allParams = ctx.GetAllParameters();
+            var allParams = ctx.GetAllVariables();
             if (allParams.Count == 0)
             {
                 EditorGUILayout.LabelField("(none)");

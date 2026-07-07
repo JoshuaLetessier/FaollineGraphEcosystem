@@ -6,14 +6,14 @@ namespace Faolline.GraphCore.Tests
     public class CompositeConditionTests
     {
         private BaseContext _ctx;
-        private ParameterName _a, _b;
+        private VariableDef _a, _b;
 
         [SetUp]
         public void SetUp()
         {
             _ctx = new BaseContext();
-            _a = ParameterName.Bool("a");
-            _b = ParameterName.Bool("b");
+            _a = VariableDef.Bool("a");
+            _b = VariableDef.Bool("b");
             _ctx.Set<bool>(_a, true);
             _ctx.Set<bool>(_b, false);
         }
@@ -25,10 +25,10 @@ namespace Faolline.GraphCore.Tests
             if (_b != null) Object.DestroyImmediate(_b);
         }
 
-        private BoolCondition Bool(ParameterName param, bool expected)
+        private BoolCondition Bool(VariableDef param, bool expected)
         {
             var c = ScriptableObject.CreateInstance<BoolCondition>();
-            c.Parameter = param;
+            c.Variable = param;
             c.ExpectedValue = expected;
             return c;
         }

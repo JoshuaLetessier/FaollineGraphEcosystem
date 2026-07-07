@@ -57,8 +57,8 @@ namespace Faolline.GraphCore.Editor
         }
 
         // ── No-selection content ──────────────────────────────────────────────
-        // Parameters are declaration-free ParameterName assets (project assets dragged onto actions/conditions,
-        // like SignalName), so there is no per-graph parameter panel here anymore. The no-selection panel now
+        // Variables are declaration-free VariableDef assets (project assets dragged onto actions/conditions,
+        // like SignalDef), so there is no per-graph parameter panel here anymore. The no-selection panel now
         // only hosts lib-registered graph sections.
 
         /// <summary>

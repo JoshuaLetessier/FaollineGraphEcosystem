@@ -37,7 +37,7 @@ namespace Faolline.GraphCore.Tests
         {
             var ctx = new BaseContext();
             ctx.Set<int>("x", 1);
-            Assert.AreEqual(1, ctx.GetAllParameters().Count);
+            Assert.AreEqual(1, ctx.GetAllVariables().Count);
             Assert.AreEqual(0, ctx.GetAllCollections().Count);
         }
     }

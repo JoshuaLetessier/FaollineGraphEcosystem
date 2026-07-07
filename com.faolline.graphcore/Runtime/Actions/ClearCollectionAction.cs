@@ -9,9 +9,9 @@ namespace Faolline.GraphCore
     public class ClearCollectionAction : BaseAction
     {
         [SerializeField, Tooltip("The collection to clear.")]
-        private CollectionName _collection;
+        private CollectionDef _collection;
 
-        public CollectionName Collection { get => _collection; set => _collection = value; }
+        public CollectionDef Collection { get => _collection; set => _collection = value; }
 
         public override void Execute(BaseContext context)
         {

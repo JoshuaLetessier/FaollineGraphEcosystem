@@ -7,7 +7,7 @@ namespace Faolline.GraphCore.Tests
     {
         // Asset signals key on their GUID (islands); tests that pair an asset with a raise/check pass the
         // asset itself (implicit → GUID), not a raw literal.
-        private static SignalName Sig(string name) => SignalName.Create(name);
+        private static SignalDef Sig(string name) => SignalDef.Create(name);
 
         // ── HasSignalBeenRaised ────────────────────────────────────────────────
 

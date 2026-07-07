@@ -15,10 +15,10 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void AddIntAction_AddsToExistingValue()
         {
-            var gold = ParameterName.Int("gold");
+            var gold = VariableDef.Int("gold");
             _context.Set<int>(gold, 100);
             var action = ScriptableObject.CreateInstance<AddIntAction>();
-            action.Parameter = gold; action.Value = 50;
+            action.Variable = gold; action.Value = 50;
             try
             {
                 action.Execute(_context);
@@ -31,9 +31,9 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void AddIntAction_DefaultsToZeroWhenAbsent()
         {
-            var xp = ParameterName.Int("xp");
+            var xp = VariableDef.Int("xp");
             var action = ScriptableObject.CreateInstance<AddIntAction>();
-            action.Parameter = xp; action.Value = 25;
+            action.Variable = xp; action.Value = 25;
             try
             {
                 action.Execute(_context);
@@ -46,10 +46,10 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void AddIntAction_NegativeSubtracts()
         {
-            var gold = ParameterName.Int("gold");
+            var gold = VariableDef.Int("gold");
             _context.Set<int>(gold, 100);
             var action = ScriptableObject.CreateInstance<AddIntAction>();
-            action.Parameter = gold; action.Value = -30;
+            action.Variable = gold; action.Value = -30;
             try
             {
                 action.Execute(_context);
@@ -62,10 +62,10 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void AddFloatAction_AddsToExistingValue()
         {
-            var hp = ParameterName.Float("hp");
+            var hp = VariableDef.Float("hp");
             _context.Set<float>(hp, 1f);
             var action = ScriptableObject.CreateInstance<AddFloatAction>();
-            action.Parameter = hp; action.Value = -0.25f;
+            action.Variable = hp; action.Value = -0.25f;
             try
             {
                 action.Execute(_context);
@@ -78,9 +78,9 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void AddFloatAction_DefaultsToZeroWhenAbsent()
         {
-            var progress = ParameterName.Float("progress");
+            var progress = VariableDef.Float("progress");
             var action = ScriptableObject.CreateInstance<AddFloatAction>();
-            action.Parameter = progress; action.Value = 0.1f;
+            action.Variable = progress; action.Value = 0.1f;
             try
             {
                 action.Execute(_context);

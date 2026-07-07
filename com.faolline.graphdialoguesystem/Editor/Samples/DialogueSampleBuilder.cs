@@ -55,16 +55,16 @@ namespace Faolline.GraphDialogue.Editor
             AssetDatabase.CreateAsset(child, $"{Folder}/SampleSubDialogue.asset");
 
             // ── Typed parameter as a stable-GUID sub-asset (the declaration) ─────────────
-            var flag = ParameterName.Bool(DialogueContextKeys.Flag, false); flag.name = "Flag";
+            var flag = VariableDef.Bool(DialogueContextKeys.Flag, false); flag.name = "Flag";
             AssetDatabase.AddObjectToAsset(flag, child);
 
             // ── Inline condition / action as sub-assets on the child (portable) ──────────
             var setVisited = ScriptableObject.CreateInstance<SetBoolAction>();
-            setVisited.Parameter = flag; setVisited.Value = true; setVisited.name = "SetVisited";
+            setVisited.Variable = flag; setVisited.Value = true; setVisited.name = "SetVisited";
             AssetDatabase.AddObjectToAsset(setVisited, child);
 
             var visitedTrue = ScriptableObject.CreateInstance<BoolCondition>();
-            visitedTrue.Parameter = flag; visitedTrue.ExpectedValue = true; visitedTrue.name = "VisitedTrue";
+            visitedTrue.Variable = flag; visitedTrue.ExpectedValue = true; visitedTrue.name = "VisitedTrue";
             AssetDatabase.AddObjectToAsset(visitedTrue, child);
 
             // ── Parent dialogue ──────────────────────────────────────────────────────────

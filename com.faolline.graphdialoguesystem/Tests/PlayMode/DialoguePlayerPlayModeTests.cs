@@ -153,15 +153,15 @@ namespace Faolline.GraphDialogue.Tests.PlayMode
         // ── Helper ────────────────────────────────────────────────────────────────
 
         /// <summary>Builds: Start → L1(checkpoint, counter=1) → L2(counter=2) → End.</summary>
-        private static ParameterName _counter;
+        private static VariableDef _counter;
 
         private static DialogueGraph BuildLinearGraph(out SetIntAction a1, out SetIntAction a2)
         {
-            _counter = ParameterName.Int("counter");
+            _counter = VariableDef.Int("counter");
             a1 = ScriptableObject.CreateInstance<SetIntAction>();
-            a1.Parameter = _counter; a1.Value = 1;
+            a1.Variable = _counter; a1.Value = 1;
             a2 = ScriptableObject.CreateInstance<SetIntAction>();
-            a2.Parameter = _counter; a2.Value = 2;
+            a2.Variable = _counter; a2.Value = 2;
 
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
             var s  = new StartNodeData    { Id = "s",  NodeType = StartNodeData.NodeTypeId };

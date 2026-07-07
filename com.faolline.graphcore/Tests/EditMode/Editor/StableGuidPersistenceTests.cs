@@ -31,11 +31,11 @@ namespace Faolline.GraphCore.Tests
         public void SaveIfPersistentAsset_WritesAnInMemoryOnlyIdToDisk()
         {
             var path = TempFolder + "/Sig.asset";
-            var sig = ScriptableObject.CreateInstance<SignalName>();
+            var sig = ScriptableObject.CreateInstance<SignalDef>();
             AssetDatabase.CreateAsset(sig, path);   // written with its OnEnable GUID
 
             // Assign _id directly (mirrors OnEnable: reaches memory, does NOT dirty the asset).
-            typeof(SignalName).GetField("_id", BindingFlags.NonPublic | BindingFlags.Instance)
+            typeof(SignalDef).GetField("_id", BindingFlags.NonPublic | BindingFlags.Instance)
                 .SetValue(sig, "PERSIST-ME-1234");
 
             var before = File.ReadAllText(Path.GetFullPath(path));
@@ -50,8 +50,8 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void SaveIfPersistentAsset_RuntimeInstance_IsNoOp()
         {
-            // A runtime instance (SignalName.Create, tests) is not a persistent asset — never saved, no throw.
-            var sig = SignalName.Create("runtime");
+            // A runtime instance (SignalDef.Create, tests) is not a persistent asset — never saved, no throw.
+            var sig = SignalDef.Create("runtime");
             Assert.DoesNotThrow(() => StableGuidPersistence.SaveIfPersistentAsset(sig));
             Object.DestroyImmediate(sig);
         }
@@ -59,7 +59,7 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void ScheduleSave_RuntimeInstance_DoesNotThrow()
         {
-            var sig = SignalName.Create("runtime");
+            var sig = SignalDef.Create("runtime");
             Assert.DoesNotThrow(() => StableGuidPersistence.ScheduleSave(sig));
             Object.DestroyImmediate(sig);
         }

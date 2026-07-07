@@ -27,7 +27,7 @@ namespace Faolline.StarterGraph.Editor
 
         public override void BindNode(BaseNodeData node)
         {
-            // node == null shows the no-selection content (Parameters); a real node shows ONLY its sections —
+            // node == null shows the no-selection content (Variables); a real node shows ONLY its sections —
             // so clear without rebuilding the no-selection panel (else they'd stack/overlap).
             if (node == null) { ClearInspector(); return; }
             Clear();

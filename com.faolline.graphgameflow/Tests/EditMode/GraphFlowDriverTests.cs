@@ -338,11 +338,11 @@ namespace Faolline.GraphGameFlow.Tests
         // Builds start → s → end where node 's' references parameter 'p' (default) through a ResumeConditions
         // entry that is scanned by InitFromGraph but inert for linear traversal (never awaited). Lets a test
         // assert whether the graph default was seeded, without the reference altering the flow.
-        private BaseGraph GraphDeclaringParam(ParameterName p)
+        private BaseGraph GraphDeclaringParam(VariableDef p)
         {
             var g = NewGraph("start");
             var s = St("s");
-            var probe = ScriptableObject.CreateInstance<IntCondition>(); probe.Parameter = p; _so.Add(probe);
+            var probe = ScriptableObject.CreateInstance<IntCondition>(); probe.Variable = p; _so.Add(probe);
             s.ResumeConditions.Add(probe);
             g.AddNode(Start("start")); g.AddNode(s); g.AddNode(End("end"));
             g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "s" });
@@ -353,7 +353,7 @@ namespace Faolline.GraphGameFlow.Tests
         [Test]
         public void BootWithContext_DoesNotInitFromGraph()
         {
-            var p = ParameterName.Int("p", 1); _so.Add(p);
+            var p = VariableDef.Int("p", 1); _so.Add(p);
             var g = GraphDeclaringParam(p);
             var d = NewDriver(g, autoAdvance: true);
             var ctx = new GameFlowContext();
@@ -413,11 +413,11 @@ namespace Faolline.GraphGameFlow.Tests
         [Test]
         public void BootNoArgs_StillInitialisesFromGraph()
         {
-            var p = ParameterName.Int("p", 7); _so.Add(p);
+            var p = VariableDef.Int("p", 7); _so.Add(p);
             var g = GraphDeclaringParam(p);
             var d = NewDriver(g, autoAdvance: true);
 
-            d.Boot();   // unchanged: fresh context + InitFromGraph (seeds referenced ParameterName defaults)
+            d.Boot();   // unchanged: fresh context + InitFromGraph (seeds referenced VariableDef defaults)
 
             Assert.IsNotNull(d.Context);
             Assert.AreEqual(7, d.Context.Get<int>(p), "no-arg Boot still initialises from the graph.");
@@ -542,9 +542,9 @@ namespace Faolline.GraphGameFlow.Tests
             sub.AddEdge(new BaseEdgeData { FromNodeId = "sub_start", ToNodeId = "sub_st" });
             sub.AddEdge(new BaseEdgeData { FromNodeId = "sub_st", ToNodeId = "sub_end" });
 
-            var fromSub = ParameterName.Bool("from_sub"); _so.Add(fromSub);
+            var fromSub = VariableDef.Bool("from_sub"); _so.Add(fromSub);
             var setAction = ScriptableObject.CreateInstance<SetBoolAction>();
-            setAction.Parameter = fromSub; setAction.Value = true;
+            setAction.Variable = fromSub; setAction.Value = true;
             _so.Add(setAction);
             subSt.OnEnterActions.Add(setAction);
 

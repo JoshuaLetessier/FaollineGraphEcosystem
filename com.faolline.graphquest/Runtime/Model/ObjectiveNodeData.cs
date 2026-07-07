@@ -42,7 +42,7 @@ namespace Faolline.GraphQuest
 
         [Header("Progress")]
         [SerializeField, Tooltip("Optional collection whose count drives a progress display (e.g. 3/10). Empty = no progress tracking (binary completion only).")]
-        private CollectionName _progressCollection;
+        private CollectionDef _progressCollection;
         [SerializeField, Tooltip("The target count for progress (e.g. 10 for 'kill 10 wolves'). Ignored when Progress Collection Key is empty.")]
         private int _progressTarget;
 
@@ -74,7 +74,7 @@ namespace Faolline.GraphQuest
         public int RequiredPrerequisiteCount { get => _requiredPrerequisiteCount; set => _requiredPrerequisiteCount = value; }
 
         /// <summary>Optional collection whose count drives a progress display (e.g. 3/10). Null = binary completion.</summary>
-        public CollectionName ProgressCollection { get => _progressCollection; set => _progressCollection = value; }
+        public CollectionDef ProgressCollection { get => _progressCollection; set => _progressCollection = value; }
 
         /// <summary>Resolved collection key for progress. Empty when no collection is assigned.</summary>
         public string ProgressCollectionKey => _progressCollection != null ? (string)_progressCollection : string.Empty;

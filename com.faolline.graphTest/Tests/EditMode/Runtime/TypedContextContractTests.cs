@@ -87,16 +87,16 @@ namespace Faolline.GraphTest.Tests
             int fired = 0; object got = null;
             void Handler(object v) { fired++; got = v; }
 
-            ctx.OnParameterChanged("k", Handler);
+            ctx.OnVariableChanged("k", Handler);
             ctx.Set<int>("k", 42);
 
             Assert.AreEqual(1, fired);
             Assert.AreEqual(42, got);
 
-            ctx.OffParameterChanged("k", Handler);
+            ctx.OffVariableChanged("k", Handler);
             ctx.Set<int>("k", 7);
 
-            Assert.AreEqual(1, fired, "After OffParameterChanged the handler must not fire again");
+            Assert.AreEqual(1, fired, "After OffVariableChanged the handler must not fire again");
         }
     }
 }

@@ -51,9 +51,9 @@ namespace Faolline.StarterGraph.Tests
         [Test]
         public void CoreBoolCondition_ReadsTypedContextKey()
         {
-            var flag = ParameterName.Bool(StarterContextKeys.Flag);
+            var flag = VariableDef.Bool(StarterContextKeys.Flag);
             var c = ScriptableObject.CreateInstance<BoolCondition>();
-            c.Parameter = flag; c.ExpectedValue = true;
+            c.Variable = flag; c.ExpectedValue = true;
             var ctx = new StarterContext();
             ctx.Set<bool>(flag, true);
             try

@@ -11,12 +11,12 @@ namespace Faolline.GraphStandard
     public class CollectionContainsCondition : BaseCondition
     {
         [SerializeField, Tooltip("The collection to inspect.")]
-        private CollectionName _collection;
+        private CollectionDef _collection;
 
         [SerializeField, Tooltip("The entry whose membership is tested.")]
         private CollectionEntry _entry;
 
-        public CollectionName Collection { get => _collection; set => _collection = value; }
+        public CollectionDef Collection { get => _collection; set => _collection = value; }
         public CollectionEntry Entry { get => _entry; set => _entry = value; }
 
         public override bool Evaluate(BaseContext context)

@@ -15,7 +15,7 @@ namespace Faolline.GraphCore
         // _collectionAsset → _collection and _valueAsset → _entry (the raw-string _collectionKey / _value
         // fallbacks were intentionally dropped and cannot be migrated to assets).
         [SerializeField, FormerlySerializedAs("_collectionAsset"), Tooltip("The collection to add the value to.")]
-        private CollectionName _collection;
+        private CollectionDef _collection;
 
         [SerializeField, FormerlySerializedAs("_valueAsset"), Tooltip("The entry to add. Drag a CollectionEntry asset (or a subclass like an inventory item).")]
         private CollectionEntry _entry;
@@ -28,7 +28,7 @@ namespace Faolline.GraphCore
         [SerializeField, Min(1), Tooltip("Units added when Stack is ON. Ignored when Stack is OFF.")]
         private int _count = 1;
 
-        public CollectionName Collection { get => _collection; set => _collection = value; }
+        public CollectionDef Collection { get => _collection; set => _collection = value; }
         public CollectionEntry Entry { get => _entry; set => _entry = value; }
         public bool Stack { get => _stack; set => _stack = value; }
         public int Count { get => _count; set => _count = value; }

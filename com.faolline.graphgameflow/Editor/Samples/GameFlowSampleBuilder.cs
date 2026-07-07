@@ -39,9 +39,9 @@ namespace Faolline.GraphGameFlow.Editor
             var gate  = new StatementNodeData { Id = NewId(), NodeType = StatementNodeData.NodeTypeId, Title = "Await advance", AwaitSignalName = "advance", Position = new Vector2(480, 0) };
             var nodeB = new StatementNodeData { Id = NewId(), NodeType = StatementNodeData.NodeTypeId, Title = "Load Scene B", Position = new Vector2(720, 0) };
             nodeB.OnEnterActions.Add(loadB);
-            var flowDoneSignal = Sub<SignalName>(g, "FlowComplete"); flowDoneSignal.name = "flow_complete";
+            var flowDoneSignal = Sub<SignalDef>(g, "FlowComplete"); flowDoneSignal.name = "flow_complete";
             var markDone = Sub<RaiseSignalAction>(g, "RaiseFlowDone"); markDone.Signal = flowDoneSignal;
-            var visitedCol = Sub<CollectionName>(g, "VisitedScenes"); visitedCol.name = "visited_scenes";
+            var visitedCol = Sub<CollectionDef>(g, "VisitedScenes"); visitedCol.name = "visited_scenes";
             var sceneB = Sub<CollectionEntry>(g, "SceneB"); sceneB.name = "B";
             var log = Sub<AddToCollectionAction>(g, "LogVisited"); log.Collection = visitedCol; log.Entry = sceneB;
             nodeB.OnExitActions.Add(markDone);

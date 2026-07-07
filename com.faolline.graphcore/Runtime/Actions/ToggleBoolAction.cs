@@ -3,26 +3,26 @@ using UnityEngine;
 
 namespace Faolline.GraphCore
 {
-    /// <summary>Flips the bool at <see cref="Parameter"/> (false→true, true→false).
+    /// <summary>Flips the bool at <see cref="Variable"/> (false→true, true→false).
     /// Defaults to true when the key is absent (toggling an unset flag sets it).</summary>
     [CreateAssetMenu(menuName = "Faolline/Actions/Toggle Bool", fileName = "ToggleBoolAction")]
-    public class ToggleBoolAction : BaseAction, IParameterReferencing
+    public class ToggleBoolAction : BaseAction, IVariableReferencing
     {
-        [SerializeField, Tooltip("Parameter asset to toggle. Drag a ParameterName (type Bool).")]
-        private ParameterName _parameter;
+        [SerializeField, Tooltip("Variable asset to toggle. Drag a VariableDef (type Bool).")]
+        private VariableDef _variable;
 
         /// <summary>The parameter asset to toggle.</summary>
-        public ParameterName Parameter { get => _parameter; set => _parameter = value; }
+        public VariableDef Variable { get => _variable; set => _variable = value; }
 
         /// <inheritdoc/>
-        public IEnumerable<ParameterReference> ReferencedParameters { get { if (_parameter != null) yield return new ParameterReference(_parameter, ParameterType.Bool); } }
+        public IEnumerable<VariableReference> ReferencedVariables { get { if (_variable != null) yield return new VariableReference(_variable, VariableType.Bool); } }
 
         /// <inheritdoc/>
         public override void Execute(BaseContext context)
         {
-            if (_parameter == null) return;
-            context.TryGet<bool>(_parameter, out var current);
-            context.Set<bool>(_parameter, !current);
+            if (_variable == null) return;
+            context.TryGet<bool>(_variable, out var current);
+            context.Set<bool>(_variable, !current);
         }
     }
 }

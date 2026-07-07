@@ -89,7 +89,7 @@ namespace Faolline.GraphQuest.Tests
         public void ResetObjective_LetsRewardFireAgain()
         {
             var reward = ScriptableObject.CreateInstance<SetBoolAction>();
-            reward.Parameter = Track(ParameterName.Bool("got_reward")); reward.Value = true;
+            reward.Variable = Track(VariableDef.Bool("got_reward")); reward.Value = true;
             var quest = TrackGraph(QuestBuilder.Create("q")
                 .AddObjective("a").CompleteWhen(Flag("a_done")).RewardWith(reward)
                 .Build());

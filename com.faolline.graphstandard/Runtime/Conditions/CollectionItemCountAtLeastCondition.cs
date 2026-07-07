@@ -13,13 +13,13 @@ namespace Faolline.GraphStandard
     public class CollectionItemCountAtLeastCondition : BaseCondition
     {
         [SerializeField, Tooltip("The collection to inspect.")]
-        private CollectionName _collection;
+        private CollectionDef _collection;
         [SerializeField, Tooltip("The entry whose quantity is checked.")]
         private CollectionEntry _entry;
         [SerializeField, Tooltip("Minimum quantity that satisfies this condition. 0 = always satisfied.")]
         private int _threshold;
 
-        public CollectionName Collection { get => _collection; set => _collection = value; }
+        public CollectionDef Collection { get => _collection; set => _collection = value; }
         public CollectionEntry Entry { get => _entry; set => _entry = value; }
         public int Threshold { get => _threshold; set => _threshold = value; }
 

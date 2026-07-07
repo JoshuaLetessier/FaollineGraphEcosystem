@@ -10,10 +10,10 @@ namespace Faolline.GraphCore.Tests
         public void BoolCondition_ComparesAgainstExpected()
         {
             var ctx = new BaseContext();
-            var flag = ParameterName.Bool("flag");
+            var flag = VariableDef.Bool("flag");
             ctx.Set<bool>(flag, true);
             var c = ScriptableObject.CreateInstance<BoolCondition>();
-            c.Parameter = flag; c.ExpectedValue = true;
+            c.Variable = flag; c.ExpectedValue = true;
             try
             {
                 Assert.IsTrue(c.Evaluate(ctx));
@@ -26,9 +26,9 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void BoolCondition_AbsentKey_IsFalse_SilentlyByDefault()
         {
-            var missing = ParameterName.Bool("missing");
+            var missing = VariableDef.Bool("missing");
             var c = ScriptableObject.CreateInstance<BoolCondition>();
-            c.Parameter = missing; c.ExpectedValue = true;
+            c.Variable = missing; c.ExpectedValue = true;
             try { Assert.IsFalse(c.Evaluate(new BaseContext())); }   // WarnOnMissing defaults false → silent false
             finally { Object.DestroyImmediate(c); Object.DestroyImmediate(missing); }
         }
@@ -37,9 +37,9 @@ namespace Faolline.GraphCore.Tests
         public void SetBoolAction_WritesValueIntoContext()
         {
             var ctx = new BaseContext();
-            var x = ParameterName.Bool("x");
+            var x = VariableDef.Bool("x");
             var a = ScriptableObject.CreateInstance<SetBoolAction>();
-            a.Parameter = x; a.Value = true;
+            a.Variable = x; a.Value = true;
             try
             {
                 a.Execute(ctx);

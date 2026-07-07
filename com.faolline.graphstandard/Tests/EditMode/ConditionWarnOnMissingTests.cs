@@ -13,9 +13,9 @@ namespace Faolline.GraphStandard.Tests
         [Test]
         public void BoolCondition_AbsentKey_IsFalse_Silently_ByDefault()
         {
-            var missing = ParameterName.Bool("missing");
+            var missing = VariableDef.Bool("missing");
             var c = ScriptableObject.CreateInstance<BoolCondition>();
-            c.Parameter = missing; c.ExpectedValue = true;
+            c.Variable = missing; c.ExpectedValue = true;
             try { Assert.IsFalse(c.Evaluate(new BaseContext())); }   // no warning by default
             finally { Object.DestroyImmediate(c); Object.DestroyImmediate(missing); }
         }
@@ -23,9 +23,9 @@ namespace Faolline.GraphStandard.Tests
         [Test]
         public void BoolCondition_AbsentKey_Warns_WhenOptedIn()
         {
-            var missing = ParameterName.Bool("missing");
+            var missing = VariableDef.Bool("missing");
             var c = ScriptableObject.CreateInstance<BoolCondition>();
-            c.Parameter = missing; c.ExpectedValue = true; c.WarnOnMissing = true;
+            c.Variable = missing; c.ExpectedValue = true; c.WarnOnMissing = true;
             try
             {
                 LogAssert.Expect(LogType.Warning, new Regex("BoolCondition.*not found"));
@@ -37,9 +37,9 @@ namespace Faolline.GraphStandard.Tests
         [Test]
         public void IntCondition_AbsentKey_IsFalse_Silently_ByDefault()
         {
-            var missing = ParameterName.Int("missing");
+            var missing = VariableDef.Int("missing");
             var c = ScriptableObject.CreateInstance<IntCondition>();
-            c.Parameter = missing; c.ExpectedValue = 1;
+            c.Variable = missing; c.ExpectedValue = 1;
             try { Assert.IsFalse(c.Evaluate(new BaseContext())); }
             finally { Object.DestroyImmediate(c); Object.DestroyImmediate(missing); }
         }

@@ -41,7 +41,7 @@ namespace Faolline.GraphGameFlow
         [SerializeField] private List<BaseAction> _actions = new List<BaseAction>();
 
         [Tooltip("Optional signal raised on the context after actions execute.")]
-        [SerializeField] private SignalName _signal;
+        [SerializeField] private SignalDef _signal;
 
         [Header("Target")]
         [Tooltip("The driver whose context receives the actions and signal. When null, falls back to GraphFlowDriver.Active (the persistent singleton).")]

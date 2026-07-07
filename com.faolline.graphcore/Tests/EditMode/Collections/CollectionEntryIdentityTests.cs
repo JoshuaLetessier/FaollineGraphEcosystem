@@ -5,7 +5,7 @@ using Faolline.GraphCore;
 namespace Faolline.GraphCore.Tests
 {
     /// <summary>
-    /// <see cref="CollectionEntry.Key"/> / <see cref="CollectionName.Key"/> must be stable, non-editable
+    /// <see cref="CollectionEntry.Key"/> / <see cref="CollectionDef.Key"/> must be stable, non-editable
     /// GUIDs (mirroring <see cref="BaseGraph.GraphId"/>) — never derived from the mutable asset name.
     /// </summary>
     public class CollectionEntryIdentityTests
@@ -59,7 +59,7 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void CollectionName_Key_IsAssignedOnEnable_NeverEmpty()
         {
-            var c = ScriptableObject.CreateInstance<CollectionName>();
+            var c = ScriptableObject.CreateInstance<CollectionDef>();
             Assert.IsFalse(string.IsNullOrEmpty(c.Key));
             Object.DestroyImmediate(c);
         }
@@ -67,8 +67,8 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void CollectionName_Key_IsIndependentOfAssetName()
         {
-            var a = ScriptableObject.CreateInstance<CollectionName>(); a.name = "inventory";
-            var b = ScriptableObject.CreateInstance<CollectionName>(); b.name = "inventory";
+            var a = ScriptableObject.CreateInstance<CollectionDef>(); a.name = "inventory";
+            var b = ScriptableObject.CreateInstance<CollectionDef>(); b.name = "inventory";
             Assert.AreNotEqual(a.Key, b.Key);
             Object.DestroyImmediate(a); Object.DestroyImmediate(b);
         }
@@ -76,7 +76,7 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void CollectionName_Key_UnaffectedByRename()
         {
-            var c = ScriptableObject.CreateInstance<CollectionName>();
+            var c = ScriptableObject.CreateInstance<CollectionDef>();
             var key = c.Key;
             c.name = "renamed";
             Assert.AreEqual(key, c.Key);

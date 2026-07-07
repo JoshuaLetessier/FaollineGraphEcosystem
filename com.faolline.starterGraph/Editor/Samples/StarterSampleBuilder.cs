@@ -44,15 +44,15 @@ namespace Faolline.StarterGraph.Editor
 
             // Typed parameter as a stable-GUID asset (the declaration): seeded into the StarterContext on run
             // (InitFromGraph discovers it via the FlagCond/ToggleFlag references) — gates the Left option.
-            var flag = ParameterName.Bool(StarterContextKeys.Flag, true); flag.name = "Flag";
+            var flag = VariableDef.Bool(StarterContextKeys.Flag, true); flag.name = "Flag";
             AssetDatabase.AddObjectToAsset(flag, g);
 
             // Example action (BaseAction) + example condition (BaseCondition), stored as sub-assets.
             var introLog = Sub<LogAction>(g, "IntroLog"); introLog.Message = "Intro";
             var leftLog  = Sub<LogAction>(g, "LeftLog");  leftLog.Message  = "Took Left";
             var rightLog = Sub<LogAction>(g, "RightLog"); rightLog.Message = "Took Right";
-            var flagCond = Sub<BoolCondition>(g, "FlagCond"); flagCond.Parameter = flag; flagCond.ExpectedValue = true;
-            var toggleFlag = Sub<ToggleBoolAction>(g, "ToggleFlag"); toggleFlag.Parameter = flag;
+            var flagCond = Sub<BoolCondition>(g, "FlagCond"); flagCond.Variable = flag; flagCond.ExpectedValue = true;
+            var toggleFlag = Sub<ToggleBoolAction>(g, "ToggleFlag"); toggleFlag.Variable = flag;
 
             var start  = new StartNodeData            { Id = NewId(), NodeType = StartNodeData.NodeTypeId,            Position = new Vector2(0,    0) };
             var intro  = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Intro", Position = new Vector2(240,  0) };

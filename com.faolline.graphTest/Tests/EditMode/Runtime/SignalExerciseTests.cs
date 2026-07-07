@@ -71,7 +71,7 @@ namespace Faolline.GraphTest.Tests
             _so.Add(graph);
 
             var cond = ScriptableObject.CreateInstance<TestSignalPayloadCondition>();
-            cond.SignalName = "pick";
+            cond.SignalDef = "pick";
             cond.ExpectedPayload = "key";
             _so.Add(cond);
 

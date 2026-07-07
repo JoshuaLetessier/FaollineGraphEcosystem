@@ -43,7 +43,7 @@ namespace Faolline.GraphCore.Editor
 
             // ── Other SO types ───────────────────────────────────────────────
             ["Speaker"]         = new IconDef { Name = "ico_speaker",         Fill = new Color(0.70f, 0.45f, 0.80f), Border = new Color(0.50f, 0.30f, 0.60f), Letter = "🗣" },
-            ["SignalName"]      = new IconDef { Name = "ico_signal",          Fill = new Color(0.90f, 0.35f, 0.35f), Border = new Color(0.70f, 0.20f, 0.20f), Letter = "⚡" },
+            ["SignalDef"]      = new IconDef { Name = "ico_signal",          Fill = new Color(0.90f, 0.35f, 0.35f), Border = new Color(0.70f, 0.20f, 0.20f), Letter = "⚡" },
             ["GraphTemplate"]   = new IconDef { Name = "ico_template",        Fill = new Color(0.50f, 0.70f, 0.60f), Border = new Color(0.35f, 0.50f, 0.40f), Letter = "▦" },
         };
 
@@ -105,7 +105,7 @@ namespace Faolline.GraphCore.Editor
         private static void RefreshExistingAssets()
         {
             int refreshed = 0;
-            var typeNames = new[] { "BaseGraph", "BaseCondition", "BaseAction", "Speaker", "SignalName", "GraphTemplate" };
+            var typeNames = new[] { "BaseGraph", "BaseCondition", "BaseAction", "Speaker", "SignalDef", "GraphTemplate" };
             foreach (var typeName in typeNames)
             {
                 var guids = AssetDatabase.FindAssets($"t:{typeName}");

@@ -33,13 +33,13 @@ namespace Faolline.GraphCore
         private List<BaseAction>    _onExitActions    = new List<BaseAction>();
 
         [Header("Signals & Timing")]
-        [SerializeField, Tooltip("SignalName asset the runner waits for on entry. The node parks (WaitingForSignal) until a matching signal is raised. Takes precedence over the raw string field below.")]
-        private SignalName _awaitSignalAsset;
-        [SerializeField, Tooltip("Raw signal name string (used when no SignalName asset is assigned above). The node parks until this signal is raised on the runner.")]
+        [SerializeField, Tooltip("SignalDef asset the runner waits for on entry. The node parks (WaitingForSignal) until a matching signal is raised. Takes precedence over the raw string field below.")]
+        private SignalDef _awaitSignalAsset;
+        [SerializeField, Tooltip("Raw signal name string (used when no SignalDef asset is assigned above). The node parks until this signal is raised on the runner.")]
         private string _awaitSignal = string.Empty;
         [SerializeField, Tooltip("Additional signals to wait for (logical OR): the node resumes on the FIRST of any awaited signal that passes the Resume Conditions. Combine with the single await field above.")]
-        private List<SignalName> _awaitSignals = new List<SignalName>();
-        [SerializeField, Tooltip("Additional raw signal name strings to wait for (logical OR), the code-first counterpart of the SignalName asset list above. Serializes as plain strings, so a code-built graph saved to an asset keeps its multi-await intact.")]
+        private List<SignalDef> _awaitSignals = new List<SignalDef>();
+        [SerializeField, Tooltip("Additional raw signal name strings to wait for (logical OR), the code-first counterpart of the SignalDef asset list above. Serializes as plain strings, so a code-built graph saved to an asset keeps its multi-await intact.")]
         private List<string> _awaitSignalNamesExtra = new List<string>();
         [SerializeField, Tooltip("Extra conditions an await-signal must satisfy to resume this node. All must pass (AND). Unlike Entry Conditions (checked once on arrival), these are re-checked every time the signal fires — the node stays parked until the context satisfies them.")]
         private List<BaseCondition> _resumeConditions = new List<BaseCondition>();
@@ -182,7 +182,7 @@ namespace Faolline.GraphCore
         }
 
         /// <summary>The extra OR-await signal assets (beyond <see cref="AwaitSignalName"/>). Never null.</summary>
-        public List<SignalName> AwaitSignals => _awaitSignals ??= new List<SignalName>();
+        public List<SignalDef> AwaitSignals => _awaitSignals ??= new List<SignalDef>();
 
         /// <summary>
         /// The extra OR-await signal names as raw strings — the code-first counterpart of

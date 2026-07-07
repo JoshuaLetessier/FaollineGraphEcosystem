@@ -13,9 +13,9 @@ namespace Faolline.GraphDialogue.Tests
         public void GatedChoice_TogglesAvailability_WithContextValue()
         {
             // Option "b" gated by BoolCondition(flag == true).
-            var flag = ParameterName.Bool("flag");
+            var flag = VariableDef.Bool("flag");
             var gate = ScriptableObject.CreateInstance<BoolCondition>();
-            gate.Parameter = flag; gate.ExpectedValue = true;
+            gate.Variable = flag; gate.ExpectedValue = true;
             var graph = DialoguePlayerTestGraphs.WithChoice(gate);
             try
             {

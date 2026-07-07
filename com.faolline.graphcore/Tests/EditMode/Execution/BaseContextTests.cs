@@ -115,14 +115,14 @@ namespace Faolline.GraphCore.Tests
             Assert.Throws<KeyNotFoundException>(() => ctx.Get<int>("nope"));
         }
 
-        // ── OnParameterChanged ────────────────────────────────────────────────
+        // ── OnVariableChanged ────────────────────────────────────────────────
 
         [Test]
         public void OnParameterChanged_FiredOnSet()
         {
             var ctx = new BaseContext();
             object received = null;
-            ctx.OnParameterChanged("score", v => received = v);
+            ctx.OnVariableChanged("score", v => received = v);
 
             ctx.Set<int>("score", 100);
 
@@ -134,7 +134,7 @@ namespace Faolline.GraphCore.Tests
         {
             var ctx = new BaseContext();
             bool fired = false;
-            ctx.OnParameterChanged("score", _ => fired = true);
+            ctx.OnVariableChanged("score", _ => fired = true);
 
             ctx.Set<int>("other", 5);
 
@@ -147,10 +147,10 @@ namespace Faolline.GraphCore.Tests
             var ctx = new BaseContext();
             int callCount = 0;
             Action<object> handler = _ => callCount++;
-            ctx.OnParameterChanged("score", handler);
+            ctx.OnVariableChanged("score", handler);
             ctx.Set<int>("score", 1);
 
-            ctx.OffParameterChanged("score", handler);
+            ctx.OffVariableChanged("score", handler);
             ctx.Set<int>("score", 2);
 
             Assert.AreEqual(1, callCount);
@@ -161,7 +161,7 @@ namespace Faolline.GraphCore.Tests
         {
             var ctx = new BaseContext();
             int calls = 0;
-            ctx.OnParameterChanged("hp", _ => calls++);
+            ctx.OnVariableChanged("hp", _ => calls++);
 
             ctx.Set<int>("hp", 50);
 
@@ -212,7 +212,7 @@ namespace Faolline.GraphCore.Tests
         {
             var ctx = new BaseContext();
             int calls = 0;
-            ctx.OnParameterChanged("score", _ => calls++);
+            ctx.OnVariableChanged("score", _ => calls++);
 
             var clone = ctx.DeepClone();
             clone.Set<int>("score", 5);

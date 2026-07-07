@@ -9,7 +9,7 @@ namespace Faolline.GraphDialogue
     /// so the node's <see cref="BaseNodeData.AwaitSignalName"/> can resume the flow automatically.
     /// <para>
     /// Usage: attach to a Statement node's OnEnter list, assign the <see cref="DialogueGraph"/>, and
-    /// set the node's <c>AwaitSignalName</c> to the same <see cref="SignalName"/> (or leave both empty
+    /// set the node's <c>AwaitSignalName</c> to the same <see cref="SignalDef"/> (or leave both empty
     /// for the auto-derived default <c>"dialogue_done_{GraphId}"</c>).
     /// </para>
     /// </summary>
@@ -27,7 +27,7 @@ namespace Faolline.GraphDialogue
         public DialogueGraph DialogueGraph { get => _dialogueGraph; set => _dialogueGraph = value; }
 
         /// <summary>Signal name raised when the dialogue ends. Empty = auto-derived from the graph's GraphId.</summary>
-        public string SignalName { get => _signalName; set => _signalName = value; }
+        public string SignalDef { get => _signalName; set => _signalName = value; }
 
         /// <summary>When true, missing localization keys fall back to authored node Title.</summary>
         public bool TitleFallback { get => _titleFallback; set => _titleFallback = value; }

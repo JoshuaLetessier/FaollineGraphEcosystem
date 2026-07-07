@@ -521,7 +521,7 @@ namespace Faolline.GraphQuest
         {
             if (_autoEvaluate || _context == null) return;
             _autoEvaluate = true;
-            _context.OnAnyParameterChanged(HandleAutoEvaluateTrigger);
+            _context.OnAnyVariableChanged(HandleAutoEvaluateTrigger);
             _context.OnAnyCollectionChanged(HandleAutoEvaluateTrigger);
             _context.OnAnySignalRaised(HandleAutoEvaluateTrigger);
         }

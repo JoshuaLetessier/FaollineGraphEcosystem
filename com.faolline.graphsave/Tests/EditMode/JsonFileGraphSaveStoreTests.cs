@@ -42,7 +42,7 @@ namespace Faolline.GraphSave.Tests
             Assert.IsNotNull(loaded);
             Assert.AreEqual("graph1", loaded.GraphId);
             Assert.AreEqual("node5", loaded.CurrentNodeId);
-            Assert.AreEqual(original.Parameters.Count, loaded.Parameters.Count);
+            Assert.AreEqual(original.Variables.Count, loaded.Variables.Count);
             Assert.AreEqual(original.Collections.Count, loaded.Collections.Count);
         }
 

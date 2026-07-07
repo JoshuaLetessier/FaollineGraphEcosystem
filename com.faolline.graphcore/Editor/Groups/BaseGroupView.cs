@@ -19,7 +19,7 @@ namespace Faolline.GraphCore.Editor
         public System.Action DataChanged;
 
         /// <summary>
-        /// Raised when the collapsed state changes. Parameter: isCollapsed.
+        /// Raised when the collapsed state changes. Variable: isCollapsed.
         /// The host graph view subscribes to hide/show the contained node views.
         /// </summary>
         public System.Action<bool> CollapseToggled;

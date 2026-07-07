@@ -11,13 +11,13 @@ namespace Faolline.GraphTest.Tests
         [SetUp]
         public void SetUp() => _ctx = new BaseContext();
 
-        // ── OnAnyParameterChanged ─────────────────────────────────────────────
+        // ── OnAnyVariableChanged ─────────────────────────────────────────────
 
         [Test]
         public void OnAnyParameterChanged_FiresOnSetInt()
         {
             string changedKey = null;
-            _ctx.OnAnyParameterChanged(k => changedKey = k);
+            _ctx.OnAnyVariableChanged(k => changedKey = k);
 
             _ctx.Set<int>("score", 42);
 
@@ -28,7 +28,7 @@ namespace Faolline.GraphTest.Tests
         public void OnAnyParameterChanged_FiresForAllTypes()
         {
             var keys = new System.Collections.Generic.List<string>();
-            _ctx.OnAnyParameterChanged(k => keys.Add(k));
+            _ctx.OnAnyVariableChanged(k => keys.Add(k));
 
             _ctx.Set<bool>("flag", true);
             _ctx.Set<int>("score", 1);
@@ -48,7 +48,7 @@ namespace Faolline.GraphTest.Tests
             int count = 0;
             System.Action<string> handler = _ => count++;
 
-            _ctx.OnAnyParameterChanged(handler);
+            _ctx.OnAnyVariableChanged(handler);
             _ctx.Set<int>("a", 1);
             Assert.AreEqual(1, count);
 
@@ -61,8 +61,8 @@ namespace Faolline.GraphTest.Tests
         public void PerKeyHandler_FiresBeforeWildcard()
         {
             var order = new System.Collections.Generic.List<string>();
-            _ctx.OnParameterChanged("gold", _ => order.Add("perkey"));
-            _ctx.OnAnyParameterChanged(_ => order.Add("wildcard"));
+            _ctx.OnVariableChanged("gold", _ => order.Add("perkey"));
+            _ctx.OnAnyVariableChanged(_ => order.Add("wildcard"));
 
             _ctx.Set<int>("gold", 100);
 

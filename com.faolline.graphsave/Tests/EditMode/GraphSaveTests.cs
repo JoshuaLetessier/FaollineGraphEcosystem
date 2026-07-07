@@ -144,12 +144,12 @@ namespace Faolline.GraphSave.Tests
         public void Capture_EmptyContext_ProducesEmptySnapshot()
         {
             var snap = GraphRunSnapshot.Capture(new BaseContext(), "g", "n");
-            Assert.AreEqual(0, snap.Parameters.Count);
+            Assert.AreEqual(0, snap.Variables.Count);
             Assert.AreEqual(0, snap.Collections.Count);
 
             var ctx = new BaseContext();
             snap.ApplyTo(ctx);
-            Assert.AreEqual(0, ctx.GetAllParameters().Count);
+            Assert.AreEqual(0, ctx.GetAllVariables().Count);
             Assert.AreEqual(0, ctx.GetAllCollections().Count);
         }
 
@@ -159,7 +159,7 @@ namespace Faolline.GraphSave.Tests
             var snap = GraphRunSnapshot.Capture((BaseContext)null, "g", "n");
             Assert.AreEqual("g", snap.GraphId);
             Assert.AreEqual("n", snap.CurrentNodeId);
-            Assert.AreEqual(0, snap.Parameters.Count);
+            Assert.AreEqual(0, snap.Variables.Count);
             Assert.AreEqual(0, snap.Collections.Count);
         }
 
@@ -180,7 +180,7 @@ namespace Faolline.GraphSave.Tests
                 var snap = GraphRunSnapshot.Capture(runner, ctx);
                 Assert.AreEqual(graph.GraphId, snap.GraphId);
                 Assert.AreEqual("s", snap.CurrentNodeId);
-                Assert.AreEqual(1, snap.Parameters.Count);
+                Assert.AreEqual(1, snap.Variables.Count);
             }
             finally { Object.DestroyImmediate(graph); }
         }
@@ -198,7 +198,7 @@ namespace Faolline.GraphSave.Tests
         public void ApplyTo_NullContext_DoesNotThrow()
         {
             var snap = new GraphRunSnapshot();
-            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "k", Type = "int", Value = "1" });
+            snap.Variables.Add(new GraphRunSnapshot.Param { Key = "k", Type = "int", Value = "1" });
             Assert.DoesNotThrow(() => snap.ApplyTo(null));
         }
 
@@ -206,8 +206,8 @@ namespace Faolline.GraphSave.Tests
         public void ApplyTo_MalformedFloat_SkipsGracefully()
         {
             var snap = new GraphRunSnapshot();
-            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "bad", Type = "float", Value = "not_a_number" });
-            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "ok", Type = "int", Value = "5" });
+            snap.Variables.Add(new GraphRunSnapshot.Param { Key = "bad", Type = "float", Value = "not_a_number" });
+            snap.Variables.Add(new GraphRunSnapshot.Param { Key = "ok", Type = "int", Value = "5" });
 
             var ctx = new BaseContext();
             snap.ApplyTo(ctx);
@@ -219,9 +219,9 @@ namespace Faolline.GraphSave.Tests
         public void ApplyTo_MalformedVector_SkipsGracefully()
         {
             var snap = new GraphRunSnapshot();
-            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "v2_bad", Type = "vector2", Value = "1,2,3" });
-            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "v3_bad", Type = "vector3", Value = "nope" });
-            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "col_bad", Type = "color", Value = "" });
+            snap.Variables.Add(new GraphRunSnapshot.Param { Key = "v2_bad", Type = "vector2", Value = "1,2,3" });
+            snap.Variables.Add(new GraphRunSnapshot.Param { Key = "v3_bad", Type = "vector3", Value = "nope" });
+            snap.Variables.Add(new GraphRunSnapshot.Param { Key = "col_bad", Type = "color", Value = "" });
 
             var ctx = new BaseContext();
             snap.ApplyTo(ctx);
@@ -234,9 +234,9 @@ namespace Faolline.GraphSave.Tests
         public void ApplyTo_NullParam_SkipsGracefully()
         {
             var snap = new GraphRunSnapshot();
-            snap.Parameters.Add(null);
-            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "", Type = "int", Value = "1" });
-            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "ok", Type = "int", Value = "2" });
+            snap.Variables.Add(null);
+            snap.Variables.Add(new GraphRunSnapshot.Param { Key = "", Type = "int", Value = "1" });
+            snap.Variables.Add(new GraphRunSnapshot.Param { Key = "ok", Type = "int", Value = "2" });
 
             var ctx = new BaseContext();
             Assert.DoesNotThrow(() => snap.ApplyTo(ctx));
@@ -280,7 +280,7 @@ namespace Faolline.GraphSave.Tests
         public void UnknownType_FallsBackToString()
         {
             var snap = new GraphRunSnapshot();
-            snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "custom", Type = "widget", Value = "hello" });
+            snap.Variables.Add(new GraphRunSnapshot.Param { Key = "custom", Type = "widget", Value = "hello" });
 
             var ctx = new BaseContext();
             snap.ApplyTo(ctx);
@@ -305,7 +305,7 @@ namespace Faolline.GraphSave.Tests
             try
             {
                 var snap = new GraphRunSnapshot { GraphId = graph.GraphId, CurrentNodeId = "" };
-                snap.Parameters.Add(new GraphRunSnapshot.Param { Key = "x", Type = "int", Value = "3" });
+                snap.Variables.Add(new GraphRunSnapshot.Param { Key = "x", Type = "int", Value = "3" });
 
                 var runner = new BaseRunner();
                 var ctx = new BaseContext();

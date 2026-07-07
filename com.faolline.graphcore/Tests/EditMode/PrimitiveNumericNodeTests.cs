@@ -10,10 +10,10 @@ namespace Faolline.GraphCore.Tests
         public void IntCondition_AppliesTheComparisonOperator()
         {
             var ctx = new BaseContext();
-            var hp = ParameterName.Int("hp");
+            var hp = VariableDef.Int("hp");
             ctx.Set<int>(hp, 5);
             var c = ScriptableObject.CreateInstance<IntCondition>();
-            c.Parameter = hp; c.ExpectedValue = 3;
+            c.Variable = hp; c.ExpectedValue = 3;
             try
             {
                 c.Operator = ComparisonOperator.Greater;        Assert.IsTrue(c.Evaluate(ctx));
@@ -26,9 +26,9 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void FloatCondition_AbsentKey_IsFalse_SilentlyByDefault()
         {
-            var missing = ParameterName.Float("missing");
+            var missing = VariableDef.Float("missing");
             var c = ScriptableObject.CreateInstance<FloatCondition>();
-            c.Parameter = missing; c.ExpectedValue = 1f;
+            c.Variable = missing; c.ExpectedValue = 1f;
             try { Assert.IsFalse(c.Evaluate(new BaseContext())); }   // WarnOnMissing defaults false → silent
             finally { Object.DestroyImmediate(c); Object.DestroyImmediate(missing); }
         }
@@ -37,10 +37,10 @@ namespace Faolline.GraphCore.Tests
         public void StringCondition_EqualityAndNegate()
         {
             var ctx = new BaseContext();
-            var name = ParameterName.String("name");
+            var name = VariableDef.String("name");
             ctx.Set<string>(name, "keep");
             var c = ScriptableObject.CreateInstance<StringCondition>();
-            c.Parameter = name; c.ExpectedValue = "keep";
+            c.Variable = name; c.ExpectedValue = "keep";
             try
             {
                 Assert.IsTrue(c.Evaluate(ctx));
@@ -54,9 +54,9 @@ namespace Faolline.GraphCore.Tests
         public void SetIntAction_WritesValue()
         {
             var ctx = new BaseContext();
-            var n = ParameterName.Int("n");
+            var n = VariableDef.Int("n");
             var a = ScriptableObject.CreateInstance<SetIntAction>();
-            a.Parameter = n; a.Value = 7;
+            a.Variable = n; a.Value = 7;
             try
             {
                 a.Execute(ctx);

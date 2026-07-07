@@ -4,30 +4,30 @@ using UnityEngine;
 namespace Faolline.GraphCore
 {
     /// <summary>
-    /// Compares two <see cref="ParameterName"/> (string) parameters from the context for equality or inequality.
+    /// Compares two <see cref="VariableDef"/> (string) parameters from the context for equality or inequality.
     /// An unassigned or absent side defaults to empty string. Comparison is ordinal (case-sensitive).
     /// </summary>
     [CreateAssetMenu(menuName = "Faolline/Conditions/String Compare (param vs param)", fileName = "StringCompareCondition")]
-    public class StringCompareCondition : BaseCondition, IParameterReferencing
+    public class StringCompareCondition : BaseCondition, IVariableReferencing
     {
         [SerializeField, Tooltip("Left-hand side: parameter asset (type String).")]
-        private ParameterName _left;
+        private VariableDef _left;
         [SerializeField, Tooltip("True = Equal, False = NotEqual.")]
         private bool _expectEqual = true;
         [SerializeField, Tooltip("Right-hand side: parameter asset (type String).")]
-        private ParameterName _right;
+        private VariableDef _right;
 
-        public ParameterName Left { get => _left; set => _left = value; }
+        public VariableDef Left { get => _left; set => _left = value; }
         public bool ExpectEqual { get => _expectEqual; set => _expectEqual = value; }
-        public ParameterName Right { get => _right; set => _right = value; }
+        public VariableDef Right { get => _right; set => _right = value; }
 
         /// <inheritdoc/>
-        public IEnumerable<ParameterReference> ReferencedParameters
+        public IEnumerable<VariableReference> ReferencedVariables
         {
             get
             {
-                if (_left != null)  yield return new ParameterReference(_left,  ParameterType.String);
-                if (_right != null) yield return new ParameterReference(_right, ParameterType.String);
+                if (_left != null)  yield return new VariableReference(_left,  VariableType.String);
+                if (_right != null) yield return new VariableReference(_right, VariableType.String);
             }
         }
 

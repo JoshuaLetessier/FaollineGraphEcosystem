@@ -40,7 +40,7 @@ namespace Faolline.GraphQuest.Editor
             var open = Objective(g, "open_door", "Open the door", "Use what you found to unlock the cell.",
                 Bool(g, "Cond_DoorOpen", "door_open"), new Vector2(260, -90));
 
-            var suppliesCol = Sub<CollectionName>(g, "SuppliesCollection"); suppliesCol.name = "supplies";
+            var suppliesCol = Sub<CollectionDef>(g, "SuppliesCollection"); suppliesCol.name = "supplies";
             var suppliesCond = Sub<CollectionCountAtLeastCondition>(g, "Cond_HasSupplies");
             suppliesCond.Collection = suppliesCol;
             suppliesCond.Threshold = 3;
@@ -88,7 +88,7 @@ namespace Faolline.GraphQuest.Editor
         private static BaseCondition Bool(Object owner, string assetName, string paramKey)
         {
             var c = Sub<BoolCondition>(owner, assetName);
-            c.Parameter = BoolParam(owner, paramKey);
+            c.Variable = BoolParam(owner, paramKey);
             c.ExpectedValue = true;
             return c;
         }
@@ -96,15 +96,15 @@ namespace Faolline.GraphQuest.Editor
         private static BaseAction Reward(Object owner, string assetName, string paramKey)
         {
             var a = Sub<SetBoolAction>(owner, assetName);
-            a.Parameter = BoolParam(owner, paramKey);
+            a.Variable = BoolParam(owner, paramKey);
             a.Value = true;
             return a;
         }
 
-        // A bool ParameterName asset (the declaration), stored as a sub-asset so the sample is self-contained.
-        private static ParameterName BoolParam(Object owner, string displayName)
+        // A bool VariableDef asset (the declaration), stored as a sub-asset so the sample is self-contained.
+        private static VariableDef BoolParam(Object owner, string displayName)
         {
-            var p = ParameterName.Bool(displayName); p.name = displayName;
+            var p = VariableDef.Bool(displayName); p.name = displayName;
             AssetDatabase.AddObjectToAsset(p, owner);
             return p;
         }

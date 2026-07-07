@@ -11,17 +11,17 @@ namespace Faolline.GraphStandard.Tests
     /// completion → a ReactiveEvaluator over the SAME context derives k-of-N unlocks, bridged by
     /// OnCollectionChanged → Reevaluate).
     /// <para>
-    /// CollectionName/CollectionEntry.Key is a stable GUID assigned in OnEnable (not a name-fallback string),
+    /// CollectionDef/CollectionEntry.Key is a stable GUID assigned in OnEnable (not a name-fallback string),
     /// so two calls that must refer to the SAME collection/entry share the SAME asset instance — never two
     /// instances constructed with an equal label.
     /// </para>
     /// </summary>
     public class CollectionPrimitivesTests
     {
-        private static CollectionName Col() => ScriptableObject.CreateInstance<CollectionName>();
+        private static CollectionDef Col() => ScriptableObject.CreateInstance<CollectionDef>();
         private static CollectionEntry Entry() => ScriptableObject.CreateInstance<CollectionEntry>();
 
-        private static AddToCollectionAction Add(CollectionName col, CollectionEntry entry)
+        private static AddToCollectionAction Add(CollectionDef col, CollectionEntry entry)
         {
             var a = ScriptableObject.CreateInstance<AddToCollectionAction>();
             a.Collection = col;
@@ -29,7 +29,7 @@ namespace Faolline.GraphStandard.Tests
             return a;
         }
 
-        private static CollectionContainsCondition Contains(CollectionName col, CollectionEntry entry)
+        private static CollectionContainsCondition Contains(CollectionDef col, CollectionEntry entry)
         {
             var c = ScriptableObject.CreateInstance<CollectionContainsCondition>();
             c.Collection = col;
@@ -37,7 +37,7 @@ namespace Faolline.GraphStandard.Tests
             return c;
         }
 
-        private static CollectionCountAtLeastCondition CountAtLeast(CollectionName col, int threshold)
+        private static CollectionCountAtLeastCondition CountAtLeast(CollectionDef col, int threshold)
         {
             var c = ScriptableObject.CreateInstance<CollectionCountAtLeastCondition>();
             c.Collection = col;
@@ -183,7 +183,7 @@ namespace Faolline.GraphStandard.Tests
 
         // ── US4: remove / clear collections from a node ───────────────────────
 
-        private static RemoveFromCollectionAction Remove(CollectionName col, CollectionEntry entry)
+        private static RemoveFromCollectionAction Remove(CollectionDef col, CollectionEntry entry)
         {
             var a = ScriptableObject.CreateInstance<RemoveFromCollectionAction>();
             a.Collection = col;
@@ -191,7 +191,7 @@ namespace Faolline.GraphStandard.Tests
             return a;
         }
 
-        private static ClearCollectionAction Clear(CollectionName col)
+        private static ClearCollectionAction Clear(CollectionDef col)
         {
             var a = ScriptableObject.CreateInstance<ClearCollectionAction>();
             a.Collection = col;
@@ -254,7 +254,7 @@ namespace Faolline.GraphStandard.Tests
         // ── US5: stacking (quantities) via the action's opt-in Stack toggle ────
 
         private static CollectionItemCountAtLeastCondition ItemCountAtLeast(
-            CollectionName col, CollectionEntry entry, int threshold)
+            CollectionDef col, CollectionEntry entry, int threshold)
         {
             var c = ScriptableObject.CreateInstance<CollectionItemCountAtLeastCondition>();
             c.Collection = col;

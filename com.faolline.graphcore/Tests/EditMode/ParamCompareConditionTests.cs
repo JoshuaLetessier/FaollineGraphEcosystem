@@ -8,23 +8,23 @@ namespace Faolline.GraphCore.Tests
     {
         private BaseContext _ctx;
 
-        // Governed parameters are ParameterName assets keyed by GUID (islands): the context value and the
+        // Governed parameters are VariableDef assets keyed by GUID (islands): the context value and the
         // condition reference must use the SAME instance to interoperate. Created per-test, destroyed in TearDown.
         private readonly List<Object> _created = new List<Object>();
-        private ParameterName _hp, _hpMax, _speed, _maxSpeed, _name, _target;
+        private VariableDef _hp, _hpMax, _speed, _maxSpeed, _name, _target;
 
-        private ParameterName P(ParameterName p) { _created.Add(p); return p; }
+        private VariableDef P(VariableDef p) { _created.Add(p); return p; }
 
         [SetUp]
         public void SetUp()
         {
             _ctx = new BaseContext();
-            _hp       = P(ParameterName.Int("hp"));
-            _hpMax    = P(ParameterName.Int("hpMax"));
-            _speed    = P(ParameterName.Float("speed"));
-            _maxSpeed = P(ParameterName.Float("maxSpeed"));
-            _name     = P(ParameterName.String("name"));
-            _target   = P(ParameterName.String("target"));
+            _hp       = P(VariableDef.Int("hp"));
+            _hpMax    = P(VariableDef.Int("hpMax"));
+            _speed    = P(VariableDef.Float("speed"));
+            _maxSpeed = P(VariableDef.Float("maxSpeed"));
+            _name     = P(VariableDef.String("name"));
+            _target   = P(VariableDef.String("target"));
 
             _ctx.Set<int>(_hp, 30);
             _ctx.Set<int>(_hpMax, 100);
@@ -64,8 +64,8 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void IntCompare_AbsentKeys_BothZero_Equal()
         {
-            var missing1 = P(ParameterName.Int("missing1"));
-            var missing2 = P(ParameterName.Int("missing2"));
+            var missing1 = P(VariableDef.Int("missing1"));
+            var missing2 = P(VariableDef.Int("missing2"));
             var c = ScriptableObject.CreateInstance<IntCompareCondition>();
             c.Left = missing1; c.Operator = ComparisonOperator.Equal; c.Right = missing2;
             try { Assert.IsTrue(c.Evaluate(new BaseContext())); }
@@ -116,8 +116,8 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void StringCompare_AbsentKeys_BothEmpty_Equal()
         {
-            var x = P(ParameterName.String("x"));
-            var y = P(ParameterName.String("y"));
+            var x = P(VariableDef.String("x"));
+            var y = P(VariableDef.String("y"));
             var c = ScriptableObject.CreateInstance<StringCompareCondition>();
             c.Left = x; c.ExpectEqual = true; c.Right = y;
             try { Assert.IsTrue(c.Evaluate(new BaseContext())); }

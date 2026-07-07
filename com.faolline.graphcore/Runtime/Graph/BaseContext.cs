@@ -36,7 +36,7 @@ namespace Faolline.GraphCore
 
         // ── Signal channel (0.4.0) ─────────────────────────────────────────────
         // Signals are TRANSIENT events, kept deliberately separate from the typed-parameter store
-        // (_params): they never appear in GetAllParameters/DeepClone/CopyValuesFrom, so they never
+        // (_params): they never appear in GetAllVariables/DeepClone/CopyValuesFrom, so they never
         // pollute saves or history snapshots. Both dictionaries are lazily allocated, so a context that
         // never touches signals pays nothing.
         //
@@ -134,10 +134,10 @@ namespace Faolline.GraphCore
             typeof(UnityEngine.Vector2), typeof(UnityEngine.Vector3), typeof(UnityEngine.Color)
         };
 
-        // ── Parameter accessors ────────────────────────────────────────────────
+        // ── Variable accessors ────────────────────────────────────────────────
 
         /// <summary>
-        /// Sets a typed parameter value. Fires <see cref="OnParameterChanged"/> subscribers.
+        /// Sets a typed parameter value. Fires <see cref="OnVariableChanged"/> subscribers.
         /// <typeparamref name="T"/> must be <c>bool</c>, <c>int</c>, <c>float</c>, <c>string</c>,
         /// <c>Vector2</c>, <c>Vector3</c>, or <c>Color</c>.
         /// </summary>
@@ -178,7 +178,7 @@ namespace Faolline.GraphCore
             if (_localActive && _local.TryGetValue(key, out var localRaw))
                 return (T)localRaw;
             if (!_params.TryGetValue(key, out var raw))
-                throw new KeyNotFoundException($"[GraphCore] Parameter key not found: '{key}'.");
+                throw new KeyNotFoundException($"[GraphCore] Variable key not found: '{key}'.");
             return (T)raw;
         }
 
@@ -215,7 +215,7 @@ namespace Faolline.GraphCore
         /// excluded, so a save taken while a local context is open captures durable global state only.
         /// Types are limited to bool, int, float, string, Vector2, Vector3, Color.
         /// </summary>
-        public IReadOnlyDictionary<string, object> GetAllParameters()
+        public IReadOnlyDictionary<string, object> GetAllVariables()
             => new System.Collections.ObjectModel.ReadOnlyDictionary<string, object>(_params);
 
         // ── Local-context overlay ──────────────────────────────────────────────
@@ -243,7 +243,7 @@ namespace Faolline.GraphCore
 
         /// <summary>
         /// As <see cref="BeginLocalContext()"/>, then seeds the new local context from the
-        /// <see cref="ParameterName"/> defaults <paramref name="seedFrom"/> references (same discovery as
+        /// <see cref="VariableDef"/> defaults <paramref name="seedFrom"/> references (same discovery as
         /// <see cref="InitFromGraph"/>, written into the local overlay). A <c>null</c> graph seeds nothing.
         /// </summary>
         public void BeginLocalContext(BaseGraph seedFrom)
@@ -314,7 +314,7 @@ namespace Faolline.GraphCore
                     handler(args);
             }
 
-            // Wildcard delivery, AFTER per-name handlers (mirrors OnAnyParameterChanged). Lets a
+            // Wildcard delivery, AFTER per-name handlers (mirrors OnAnyVariableChanged). Lets a
             // reactive consumer (e.g. QuestEvaluator.EnableAutoEvaluate) re-evaluate on any signal
             // without knowing the name in advance.
             if (_anySignalSubs != null && _anySignalSubs.Count > 0)
@@ -330,7 +330,7 @@ namespace Faolline.GraphCore
         /// <summary>
         /// Subscribes <paramref name="handler"/> to ANY raised signal. The handler receives the signal
         /// name and fires AFTER the per-name <see cref="OnSignal"/> handlers. Multiple handlers supported.
-        /// Mirrors <see cref="OnAnyParameterChanged"/> / <see cref="OnAnyCollectionChanged"/>.
+        /// Mirrors <see cref="OnAnyVariableChanged"/> / <see cref="OnAnyCollectionChanged"/>.
         /// </summary>
         public void OnAnySignalRaised(Action<string> handler)
         {
@@ -443,7 +443,7 @@ namespace Faolline.GraphCore
         /// Subscribes <paramref name="handler"/> to changes on ANY parameter key. The handler
         /// receives the changed key. Fires AFTER per-key handlers. Multiple handlers supported.
         /// </summary>
-        public void OnAnyParameterChanged(Action<string> handler)
+        public void OnAnyVariableChanged(Action<string> handler)
         {
             if (handler == null) return;
             (_anyParamSubs ??= new List<Action<string>>()).Add(handler);
@@ -459,7 +459,7 @@ namespace Faolline.GraphCore
         /// Subscribes <paramref name="handler"/> to changes on <paramref name="key"/>.
         /// The handler receives the new value boxed as <c>object</c>.
         /// </summary>
-        public void OnParameterChanged(string key, Action<object> handler)
+        public void OnVariableChanged(string key, Action<object> handler)
         {
             if (!_subs.TryGetValue(key, out var list))
             {
@@ -470,7 +470,7 @@ namespace Faolline.GraphCore
         }
 
         /// <summary>Removes <paramref name="handler"/> from the subscriber list for <paramref name="key"/>.</summary>
-        public void OffParameterChanged(string key, Action<object> handler)
+        public void OffVariableChanged(string key, Action<object> handler)
         {
             if (_subs.TryGetValue(key, out var list))
                 list.Remove(handler);
@@ -495,23 +495,23 @@ namespace Faolline.GraphCore
         // ── Graph initialization ──────────────────────────────────────────────
 
         /// <summary>
-        /// Seeds this context with the defaults of every <see cref="ParameterName"/> the <paramref name="graph"/>
-        /// references from its actions/conditions (discovered via <see cref="GraphParameterScanner"/>). Parameters
+        /// Seeds this context with the defaults of every <see cref="VariableDef"/> the <paramref name="graph"/>
+        /// references from its actions/conditions (discovered via <see cref="GraphVariableScanner"/>). Variables
         /// are declaration-free: there is no per-graph parameter list — the asset carries the type and default,
         /// keyed by its stable GUID. A key already present is left untouched (seed-if-absent), so seeding never
         /// clobbers a value the host set first. A parameter used only from host code is not discovered here and
-        /// is the host's responsibility to set (via a <c>GraphParams</c> constant).
+        /// is the host's responsibility to set (via a <c>GraphVariables</c> constant).
         /// </summary>
         public void InitFromGraph(BaseGraph graph) => SeedFromGraph(graph, _params);
 
         /// <summary>
-        /// Seeds <paramref name="target"/> from the graph's referenced <see cref="ParameterName"/> defaults,
+        /// Seeds <paramref name="target"/> from the graph's referenced <see cref="VariableDef"/> defaults,
         /// keyed by GUID, seed-if-absent. Shared by <see cref="InitFromGraph"/> (seeds global) and local-context
         /// seeding (seeds the overlay).
         /// </summary>
         private static void SeedFromGraph(BaseGraph graph, Dictionary<string, object> target)
         {
-            foreach (var param in GraphParameterScanner.Collect(graph))
+            foreach (var param in GraphVariableScanner.Collect(graph))
             {
                 var key = param.Key;
                 if (string.IsNullOrEmpty(key) || target.ContainsKey(key)) continue;
@@ -673,7 +673,7 @@ namespace Faolline.GraphCore
 
         /// <summary>
         /// Returns a read-only snapshot of all collections (key → distinct members in insertion order, as
-        /// copies) for serialization. Parallel to <see cref="GetAllParameters"/>, which remains scalar-only.
+        /// copies) for serialization. Parallel to <see cref="GetAllVariables"/>, which remains scalar-only.
         /// Empty when none exist.
         /// <para>
         /// <b>Quantities are not captured here</b> — this mirrors the pre-0.31.0 shape (distinct membership

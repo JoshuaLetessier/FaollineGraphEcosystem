@@ -60,7 +60,7 @@ namespace Faolline.GraphCore.Tests
             ctx.Set<int>("Gold", 5);
             ctx.RaiseSignal<int>("evt", 99);
 
-            var all = ctx.GetAllParameters();
+            var all = ctx.GetAllVariables();
             Assert.IsTrue(all.ContainsKey("Gold"));
             Assert.IsFalse(all.ContainsKey("evt"), "Signals must never enter the parameter snapshot.");
 

@@ -12,9 +12,9 @@ namespace Faolline.GraphDialogue.Tests
         [Test]
         public void EnterEffect_SetsState_BeforeStepEmitted_AndLaterConditionReadsIt()
         {
-            var flag = ParameterName.Bool("flag");
+            var flag = VariableDef.Bool("flag");
             var setFlag = ScriptableObject.CreateInstance<SetBoolAction>();
-            setFlag.Parameter = flag; setFlag.Value = true;
+            setFlag.Variable = flag; setFlag.Value = true;
 
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
             try
@@ -45,9 +45,9 @@ namespace Faolline.GraphDialogue.Tests
         [Test]
         public void ExitEffect_RunsBeforeAdvancing()
         {
-            var counter = ParameterName.Int("counter");
+            var counter = VariableDef.Int("counter");
             var setCounter = ScriptableObject.CreateInstance<SetIntAction>();
-            setCounter.Parameter = counter; setCounter.Value = 9;
+            setCounter.Variable = counter; setCounter.Value = 9;
 
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
             try
