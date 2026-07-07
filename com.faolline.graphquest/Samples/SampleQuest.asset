@@ -1,6 +1,86 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-3956879970998472878
+--- !u!114 &-7127676169715621902
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0fd1b2fa829644b9fed270c3c71f3b, type: 3}
+  m_Name: quest_complete
+  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.ParameterName
+  _id: b3c748d4-1dc3-4d49-b6e0-189a5d35eb01
+  _name: quest_complete
+  _type: 0
+  _boolDefault: 0
+  _intDefault: 0
+  _floatDefault: 0
+  _stringDefault: 
+  _vector2Default: {x: 0, y: 0}
+  _vector3Default: {x: 0, y: 0, z: 0}
+  _colorDefault: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &-5746298066251285253
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0fd1b2fa829644b9fed270c3c71f3b, type: 3}
+  m_Name: freedom
+  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.ParameterName
+  _id: fb1f6122-a274-445d-9207-c41b41f45f86
+  _name: freedom
+  _type: 0
+  _boolDefault: 0
+  _intDefault: 0
+  _floatDefault: 0
+  _stringDefault: 
+  _vector2Default: {x: 0, y: 0}
+  _vector3Default: {x: 0, y: 0, z: 0}
+  _colorDefault: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &-4623766233108630615
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0fd1b2fa829644b9fed270c3c71f3b, type: 3}
+  m_Name: door_open
+  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.ParameterName
+  _id: 57f3246d-8fa1-4af2-90e0-47b7a2507656
+  _name: door_open
+  _type: 0
+  _boolDefault: 0
+  _intDefault: 0
+  _floatDefault: 0
+  _stringDefault: 
+  _vector2Default: {x: 0, y: 0}
+  _vector3Default: {x: 0, y: 0, z: 0}
+  _colorDefault: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &-3631985778878690876
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6f7abf03440c2364e99815ecaeaf2cfc, type: 3}
+  m_Name: Reward_Supplies
+  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.SetBoolAction
+  _parameter: {fileID: 9048496649502622010}
+  _value: 1
+--- !u!114 &-2193016088146696005
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -12,10 +92,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccdfc9ba64ac4b440959f7b0de9e3b97, type: 3}
   m_Name: Cond_DoorOpen
   m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.BoolCondition
-  _parameterKey: door_open
+  _parameter: {fileID: -4623766233108630615}
   _expectedValue: 1
   _warnOnMissing: 0
---- !u!114 &-3064068467594983815
+--- !u!114 &-2102480380528493400
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -24,12 +104,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 87cd6e2974bcf0f43971e703416912e5, type: 3}
-  m_Name: Cond_HasSupplies
-  m_EditorClassIdentifier: com.faolline.graphstandard.Runtime::Faolline.GraphStandard.CollectionCountAtLeastCondition
-  _collectionKey: supplies
-  _threshold: 3
---- !u!114 &-2830565199240731993
+  m_Script: {fileID: 11500000, guid: 0a0fd1b2fa829644b9fed270c3c71f3b, type: 3}
+  m_Name: found_clue
+  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.ParameterName
+  _id: 8898e7af-a0ca-462a-905a-102b3229efba
+  _name: found_clue
+  _type: 0
+  _boolDefault: 0
+  _intDefault: 0
+  _floatDefault: 0
+  _stringDefault: 
+  _vector2Default: {x: 0, y: 0}
+  _vector3Default: {x: 0, y: 0, z: 0}
+  _colorDefault: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &-377620993292405382
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -38,12 +126,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ccdfc9ba64ac4b440959f7b0de9e3b97, type: 3}
-  m_Name: Cond_FoundClue
-  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.BoolCondition
-  _parameterKey: found_clue
-  _expectedValue: 1
-  _warnOnMissing: 0
+  m_Script: {fileID: 11500000, guid: 6f7abf03440c2364e99815ecaeaf2cfc, type: 3}
+  m_Name: Reward_Freedom
+  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.SetBoolAction
+  _parameter: {fileID: -5746298066251285253}
+  _value: 1
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -56,36 +143,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0bd1516d5498314429fe9693130cf7d1, type: 3}
   m_Name: SampleQuest
   m_EditorClassIdentifier: com.faolline.graphquest.Runtime::Faolline.GraphQuest.QuestGraph
-  _graphId: 0e1502f2-950f-4c58-addd-3d643affb760
+  _graphId: f2e56dc3-bdda-410f-a369-eac72494d489
   _nodes:
-  - rid: 2948309199583969374
-  - rid: 2948309199583969375
-  - rid: 2948309199583969376
-  - rid: 2948309199583969377
+  - rid: 7709853779376209920
+  - rid: 7709853779376209921
+  - rid: 7709853779376209922
+  - rid: 7709853779376209923
   _edges:
-  - rid: 2948309199583969378
-  - rid: 2948309199583969379
-  _parameters: []
+  - rid: 7709853779376209924
+  - rid: 7709853779376209925
   _groups: []
   _entryNodeId: 
   _historyDepth: 20
   _questId: keep_escape
+  _localizationFlags:
+    _defaultFlags: 1
+    _entries: []
   _displayName: The Keep Escape
   _description: Find a way out of Aldric's keep.
   _unlockCondition: {fileID: 0}
-  _completionReward: {fileID: 6263158146308954157}
+  _completionReward: {fileID: 5614437418536793653}
   _completionRule: 0
   _completionThreshold: 0
   references:
     version: 2
     RefIds:
-    - rid: 2948309199583969374
+    - rid: 7709853779376209920
       type: {class: ObjectiveNodeData, ns: Faolline.GraphQuest, asm: com.faolline.graphquest.Runtime}
       data:
         _id: find_clue
         _nodeType: graphquest.objective
         _title: Find the clue
-        _position: {x: 0, y: -92}
+        _position: {x: 0, y: 0}
         _hasColorOverride: 0
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _entryConditions: []
@@ -93,25 +182,29 @@ MonoBehaviour:
         _onExitActions: []
         _awaitSignalAsset: {fileID: 0}
         _awaitSignal: 
+        _awaitSignals: []
+        _awaitSignalNamesExtra: []
         _resumeConditions: []
+        _resumeIfSignalAlreadyRaised: 0
         _waitDuration: 0
         _isCheckpoint: 0
-        _completionCondition: {fileID: -2830565199240731993}
+        _completionCondition: {fileID: 7717748408373533489}
         _failCondition: {fileID: 0}
         _required: 1
         _requiredPrerequisiteCount: -1
         _reward: {fileID: 0}
         _timeLimitSeconds: 0
-        _progressCollectionKey: 
+        _progressCollection: {fileID: 0}
         _progressTarget: 0
         _description: Search Aldric's study for a way out.
-    - rid: 2948309199583969375
+        _isHideObjective: 0
+    - rid: 7709853779376209921
       type: {class: ObjectiveNodeData, ns: Faolline.GraphQuest, asm: com.faolline.graphquest.Runtime}
       data:
         _id: open_door
         _nodeType: graphquest.objective
         _title: Open the door
-        _position: {x: 310.4, y: 0}
+        _position: {x: 260, y: -90}
         _hasColorOverride: 0
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _entryConditions: []
@@ -119,25 +212,29 @@ MonoBehaviour:
         _onExitActions: []
         _awaitSignalAsset: {fileID: 0}
         _awaitSignal: 
+        _awaitSignals: []
+        _awaitSignalNamesExtra: []
         _resumeConditions: []
+        _resumeIfSignalAlreadyRaised: 0
         _waitDuration: 0
         _isCheckpoint: 0
-        _completionCondition: {fileID: -3956879970998472878}
+        _completionCondition: {fileID: -2193016088146696005}
         _failCondition: {fileID: 0}
         _required: 1
         _requiredPrerequisiteCount: -1
         _reward: {fileID: 0}
         _timeLimitSeconds: 0
-        _progressCollectionKey: 
+        _progressCollection: {fileID: 0}
         _progressTarget: 0
         _description: Use what you found to unlock the cell.
-    - rid: 2948309199583969376
+        _isHideObjective: 0
+    - rid: 7709853779376209922
       type: {class: ObjectiveNodeData, ns: Faolline.GraphQuest, asm: com.faolline.graphquest.Runtime}
       data:
         _id: gather_supplies
         _nodeType: graphquest.objective
         _title: Gather supplies
-        _position: {x: 0, y: 92}
+        _position: {x: 260, y: 110}
         _hasColorOverride: 0
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _entryConditions: []
@@ -145,25 +242,29 @@ MonoBehaviour:
         _onExitActions: []
         _awaitSignalAsset: {fileID: 0}
         _awaitSignal: 
+        _awaitSignals: []
+        _awaitSignalNamesExtra: []
         _resumeConditions: []
+        _resumeIfSignalAlreadyRaised: 0
         _waitDuration: 0
         _isCheckpoint: 0
-        _completionCondition: {fileID: -3064068467594983815}
+        _completionCondition: {fileID: 4495156869707796004}
         _failCondition: {fileID: 0}
         _required: 0
         _requiredPrerequisiteCount: -1
-        _reward: {fileID: 4457609928125755017}
+        _reward: {fileID: -3631985778878690876}
         _timeLimitSeconds: 0
-        _progressCollectionKey: supplies
+        _progressCollection: {fileID: 7710620988715958441}
         _progressTarget: 3
         _description: 'Optional: collect 3 useful items from the keep.'
-    - rid: 2948309199583969377
+        _isHideObjective: 0
+    - rid: 7709853779376209923
       type: {class: ObjectiveNodeData, ns: Faolline.GraphQuest, asm: com.faolline.graphquest.Runtime}
       data:
         _id: escape
         _nodeType: graphquest.objective
         _title: Escape the keep
-        _position: {x: 620, y: 0}
+        _position: {x: 520, y: -90}
         _hasColorOverride: 0
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _entryConditions: []
@@ -171,22 +272,26 @@ MonoBehaviour:
         _onExitActions: []
         _awaitSignalAsset: {fileID: 0}
         _awaitSignal: 
+        _awaitSignals: []
+        _awaitSignalNamesExtra: []
         _resumeConditions: []
+        _resumeIfSignalAlreadyRaised: 0
         _waitDuration: 0
         _isCheckpoint: 0
-        _completionCondition: {fileID: 5676156196837383415}
+        _completionCondition: {fileID: 2660991433986238676}
         _failCondition: {fileID: 0}
         _required: 1
         _requiredPrerequisiteCount: -1
-        _reward: {fileID: 4550343481036034132}
+        _reward: {fileID: -377620993292405382}
         _timeLimitSeconds: 0
-        _progressCollectionKey: 
+        _progressCollection: {fileID: 0}
         _progressTarget: 0
         _description: Slip past the gate to freedom.
-    - rid: 2948309199583969378
+        _isHideObjective: 0
+    - rid: 7709853779376209924
       type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
       data:
-        _id: 5d73cac9-31de-4cd5-816f-670236a6f715
+        _id: e12b3624-8941-46e4-b085-f830321e040e
         _fromNodeId: find_clue
         _toNodeId: open_door
         _portName: unlocks
@@ -194,10 +299,10 @@ MonoBehaviour:
         _hasColorOverride: 0
         _edgeColor: {r: 0, g: 0, b: 0, a: 0}
         _waypoints: []
-    - rid: 2948309199583969379
+    - rid: 7709853779376209925
       type: {class: BaseEdgeData, ns: Faolline.GraphCore, asm: com.faolline.graphcore.Runtime}
       data:
-        _id: b05c09c9-215d-41ad-963b-cacd2424a2df
+        _id: 5b8ee7f0-d0fa-4d17-8ab5-3fee6f1f3e23
         _fromNodeId: open_door
         _toNodeId: escape
         _portName: unlocks
@@ -205,35 +310,7 @@ MonoBehaviour:
         _hasColorOverride: 0
         _edgeColor: {r: 0, g: 0, b: 0, a: 0}
         _waypoints: []
---- !u!114 &4457609928125755017
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6f7abf03440c2364e99815ecaeaf2cfc, type: 3}
-  m_Name: Reward_Supplies
-  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.SetBoolAction
-  _parameterKey: supplies_bonus
-  _value: 1
---- !u!114 &4550343481036034132
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6f7abf03440c2364e99815ecaeaf2cfc, type: 3}
-  m_Name: Reward_Freedom
-  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.SetBoolAction
-  _parameterKey: freedom
-  _value: 1
---- !u!114 &5676156196837383415
+--- !u!114 &2660991433986238676
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -245,10 +322,46 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ccdfc9ba64ac4b440959f7b0de9e3b97, type: 3}
   m_Name: Cond_Escaped
   m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.BoolCondition
-  _parameterKey: escaped
+  _parameter: {fileID: 4309337592667390735}
   _expectedValue: 1
   _warnOnMissing: 0
---- !u!114 &6263158146308954157
+--- !u!114 &4309337592667390735
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0fd1b2fa829644b9fed270c3c71f3b, type: 3}
+  m_Name: escaped
+  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.ParameterName
+  _id: 82121e73-1778-408e-b441-62b93432ebb6
+  _name: escaped
+  _type: 0
+  _boolDefault: 0
+  _intDefault: 0
+  _floatDefault: 0
+  _stringDefault: 
+  _vector2Default: {x: 0, y: 0}
+  _vector3Default: {x: 0, y: 0, z: 0}
+  _colorDefault: {r: 1, g: 1, b: 1, a: 1}
+--- !u!114 &4495156869707796004
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87cd6e2974bcf0f43971e703416912e5, type: 3}
+  m_Name: Cond_HasSupplies
+  m_EditorClassIdentifier: com.faolline.graphstandard.Runtime::Faolline.GraphStandard.CollectionCountAtLeastCondition
+  _collection: {fileID: 7710620988715958441}
+  _threshold: 3
+--- !u!114 &5614437418536793653
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -260,5 +373,57 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6f7abf03440c2364e99815ecaeaf2cfc, type: 3}
   m_Name: Reward_QuestComplete
   m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.SetBoolAction
-  _parameterKey: quest_complete
+  _parameter: {fileID: -7127676169715621902}
   _value: 1
+--- !u!114 &7710620988715958441
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f923eff55547aa44daae7595c66d956b, type: 3}
+  m_Name: supplies
+  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.CollectionName
+  _id: 66a47d87-f13f-4eab-bc3f-a7c67b7de40a
+  _title: 
+  _entries: []
+--- !u!114 &7717748408373533489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ccdfc9ba64ac4b440959f7b0de9e3b97, type: 3}
+  m_Name: Cond_FoundClue
+  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.BoolCondition
+  _parameter: {fileID: -2102480380528493400}
+  _expectedValue: 1
+  _warnOnMissing: 0
+--- !u!114 &9048496649502622010
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a0fd1b2fa829644b9fed270c3c71f3b, type: 3}
+  m_Name: supplies_bonus
+  m_EditorClassIdentifier: com.faolline.graphcore.Runtime::Faolline.GraphCore.ParameterName
+  _id: 126eedfb-c357-438b-9f9b-fd1a365990dc
+  _name: supplies_bonus
+  _type: 0
+  _boolDefault: 0
+  _intDefault: 0
+  _floatDefault: 0
+  _stringDefault: 
+  _vector2Default: {x: 0, y: 0}
+  _vector3Default: {x: 0, y: 0, z: 0}
+  _colorDefault: {r: 1, g: 1, b: 1, a: 1}
