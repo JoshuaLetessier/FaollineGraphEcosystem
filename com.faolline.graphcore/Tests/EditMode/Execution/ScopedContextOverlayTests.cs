@@ -12,15 +12,35 @@ namespace Faolline.GraphCore.Tests
     public class ScopedContextOverlayTests
     {
         private readonly List<BaseGraph> _graphs = new List<BaseGraph>();
+        private readonly List<Object> _objs = new List<Object>();
 
         [TearDown]
         public void TearDown()
         {
             foreach (var g in _graphs) UnityEngine.Object.DestroyImmediate(g);
             _graphs.Clear();
+            foreach (var o in _objs) if (o != null) UnityEngine.Object.DestroyImmediate(o);
+            _objs.Clear();
         }
 
         private BaseGraph Track(BaseGraph g) { _graphs.Add(g); return g; }
+        private T TrackObj<T>(T o) where T : Object { _objs.Add(o); return o; }
+
+        // Builds a graph that references each ParameterName (via an inert ResumeConditions probe on one node),
+        // so BeginLocalContext(graph)/InitFromGraph discovers them and seeds their asset defaults.
+        private BaseGraph GraphReferencing(params ParameterName[] parameters)
+        {
+            var g = Track(ScriptableObject.CreateInstance<BaseGraph>());
+            var node = new StatementNodeData { Id = "n", NodeType = StatementNodeData.NodeTypeId };
+            foreach (var p in parameters)
+            {
+                var probe = TrackObj(ScriptableObject.CreateInstance<IntCondition>()); // type irrelevant to seeding
+                probe.Parameter = p;
+                node.ResumeConditions.Add(probe);
+            }
+            g.AddNode(node);
+            return g;
+        }
 
         // ── Open / close ────────────────────────────────────────────────────────
 
@@ -57,18 +77,14 @@ namespace Faolline.GraphCore.Tests
         public void Read_LocalShadows_Global()
         {
             var ctx = new BaseContext();
-            ctx.Set<int>("Gold", 7);
-            ctx.BeginLocalContext();
-            // create a local shadow first (undeclared key would go local; here we force a local entry)
-            // Gold exists in global, so writing it routes to global; to shadow we seed a local Gold.
-            ctx.EndLocalContext();
-            // Use seeding to get a genuine local shadow:
-            var g = Track(ScriptableObject.CreateInstance<BaseGraph>());
-            g.AddParameter(new ParameterData { Key = "Gold", Type = ParameterType.Int, DefaultValue = "99" });
+            var gold = TrackObj(ParameterName.Int("Gold", 99));
+            ctx.Set<int>(gold, 7);
+            // Seed a genuine local shadow from a graph that references Gold (default 99):
+            var g = GraphReferencing(gold);
             ctx.BeginLocalContext(g);
-            Assert.AreEqual(99, ctx.Get<int>("Gold"));   // local shadow wins
+            Assert.AreEqual(99, ctx.Get<int>(gold));   // local shadow wins
             ctx.EndLocalContext();
-            Assert.AreEqual(7, ctx.Get<int>("Gold"));    // global re-exposed
+            Assert.AreEqual(7, ctx.Get<int>(gold));    // global re-exposed
         }
 
         [Test]
@@ -109,14 +125,14 @@ namespace Faolline.GraphCore.Tests
         public void Write_LocalShadow_DoesNotAffectGlobal()
         {
             var ctx = new BaseContext();
-            ctx.Set<int>("Gold", 7);
-            var g = Track(ScriptableObject.CreateInstance<BaseGraph>());
-            g.AddParameter(new ParameterData { Key = "Gold", Type = ParameterType.Int, DefaultValue = "1" });
+            var gold = TrackObj(ParameterName.Int("Gold", 1));
+            ctx.Set<int>(gold, 7);
+            var g = GraphReferencing(gold);
             ctx.BeginLocalContext(g);     // local shadow Gold=1
-            ctx.Set<int>("Gold", 50);     // key in local → writes the local shadow
-            Assert.AreEqual(50, ctx.Get<int>("Gold"));
+            ctx.Set<int>(gold, 50);       // key in local → writes the local shadow
+            Assert.AreEqual(50, ctx.Get<int>(gold));
             ctx.EndLocalContext();
-            Assert.AreEqual(7, ctx.Get<int>("Gold"), "Local shadow write must not touch global.");
+            Assert.AreEqual(7, ctx.Get<int>(gold), "Local shadow write must not touch global.");
         }
 
         // ── Seeding ────────────────────────────────────────────────────────────────
@@ -125,16 +141,16 @@ namespace Faolline.GraphCore.Tests
         public void BeginLocalContext_Seed_SeedsLocalFromGraphParameters()
         {
             var ctx = new BaseContext();
-            var g = Track(ScriptableObject.CreateInstance<BaseGraph>());
-            g.AddParameter(new ParameterData { Key = "Step", Type = ParameterType.Int,    DefaultValue = "3" });
-            g.AddParameter(new ParameterData { Key = "Flag", Type = ParameterType.Bool,   DefaultValue = "true" });
+            var step = TrackObj(ParameterName.Int("Step", 3));
+            var flag = TrackObj(ParameterName.Bool("Flag", true));
+            var g = GraphReferencing(step, flag);
 
             ctx.BeginLocalContext(g);
 
-            Assert.AreEqual(3, ctx.Get<int>("Step"));
-            Assert.IsTrue(ctx.Get<bool>("Flag"));
+            Assert.AreEqual(3, ctx.Get<int>(step));
+            Assert.IsTrue(ctx.Get<bool>(flag));
             ctx.EndLocalContext();
-            Assert.IsFalse(ctx.Has("Step"), "Seeded local values vanish when the scope ends.");
+            Assert.IsFalse(ctx.Has(step), "Seeded local values vanish when the scope ends.");
         }
 
         // ── Persistence exclusion (inv.11) ──────────────────────────────────────────

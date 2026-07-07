@@ -24,9 +24,10 @@ namespace Faolline.GraphDialogue.Tests
         public void Bool_Compares()
         {
             var ctx = new DialogueContext();
-            ctx.Set<bool>("k", true);
+            var k = ParameterName.Bool("k");
+            ctx.Set<bool>(k, true);
             var c = Make<BoolCondition>();
-            c.ParameterKey = "k"; c.ExpectedValue = true;
+            c.Parameter = k; c.ExpectedValue = true;
             Assert.IsTrue(c.Evaluate(ctx));
             c.ExpectedValue = false;
             Assert.IsFalse(c.Evaluate(ctx));
@@ -36,9 +37,10 @@ namespace Faolline.GraphDialogue.Tests
         public void Int_Operators()
         {
             var ctx = new DialogueContext();
-            ctx.Set<int>("k", 5);
+            var k = ParameterName.Int("k");
+            ctx.Set<int>(k, 5);
             var c = Make<IntCondition>();
-            c.ParameterKey = "k"; c.ExpectedValue = 3; c.Operator = ComparisonOperator.Greater;
+            c.Parameter = k; c.ExpectedValue = 3; c.Operator = ComparisonOperator.Greater;
             Assert.IsTrue(c.Evaluate(ctx));
             c.Operator = ComparisonOperator.LessOrEqual;
             Assert.IsFalse(c.Evaluate(ctx));
@@ -48,9 +50,10 @@ namespace Faolline.GraphDialogue.Tests
         public void Float_Operators()
         {
             var ctx = new DialogueContext();
-            ctx.Set<float>("k", 2.5f);
+            var k = ParameterName.Float("k");
+            ctx.Set<float>(k, 2.5f);
             var c = Make<FloatCondition>();
-            c.ParameterKey = "k"; c.ExpectedValue = 2.5f; c.Operator = ComparisonOperator.GreaterOrEqual;
+            c.Parameter = k; c.ExpectedValue = 2.5f; c.Operator = ComparisonOperator.GreaterOrEqual;
             Assert.IsTrue(c.Evaluate(ctx));
         }
 
@@ -58,9 +61,10 @@ namespace Faolline.GraphDialogue.Tests
         public void String_EqualityAndNegate()
         {
             var ctx = new DialogueContext();
-            ctx.Set<string>("k", "abc");
+            var k = ParameterName.String("k");
+            ctx.Set<string>(k, "abc");
             var c = Make<StringCondition>();
-            c.ParameterKey = "k"; c.ExpectedValue = "abc";
+            c.Parameter = k; c.ExpectedValue = "abc";
             Assert.IsTrue(c.Evaluate(ctx));
             c.Negate = true;
             Assert.IsFalse(c.Evaluate(ctx));
@@ -71,7 +75,7 @@ namespace Faolline.GraphDialogue.Tests
         {
             var ctx = new DialogueContext();
             var c = Make<IntCondition>();
-            c.ParameterKey = "absent"; c.ExpectedValue = 0;
+            c.Parameter = ParameterName.Int("absent"); c.ExpectedValue = 0;
             c.WarnOnMissing = true;   // canonical reads an absent key as false SILENTLY by default; opt in to the warning
             LogAssert.Expect(LogType.Warning, new Regex("not found"));
             Assert.IsFalse(c.Evaluate(ctx));

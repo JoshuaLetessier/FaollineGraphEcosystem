@@ -46,7 +46,7 @@ namespace Faolline.GraphDialogue.Tests.PlayMode
                 player1.OnLine += s => { if (s.NodeId == "l1") saved = s; };
                 player1.Start();    // paused at l1 (checkpoint), counter=1
 
-                Assert.AreEqual(1, ctx1.Counter, "Enter action must have fired.");
+                Assert.AreEqual(1, ctx1.Get<int>(_counter), "Enter action must have fired.");
                 Assert.IsNotNull(saved);
 
                 var json = player1.SaveState().ToJson();
@@ -68,14 +68,14 @@ namespace Faolline.GraphDialogue.Tests.PlayMode
                 player2.RestoreFrom(state);
 
                 // l1's enter-action re-fires (checkpoint is re-entered)
-                Assert.AreEqual(1, ctx2.Counter, "Restored context must reflect checkpoint state.");
+                Assert.AreEqual(1, ctx2.Get<int>(_counter), "Restored context must reflect checkpoint state.");
 
                 yield return null;
 
                 LineStep l2Step = null;
                 player2.OnLine += s => { if (s.NodeId == "l2") l2Step = s; };
                 player2.Advance(); // l1 → l2, counter=2
-                Assert.AreEqual(2, ctx2.Counter);
+                Assert.AreEqual(2, ctx2.Get<int>(_counter));
                 Assert.IsNotNull(l2Step, "Playback must continue past the checkpoint.");
             }
             finally
@@ -153,12 +153,15 @@ namespace Faolline.GraphDialogue.Tests.PlayMode
         // ── Helper ────────────────────────────────────────────────────────────────
 
         /// <summary>Builds: Start → L1(checkpoint, counter=1) → L2(counter=2) → End.</summary>
+        private static ParameterName _counter;
+
         private static DialogueGraph BuildLinearGraph(out SetIntAction a1, out SetIntAction a2)
         {
+            _counter = ParameterName.Int("counter");
             a1 = ScriptableObject.CreateInstance<SetIntAction>();
-            a1.ParameterKey = DialogueContextKeys.Counter; a1.Value = 1;
+            a1.Parameter = _counter; a1.Value = 1;
             a2 = ScriptableObject.CreateInstance<SetIntAction>();
-            a2.ParameterKey = DialogueContextKeys.Counter; a2.Value = 2;
+            a2.Parameter = _counter; a2.Value = 2;
 
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
             var s  = new StartNodeData    { Id = "s",  NodeType = StartNodeData.NodeTypeId };

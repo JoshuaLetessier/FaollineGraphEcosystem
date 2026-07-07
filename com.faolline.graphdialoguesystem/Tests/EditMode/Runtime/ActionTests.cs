@@ -14,40 +14,44 @@ namespace Faolline.GraphDialogue.Tests
         public void SetBool_Writes()
         {
             var ctx = new DialogueContext();
+            var k = ParameterName.Bool("k");
             var a = Make<SetBoolAction>();
-            a.ParameterKey = "k"; a.Value = true;
+            a.Parameter = k; a.Value = true;
             a.Execute(ctx);
-            Assert.IsTrue(ctx.Get<bool>("k"));
+            Assert.IsTrue(ctx.Get<bool>(k));
         }
 
         [Test]
         public void SetInt_Writes()
         {
             var ctx = new DialogueContext();
+            var k = ParameterName.Int("k");
             var a = Make<SetIntAction>();
-            a.ParameterKey = "k"; a.Value = 42;
+            a.Parameter = k; a.Value = 42;
             a.Execute(ctx);
-            Assert.AreEqual(42, ctx.Get<int>("k"));
+            Assert.AreEqual(42, ctx.Get<int>(k));
         }
 
         [Test]
         public void SetFloat_Writes()
         {
             var ctx = new DialogueContext();
+            var k = ParameterName.Float("k");
             var a = Make<SetFloatAction>();
-            a.ParameterKey = "k"; a.Value = 1.25f;
+            a.Parameter = k; a.Value = 1.25f;
             a.Execute(ctx);
-            Assert.AreEqual(1.25f, ctx.Get<float>("k"));
+            Assert.AreEqual(1.25f, ctx.Get<float>(k));
         }
 
         [Test]
         public void SetString_Writes()
         {
             var ctx = new DialogueContext();
+            var k = ParameterName.String("k");
             var a = Make<SetStringAction>();
-            a.ParameterKey = "k"; a.Value = "v";
+            a.Parameter = k; a.Value = "v";
             a.Execute(ctx);
-            Assert.AreEqual("v", ctx.Get<string>("k"));
+            Assert.AreEqual("v", ctx.Get<string>(k));
         }
     }
 }

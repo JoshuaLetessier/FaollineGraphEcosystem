@@ -44,30 +44,32 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void ToggleBool_FlipsValue()
         {
-            _ctx.Set<bool>("flag", false);
+            var flag = ParameterName.Bool("flag");
+            _ctx.Set<bool>(flag, false);
             var a = ScriptableObject.CreateInstance<ToggleBoolAction>();
-            a.ParameterKey = "flag";
+            a.Parameter = flag;
             try
             {
                 a.Execute(_ctx);
-                Assert.IsTrue(_ctx.Get<bool>("flag"));
+                Assert.IsTrue(_ctx.Get<bool>(flag));
                 a.Execute(_ctx);
-                Assert.IsFalse(_ctx.Get<bool>("flag"));
+                Assert.IsFalse(_ctx.Get<bool>(flag));
             }
-            finally { Object.DestroyImmediate(a); }
+            finally { Object.DestroyImmediate(a); Object.DestroyImmediate(flag); }
         }
 
         [Test]
         public void ToggleBool_AbsentKey_SetsTrue()
         {
+            var flag = ParameterName.Bool("new_flag");
             var a = ScriptableObject.CreateInstance<ToggleBoolAction>();
-            a.ParameterKey = "new_flag";
+            a.Parameter = flag;
             try
             {
                 a.Execute(_ctx);
-                Assert.IsTrue(_ctx.Get<bool>("new_flag"));
+                Assert.IsTrue(_ctx.Get<bool>(flag));
             }
-            finally { Object.DestroyImmediate(a); }
+            finally { Object.DestroyImmediate(a); Object.DestroyImmediate(flag); }
         }
 
         // ── SetRandomIntAction ────────────────────────────────────────────────
@@ -75,8 +77,9 @@ namespace Faolline.GraphCore.Tests
         [Test]
         public void SetRandomInt_ValueInRange()
         {
+            var roll = ParameterName.Int("roll");
             var a = ScriptableObject.CreateInstance<SetRandomIntAction>();
-            a.ParameterKey = "roll";
+            a.Parameter = roll;
             a.Min = 1;
             a.Max = 6;
             try
@@ -84,11 +87,11 @@ namespace Faolline.GraphCore.Tests
                 for (int i = 0; i < 50; i++)
                 {
                     a.Execute(_ctx);
-                    var v = _ctx.Get<int>("roll");
+                    var v = _ctx.Get<int>(roll);
                     Assert.IsTrue(v >= 1 && v <= 6, $"Roll {v} out of [1,6]");
                 }
             }
-            finally { Object.DestroyImmediate(a); }
+            finally { Object.DestroyImmediate(a); Object.DestroyImmediate(roll); }
         }
     }
 }

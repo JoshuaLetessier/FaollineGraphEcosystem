@@ -1,29 +1,41 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Faolline.GraphCore
 {
     /// <summary>
-    /// Compares two float parameters from the context (e.g. <c>speed &gt; maxSpeed</c>).
-    /// Both absent keys default to 0.
+    /// Compares two <see cref="ParameterName"/> (float) parameters from the context (e.g. <c>speed &gt; maxSpeed</c>).
+    /// An unassigned or absent side defaults to 0.
     /// </summary>
     [CreateAssetMenu(menuName = "Faolline/Conditions/Float Compare (param vs param)", fileName = "FloatCompareCondition")]
-    public class FloatCompareCondition : BaseCondition
+    public class FloatCompareCondition : BaseCondition, IParameterReferencing
     {
-        [SerializeField, Tooltip("Left-hand side: context parameter key (float).")]
-        private string _leftKey;
+        [SerializeField, Tooltip("Left-hand side: parameter asset (type Float).")]
+        private ParameterName _left;
         [SerializeField, Tooltip("Comparison operator.")]
         private ComparisonOperator _operator = ComparisonOperator.Equal;
-        [SerializeField, Tooltip("Right-hand side: context parameter key (float).")]
-        private string _rightKey;
+        [SerializeField, Tooltip("Right-hand side: parameter asset (type Float).")]
+        private ParameterName _right;
 
-        public string LeftKey { get => _leftKey; set => _leftKey = value; }
+        public ParameterName Left { get => _left; set => _left = value; }
         public ComparisonOperator Operator { get => _operator; set => _operator = value; }
-        public string RightKey { get => _rightKey; set => _rightKey = value; }
+        public ParameterName Right { get => _right; set => _right = value; }
+
+        /// <inheritdoc/>
+        public IEnumerable<ParameterReference> ReferencedParameters
+        {
+            get
+            {
+                if (_left != null)  yield return new ParameterReference(_left,  ParameterType.Float);
+                if (_right != null) yield return new ParameterReference(_right, ParameterType.Float);
+            }
+        }
 
         public override bool Evaluate(BaseContext context)
         {
-            context.TryGet<float>(_leftKey, out var left);
-            context.TryGet<float>(_rightKey, out var right);
+            float left = 0f, right = 0f;
+            if (_left != null) context.TryGet<float>(_left, out left);
+            if (_right != null) context.TryGet<float>(_right, out right);
             return _operator.Matches(left.CompareTo(right));
         }
     }

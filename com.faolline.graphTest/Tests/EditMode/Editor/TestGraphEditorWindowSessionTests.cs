@@ -186,11 +186,16 @@ namespace Faolline.GraphTest.Tests
             var failCond = ScriptableObject.CreateInstance<TestIntCondition>();
             failCond.ParameterKey = "score"; failCond.Operator = ComparisonOperator.GreaterOrEqual; failCond.ExpectedValue = 10;
 
+            // Seed score=5 via a start-node enter action (Test* uses the raw-string context channel), replacing
+            // the old graph parameter declaration.
+            var setScore = ScriptableObject.CreateInstance<TestSetIntAction>();
+            setScore.ParameterKey = "score"; setScore.Value = 5;
+
             var graph = ScriptableObject.CreateInstance<TestGraph>();
             try
             {
-                graph.AddParameter(new ParameterData { Key = "score", Type = ParameterType.Int, DefaultValue = "5" });
                 var start  = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
+                start.OnEnterActions.Add(setScore);
                 var choice = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
                 choice.Choices.Add(new TestChoice { Id = "high",  Label = "High",     Condition = passCond });
                 choice.Choices.Add(new TestChoice { Id = "vhigh", Label = "VeryHigh", Condition = failCond });
@@ -211,6 +216,7 @@ namespace Faolline.GraphTest.Tests
             {
                 Object.DestroyImmediate(passCond);
                 Object.DestroyImmediate(failCond);
+                Object.DestroyImmediate(setScore);
                 Object.DestroyImmediate(graph);
             }
         }

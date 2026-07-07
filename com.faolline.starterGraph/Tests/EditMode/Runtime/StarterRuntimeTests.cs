@@ -51,16 +51,18 @@ namespace Faolline.StarterGraph.Tests
         [Test]
         public void CoreBoolCondition_ReadsTypedContextKey()
         {
+            var flag = ParameterName.Bool(StarterContextKeys.Flag);
             var c = ScriptableObject.CreateInstance<BoolCondition>();
-            c.ParameterKey = StarterContextKeys.Flag; c.ExpectedValue = true;
-            var ctx = new StarterContext { Flag = true };
+            c.Parameter = flag; c.ExpectedValue = true;
+            var ctx = new StarterContext();
+            ctx.Set<bool>(flag, true);
             try
             {
                 Assert.IsTrue(c.Evaluate(ctx));
-                ctx.Flag = false;
+                ctx.Set<bool>(flag, false);
                 Assert.IsFalse(c.Evaluate(ctx));
             }
-            finally { UnityEngine.Object.DestroyImmediate(c); }
+            finally { UnityEngine.Object.DestroyImmediate(c); UnityEngine.Object.DestroyImmediate(flag); }
         }
     }
 }

@@ -242,8 +242,8 @@ namespace Faolline.GraphCore
         }
 
         /// <summary>
-        /// As <see cref="BeginLocalContext()"/>, then seeds the new local context from
-        /// <paramref name="seedFrom"/>'s declared parameters (same parsing as
+        /// As <see cref="BeginLocalContext()"/>, then seeds the new local context from the
+        /// <see cref="ParameterName"/> defaults <paramref name="seedFrom"/> references (same discovery as
         /// <see cref="InitFromGraph"/>, written into the local overlay). A <c>null</c> graph seeds nothing.
         /// </summary>
         public void BeginLocalContext(BaseGraph seedFrom)
@@ -495,25 +495,28 @@ namespace Faolline.GraphCore
         // ── Graph initialization ──────────────────────────────────────────────
 
         /// <summary>
-        /// Populates this context from <paramref name="graph"/>'s declared parameters,
-        /// converting each <see cref="ParameterData.DefaultValue"/> string to the correct type.
-        /// Parse failures use <c>default(T)</c> and log a <c>[GraphCore]</c> warning.
+        /// Seeds this context with the defaults of every <see cref="ParameterName"/> the <paramref name="graph"/>
+        /// references from its actions/conditions (discovered via <see cref="GraphParameterScanner"/>). Parameters
+        /// are declaration-free: there is no per-graph parameter list — the asset carries the type and default,
+        /// keyed by its stable GUID. A key already present is left untouched (seed-if-absent), so seeding never
+        /// clobbers a value the host set first. A parameter used only from host code is not discovered here and
+        /// is the host's responsibility to set (via a <c>GraphParams</c> constant).
         /// </summary>
         public void InitFromGraph(BaseGraph graph) => SeedFromGraph(graph, _params);
 
         /// <summary>
-        /// Parses <paramref name="graph"/>'s declared parameters into <paramref name="target"/>,
-        /// converting each <see cref="ParameterData.DefaultValue"/> string to the correct type.
-        /// Parse failures use <c>default(T)</c> and log a <c>[GraphCore]</c> warning. Shared by
-        /// <see cref="InitFromGraph"/> (seeds global) and local-context seeding (seeds the overlay).
+        /// Seeds <paramref name="target"/> from the graph's referenced <see cref="ParameterName"/> defaults,
+        /// keyed by GUID, seed-if-absent. Shared by <see cref="InitFromGraph"/> (seeds global) and local-context
+        /// seeding (seeds the overlay).
         /// </summary>
         private static void SeedFromGraph(BaseGraph graph, Dictionary<string, object> target)
         {
-            foreach (var param in graph.Parameters)
+            foreach (var param in GraphParameterScanner.Collect(graph))
             {
-                if (param == null || string.IsNullOrEmpty(param.Key)) continue;
-                // The default is already stored in the field matching the parameter's type — no parsing.
-                target[param.Key] = param.DefaultValueBoxed;
+                var key = param.Key;
+                if (string.IsNullOrEmpty(key) || target.ContainsKey(key)) continue;
+                // The default is stored in the field matching the parameter's type — no parsing.
+                target[key] = param.DefaultValueBoxed;
             }
         }
 

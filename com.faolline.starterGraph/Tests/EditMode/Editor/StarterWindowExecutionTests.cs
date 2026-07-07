@@ -11,20 +11,25 @@ namespace Faolline.StarterGraph.Tests
     public class StarterWindowExecutionTests
     {
         private StarterGraphEditorWindow _window;
+        private ParameterName _flag;
 
         [SetUp]    public void SetUp()    => _window = ScriptableObject.CreateInstance<StarterGraphEditorWindow>();
-        [TearDown] public void TearDown() => Object.DestroyImmediate(_window);
+        [TearDown] public void TearDown()
+        {
+            Object.DestroyImmediate(_window);
+            if (_flag != null) Object.DestroyImmediate(_flag);
+        }
 
         // Start → Setup → Choice(Left gated by the Flag bool param, Right always) → A/B → End.
-        // The gating value comes from the declared Flag parameter's default (seeded via InitFromGraph), so no
-        // context-mutating action is needed.
-        private static StarterGraph BuildChoiceGraph(out BoolCondition cond)
+        // The gating value comes from the Flag ParameterName's default (true), seeded via InitFromGraph because
+        // the choice condition references it — so no context-mutating action is needed.
+        private StarterGraph BuildChoiceGraph(out BoolCondition cond)
         {
+            _flag = ParameterName.Bool(StarterContextKeys.Flag, true);
             cond = ScriptableObject.CreateInstance<BoolCondition>();
-            cond.ParameterKey = StarterContextKeys.Flag; cond.ExpectedValue = true;
+            cond.Parameter = _flag; cond.ExpectedValue = true;
 
             var g = ScriptableObject.CreateInstance<StarterGraph>();
-            g.AddParameter(new ParameterData { Key = StarterContextKeys.Flag, Type = ParameterType.Bool, DefaultValue = "true" });
 
             var start  = new StartNodeData            { Id = "s", NodeType = StartNodeData.NodeTypeId };
             var setup  = new StarterStatementNodeData { Id = "u", NodeType = StarterStatementNodeData.NodeTypeId };

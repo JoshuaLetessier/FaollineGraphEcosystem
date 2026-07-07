@@ -56,148 +56,21 @@ namespace Faolline.GraphCore.Editor
             SerializedGraph?.Update();
         }
 
-        // ── Shared parameter panel ────────────────────────────────────────────
-        // Every graph has parameters, so the panel lives here once instead of being copied per lib. The default
-        // value is edited with a field whose type matches the chosen ParameterType (no free-text parsing).
-
-        /// <summary>Appends the graph-parameters foldout (list + a typed add row). No-op without a graph.</summary>
-        protected void BuildParameterPanel()
-        {
-            if (Graph == null) return;
-
-            var foldout = new Foldout { text = "Parameters", value = true };
-
-            foreach (var param in Graph.Parameters)
-            {
-                if (param == null) continue;
-                var capturedKey = param.Key;
-                var row = new VisualElement { style = { flexDirection = FlexDirection.Row } };
-                row.Add(new Label(param.Key) { style = { flexGrow = 1 } });
-                row.Add(new Label(param.Type.ToString()) { style = { width = 56 } });
-                row.Add(new Label($"= {param.DefaultValue}") { style = { flexGrow = 1 } });
-                row.Add(new Button(() => RemoveParameter(capturedKey)) { text = "×" });
-                foldout.Add(row);
-            }
-
-            var addRow = new VisualElement { style = { flexDirection = FlexDirection.Row } };
-            var keyField  = new TextField("key") { style = { flexGrow = 1 } };
-            var typeField = new EnumField(ParameterType.Bool) { style = { width = 72 } };
-            var defaultHost = new VisualElement { style = { flexGrow = 1 } };
-            VisualElement defaultField = MakeDefaultField(ParameterType.Bool);
-            defaultHost.Add(defaultField);
-            typeField.RegisterValueChangedCallback(e =>
-            {
-                defaultHost.Clear();
-                defaultField = MakeDefaultField((ParameterType)e.newValue);
-                defaultHost.Add(defaultField);
-            });
-            var addBtn = new Button(() =>
-            {
-                var key = keyField.value?.Trim();
-                if (string.IsNullOrWhiteSpace(key)) return;
-                AddParameter(MakeParameter(key, (ParameterType)typeField.value, defaultField));
-            }) { text = "Add" };
-            addRow.Add(keyField);
-            addRow.Add(typeField);
-            addRow.Add(defaultHost);
-            addRow.Add(addBtn);
-            foldout.Add(addRow);
-
-            Add(foldout);
-        }
-
-        /// <summary>Clears the panel and rebuilds the no-selection content (used after parameter add/remove).</summary>
-        protected void RebuildParameterPanel()
-        {
-            Clear();
-            BuildNoSelectionContent();
-        }
+        // ── No-selection content ──────────────────────────────────────────────
+        // Parameters are declaration-free ParameterName assets (project assets dragged onto actions/conditions,
+        // like SignalName), so there is no per-graph parameter panel here anymore. The no-selection panel now
+        // only hosts lib-registered graph sections.
 
         /// <summary>
-        /// Builds the panel content shown when no node is selected. Default = the parameter panel. Override to add
-        /// lib-specific no-selection sections around it (e.g. a dialogue speakers list), then call
-        /// <see cref="BuildParameterPanel"/>. Subclasses call this from their <c>ClearInspector</c>.
+        /// Builds the panel content shown when no node is selected. Default = the lib-registered graph sections.
+        /// Override to add lib-specific no-selection sections, then call <c>base.BuildNoSelectionContent()</c>.
+        /// Subclasses call this from their <c>ClearInspector</c>.
         /// </summary>
         protected virtual void BuildNoSelectionContent()
         {
-            BuildParameterPanel();
             if (Graph != null)
                 foreach (var ext in InspectorExtensionRegistry.GraphSections)
                     ext(Graph, this, MarkGraphDirty);
-        }
-
-        /// <summary>Adds a fully-formed parameter to the graph and rebuilds the panel.</summary>
-        public void AddParameter(ParameterData param)
-        {
-            if (Graph == null || param == null) return;
-            Graph.AddParameter(param);
-            MarkGraphDirty();
-            RebuildParameterPanel();
-        }
-
-        /// <summary>Adds a parameter from a (legacy) string default — kept for existing callers/tests.</summary>
-        public void AddParameter(string key, ParameterType type, string defaultValue)
-            => AddParameter(new ParameterData { Key = key, Type = type, DefaultValue = defaultValue ?? string.Empty });
-
-        /// <summary>Adds a bool parameter (convenience).</summary>
-        public void AddBoolParameter(string key, bool defaultValue) => AddParameter(ParameterData.Bool(key, defaultValue));
-
-        /// <summary>Removes the first parameter with <paramref name="key"/>, regardless of type, and rebuilds.</summary>
-        public void RemoveParameter(string key)
-        {
-            if (Graph == null) return;
-            for (int i = Graph.Parameters.Count - 1; i >= 0; i--)
-                if (Graph.Parameters[i] != null && Graph.Parameters[i].Key == key)
-                {
-                    Graph.RemoveParameter(Graph.Parameters[i]);
-                    MarkGraphDirty();
-                    break;
-                }
-            RebuildParameterPanel();
-        }
-
-        /// <summary>Removes the first bool parameter with <paramref name="key"/> (convenience).</summary>
-        public void RemoveBoolParameter(string key)
-        {
-            if (Graph == null) return;
-            for (int i = Graph.Parameters.Count - 1; i >= 0; i--)
-                if (Graph.Parameters[i] != null && Graph.Parameters[i].Key == key && Graph.Parameters[i].Type == ParameterType.Bool)
-                {
-                    Graph.RemoveParameter(Graph.Parameters[i]);
-                    MarkGraphDirty();
-                    break;
-                }
-            RebuildParameterPanel();
-        }
-
-        // The default-value editor field, typed to the parameter type (Toggle / Integer / Float / Text).
-        private static VisualElement MakeDefaultField(ParameterType type)
-        {
-            switch (type)
-            {
-                case ParameterType.Int:     return new IntegerField { value = 0 };
-                case ParameterType.Float:   return new FloatField   { value = 0f };
-                case ParameterType.String:  return new TextField    { value = string.Empty };
-                case ParameterType.Vector2: return new Vector2Field { value = Vector2.zero };
-                case ParameterType.Vector3: return new Vector3Field { value = Vector3.zero };
-                case ParameterType.Color:   return new ColorField   { value = Color.white };
-                default:                    return new Toggle       { value = false };
-            }
-        }
-
-        // Builds a typed ParameterData from the add-row's key + typed default field.
-        private static ParameterData MakeParameter(string key, ParameterType type, VisualElement defaultField)
-        {
-            switch (type)
-            {
-                case ParameterType.Int:     return ParameterData.Int(key,     (defaultField as IntegerField)?.value ?? 0);
-                case ParameterType.Float:   return ParameterData.Float(key,   (defaultField as FloatField)?.value   ?? 0f);
-                case ParameterType.String:  return ParameterData.String(key,  (defaultField as TextField)?.value    ?? string.Empty);
-                case ParameterType.Vector2: return ParameterData.Vector2(key, (defaultField as Vector2Field)?.value ?? Vector2.zero);
-                case ParameterType.Vector3: return ParameterData.Vector3(key, (defaultField as Vector3Field)?.value ?? Vector3.zero);
-                case ParameterType.Color:   return ParameterData.Color(key,   (defaultField as ColorField)?.value   ?? Color.white);
-                default:                    return ParameterData.Bool(key,    (defaultField as Toggle)?.value        ?? false);
-            }
         }
 
         // ── Bound node + universal node sections ──────────────────────────────

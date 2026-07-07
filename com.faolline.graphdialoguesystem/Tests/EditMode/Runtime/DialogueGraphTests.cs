@@ -23,7 +23,7 @@ namespace Faolline.GraphDialogue.Tests
         }
 
         [Test]
-        public void Graph_RoundTrips_NodesEdgesParameters()
+        public void Graph_RoundTrips_NodesEdges()
         {
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
             try
@@ -33,12 +33,10 @@ namespace Faolline.GraphDialogue.Tests
                 graph.AddNode(start);
                 graph.AddNode(end);
                 graph.AddEdge(new BaseEdgeData { Id = "e0", FromNodeId = "start", ToNodeId = "end" });
-                graph.AddParameter(new ParameterData { Key = "k", Type = ParameterType.Bool, DefaultValue = "true" });
                 graph.EntryNodeId = "start";
 
                 Assert.AreEqual(2, graph.Nodes.Count);
                 Assert.AreEqual(1, graph.Edges.Count);
-                Assert.AreEqual(1, graph.Parameters.Count);
                 Assert.AreEqual("start", graph.EntryNodeId);
             }
             finally { Object.DestroyImmediate(graph); }

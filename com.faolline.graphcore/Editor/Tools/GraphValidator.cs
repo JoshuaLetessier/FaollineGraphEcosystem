@@ -149,8 +149,33 @@ namespace Faolline.GraphCore.Editor
             }
 
             CheckCircularAwaits(graph, nodes, edges, report);
+            CheckParameterTypeMismatches(graph, report);
 
             return report;
+        }
+
+        // ── Parameter type-safety ────────────────────────────────────────────
+        // A ParameterName asset carries the authoritative type. An action/condition tags each reference with the
+        // type it needs (via IParameterReferencing / ParameterReference). A mismatch (e.g. a SetIntAction wired to
+        // a Float parameter, or two differently-typed actions sharing one parameter) silently corrupts the key at
+        // runtime under the old raw-string model — here it is an authoring-time error. Reported once per distinct
+        // (parameter, wrong-expected-type) pair to avoid duplicate spam when a parameter is referenced many times.
+        private static void CheckParameterTypeMismatches(BaseGraph graph, GraphValidationReport report)
+        {
+            var reported = new HashSet<string>();
+            foreach (var reference in GraphParameterScanner.CollectReferences(graph))
+            {
+                var param = reference.Parameter;
+                if (param == null || param.Type == reference.ExpectedType) continue;
+
+                var dedupKey = $"{param.Key}|{reference.ExpectedType}";
+                if (!reported.Add(dedupKey)) continue;
+
+                report.Issues.Add(new GraphIssue(GraphIssueSeverity.Error, null,
+                    $"Parameter '{param.DisplayName}' is typed {param.Type} but is referenced as " +
+                    $"{reference.ExpectedType} by an action/condition. Fix the parameter's type or use a " +
+                    $"{reference.ExpectedType} parameter there — the types must match."));
+            }
         }
 
         // ── Circular await ───────────────────────────────────────────────────

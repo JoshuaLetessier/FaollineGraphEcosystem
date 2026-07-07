@@ -335,18 +335,33 @@ namespace Faolline.GraphGameFlow.Tests
             Assert.AreEqual(42, d.Context.Get<int>("seed"), "seeded state survives.");
         }
 
+        // Builds start → s → end where node 's' references parameter 'p' (default) through a ResumeConditions
+        // entry that is scanned by InitFromGraph but inert for linear traversal (never awaited). Lets a test
+        // assert whether the graph default was seeded, without the reference altering the flow.
+        private BaseGraph GraphDeclaringParam(ParameterName p)
+        {
+            var g = NewGraph("start");
+            var s = St("s");
+            var probe = ScriptableObject.CreateInstance<IntCondition>(); probe.Parameter = p; _so.Add(probe);
+            s.ResumeConditions.Add(probe);
+            g.AddNode(Start("start")); g.AddNode(s); g.AddNode(End("end"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "s" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "s", ToNodeId = "end" });
+            return g;
+        }
+
         [Test]
         public void BootWithContext_DoesNotInitFromGraph()
         {
-            var g = LinearGraph();
-            g.AddParameter(new ParameterData { Key = "p", Type = ParameterType.Int, DefaultValue = "1" });
+            var p = ParameterName.Int("p", 1); _so.Add(p);
+            var g = GraphDeclaringParam(p);
             var d = NewDriver(g, autoAdvance: true);
             var ctx = new GameFlowContext();
-            ctx.Set<int>("p", 5);   // pre-seeded; must NOT be reset to the graph default (1)
+            ctx.Set<int>(p, 5);   // pre-seeded; must NOT be reset to the graph default (1)
 
             d.Boot(ctx, null);
 
-            Assert.AreEqual(5, d.Context.Get<int>("p"), "a provided context is not re-initialised from the graph.");
+            Assert.AreEqual(5, d.Context.Get<int>(p), "a provided context is not re-initialised from the graph.");
         }
 
         [Test]
@@ -398,14 +413,14 @@ namespace Faolline.GraphGameFlow.Tests
         [Test]
         public void BootNoArgs_StillInitialisesFromGraph()
         {
-            var g = LinearGraph();
-            g.AddParameter(new ParameterData { Key = "p", Type = ParameterType.Int, DefaultValue = "7" });
+            var p = ParameterName.Int("p", 7); _so.Add(p);
+            var g = GraphDeclaringParam(p);
             var d = NewDriver(g, autoAdvance: true);
 
-            d.Boot();   // unchanged: fresh context + InitFromGraph
+            d.Boot();   // unchanged: fresh context + InitFromGraph (seeds referenced ParameterName defaults)
 
             Assert.IsNotNull(d.Context);
-            Assert.AreEqual(7, d.Context.Get<int>("p"), "no-arg Boot still initialises from the graph.");
+            Assert.AreEqual(7, d.Context.Get<int>(p), "no-arg Boot still initialises from the graph.");
         }
 
         [Test]
@@ -527,8 +542,9 @@ namespace Faolline.GraphGameFlow.Tests
             sub.AddEdge(new BaseEdgeData { FromNodeId = "sub_start", ToNodeId = "sub_st" });
             sub.AddEdge(new BaseEdgeData { FromNodeId = "sub_st", ToNodeId = "sub_end" });
 
+            var fromSub = ParameterName.Bool("from_sub"); _so.Add(fromSub);
             var setAction = ScriptableObject.CreateInstance<SetBoolAction>();
-            setAction.ParameterKey = "from_sub"; setAction.Value = true;
+            setAction.Parameter = fromSub; setAction.Value = true;
             _so.Add(setAction);
             subSt.OnEnterActions.Add(setAction);
 
@@ -546,7 +562,7 @@ namespace Faolline.GraphGameFlow.Tests
 
             d.Boot();
 
-            Assert.IsTrue(d.Context.TryGet<bool>("from_sub", out var v) && v,
+            Assert.IsTrue(d.Context.TryGet<bool>(fromSub, out var v) && v,
                 "sub-graph with inherited context writes into the parent's context.");
         }
 

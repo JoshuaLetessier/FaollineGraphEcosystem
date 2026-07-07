@@ -71,12 +71,6 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void BaseGraph_Parameters_IsNonNull_OnCreation()
-        {
-            Assert.IsNotNull(_graph.Parameters);
-        }
-
-        [Test]
         public void BaseGraph_EntryNodeId_CanBeSetAndRead()
         {
             _graph.EntryNodeId = "start-node-id";
@@ -94,20 +88,6 @@ namespace Faolline.GraphCore.Tests
             _graph.AddNode(node);
             Assert.AreEqual(1, _graph.Nodes.Count);
             Assert.AreSame(node, _graph.Nodes[0]);
-        }
-
-        [Test]
-        public void BaseGraph_AddParameter_AppearsInParameters()
-        {
-            var param = new ParameterData
-            {
-                Key = "HP",
-                Type = ParameterType.Int,
-                DefaultValue = "100"
-            };
-            _graph.AddParameter(param);
-            Assert.AreEqual(1, _graph.Parameters.Count);
-            Assert.AreEqual("HP", _graph.Parameters[0].Key);
         }
 
         [Test]

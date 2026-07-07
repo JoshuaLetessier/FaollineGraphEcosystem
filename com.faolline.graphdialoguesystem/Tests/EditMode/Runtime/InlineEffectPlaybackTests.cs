@@ -12,8 +12,9 @@ namespace Faolline.GraphDialogue.Tests
         [Test]
         public void EnterEffect_SetsState_BeforeStepEmitted_AndLaterConditionReadsIt()
         {
+            var flag = ParameterName.Bool("flag");
             var setFlag = ScriptableObject.CreateInstance<SetBoolAction>();
-            setFlag.ParameterKey = DialogueContextKeys.Flag; setFlag.Value = true;
+            setFlag.Parameter = flag; setFlag.Value = true;
 
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
             try
@@ -32,20 +33,21 @@ namespace Faolline.GraphDialogue.Tests
                     new CsvLocalizationProvider(DialoguePlayerTestGraphs.Csv, "en"));
 
                 bool flagAtLine = false;
-                player.OnLine += _ => flagAtLine = ctx.Flag;
+                player.OnLine += _ => flagAtLine = ctx.TryGet<bool>(flag, out var v) && v;
                 player.Start();
 
                 Assert.IsTrue(flagAtLine, "Enter effect must run before the line step is emitted.");
-                Assert.IsTrue(ctx.Flag, "Shared state carries the effect's value for later conditions.");
+                Assert.IsTrue(ctx.TryGet<bool>(flag, out var f) && f, "Shared state carries the effect's value for later conditions.");
             }
-            finally { Object.DestroyImmediate(setFlag); Object.DestroyImmediate(graph); }
+            finally { Object.DestroyImmediate(setFlag); Object.DestroyImmediate(flag); Object.DestroyImmediate(graph); }
         }
 
         [Test]
         public void ExitEffect_RunsBeforeAdvancing()
         {
+            var counter = ParameterName.Int("counter");
             var setCounter = ScriptableObject.CreateInstance<SetIntAction>();
-            setCounter.ParameterKey = DialogueContextKeys.Counter; setCounter.Value = 9;
+            setCounter.Parameter = counter; setCounter.Value = 9;
 
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
             try
@@ -65,16 +67,17 @@ namespace Faolline.GraphDialogue.Tests
                 var player = new DialoguePlayer(graph, ctx,
                     new CsvLocalizationProvider(DialoguePlayerTestGraphs.Csv, "en"));
 
+                int Read() => ctx.TryGet<int>(counter, out var v) ? v : 0;
                 int counterAtL2 = -1;
-                player.OnLine += step => { if (step.NodeId == "l2") counterAtL2 = ctx.Counter; };
+                player.OnLine += step => { if (step.NodeId == "l2") counterAtL2 = Read(); };
 
                 player.Start();    // pauses at l1
-                Assert.AreEqual(0, ctx.Counter, "Exit effect has not run yet at l1.");
+                Assert.AreEqual(0, Read(), "Exit effect has not run yet at l1.");
                 player.Advance();  // l1 exit (counter=9) â†’ l2
 
                 Assert.AreEqual(9, counterAtL2, "Exit effect must run before the next node is entered.");
             }
-            finally { Object.DestroyImmediate(setCounter); Object.DestroyImmediate(graph); }
+            finally { Object.DestroyImmediate(setCounter); Object.DestroyImmediate(counter); Object.DestroyImmediate(graph); }
         }
     }
 }

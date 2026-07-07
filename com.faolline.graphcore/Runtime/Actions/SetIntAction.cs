@@ -1,24 +1,33 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Faolline.GraphCore
 {
-    /// <summary>Universal action: writes a named int value into the execution context. Canonical home in GraphCore;
-    /// downstream libs subclass this.</summary>
+    /// <summary>Universal action: writes a fixed int value into the execution context under a
+    /// <see cref="ParameterName"/> asset's stable GUID key. Canonical home in GraphCore; downstream libs subclass
+    /// this.</summary>
     [CreateAssetMenu(menuName = "Faolline/Actions/Set Int", fileName = "SetIntAction")]
-    public class SetIntAction : BaseAction
+    public class SetIntAction : BaseAction, IParameterReferencing
     {
-        [SerializeField, Tooltip("Context parameter key to write. Must match a key declared on the graph's Parameters list.")]
-        private string _parameterKey;
-        [SerializeField, Tooltip("The int value written to the context parameter.")]
+        [SerializeField, Tooltip("Parameter asset to write. Drag a ParameterName (type Int); its stable GUID is the context key.")]
+        private ParameterName _parameter;
+        [SerializeField, Tooltip("The int value written to the parameter.")]
         private int _value;
 
-        /// <summary>The context parameter key to write.</summary>
-        public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }
+        /// <summary>The parameter asset to write.</summary>
+        public ParameterName Parameter { get => _parameter; set => _parameter = value; }
 
-        /// <summary>The int value to set on the context parameter.</summary>
+        /// <summary>The int value to set on the parameter.</summary>
         public int Value { get => _value; set => _value = value; }
 
         /// <inheritdoc/>
-        public override void Execute(BaseContext context) => context.Set<int>(_parameterKey, _value);
+        public IEnumerable<ParameterReference> ReferencedParameters { get { if (_parameter != null) yield return new ParameterReference(_parameter, ParameterType.Int); } }
+
+        /// <inheritdoc/>
+        public override void Execute(BaseContext context)
+        {
+            if (_parameter == null) return;
+            context.Set<int>(_parameter, _value);
+        }
     }
 }

@@ -4,6 +4,46 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.34.0]
+
+Parameter identity re-base (spec `033-parameter-identity-rebase`). Applies the proven `032` signal model to the
+last raw-string primitive — parameters. Unpublished ecosystem — clean break, no migration shim.
+
+### Added
+- **`ParameterName` asset — a typed, stable-GUID parameter definition.** `ScriptableObject, IStableGuidIdentity`
+  carrying a GUID `Key` (assigned in `OnEnable`, never editable, persisted via `StableGuidPersistence`), a
+  cosmetic `DisplayName`, a `ParameterType`, and a typed default (`DefaultValueBoxed`). `(string)ParameterName`
+  returns the GUID — so an asset-based action/condition keys on the stable identity. Renaming a parameter's
+  display name is now free (the GUID never changes; only the regenerated code symbol does). Factories
+  (`ParameterName.Bool/Int/Float/String/Vector2/Vector3/Color`) for code-first authoring and tests. The asset
+  IS the declaration: there is no per-graph parameter list anymore.
+- **`IParameterReferencing` + `ParameterReference` (parameter + expected type).** The opt-in contract that makes
+  parameters declaration-free: an action/condition exposes the `ParameterName`s it reads/writes, each tagged
+  with the type it expects. Implemented by every stock parameter action/condition.
+- **`GraphParameterScanner`** — walks a graph's action/condition sites (entry/resume conditions, enter/exit
+  actions, choice + edge conditions) and collects referenced parameters. Used by `InitFromGraph` (seed the
+  discovered parameters' defaults, seed-if-absent) and by the validator.
+- **`ParameterConstantsGenerator` → `GraphParams` class** (menu `Faolline ▸ Parameters ▸ Generate Constants`):
+  a `const string` per `ParameterName` asset — symbol from `DisplayName`, value = the GUID — the compile-checked
+  bridge for reading/writing asset parameters from pure host code. Shares its sanitize/collision core with the
+  signal generator via the new `ConstantsGeneratorCore`.
+- **Graph validator: parameter type-mismatch is now an error.** A `SetIntAction` wired to a `Float` parameter
+  (or two differently-typed references to one parameter) is caught at authoring time instead of silently
+  corrupting the key at runtime.
+
+### Changed / Breaking
+- **The stock parameter actions/conditions reference a `ParameterName` asset instead of a raw `_parameterKey`
+  string.** `SetInt/Bool/Float/String`, `AddInt/Float`, `SetRandomInt`, `ToggleBool`; `Int/Bool/Float/String`
+  conditions; the three `*CompareCondition`s — all now expose a `Parameter` (or `Left`/`Right`) `ParameterName`
+  field. The raw-string escape hatch stays at the `BaseContext` API level (`context.Set<int>("hp", …)`) per the
+  **islands** rule: asset parameters key on the GUID, raw literals key on themselves, the two never cross.
+- **`InitFromGraph` seeds discovered `ParameterName` defaults** (via `GraphParameterScanner`) instead of reading
+  a per-graph parameter list. The seeding entry points are unchanged for callers.
+- **Removed** `BaseGraph._parameters` / `Parameters` / `AddParameter` / `RemoveParameter`, the `ParameterData`
+  class, its `ParameterDataDrawer`, and the graph-parameter authoring panel in `BaseNodeInspectorView`
+  (parameters are now project assets dragged onto actions, exactly like `SignalName`). Committed sample graphs
+  that referenced parameters must be regenerated via their sample-builder menu items.
+
 ## [0.33.2]
 
 ### Added

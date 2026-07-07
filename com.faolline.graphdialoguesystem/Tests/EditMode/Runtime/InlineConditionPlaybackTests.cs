@@ -13,12 +13,14 @@ namespace Faolline.GraphDialogue.Tests
         public void GatedChoice_TogglesAvailability_WithContextValue()
         {
             // Option "b" gated by BoolCondition(flag == true).
+            var flag = ParameterName.Bool("flag");
             var gate = ScriptableObject.CreateInstance<BoolCondition>();
-            gate.ParameterKey = DialogueContextKeys.Flag; gate.ExpectedValue = true;
+            gate.Parameter = flag; gate.ExpectedValue = true;
             var graph = DialoguePlayerTestGraphs.WithChoice(gate);
             try
             {
-                var ctx = new DialogueContext { Flag = false };
+                var ctx = new DialogueContext();
+                ctx.Set<bool>(flag, false);
                 var player = new DialoguePlayer(graph, ctx,
                     new CsvLocalizationProvider(DialoguePlayerTestGraphs.Csv, "en"));
 
@@ -30,7 +32,7 @@ namespace Faolline.GraphDialogue.Tests
                 Assert.IsTrue(step.Options[0].Available, "Open option always available.");
                 Assert.IsFalse(step.Options[1].Available, "Gated option unavailable when flag=false.");
             }
-            finally { Object.DestroyImmediate(gate); Object.DestroyImmediate(graph); }
+            finally { Object.DestroyImmediate(gate); Object.DestroyImmediate(flag); Object.DestroyImmediate(graph); }
         }
 
         [Test]

@@ -89,11 +89,6 @@ namespace Faolline.StarterGraph.Tests
             inspector.RemoveChoice(choice, choice.Choices[0]);
             Assert.AreEqual(0, choice.Choices.Count);
 
-            // Typed parameter
-            inspector.AddParameter("score", ParameterType.Int, "5");
-            Assert.AreEqual(1, _graph.Parameters.Count);
-            Assert.AreEqual(ParameterType.Int, _graph.Parameters[0].Type);
-
             // SubGraph inherit toggle
             var sg = new SubGraphNodeData { Id = "sg", NodeType = SubGraphNodeData.NodeTypeId };
             inspector.SetInheritParentContext(sg, true);

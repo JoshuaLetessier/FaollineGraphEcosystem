@@ -1,21 +1,28 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Faolline.GraphCore
 {
-    /// <summary>Flips the bool at <see cref="ParameterKey"/> (false→true, true→false).
+    /// <summary>Flips the bool at <see cref="Parameter"/> (false→true, true→false).
     /// Defaults to true when the key is absent (toggling an unset flag sets it).</summary>
     [CreateAssetMenu(menuName = "Faolline/Actions/Toggle Bool", fileName = "ToggleBoolAction")]
-    public class ToggleBoolAction : BaseAction
+    public class ToggleBoolAction : BaseAction, IParameterReferencing
     {
-        [SerializeField, Tooltip("Context parameter key to toggle.")]
-        private string _parameterKey;
+        [SerializeField, Tooltip("Parameter asset to toggle. Drag a ParameterName (type Bool).")]
+        private ParameterName _parameter;
 
-        public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }
+        /// <summary>The parameter asset to toggle.</summary>
+        public ParameterName Parameter { get => _parameter; set => _parameter = value; }
 
+        /// <inheritdoc/>
+        public IEnumerable<ParameterReference> ReferencedParameters { get { if (_parameter != null) yield return new ParameterReference(_parameter, ParameterType.Bool); } }
+
+        /// <inheritdoc/>
         public override void Execute(BaseContext context)
         {
-            context.TryGet<bool>(_parameterKey, out var current);
-            context.Set<bool>(_parameterKey, !current);
+            if (_parameter == null) return;
+            context.TryGet<bool>(_parameter, out var current);
+            context.Set<bool>(_parameter, !current);
         }
     }
 }

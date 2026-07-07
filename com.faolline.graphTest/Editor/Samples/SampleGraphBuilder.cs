@@ -26,9 +26,9 @@ namespace Faolline.GraphTest.Editor
             var graph = ScriptableObject.CreateInstance<TestGraph>();
             AssetDatabase.CreateAsset(graph, AssetPath);
 
-            // ── Parameters (seed the context so conditions can read them) ─────────
-            graph.AddParameter(ParameterData.Bool(TestContextKeys.DoorOpen, false));
-            graph.AddParameter(ParameterData.Bool(TestContextKeys.FlagA,    false));
+            // The Test* actions/conditions use the raw-string context channel (TestContextKeys), so no parameter
+            // declaration is needed: intro's enter-action sets DoorOpen and the conditions read it back on the
+            // same raw keys (absent bool reads as false).
 
             // ── Sub-assets: actions & conditions ─────────────────────────────────
             var logIntro     = Sub<TestLogAction>(graph, "LogIntro");        logIntro.Message = "Entrée intro";
@@ -131,10 +131,8 @@ namespace Faolline.GraphTest.Editor
             var parent = ScriptableObject.CreateInstance<TestGraph>();
             AssetDatabase.CreateAsset(parent, AuthoringPath);
 
-            // Typed parameters (US3)
-            parent.AddParameter(ParameterData.Int(score, 0));
-            parent.AddParameter(ParameterData.Float(hp, 1f));
-            parent.AddParameter(ParameterData.String(pname, ""));
+            // The Test* typed actions/conditions use the raw-string context channel: the Setup node's enter
+            // actions set score/hp/name before the choice reads them, so no parameter declaration is needed.
 
             // Typed actions (US3)
             var logSetup = Sub<TestLogAction>(parent, "LogSetup"); logSetup.Message = "Setup: score=5, hp=0.3, name=hero";

@@ -16,8 +16,6 @@ namespace Faolline.GraphCore
         [SerializeField, HideInInspector] private string             _graphId;
         [SerializeReference] private List<BaseNodeData> _nodes      = new List<BaseNodeData>();
         [SerializeReference] private List<BaseEdgeData> _edges      = new List<BaseEdgeData>();
-        [SerializeField, Tooltip("Typed parameters declared on this graph. InitFromGraph seeds the context with these defaults.")]
-        private List<ParameterData>  _parameters = new List<ParameterData>();
         [SerializeField]   private List<GraphGroupData> _groups     = new List<GraphGroupData>();
         [SerializeField, HideInInspector] private string             _entryNodeId;
         [SerializeField, Tooltip("Maximum history entries kept by the runtime for GoBack / GoBackToCheckpoint. Default 20. Set to 0 for unlimited.")]
@@ -51,9 +49,6 @@ namespace Faolline.GraphCore
 
         /// <summary>All directed edges in this graph.</summary>
         public IReadOnlyList<BaseEdgeData> Edges => _edges;
-
-        /// <summary>All typed parameters declared on this graph.</summary>
-        public IReadOnlyList<ParameterData> Parameters => _parameters;
 
         /// <summary>Id of the node that serves as the graph entry point.</summary>
         public string EntryNodeId
@@ -99,12 +94,6 @@ namespace Faolline.GraphCore
 
         /// <summary>Removes an edge from this graph. Use from editor tooling only.</summary>
         public void RemoveEdge(BaseEdgeData edge) => _edges.Remove(edge);
-
-        /// <summary>Appends a parameter to this graph. Use from editor tooling only.</summary>
-        public void AddParameter(ParameterData parameter) => _parameters.Add(parameter);
-
-        /// <summary>Removes a parameter from this graph. Use from editor tooling only.</summary>
-        public void RemoveParameter(ParameterData parameter) => _parameters.Remove(parameter);
 
     }
 }

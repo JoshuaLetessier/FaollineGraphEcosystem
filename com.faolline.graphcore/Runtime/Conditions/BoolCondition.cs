@@ -1,40 +1,45 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace Faolline.GraphCore
 {
     /// <summary>
-    /// Universal condition: reads a named bool parameter from the context and compares it to an expected value.
-    /// Reads false (silently) when the key is absent — a not-yet-set flag is false, never throws; set
-    /// <see cref="WarnOnMissing"/> to log a warning instead. This is the canonical home for the primitive bool
-    /// condition: downstream libs that historically shipped their own (GraphStandard, GraphDialogue) now subclass
-    /// this so there is a single implementation and no cross-namespace ambiguity for a consumer using both.
+    /// Universal condition: reads a <see cref="ParameterName"/> (bool) from the context and compares it to an
+    /// expected value. Reads false (silently) when the parameter is unassigned or absent — a not-yet-set flag is
+    /// false, never throws; set <see cref="WarnOnMissing"/> to log a warning instead. This is the canonical home
+    /// for the primitive bool condition: downstream libs that historically shipped their own (GraphStandard,
+    /// GraphDialogue) now subclass this so there is a single implementation and no cross-namespace ambiguity.
     /// </summary>
     [CreateAssetMenu(menuName = "Faolline/Conditions/Bool", fileName = "BoolCondition")]
-    public class BoolCondition : BaseCondition
+    public class BoolCondition : BaseCondition, IParameterReferencing
     {
-        [SerializeField, Tooltip("Context parameter key to read and compare.")]
-        private string _parameterKey;
+        [SerializeField, Tooltip("Parameter asset to read and compare. Drag a ParameterName (type Bool).")]
+        private ParameterName _parameter;
         [SerializeField, Tooltip("The bool value this condition expects to find in the context.")]
         private bool _expectedValue;
-        [SerializeField, Tooltip("When enabled, logs a warning if the parameter key is absent from the context. When disabled (default), absent keys silently evaluate to false.")]
+        [SerializeField, Tooltip("When enabled, logs a warning if the parameter is absent from the context. When disabled (default), absent keys silently evaluate to false.")]
         private bool _warnOnMissing;
 
-        /// <summary>The context parameter key to evaluate.</summary>
-        public string ParameterKey { get => _parameterKey; set => _parameterKey = value; }
+        /// <summary>The parameter asset to evaluate.</summary>
+        public ParameterName Parameter { get => _parameter; set => _parameter = value; }
 
         /// <summary>The bool value this condition expects to find in the context.</summary>
         public bool ExpectedValue { get => _expectedValue; set => _expectedValue = value; }
 
-        /// <summary>When true, logs a warning if the key is absent (default false — absent reads as false silently).</summary>
+        /// <summary>When true, logs a warning if the parameter is absent (default false — absent reads as false silently).</summary>
         public bool WarnOnMissing { get => _warnOnMissing; set => _warnOnMissing = value; }
+
+        /// <inheritdoc/>
+        public IEnumerable<ParameterReference> ReferencedParameters { get { if (_parameter != null) yield return new ParameterReference(_parameter, ParameterType.Bool); } }
 
         /// <inheritdoc/>
         public override bool Evaluate(BaseContext context)
         {
-            if (!context.TryGet<bool>(_parameterKey, out var value))
+            if (_parameter == null) return false;
+            if (!context.TryGet<bool>(_parameter, out var value))
             {
                 if (_warnOnMissing)
-                    Debug.LogWarning($"[GraphCore] BoolCondition: parameter '{_parameterKey}' not found — false.");
+                    Debug.LogWarning($"[GraphCore] BoolCondition: parameter '{_parameter.DisplayName}' not found — false.");
                 return false;
             }
             return value == _expectedValue;

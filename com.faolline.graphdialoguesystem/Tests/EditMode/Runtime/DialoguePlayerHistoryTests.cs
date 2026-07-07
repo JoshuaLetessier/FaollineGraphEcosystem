@@ -10,10 +10,11 @@ namespace Faolline.GraphDialogue.Tests
     public class DialoguePlayerHistoryTests
     {
         // Start â†’ L1(enter Counter=1, checkpoint) â†’ L2(enter Counter=2) â†’ End
-        private static DialogueGraph Build(out SetIntAction a1, out SetIntAction a2)
+        private static DialogueGraph Build(out SetIntAction a1, out SetIntAction a2, out ParameterName counter)
         {
-            a1 = ScriptableObject.CreateInstance<SetIntAction>(); a1.ParameterKey = DialogueContextKeys.Counter; a1.Value = 1;
-            a2 = ScriptableObject.CreateInstance<SetIntAction>(); a2.ParameterKey = DialogueContextKeys.Counter; a2.Value = 2;
+            counter = ParameterName.Int("counter");
+            a1 = ScriptableObject.CreateInstance<SetIntAction>(); a1.Parameter = counter; a1.Value = 1;
+            a2 = ScriptableObject.CreateInstance<SetIntAction>(); a2.Parameter = counter; a2.Value = 2;
 
             var g = ScriptableObject.CreateInstance<DialogueGraph>();
             var s = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
@@ -33,29 +34,29 @@ namespace Faolline.GraphDialogue.Tests
         [Test]
         public void Back_RestoresEarlierState_AndReEmitsNode()
         {
-            var g = Build(out var a1, out var a2);
+            var g = Build(out var a1, out var a2, out var counter);
             try
             {
                 var ctx = new DialogueContext();
                 var player = new DialoguePlayer(g, ctx, new CsvLocalizationProvider(DialoguePlayerTestGraphs.Csv, "en"));
 
                 player.Start();    // at L1, counter=1
-                Assert.AreEqual(1, ctx.Counter);
+                Assert.AreEqual(1, ctx.Get<int>(counter));
                 player.Advance();  // at L2, counter=2
-                Assert.AreEqual(2, ctx.Counter);
+                Assert.AreEqual(2, ctx.Get<int>(counter));
 
                 player.Back();     // back to L1
-                Assert.AreEqual(1, ctx.Counter, "Step-back restores the earlier counter value.");
+                Assert.AreEqual(1, ctx.Get<int>(counter), "Step-back restores the earlier counter value.");
                 Assert.IsInstanceOf<LineStep>(player.CurrentStep);
                 Assert.AreEqual("l1", player.CurrentStep.NodeId, "Back re-emits the restored node.");
             }
-            finally { Object.DestroyImmediate(a1); Object.DestroyImmediate(a2); Object.DestroyImmediate(g); }
+            finally { Object.DestroyImmediate(a1); Object.DestroyImmediate(a2); Object.DestroyImmediate(counter); Object.DestroyImmediate(g); }
         }
 
         [Test]
         public void BackToCheckpoint_ReturnsToCheckpointNode()
         {
-            var g = Build(out var a1, out var a2);
+            var g = Build(out var a1, out var a2, out var counter);
             try
             {
                 var ctx = new DialogueContext();
@@ -67,7 +68,7 @@ namespace Faolline.GraphDialogue.Tests
 
                 Assert.AreEqual("l1", player.CurrentStep.NodeId, "Returns to the nearest checkpoint node.");
             }
-            finally { Object.DestroyImmediate(a1); Object.DestroyImmediate(a2); Object.DestroyImmediate(g); }
+            finally { Object.DestroyImmediate(a1); Object.DestroyImmediate(a2); Object.DestroyImmediate(counter); Object.DestroyImmediate(g); }
         }
     }
 }

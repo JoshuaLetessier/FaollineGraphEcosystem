@@ -60,8 +60,9 @@ namespace Faolline.GraphGameFlow.Tests
         public void Fire_ExecutesActionsOnContext()
         {
             var driver = CreateActiveDriver();
+            var testFlag = ParameterName.Bool("test_flag"); _so.Add(testFlag);
             var action = ScriptableObject.CreateInstance<SetBoolAction>();
-            action.ParameterKey = "test_flag"; action.Value = true;
+            action.Parameter = testFlag; action.Value = true;
             _so.Add(action);
 
             var triggerGo = new GameObject("Trigger");
@@ -71,7 +72,7 @@ namespace Faolline.GraphGameFlow.Tests
 
             trigger.Fire();
 
-            Assert.IsTrue(driver.Context.TryGet<bool>("test_flag", out var v) && v);
+            Assert.IsTrue(driver.Context.TryGet<bool>(testFlag, out var v) && v);
         }
 
         [Test]
@@ -96,8 +97,9 @@ namespace Faolline.GraphGameFlow.Tests
         public void FireOnce_PreventsDoubleFire()
         {
             var driver = CreateActiveDriver();
+            var counter = ParameterName.Int("counter"); _so.Add(counter);
             var action = ScriptableObject.CreateInstance<AddIntAction>();
-            action.ParameterKey = "counter"; action.Value = 1;
+            action.Parameter = counter; action.Value = 1;
             _so.Add(action);
 
             var triggerGo = new GameObject("Trigger");
@@ -110,7 +112,7 @@ namespace Faolline.GraphGameFlow.Tests
             trigger.Fire();
             trigger.Fire();
 
-            Assert.IsTrue(driver.Context.TryGet<int>("counter", out var v));
+            Assert.IsTrue(driver.Context.TryGet<int>(counter, out var v));
             Assert.AreEqual(1, v, "Should only fire once.");
             Assert.IsTrue(trigger.HasFired);
         }
@@ -119,8 +121,9 @@ namespace Faolline.GraphGameFlow.Tests
         public void ResetTrigger_AllowsRefire()
         {
             var driver = CreateActiveDriver();
+            var counter = ParameterName.Int("counter"); _so.Add(counter);
             var action = ScriptableObject.CreateInstance<AddIntAction>();
-            action.ParameterKey = "counter"; action.Value = 1;
+            action.Parameter = counter; action.Value = 1;
             _so.Add(action);
 
             var triggerGo = new GameObject("Trigger");
@@ -133,7 +136,7 @@ namespace Faolline.GraphGameFlow.Tests
             trigger.ResetTrigger();
             trigger.Fire();
 
-            Assert.IsTrue(driver.Context.TryGet<int>("counter", out var v));
+            Assert.IsTrue(driver.Context.TryGet<int>(counter, out var v));
             Assert.AreEqual(2, v);
         }
 
@@ -181,12 +184,14 @@ namespace Faolline.GraphGameFlow.Tests
         public void Guard_BlocksFireWhenFalse()
         {
             var driver = CreateActiveDriver();
+            var guardedFlag = ParameterName.Bool("guarded_flag"); _so.Add(guardedFlag);
+            var hasKey = ParameterName.Bool("has_key"); _so.Add(hasKey);
             var action = ScriptableObject.CreateInstance<SetBoolAction>();
-            action.ParameterKey = "guarded_flag"; action.Value = true;
+            action.Parameter = guardedFlag; action.Value = true;
             _so.Add(action);
 
             var guard = ScriptableObject.CreateInstance<BoolCondition>();
-            guard.ParameterKey = "has_key"; guard.ExpectedValue = true;
+            guard.Parameter = hasKey; guard.ExpectedValue = true;
             _so.Add(guard);
 
             var triggerGo = new GameObject("Trigger");
@@ -197,12 +202,12 @@ namespace Faolline.GraphGameFlow.Tests
             SetFireOnce(trigger, false);
 
             trigger.Fire();
-            Assert.IsFalse(driver.Context.TryGet<bool>("guarded_flag", out var v1) && v1,
+            Assert.IsFalse(driver.Context.TryGet<bool>(guardedFlag, out var v1) && v1,
                 "Guard is false (has_key not set) — action should not execute.");
 
-            driver.Context.Set<bool>("has_key", true);
+            driver.Context.Set<bool>(hasKey, true);
             trigger.Fire();
-            Assert.IsTrue(driver.Context.TryGet<bool>("guarded_flag", out var v2) && v2,
+            Assert.IsTrue(driver.Context.TryGet<bool>(guardedFlag, out var v2) && v2,
                 "Guard is now true — action should execute.");
         }
 
@@ -210,12 +215,14 @@ namespace Faolline.GraphGameFlow.Tests
         public void Guard_DoesNotConsumeFireOnce_WhenBlocked()
         {
             var driver = CreateActiveDriver();
+            var count = ParameterName.Int("count"); _so.Add(count);
+            var ready = ParameterName.Bool("ready"); _so.Add(ready);
             var action = ScriptableObject.CreateInstance<AddIntAction>();
-            action.ParameterKey = "count"; action.Value = 1;
+            action.Parameter = count; action.Value = 1;
             _so.Add(action);
 
             var guard = ScriptableObject.CreateInstance<BoolCondition>();
-            guard.ParameterKey = "ready"; guard.ExpectedValue = true;
+            guard.Parameter = ready; guard.ExpectedValue = true;
             _so.Add(guard);
 
             var triggerGo = new GameObject("Trigger");
@@ -228,10 +235,10 @@ namespace Faolline.GraphGameFlow.Tests
             trigger.Fire();
             Assert.IsFalse(trigger.HasFired, "Guard blocked — HasFired should still be false.");
 
-            driver.Context.Set<bool>("ready", true);
+            driver.Context.Set<bool>(ready, true);
             trigger.Fire();
             Assert.IsTrue(trigger.HasFired);
-            Assert.IsTrue(driver.Context.TryGet<int>("count", out var v) && v == 1);
+            Assert.IsTrue(driver.Context.TryGet<int>(count, out var v) && v == 1);
         }
 
         // ── Reflection helpers to set serialized fields in tests ─────────────

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
@@ -8,10 +9,22 @@ namespace Faolline.GraphQuest.Tests
     [TestFixture]
     public class QuestEvaluatorAutoEvaluateTests
     {
-        private static QuestGraph SimpleQuest()
+        // Governed parameters key on a GUID (islands): a condition and the ctx.Set that satisfies it must use the
+        // SAME ParameterName instance. Tracked and destroyed per-test.
+        private readonly List<Object> _created = new List<Object>();
+        private T Track<T>(T o) where T : Object { if (o != null) _created.Add(o); return o; }
+
+        [TearDown]
+        public void TearDown()
+        {
+            foreach (var o in _created) if (o != null) Object.DestroyImmediate(o);
+            _created.Clear();
+        }
+
+        private QuestGraph QuestCompletingOn(ParameterName flag)
         {
             var completeCond = ScriptableObject.CreateInstance<BoolCondition>();
-            completeCond.ParameterKey = "task_done";
+            completeCond.Parameter = flag;
             completeCond.ExpectedValue = true;
 
             return QuestBuilder.Create("auto_test")
@@ -25,7 +38,8 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void EnableAutoEvaluate_FiresOnParameterChange()
         {
-            var quest = SimpleQuest();
+            var taskDone = Track(ParameterName.Bool("task_done"));
+            var quest = QuestCompletingOn(taskDone);
             var ctx = new BaseContext();
             try
             {
@@ -35,7 +49,7 @@ namespace Faolline.GraphQuest.Tests
                 QuestState? reported = null;
                 eval.OnObjectiveStateChanged += (id, state) => { if (id == "obj_a") reported = state; };
 
-                ctx.Set<bool>("task_done", true);
+                ctx.Set<bool>(taskDone, true);
 
                 Assert.AreEqual(QuestState.Completed, reported);
             }
@@ -76,7 +90,8 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void DisableAutoEvaluate_StopsAutoEvaluation()
         {
-            var quest = SimpleQuest();
+            var taskDone = Track(ParameterName.Bool("task_done"));
+            var quest = QuestCompletingOn(taskDone);
             var ctx = new BaseContext();
             try
             {
@@ -87,7 +102,7 @@ namespace Faolline.GraphQuest.Tests
                 int changeCount = 0;
                 eval.OnObjectiveStateChanged += (_, __) => changeCount++;
 
-                ctx.Set<bool>("task_done", true);
+                ctx.Set<bool>(taskDone, true);
 
                 Assert.AreEqual(0, changeCount, "Should not auto-evaluate after disable.");
                 Assert.IsFalse(eval.IsAutoEvaluateEnabled);
@@ -98,7 +113,8 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void EnableAutoEvaluate_Twice_IsIdempotent()
         {
-            var quest = SimpleQuest();
+            var taskDone = Track(ParameterName.Bool("task_done"));
+            var quest = QuestCompletingOn(taskDone);
             var ctx = new BaseContext();
             try
             {
@@ -109,7 +125,7 @@ namespace Faolline.GraphQuest.Tests
                 int changeCount = 0;
                 eval.OnObjectiveStateChanged += (_, __) => changeCount++;
 
-                ctx.Set<bool>("task_done", true);
+                ctx.Set<bool>(taskDone, true);
 
                 Assert.AreEqual(1, changeCount, "Should fire once, not twice.");
             }
@@ -176,8 +192,9 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void AutoEvaluate_DoesNotTickTimers()
         {
+            var timedDone = Track(ParameterName.Bool("timed_done"));
             var completeCond = ScriptableObject.CreateInstance<BoolCondition>();
-            completeCond.ParameterKey = "timed_done";
+            completeCond.Parameter = timedDone;
             completeCond.ExpectedValue = true;
 
             var quest = QuestBuilder.Create("timer_test")
@@ -192,7 +209,7 @@ namespace Faolline.GraphQuest.Tests
                 var eval = new QuestEvaluator(quest, ctx);
                 eval.EnableAutoEvaluate();
 
-                ctx.Set<int>("unrelated", 42);
+                ctx.Set<int>("unrelated", 42);   // raw-island: unrelated to the timed_done parameter
 
                 var state = eval.GetObjectiveState("timed_obj");
                 Assert.AreEqual(QuestState.Active, state,
@@ -204,12 +221,14 @@ namespace Faolline.GraphQuest.Tests
         [Test]
         public void AutoEvaluate_ReEntrancyGuard_CoalescesIntoSingleReEvaluate()
         {
+            var done = Track(ParameterName.Bool("done"));
+            var rewarded = Track(ParameterName.Bool("rewarded"));
             var completeCond = ScriptableObject.CreateInstance<BoolCondition>();
-            completeCond.ParameterKey = "done";
+            completeCond.Parameter = done;
             completeCond.ExpectedValue = true;
 
             var rewardAction = ScriptableObject.CreateInstance<SetBoolAction>();
-            rewardAction.ParameterKey = "rewarded";
+            rewardAction.Parameter = rewarded;
             rewardAction.Value = true;
 
             var quest = QuestBuilder.Create("reentry_test")
@@ -223,10 +242,10 @@ namespace Faolline.GraphQuest.Tests
                 var eval = new QuestEvaluator(quest, ctx);
                 eval.EnableAutoEvaluate();
 
-                ctx.Set<bool>("done", true);
+                ctx.Set<bool>(done, true);
 
                 Assert.AreEqual(QuestState.Completed, eval.GetObjectiveState("obj"));
-                Assert.IsTrue(ctx.TryGet<bool>("rewarded", out var v) && v,
+                Assert.IsTrue(ctx.TryGet<bool>(rewarded, out var v) && v,
                     "Reward should have fired despite re-entrancy (reward sets a param during evaluate).");
             }
             finally { Object.DestroyImmediate(quest); }

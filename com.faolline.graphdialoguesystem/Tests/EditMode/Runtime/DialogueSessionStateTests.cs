@@ -97,10 +97,11 @@ namespace Faolline.GraphDialogue.Tests
         public void SaveAndRestore_ResumesFromSameNode_WithRestoredContext()
         {
             // Build: Start → L1(checkpoint, set counter=1) → L2(set counter=2) → End
+            var counter = ParameterName.Int("counter");
             var a1 = ScriptableObject.CreateInstance<SetIntAction>();
-            a1.ParameterKey = DialogueContextKeys.Counter; a1.Value = 1;
+            a1.Parameter = counter; a1.Value = 1;
             var a2 = ScriptableObject.CreateInstance<SetIntAction>();
-            a2.ParameterKey = DialogueContextKeys.Counter; a2.Value = 2;
+            a2.Parameter = counter; a2.Value = 2;
 
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
             try
@@ -125,7 +126,7 @@ namespace Faolline.GraphDialogue.Tests
                 // ── Original session: play to l1 and save ─────────────────────────
                 var player1 = new DialoguePlayer(graph, ctx1, provider);
                 player1.Start();     // paused at l1, counter=1
-                Assert.AreEqual(1, ctx1.Counter);
+                Assert.AreEqual(1, ctx1.Get<int>(counter));
 
                 var json = player1.SaveState().ToJson();
                 Assert.IsNotNull(json);
@@ -137,18 +138,19 @@ namespace Faolline.GraphDialogue.Tests
 
                 player2.RestoreFrom(state);
                 // l1's enter-action fires again → counter=1 again
-                Assert.AreEqual(1, ctx2.Counter, "Restored session re-enters the checkpoint node.");
+                Assert.AreEqual(1, ctx2.Get<int>(counter), "Restored session re-enters the checkpoint node.");
 
                 LineStep lastLine = null;
                 player2.OnLine += s2 => lastLine = s2;
                 player2.Advance();   // l1 → l2, counter=2
-                Assert.AreEqual(2, ctx2.Counter);
+                Assert.AreEqual(2, ctx2.Get<int>(counter));
                 Assert.AreEqual("l2", lastLine?.NodeId);
             }
             finally
             {
                 Object.DestroyImmediate(a1);
                 Object.DestroyImmediate(a2);
+                Object.DestroyImmediate(counter);
                 Object.DestroyImmediate(graph);
             }
         }

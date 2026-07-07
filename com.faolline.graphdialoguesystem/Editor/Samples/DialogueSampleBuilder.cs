@@ -54,19 +54,22 @@ namespace Faolline.GraphDialogue.Editor
             child.AddEdge(new BaseEdgeData { Id = Guid(), FromNodeId = cLine.Id,  ToNodeId = cEnd.Id,  PortName = "out" });
             AssetDatabase.CreateAsset(child, $"{Folder}/SampleSubDialogue.asset");
 
+            // ── Typed parameter as a stable-GUID sub-asset (the declaration) ─────────────
+            var flag = ParameterName.Bool(DialogueContextKeys.Flag, false); flag.name = "Flag";
+            AssetDatabase.AddObjectToAsset(flag, child);
+
             // ── Inline condition / action as sub-assets on the child (portable) ──────────
             var setVisited = ScriptableObject.CreateInstance<SetBoolAction>();
-            setVisited.ParameterKey = DialogueContextKeys.Flag; setVisited.Value = true; setVisited.name = "SetVisited";
+            setVisited.Parameter = flag; setVisited.Value = true; setVisited.name = "SetVisited";
             AssetDatabase.AddObjectToAsset(setVisited, child);
 
             var visitedTrue = ScriptableObject.CreateInstance<BoolCondition>();
-            visitedTrue.ParameterKey = DialogueContextKeys.Flag; visitedTrue.ExpectedValue = true; visitedTrue.name = "VisitedTrue";
+            visitedTrue.Parameter = flag; visitedTrue.ExpectedValue = true; visitedTrue.name = "VisitedTrue";
             AssetDatabase.AddObjectToAsset(visitedTrue, child);
 
             // ── Parent dialogue ──────────────────────────────────────────────────────────
             var graph = ScriptableObject.CreateInstance<DialogueGraph>();
             graph.AddSpeaker(mayor);
-            graph.AddParameter(ParameterData.Bool(DialogueContextKeys.Flag, false));
 
             var start  = new StartNodeData { Id = Guid(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
             var intro  = new DialogueLineNodeData { Id = "intro", NodeType = DialogueLineNodeData.NodeTypeId, Title = "Welcome traveller.", SpeakerKey = "npc_mayor", ExpressionKey = "happy", Position = new Vector2(240, 0) };

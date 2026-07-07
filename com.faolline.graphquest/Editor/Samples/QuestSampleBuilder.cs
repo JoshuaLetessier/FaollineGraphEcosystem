@@ -88,7 +88,7 @@ namespace Faolline.GraphQuest.Editor
         private static BaseCondition Bool(Object owner, string assetName, string paramKey)
         {
             var c = Sub<BoolCondition>(owner, assetName);
-            c.ParameterKey = paramKey;
+            c.Parameter = BoolParam(owner, paramKey);
             c.ExpectedValue = true;
             return c;
         }
@@ -96,9 +96,17 @@ namespace Faolline.GraphQuest.Editor
         private static BaseAction Reward(Object owner, string assetName, string paramKey)
         {
             var a = Sub<SetBoolAction>(owner, assetName);
-            a.ParameterKey = paramKey;
+            a.Parameter = BoolParam(owner, paramKey);
             a.Value = true;
             return a;
+        }
+
+        // A bool ParameterName asset (the declaration), stored as a sub-asset so the sample is self-contained.
+        private static ParameterName BoolParam(Object owner, string displayName)
+        {
+            var p = ParameterName.Bool(displayName); p.name = displayName;
+            AssetDatabase.AddObjectToAsset(p, owner);
+            return p;
         }
 
         private static BaseEdgeData Edge(string from, string to)

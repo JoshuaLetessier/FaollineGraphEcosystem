@@ -50,12 +50,12 @@ namespace Faolline.GraphDialogue.Tests
             Assert.AreEqual("{x}", DialogueTextInterpolator.Interpolate("{x}", null));
         }
 
-        // Integration: a graph parameter feeds a {token} in the resolved line text.
+        // Integration: a context value feeds a {token} in the resolved line text. The interpolator reads tokens
+        // by RAW string key, so the context is seeded on the raw "name" key (the raw-island channel).
         [Test]
         public void Player_InterpolatesLineTextFromContext()
         {
             var g = ScriptableObject.CreateInstance<DialogueGraph>();
-            g.AddParameter(new ParameterData { Key = "name", Type = ParameterType.String, DefaultValue = "Bob" });
             var s = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
             var l = new DialogueLineNodeData { Id = "l", NodeType = DialogueLineNodeData.NodeTypeId };
             var e = new EndNodeData { Id = "e", NodeType = EndNodeData.NodeTypeId };
@@ -65,7 +65,9 @@ namespace Faolline.GraphDialogue.Tests
             g.AddEdge(new BaseEdgeData { Id = "e2", FromNodeId = "l", ToNodeId = "e", PortName = "out" });
 
             var provider = new CsvLocalizationProvider("Key,en\nline_l,Hi {name}!\n", "en");
-            var player = new DialoguePlayer(g, new DialogueContext(), provider);
+            var ctx = new DialogueContext();
+            ctx.Set<string>("name", "Bob");
+            var player = new DialoguePlayer(g, ctx, provider);
             LineStep line = null;
             player.OnLine += s2 => line = s2;
             try
