@@ -138,7 +138,7 @@ namespace Faolline.GraphCore.Tests
         // ── Seeding ────────────────────────────────────────────────────────────────
 
         [Test]
-        public void BeginLocalContext_Seed_SeedsLocalFromGraphParameters()
+        public void BeginLocalContext_Seed_SeedsLocalFromGraphVariables()
         {
             var ctx = new BaseContext();
             var step = TrackObj(VariableDef.Int("Step", 3));
@@ -156,7 +156,7 @@ namespace Faolline.GraphCore.Tests
         // ── Persistence exclusion (inv.11) ──────────────────────────────────────────
 
         [Test]
-        public void GetAllParameters_ReturnsGlobalOnly_WhileScoped()
+        public void GetAllVariables_ReturnsGlobalOnly_WhileScoped()
         {
             var ctx = new BaseContext();
             ctx.Set<int>("Gold", 7);     // global

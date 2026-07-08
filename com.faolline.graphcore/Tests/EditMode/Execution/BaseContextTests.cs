@@ -118,7 +118,7 @@ namespace Faolline.GraphCore.Tests
         // ── OnVariableChanged ────────────────────────────────────────────────
 
         [Test]
-        public void OnParameterChanged_FiredOnSet()
+        public void OnVariableChanged_FiredOnSet()
         {
             var ctx = new BaseContext();
             object received = null;
@@ -130,7 +130,7 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void OnParameterChanged_NotFiredForDifferentKey()
+        public void OnVariableChanged_NotFiredForDifferentKey()
         {
             var ctx = new BaseContext();
             bool fired = false;
@@ -142,7 +142,7 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void OffParameterChanged_NotFiredAfterUnsubscribe()
+        public void OffVariableChanged_NotFiredAfterUnsubscribe()
         {
             var ctx = new BaseContext();
             int callCount = 0;
@@ -157,7 +157,7 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void OnParameterChanged_FiresOnFirstSet()
+        public void OnVariableChanged_FiresOnFirstSet()
         {
             var ctx = new BaseContext();
             int calls = 0;

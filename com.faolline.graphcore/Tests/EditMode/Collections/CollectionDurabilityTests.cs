@@ -37,7 +37,7 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void GetAllParameters_ExcludesCollections()
+        public void GetAllVariables_ExcludesCollections()
         {
             var ctx = new BaseContext();
             ctx.Set<int>("gold", 5);

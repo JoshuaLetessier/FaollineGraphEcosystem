@@ -104,7 +104,7 @@ namespace Faolline.GraphCore.Tests
         // ── CollectionDef ────────────────────────────────────────────────
 
         [Test]
-        public void CollectionName_ScanAndFix_RegeneratesOneDuplicate_KeepsTheOther()
+        public void CollectionDef_ScanAndFix_RegeneratesOneDuplicate_KeepsTheOther()
         {
             var a = CreateAt<CollectionDef>("ColA");
             var b = CreateAt<CollectionDef>("ColB");

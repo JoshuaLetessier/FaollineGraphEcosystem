@@ -8,7 +8,7 @@ namespace Faolline.GraphCore.Tests
         // ── VariableType enum ────────────────────────────────────────────────
 
         [Test]
-        public void ParameterType_HasExactlySevenValues()
+        public void VariableType_HasExactlySevenValues()
         {
             // The four primitives plus the three serialization-friendly Unity value types.
             // Object/GameObject references are intentionally excluded (they need a stable-id scheme).
@@ -17,7 +17,7 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void ParameterType_HasCorrectIntegerValues()
+        public void VariableType_HasCorrectIntegerValues()
         {
             Assert.AreEqual(0, (int)VariableType.Bool);
             Assert.AreEqual(1, (int)VariableType.Int);
@@ -95,7 +95,7 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void NullParameterName_ImplicitString_IsEmpty()
+        public void NullVariableDef_ImplicitString_IsEmpty()
         {
             VariableDef p = null;
             Assert.AreEqual(string.Empty, (string)p);

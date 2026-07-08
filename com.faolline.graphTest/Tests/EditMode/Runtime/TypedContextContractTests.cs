@@ -81,7 +81,7 @@ namespace Faolline.GraphTest.Tests
         }
 
         [Test]
-        public void Context_OnParameterChanged_FiresOnSet_AndStopsAfterOff()
+        public void Context_OnVariableChanged_FiresOnSet_AndStopsAfterOff()
         {
             var ctx = new BaseContext();
             int fired = 0; object got = null;

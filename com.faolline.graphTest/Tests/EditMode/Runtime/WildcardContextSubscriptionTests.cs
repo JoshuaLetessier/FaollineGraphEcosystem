@@ -14,7 +14,7 @@ namespace Faolline.GraphTest.Tests
         // ── OnAnyVariableChanged ─────────────────────────────────────────────
 
         [Test]
-        public void OnAnyParameterChanged_FiresOnSetInt()
+        public void OnAnyVariableChanged_FiresOnSetInt()
         {
             string changedKey = null;
             _ctx.OnAnyVariableChanged(k => changedKey = k);
@@ -25,7 +25,7 @@ namespace Faolline.GraphTest.Tests
         }
 
         [Test]
-        public void OnAnyParameterChanged_FiresForAllTypes()
+        public void OnAnyVariableChanged_FiresForAllTypes()
         {
             var keys = new System.Collections.Generic.List<string>();
             _ctx.OnAnyVariableChanged(k => keys.Add(k));
@@ -43,7 +43,7 @@ namespace Faolline.GraphTest.Tests
         }
 
         [Test]
-        public void OffAnyParameterChanged_StopsNotifications()
+        public void OffAnyVariableChanged_StopsNotifications()
         {
             int count = 0;
             System.Action<string> handler = _ => count++;
@@ -52,7 +52,7 @@ namespace Faolline.GraphTest.Tests
             _ctx.Set<int>("a", 1);
             Assert.AreEqual(1, count);
 
-            _ctx.OffAnyParameterChanged(handler);
+            _ctx.OffAnyVariableChanged(handler);
             _ctx.Set<int>("b", 2);
             Assert.AreEqual(1, count, "Should not fire after Off.");
         }

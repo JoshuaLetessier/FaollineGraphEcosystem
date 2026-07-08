@@ -57,7 +57,7 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void CollectionName_Key_IsAssignedOnEnable_NeverEmpty()
+        public void CollectionDef_Key_IsAssignedOnEnable_NeverEmpty()
         {
             var c = ScriptableObject.CreateInstance<CollectionDef>();
             Assert.IsFalse(string.IsNullOrEmpty(c.Key));
@@ -65,7 +65,7 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void CollectionName_Key_IsIndependentOfAssetName()
+        public void CollectionDef_Key_IsIndependentOfAssetName()
         {
             var a = ScriptableObject.CreateInstance<CollectionDef>(); a.name = "inventory";
             var b = ScriptableObject.CreateInstance<CollectionDef>(); b.name = "inventory";
@@ -74,7 +74,7 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void CollectionName_Key_UnaffectedByRename()
+        public void CollectionDef_Key_UnaffectedByRename()
         {
             var c = ScriptableObject.CreateInstance<CollectionDef>();
             var key = c.Key;

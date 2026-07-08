@@ -54,7 +54,7 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void Signals_ExcludedFrom_GetAllParameters_AndDeepClone()
+        public void Signals_ExcludedFrom_GetAllVariables_AndDeepClone()
         {
             var ctx = new BaseContext();
             ctx.Set<int>("Gold", 5);

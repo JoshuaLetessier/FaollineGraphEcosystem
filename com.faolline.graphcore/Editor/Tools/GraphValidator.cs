@@ -149,7 +149,7 @@ namespace Faolline.GraphCore.Editor
             }
 
             CheckCircularAwaits(graph, nodes, edges, report);
-            CheckParameterTypeMismatches(graph, report);
+            CheckVariableTypeMismatches(graph, report);
 
             return report;
         }
@@ -160,7 +160,7 @@ namespace Faolline.GraphCore.Editor
         // a Float parameter, or two differently-typed actions sharing one parameter) silently corrupts the key at
         // runtime under the old raw-string model — here it is an authoring-time error. Reported once per distinct
         // (parameter, wrong-expected-type) pair to avoid duplicate spam when a parameter is referenced many times.
-        private static void CheckParameterTypeMismatches(BaseGraph graph, GraphValidationReport report)
+        private static void CheckVariableTypeMismatches(BaseGraph graph, GraphValidationReport report)
         {
             var reported = new HashSet<string>();
             foreach (var reference in GraphVariableScanner.CollectReferences(graph))

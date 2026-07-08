@@ -450,7 +450,7 @@ namespace Faolline.GraphCore
         }
 
         /// <summary>Removes <paramref name="handler"/> from the wildcard parameter change list.</summary>
-        public void OffAnyParameterChanged(Action<string> handler)
+        public void OffAnyVariableChanged(Action<string> handler)
         {
             _anyParamSubs?.Remove(handler);
         }
