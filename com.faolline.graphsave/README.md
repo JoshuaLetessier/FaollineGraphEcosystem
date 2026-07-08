@@ -1,6 +1,6 @@
 # Faolline GraphSave
 
-**Version**: 0.6.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.32.0
+**Version**: 0.7.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0
 
 Optional persistence layer for the Faolline graph ecosystem. It is to saving what `graphlocalization` is to
 text: a neutral model plus a backend seam, so you plug in whatever store you want.
@@ -17,8 +17,11 @@ https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=com.faolline.
 
 ## What it gives you
 
-- **`GraphRunSnapshot`** — a serializable photo of a running graph: the `BaseContext`'s typed parameters and
-  named collections, plus the current node id. It is the whole save model.
+- **`GraphRunSnapshot`** — a serializable photo of a running graph: the `BaseContext`'s typed **variables**
+  (its `GetAllVariables()` snapshot — the Variable primitive, see graphcore's README) and named **collections**,
+  plus the current node id. **Signals are deliberately not captured** here except the durable raised-history
+  (`HasSignalBeenRaised`) — a transient wake-event has nothing to persist beyond "did it ever fire". It is the
+  whole save model.
   ```csharp
   // capture
   var snapshot = GraphRunSnapshot.Capture(runner, context);   // or Capture(context, graphId, nodeId)
@@ -47,7 +50,7 @@ graphsave ships **no** backend — it does not reinvent persistence. Two ways to
 ```
 com.faolline.graphsave/
   Runtime/
-    GraphRunSnapshot.cs      ← serializable save model (parameters + collections + node id)
+    GraphRunSnapshot.cs      ← serializable save model (variables + collections + raised-signal history + node id)
     IGraphSaveStore.cs       ← neutral slot-based store contract (Save / Load / Exists / Delete)
 ```
 
@@ -69,7 +72,7 @@ System.IO.File.WriteAllText(savePath, json);
 string json = System.IO.File.ReadAllText(savePath);
 var snapshot = JsonUtility.FromJson<GraphRunSnapshot>(json);
 
-// 5. Restore: rehydrates the context (parameters + collections) and re-enters the saved node
+// 5. Restore: rehydrates the context (variables + collections + raised-signal history) and re-enters the saved node
 snapshot.Restore(runner, graph, context);
 ```
 

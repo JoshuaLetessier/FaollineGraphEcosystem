@@ -1,6 +1,6 @@
 # com.faolline.graphTest
 
-**Version**: 0.1.2 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.17.0, `com.faolline.graphstandard` ≥ 0.12.0
+**Version**: 0.1.4 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphstandard` ≥ 0.12.0
 
 **Internal verification package — not for distribution.**
 
@@ -40,7 +40,8 @@ com.faolline.graphTest/
   Runtime/
     TestGraph.cs              ← Concrete graph asset for test fixtures
     TestContext.cs             ← Concrete context for test fixtures
-    TestContextKeys.cs         ← Typed parameter key constants
+    TestContextKeys.cs         ← Typed variable key constants (the Test* actions/conditions deliberately stay on
+                                  the raw-string channel — graphcore's islands escape hatch — never VariableDef)
     Actions/                   ← Test-only action implementations (recording, no real effects)
     Conditions/                ← Test-only condition implementations
   Editor/

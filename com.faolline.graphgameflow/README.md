@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.9.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.27.0, `com.faolline.graphsave` ≥ 0.5.0
+**Version**: 0.10.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphsave` ≥ 0.5.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -79,7 +79,7 @@ countdown: `if (flow.IsWaitingForTime) label.text = $"{flow.WaitRemaining:0.0}s"
 **`BootOnStart = false`** to stop auto-boot on Play and `Boot()` explicitly after configuring the driver.
 
 **Prepare the context / register executors before boot.** `Boot(GameFlowContext context, NodeExecutorRegistry
-registry)` runs the flow on a context **you** built and seeded (collections, parameters, services) and a
+registry)` runs the flow on a context **you** built and seeded (collections, variables, services) and a
 registry of **your** node executors. A supplied context is used as-is (not re-initialised from the graph, so
 your seeds survive; its scene loader is filled only when absent); nulls fall back to the defaults (`Boot()` is
 `Boot(null, null)`). This is the seam for hosting a progression/ability system on the driver's shared context —

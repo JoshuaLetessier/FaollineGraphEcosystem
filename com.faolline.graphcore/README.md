@@ -1,10 +1,11 @@
 # com.faolline.graphcore
 
-**Version**: 0.33.2 — **Unity**: 6000.x — **C#**: 9 / Roslyn
+**Version**: 0.35.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
 
 Shared foundation library for graph-based systems in the Faolline ecosystem. Provides the
-**data layer** (graph structure, nodes, edges, parameters) and the **execution runtime**
-(headless state machine, context blackboard, pluggable executors, SubGraph nesting, history).
+**data layer** (graph structure, nodes, edges) and the **execution runtime** (headless state
+machine, context blackboard, pluggable executors, SubGraph nesting, history) built around three
+sharply distinct **context primitives** — **Variables**, **Signals**, and **Collections**.
 
 ---
 
@@ -32,39 +33,128 @@ com.faolline.graphcore
 │
 ├── Runtime/
 │   ├── Graph/
-│   │   ├── BaseGraph           ScriptableObject container (nodes, edges, parameters, GraphId)
-│   │   └── BaseContext         Typed parameter blackboard (bool/int/float/string/Vector2/Vector3/Color)
+│   │   ├── BaseGraph           ScriptableObject container (nodes, edges, GraphId)
+│   │   └── BaseContext         Typed blackboard: variables + signals + collections + scopes
 │   ├── Nodes/
 │   │   ├── BaseNodeData        Abstract base for all nodes
 │   │   ├── StartNodeData       Graph entry point
 │   │   ├── StatementNodeData   Generic statement node
 │   │   ├── ChoiceNodeData      Branching node with named choices
 │   │   ├── EndNodeData         Terminal node (carries EndReason)
-│   │   └── SubGraphNodeData    Delegates execution to a nested BaseGraph
+│   │   ├── SubGraphNodeData    Delegates execution to a nested BaseGraph
+│   │   └── GraphLinkNodeData   Non-executing documentary cross-reference
 │   ├── Edges/
 │   │   └── BaseEdgeData        Directed connection between two nodes (optional condition)
-│   ├── Parameters/
-│   │   ├── ParameterData       Typed parameter declaration on a graph
-│   │   └── ParameterType       Enum: Bool | Int | Float | String | Vector2 | Vector3 | Color
+│   ├── Variables/
+│   │   ├── VariableDef             Stable-GUID typed variable asset (identity + type + default)
+│   │   ├── VariableType             Enum: Bool | Int | Float | String | Vector2 | Vector3 | Color
+│   │   ├── IVariableReferencing     Contract: "this action/condition reads/writes these VariableDefs"
+│   │   └── GraphVariableScanner     Walks a graph's actions/conditions to discover referenced variables
+│   ├── Signals/
+│   │   └── SignalDef               Stable-GUID signal asset (wake-event + durable latch identity)
+│   ├── Collections/
+│   │   ├── CollectionDef           Stable-GUID collection-key asset
+│   │   └── CollectionEntry         Stable-GUID collection-item asset
 │   ├── Choices/
 │   │   └── BaseChoice          Named branch target on a ChoiceNodeData
 │   ├── Actions/
 │   │   └── BaseAction          ScriptableObject — executed on node enter/exit
 │   ├── Conditions/
 │   │   └── BaseCondition       ScriptableObject — guards node entry or edge traversal
+│   ├── IStableGuidIdentity     Interface shared by BaseGraph/VariableDef/SignalDef/CollectionDef/CollectionEntry
+│   ├── StableGuidPersistence   Editor-only GUID-to-disk flush (auto-heal + PersistAll for CI)
 │   └── Execution/
 │       ├── INodeExecutor       Pluggable executor interface (Execute + default-no-op Undo)
 │       ├── NodeExecutorRegistry Maps NodeType strings to INodeExecutor instances
 │       ├── BaseRunner          Headless state machine — drives graph traversal
-│       ├── RunnerState         Idle | NodeReady | Paused | Ended
+│       ├── RunnerState         Idle | NodeReady | Paused | Ended | WaitingForSignal | WaitingForTime
 │       ├── GraphExecutionState One stack frame (graph + current node + context)
 │       ├── HistoryEntry        Snapshot for GoBack / GoBackToCheckpoint
 │       └── GraphCycleException Thrown on SubGraph cycle detection
+│
+├── Editor/Tools/
+│   ├── GraphValidator                Structural + type-safety lint (menu: Validate Selected Graph)
+│   ├── SignalConstantsGenerator      → GraphSignals class    (menu: Signals ▸ Generate Constants)
+│   ├── VariableConstantsGenerator    → GraphVariables class  (menu: Variables ▸ Generate Constants)
+│   └── ConstantsGeneratorCore        Shared sanitize/collision core for both generators
 │
 └── Tests/EditMode/
     ├── DataLayer/              Unit tests for graph structure types
     └── Execution/              Unit tests for BaseContext, BaseRunner, SubGraph, History
 ```
+
+---
+
+## The three context primitives
+
+Everything a running graph reads or writes lives on `BaseContext`, split into three primitives
+chosen by **what capability the data needs** — not by what shape it happens to be stored in. Mixing
+them up is the single most common early-authoring mistake, so here they are side by side:
+
+| | **Variable** | **Signal** | **Collection** |
+|---|---|---|---|
+| **What it is** | a durable, typed value that changes over time (hp, score, a flag) | a transient wake-event + a durable "has this ever fired" latch | a durable named set of items, each with a quantity (inventory, visited rooms) |
+| **Governed asset** | `VariableDef` | `SignalDef` | `CollectionDef` (the set's key) + `CollectionEntry` (an item) |
+| **Carries a type?** | yes — `VariableType` (Bool/Int/Float/String/Vector2/Vector3/Color) | no | items are opaque GUID strings |
+| **Carries a default?** | yes, typed | no | no |
+| **Read/write API** | `Set<T>` / `Get<T>` / `TryGet<T>` / `Has` | `RaiseSignal` / `OnSignal` / `HasSignalBeenRaised` / `ForgetSignal` | `AddToCollection` / `RemoveFromCollection` / `CollectionContains` / `CollectionCount` / `…ItemCount` |
+| **Can wake a parked node?** | **no** | **yes** — the only primitive `BaseNodeData.AwaitSignalName` can wait on | no |
+| **Notifications** | `OnVariableChanged` + `OnAnyVariableChanged` | `OnSignal` + `OnAnySignalRaised` | `OnCollectionChanged` + `OnAnyCollectionChanged` |
+| **Declaration** | declaration-free — `InitFromGraph` **discovers** every `VariableDef` a graph's actions/conditions reference (via `IVariableReferencing`) and seeds its default | none — a signal exists the moment it is first raised or awaited | none — a collection exists the moment its first item is added |
+| **Generated code constants** | `GraphVariables` (menu `Faolline ▸ Variables ▸ Generate Constants`) | `GraphSignals` (menu `Faolline ▸ Signals ▸ Generate Constants`) | *(none yet)* |
+
+**Why the split is load-bearing, not incidental**: a Variable is a *quiet* write (nothing reacts unless
+something explicitly subscribed), a Signal is a *waking* write (it can pull a parked node out of
+`WaitingForSignal`). Folding them into one "typed signal" primitive would have to re-invent that
+quiet-vs-waking distinction from scratch — so graphcore keeps them separate on purpose. If a graph
+needs to resume when a **variable** crosses a threshold (e.g. "continue when hp ≤ 0"), combine the
+two: bridge the variable's `OnVariableChanged`/`OnAnyVariableChanged` into a `RaiseSignal`, and let the
+awaiting node's `ResumeConditions` re-check the variable each time the signal fires. See
+[Authoring patterns](#authoring-patterns).
+
+### Identity: stable GUID assets, not strings
+
+`VariableDef`, `SignalDef`, `CollectionDef`, and `CollectionEntry` — plus `BaseGraph` itself — all
+implement `IStableGuidIdentity`: a GUID assigned once in `OnEnable`, never editable, persisted to
+disk (`StableGuidPersistence`) and covered by the editor's duplicate-GUID detector. The asset's
+**display name is purely cosmetic** — renaming it (or the file) never changes the identity, so
+renaming is *free*:
+
+```csharp
+VariableDef hp = /* your Hp.asset */;
+context.Set<int>(hp, 100);          // keys on hp.Key (the GUID), via an implicit string conversion
+context.Get<int>(hp);               // same GUID — survives renaming DisplayName or the asset file
+```
+
+**Islands**: an asset (`VariableDef`/`SignalDef`/`CollectionDef`) keys on its GUID; the raw-string
+API (`context.Set<int>("hp", …)`, `RaiseSignal("advance")`) keys on the literal you typed. **The two
+never cross** — a raw `RaiseSignal("advance")` does not wake a node awaiting the `SignalDef` asset
+named "advance", and a raw `Set<int>("hp", …)` does not feed a condition reading the `VariableDef`
+asset. This is deliberate: the raw channel is the escape-hatch for dynamic/code-first/quick use; the
+asset channel is the compile-checked, rename-safe, drag-and-drop authoring surface. Pick one per key
+and stay on it — don't mix.
+
+To reference an asset from pure host code (no held reference), generate constants:
+
+```csharp
+// Faolline ▸ Variables ▸ Generate Constants  →  Assets/Generated/GraphVariables.cs
+context.Set<int>(GraphVariables.Hp, 100);     // GraphVariables.Hp's VALUE is the VariableDef's GUID
+
+// Faolline ▸ Signals ▸ Generate Constants    →  Assets/Generated/GraphSignals.cs
+context.RaiseSignal(GraphSignals.BossDefeated);
+```
+
+The generated **symbol** comes from the asset's `DisplayName` (renaming it regenerates a new symbol,
+breaking stale code loudly at compile — the intended, safe rename); the generated **value** is the
+GUID (never changes, so saves/awaits/comparisons keep matching across the rename).
+
+### Type-safety (Variables only)
+
+A `VariableDef` carries a `VariableType`; every action/condition that references one implements
+`IVariableReferencing`, tagging its reference with the type it expects. `GraphValidator` cross-checks
+this — wiring a `SetIntAction` to a `Float`-typed `VariableDef` (or two differently-typed actions to
+the same `VariableDef`) is a validator **error**, caught at authoring time instead of silently
+corrupting the stored value at runtime.
 
 ---
 
@@ -79,10 +169,13 @@ com.faolline.graphcore
 | `GraphId` | Stable GUID, assigned once on `OnEnable`, never overwritten |
 | `Nodes` | `IReadOnlyList<BaseNodeData>` |
 | `Edges` | `IReadOnlyList<BaseEdgeData>` |
-| `Parameters` | `IReadOnlyList<ParameterData>` — declared parameters for `BaseContext.InitFromGraph` |
 | `EntryNodeId` | Id of the node where execution starts |
 | `HistoryDepth` | Max history entries (default: 20; 0 = unlimited) |
-| `AddNode / AddEdge / AddParameter` | Mutation helpers (use from tooling only) |
+| `AddNode / AddEdge` | Mutation helpers (use from tooling only) |
+
+There is **no declared parameter/variable list on the graph** — a graph's variables are whichever
+`VariableDef` assets its actions/conditions reference; see
+[The three context primitives](#the-three-context-primitives).
 
 Create a graph programmatically:
 
@@ -108,12 +201,13 @@ All nodes derive from `BaseNodeData`. Key members:
 | `OnEnterActions` | `List<BaseAction>` — run after conditions pass |
 | `OnExitActions` | `List<BaseAction>` — run before advancing |
 | `IsCheckpoint` | If `true`, `GoBackToCheckpoint` can restore to this node |
-| `AwaitSignalName` | When set, entering the node **parks** the runner until `RaiseSignal(name)` is raised (0.4.0) |
+| `AwaitSignalName` / `AwaitSignals` | When set, entering the node **parks** the runner until a matching `SignalDef`/raw signal is raised (0.4.0; asset list 0.26.0) — the **only** primitive that can resume a parked node |
 | `ResumeConditions` | `List<BaseCondition>` — optional gate a matching await-signal must pass to resume; empty = none. A failing gate ignores the raise and keeps the node parked (re-armable) (0.7.0) |
 | `WaitDuration` | When `> 0`, entering the node holds for this many seconds of host-fed time via `Tick` before advancing (0.6.0) |
 
-`AwaitSignalName` and `WaitDuration` are append-only universal metadata on every node — they make graphs
-*wait*: on an external cue (a signal) or on elapsed time. See **Signals & timed waits** under the runner.
+`AwaitSignalName`/`AwaitSignals` and `WaitDuration` are append-only universal metadata on every
+node — they make graphs *wait*: on an external cue (a Signal — never a Variable or Collection change
+directly) or on elapsed time. See **Signals & timed waits** under the runner.
 
 Built-in node types and their `NodeTypeId` constants:
 
@@ -177,25 +271,31 @@ their own (Locked/Available/Completed). Compiled out of player builds.
 
 ### BaseContext
 
-Typed parameter blackboard. No Unity lifecycle dependency.
+Typed blackboard for the three context primitives (Variables / Signals / Collections — see
+[above](#the-three-context-primitives)). No Unity lifecycle dependency.
 
 ```csharp
 var ctx = new BaseContext();
 
-// Read / write
+// Variables — raw-string (islands escape hatch)
 ctx.Set<int>("Score", 0);
 int score = ctx.Get<int>("Score");        // throws KeyNotFoundException if absent
 bool ok   = ctx.TryGet<int>("Score", out int v);
 bool has  = ctx.Has("Score");
 
+// Variables — governed asset (VariableDef implicitly converts to its GUID string)
+ctx.Set<int>(hpVariableDef, 100);
+ctx.Get<int>(hpVariableDef);
+
 // Supported types: bool, int, float, string, Vector2, Vector3, Color
 // Unsupported types (object/GameObject references) throw ArgumentException on Set<T>
 
-// Change notifications (per key)
-ctx.OnParameterChanged("Score", val => Debug.Log($"Score: {val}"));
-ctx.OffParameterChanged("Score", handler);
+// Change notifications (per key, either channel)
+ctx.OnVariableChanged("Score", val => Debug.Log($"Score: {val}"));
+ctx.OffVariableChanged("Score", handler);
+ctx.OnAnyVariableChanged(key => Debug.Log($"{key} changed"));
 
-// Initialize from graph's declared ParameterData defaults
+// Seed every VariableDef the graph's actions/conditions reference (declaration-free — no per-graph list)
 ctx.InitFromGraph(graph);
 
 // Deep-clone (values only, no subscribers)
@@ -316,7 +416,8 @@ runner.OnNodeCompleted += node =>
 When `BaseRunner` encounters a `SubGraphNodeData` it pushes a new stack frame and enters
 the sub-graph. On `EndNodeData` inside the sub-graph, the frame is popped and the parent
 resumes automatically. Context is either shared (`InheritParentContext = true`) or isolated
-(`false` — fresh `BaseContext` initialized from the sub-graph's declared parameters).
+(`false` — fresh `BaseContext`, seeded from whichever `VariableDef`s the sub-graph's own
+actions/conditions reference).
 
 Cycle detection is automatic: if the sub-graph's `GraphId` is already on the stack,
 `GraphCycleException` is thrown.
@@ -342,7 +443,9 @@ current node before restoring.
 ## Signals & timed waits
 
 graphcore graphs can **wait** — for an external cue or for elapsed time — and the host drives both. No
-`MonoBehaviour`; the host (e.g. a driver) decides when to feed signals and time.
+`MonoBehaviour`; the host (e.g. a driver) decides when to feed signals and time. Only a **Signal**
+(never a Variable or a Collection change) can resume a parked node — see
+[The three context primitives](#the-three-context-primitives) for why that split is deliberate.
 
 **Signals** (0.4.0): set `BaseNodeData.AwaitSignalName` to park the runner on entry. The host raises a
 signal; if the current node awaits exactly that name, the runner advances as `Proceed` would. Delivery to
@@ -383,17 +486,24 @@ runner.Tick(Time.deltaTime);               // each frame; advances once the dura
 If a node sets both, the signal wait takes precedence. `StartFrom(graph, nodeId, ctx, registry)` starts at a
 given node (e.g. restoring a saved session) instead of the entry node.
 
-## Context: parameters, signals, collections, scopes
+## Context API reference
 
-`BaseContext` is more than a typed blackboard:
+Quick reference for the full `BaseContext` surface, grouped by primitive (see
+[The three context primitives](#the-three-context-primitives) for the conceptual model and the
+identity/islands rules):
 
-- **Parameters** — `Set/Get/TryGet/Has` for `bool`/`int`/`float`/`string`/`Vector2`/`Vector3`/`Color`, with `OnParameterChanged`.
+- **Variables** — `Set<T>`/`Get<T>`/`TryGet<T>`/`Has` for `bool`/`int`/`float`/`string`/`Vector2`/`Vector3`/`Color`,
+  with `OnVariableChanged`/`OffVariableChanged`/`OnAnyVariableChanged`/`OffAnyVariableChanged`, and
+  `GetAllVariables` (snapshot for serialization). Governed via `VariableDef` or raw-string (islands).
 - **Signals** — `RaiseSignal(name[, payload])`, `OnSignal`/`OffSignal`, `TryGetLastSignal` (0.4.0),
   `HasSignalBeenRaised`/`ForgetSignal` (durable history, 0.22.0), and `OnAnySignalRaised`/`OffAnySignalRaised`
-  (wildcard, fires after per-name handlers, 0.23.0).
-- **Collections** (0.4.0) — named string-sets for save-friendly state (inventory, visited rooms, a
-  completed-set): `AddToCollection`/`RemoveFromCollection`/`CollectionContains`/`CollectionCount`/
-  `GetCollection`/`ClearCollection`/`OnCollectionChanged`/`GetAllCollections`. Deep-copied by `DeepClone`.
+  (wildcard, fires after per-name handlers, 0.23.0). Governed via `SignalDef` or raw-string (islands).
+- **Collections** (0.4.0; ordered + quantities since 0.31.0) — named sets for save-friendly state (inventory,
+  visited rooms, a completed-set): `AddToCollection`/`RemoveFromCollection` (plain or with a `count` for
+  stacking), `CollectionContains`/`CollectionCount`/`CollectionItemCount`, `GetCollection`/
+  `GetCollectionWithCounts`, `ClearCollection`, `OnCollectionChanged`/`OnAnyCollectionChanged`,
+  `GetAllCollections`. Deep-copied by `DeepClone`. Governed via `CollectionDef`/`CollectionEntry` or
+  raw-string (islands).
 - **Scoped (global + local) contexts** (0.3.0) — a sub-graph can ride the parent context with a fresh
   **local overlay** (`BeginLocalContext`/`EndLocalContext`); reads fall through to global, writes land local
   and are discarded when the scope ends. Used by `SubGraphNodeData.OpensScope`.
@@ -435,6 +545,26 @@ consumer owns the **presentation** — the same separation the dialogue/quest li
 `SignalRaisedCondition` if a later branch should gate on "the round was played", and note that a
 `QuestEvaluator` with `EnableAutoEvaluate()` now re-derives on raised signals (0.23.0).
 
+### Resuming a node on a Variable threshold ("await hp ≤ 0")
+
+Only a Signal can resume a parked node (see [The three context primitives](#the-three-context-primitives)),
+but combining Variables with Signals gets you a fully general condition-await with no new primitive needed.
+Bridge once, host-side:
+
+```csharp
+context.OnAnyVariableChanged(_ => context.RaiseSignal("Recheck"));   // generic "something changed" tick
+```
+
+…and give the parked node a `ResumeCondition` instead of relying on the signal name alone:
+
+```csharp
+node.AwaitSignalName = "Recheck";
+node.ResumeConditions.Add(hpDepletedCondition);   // e.g. IntCompareCondition(hp <= 0)
+```
+
+The node stays parked through every `Recheck` until the condition actually passes — a declarative
+condition-await assembled from the two existing primitives, no host-side polling loop required.
+
 ## Assembly Definitions
 
 | Assembly | Platforms | Auto-referenced |
@@ -446,28 +576,55 @@ consumer owns the **presentation** — the same separation the dialogue/quest li
 
 ## Test Coverage
 
-111 EditMode tests across two layers:
+EditMode tests across the data layer, the context primitives, and the execution runtime (part of the
+whole ecosystem's 1118-test green suite):
 
-| Suite | File | Coverage |
+| Suite | Location | Coverage |
 |-------|------|----------|
-| Data layer structure | `DataLayer/` (8 files) | Nodes, edges, conditions, actions, choices, parameters, graph |
-| BaseContext blackboard | `Execution/BaseContextTests.cs` | Set/Get/TryGet, subscriptions, DeepClone, InitFromGraph |
-| Executor registry | `Execution/NodeExecutorRegistryTests.cs` | Registration, resolution, default Undo |
-| BaseRunner linear | `Execution/BaseRunnerLinearTests.cs` | Start, Proceed, entry/exit actions, EntryConditions, ChooseById |
-| BaseRunner SubGraph | `Execution/BaseRunnerSubGraphTests.cs` | Push/pop, context isolation, cycle detection, nested depth |
-| BaseRunner history | `Execution/BaseRunnerHistoryTests.cs` | GoBack, GoBackToCheckpoint, depth cap, unlimited |
+| Data layer structure | `Tests/EditMode/DataLayer/` | Nodes, edges, conditions, actions, choices, graph, `VariableDef` identity |
+| Context primitives | `Tests/EditMode/` (`DesignerActionTests`, `ParamCompareConditionTests`, `Primitive*Tests`, `CompositeConditionTests`) | Variables (governed + raw), Signals, composite conditions |
+| BaseContext blackboard | `Tests/EditMode/Execution/` | Set/Get/TryGet, subscriptions, DeepClone, `InitFromGraph` scan-seeding, scoped overlays |
+| Executor registry | `Tests/EditMode/Execution/NodeExecutorRegistryTests.cs` | Registration, resolution, default Undo |
+| BaseRunner linear | `Tests/EditMode/Execution/BaseRunnerLinearTests.cs` | Start, Proceed, entry/exit actions, EntryConditions, ChooseById |
+| BaseRunner SubGraph | `Tests/EditMode/Execution/BaseRunnerSubGraphTests.cs` | Push/pop, context isolation, cycle detection, nested depth |
+| BaseRunner history | `Tests/EditMode/Execution/BaseRunnerHistoryTests.cs` | GoBack, GoBackToCheckpoint, depth cap, unlimited |
+| Editor tooling | `Tests/EditMode/Editor/` | `GraphValidator` (structural + type-mismatch), `SignalConstantsGenerator`/codegen core |
 
 ---
 
 ## Changelog
 
+Full history in [`CHANGELOG.md`](CHANGELOG.md). Highlights:
+
+### 0.35.0 — vocabulary rename (no behaviour change)
+The three identity assets drop the misleading `Name` suffix (identity is a GUID, not a name), and
+"parameter" becomes **"variable"** everywhere: `SignalName`→`SignalDef`, `CollectionName`→`CollectionDef`,
+`ParameterName`→`VariableDef`; `GraphParams`→`GraphVariables`; `BaseContext.GetAllParameters`/
+`OnParameterChanged`→`GetAllVariables`/`OnVariableChanged`. Renamed via `git mv` keeping each asset's
+`.meta` GUID — existing project assets keep their script link.
+
+### 0.34.0 — parameter (now variable) identity re-base
+`VariableDef` — a typed, stable-GUID variable asset (spec `033`) — replaces the old raw-string
+`_parameterKey` + per-graph declaration list. Declaration-free: `InitFromGraph` discovers every
+referenced `VariableDef` via `IVariableReferencing` and seeds its default. Adds the `GraphVariables`
+codegen and a validator check for type-mismatched references. Applies the same model spec `032`
+proved for signals.
+
+### 0.33.x — stable-GUID persistence hardening
+`StableGuidPersistence.ScheduleSave`/`PersistAll` — GUIDs assigned in `OnEnable` are now reliably
+flushed to disk (interactive auto-heal + a synchronous CI-safe `PersistAll`).
+
+### 0.26.0 — multi-signal await
+`AwaitSignals`/`AwaitSignalNames` — a node can await several signals (logical OR), resuming on the
+first one whose `ResumeConditions` pass.
+
 ### 0.21.0
 - **Composite conditions**: `AndCondition`, `OrCondition`, `NotCondition` — nest arbitrarily to build
   complex gates from simple building blocks.
-- **Param-to-param comparison**: `IntCompareCondition`, `FloatCompareCondition`, `StringCompareCondition` —
-  compare two context parameters against each other (not just a parameter vs. a constant).
+- **Variable-to-variable comparison**: `IntCompareCondition`, `FloatCompareCondition`, `StringCompareCondition` —
+  compare two context variables against each other (not just a variable vs. a constant).
 - **New actions**: `RaiseSignalAction` (fire a named signal from a node action), `ToggleBoolAction`
-  (flip a bool parameter), `SetRandomIntAction` (set an int parameter to a random value in a range).
+  (flip a bool variable), `SetRandomIntAction` (set an int variable to a random value in a range).
 - **Runner signal bridging**: `BaseRunner` now bridges context signals when awaiting, so a signal raised
   on the context while the runner is parked on an await node is delivered to the runner automatically.
 
@@ -487,9 +644,9 @@ consumer owns the **presentation** — the same separation the dialogue/quest li
   end. Append-only on `BaseContext`/`BaseRunner`.
 
 ### 0.2.0
-- Added `BaseContext` — typed parameter blackboard with subscriptions, deep clone, graph init
+- Added `BaseContext` — typed blackboard with subscriptions, deep clone, graph init
 - Added `INodeExecutor` / `NodeExecutorRegistry` — pluggable executor dispatch
 - Added `BaseRunner` — headless state machine with SubGraph stack, cycle detection, history rewind
 
 ### 0.1.0
-- Initial release: data layer (graph, nodes, edges, parameters, actions, conditions, choices)
+- Initial release: data layer (graph, nodes, edges, actions, conditions, choices)

@@ -1,6 +1,6 @@
 # com.faolline.starterGraph
 
-**Version**: 0.3.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.18.0
+**Version**: 0.5.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0
 
 **Internal verification package — not for distribution.**
 
@@ -52,7 +52,7 @@ com.faolline.starterGraph/
   Runtime/
     StarterGraph.cs           ← ScriptableObject graph asset (extends BaseGraph)
     StarterContext.cs          ← Custom context (extends BaseContext)
-    StarterContextKeys.cs      ← Typed parameter key constants
+    StarterContextKeys.cs      ← Typed variable key constants (raw-string channel; see graphcore's VariableDef for the governed asset channel)
   Editor/
     StarterGraphEditorWindow.cs ← Graph editor window (extends BaseGraphEditorWindow)
   Samples/
