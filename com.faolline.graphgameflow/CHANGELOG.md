@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.10.0]
+
+### Changed
+- Bumped `com.faolline.graphcore` floor to `0.35.0`, covering both the parameter→variable identity re-base
+  (spec `033`, graphcore 0.34.0) and the subsequent identity-vocabulary rename (`SignalName`→`SignalDef`,
+  `ParameterName`→`VariableDef`, etc., graphcore 0.35.0). No gameflow-specific behaviour change —
+  `ContextTrigger` and the driver internals were updated only to reference the renamed graphcore types/API.
+
 ## [0.9.0]
 
 ### Fixed

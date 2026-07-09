@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.0]
+
+### Changed
+- Bumped `com.faolline.graphcore` floor to `0.35.0`, covering both the parameter→variable identity re-base
+  (spec `033`, graphcore 0.34.0) and the identity-vocabulary rename (`SignalName`→`SignalDef`,
+  `ParameterName`→`VariableDef`, `GetAllParameters`→`GetAllVariables`, etc., graphcore 0.35.0). No save-format
+  change and no graphsave-specific behaviour change — `GraphRunSnapshot` reads `BaseContext`'s renamed
+  `GetAllVariables()`, same values, same JSON shape.
+
 ## [0.6.0]
 
 ### Added

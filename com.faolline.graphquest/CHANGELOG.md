@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.11.0]
+
+### Changed
+- Bumped `com.faolline.graphcore` floor to `0.35.0` (the identity-vocabulary rename: `SignalName`→`SignalDef`,
+  `ParameterName`→`VariableDef`, `GetAllParameters`→`GetAllVariables`, etc.). No quest-specific behaviour
+  change — `ObjectiveNodeData`, `QuestEvaluator`, and the sample builder updated to reference the renamed
+  graphcore types/API.
+
+## [0.10.0]
+
+### Changed
+- Bumped `com.faolline.graphcore` floor to `0.34.0` (the parameter→variable identity re-base, spec `033`).
+  No quest-specific behaviour change — quest conditions/rewards reference graphcore's stock
+  actions/conditions directly rather than shipping their own.
+
 ## [0.9.2]
 
 ### Fixed

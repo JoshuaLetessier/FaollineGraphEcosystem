@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.17.0]
+
+### Changed
+- Bumped `com.faolline.graphcore` floor to `0.35.0` (the identity-vocabulary rename: `SignalName`→`SignalDef`,
+  `ParameterName`→`VariableDef`, `GetAllParameters`→`GetAllVariables`, etc.). No dialogue-specific behaviour
+  change — internal references (`PlayDialogueAction`, `DialogueTextInterpolator`, `DialogueSessionState`, the
+  node inspector) updated to the renamed graphcore types/API.
+
+## [0.16.0]
+
+### Changed
+- Bumped `com.faolline.graphcore` floor to `0.34.0` (the parameter→variable identity re-base, spec `033`).
+  No dialogue-specific behaviour change — this package references graphcore's stock actions/conditions
+  directly rather than shipping its own, so nothing here needed migrating.
+
 ## [0.15.0]
 
 ### Added

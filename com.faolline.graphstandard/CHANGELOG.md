@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.17.0]
+
+### Changed
+- Bumped `com.faolline.graphcore` floor to `0.35.0` (the identity-vocabulary rename: `SignalName`→`SignalDef`,
+  `CollectionName`→`CollectionDef`, `ParameterName`→`VariableDef`, etc.). No graphstandard-specific behaviour
+  change — `CollectionContainsCondition`/`CollectionCountAtLeastCondition`/`CollectionItemCountAtLeastCondition`
+  updated to reference the renamed graphcore types.
+
 ## [0.16.0]
 
 ### Added
