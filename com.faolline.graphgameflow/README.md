@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.10.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphsave` ≥ 0.5.0
+**Version**: 0.11.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphsave` ≥ 0.5.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -24,7 +24,8 @@ com.faolline.graphgameflow
 │   │   └── GameFlowContextKeys   companion keys class (Constitution VI)
 │   ├── Scene/
 │   │   ├── ISceneLoader          seam: LoadScene(name, mode)
-│   │   ├── UnitySceneLoader      default impl → UnityEngine.SceneManagement
+│   │   ├── UnitySceneLoader      default impl → blocking SceneManager.LoadScene
+│   │   ├── AsyncSceneLoader      optional impl → LoadSceneAsync + progress/ready/completed events
 │   │   └── LoadSceneAction       a graphcore BaseAction (NOT a node type)
 │   └── Driver/
 │       └── GraphFlowDriver       the MonoBehaviour host bridge
@@ -135,6 +136,22 @@ someNode.OnEnterActions.Add(load);          // load on entering the node
 
 `LoadSceneAction` resolves the active `ISceneLoader` from the running `GameFlowContext` (defaulting to a
 `UnitySceneLoader`). A missing/empty scene logs a `[GraphGameFlow]` error and the flow continues.
+
+### Loading screen — `AsyncSceneLoader`
+
+`UnitySceneLoader` is a blocking `SceneManager.LoadScene`: no progress, no seam for a loading screen. For
+that, drop an `AsyncSceneLoader` component in your persistent bootstrap scene/prefab and assign it in place
+of the default:
+
+```csharp
+driver.SceneLoader = asyncSceneLoader;   // an AsyncSceneLoader in the scene; ISceneLoader-compatible
+```
+
+It loads via `SceneManager.LoadSceneAsync` and raises `SceneLoadStarted`, `SceneLoadProgress(name, 0..1)`,
+`SceneLoadReady`, and `SceneLoadCompleted` — wire those into your own loading-screen UI (the lib ships no
+visuals). By default the scene activates as soon as it's ready; set `AutoActivate = false` to hold it open
+until you call `ActivateReadyScene()` (e.g. after a fade-out), and `MinimumDisplayDuration` to keep a fast
+load from flashing the screen for one frame.
 
 ---
 

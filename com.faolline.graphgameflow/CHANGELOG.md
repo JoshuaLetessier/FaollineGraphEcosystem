@@ -4,6 +4,22 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.11.0]
+
+### Added
+- **`AsyncSceneLoader`: an `ISceneLoader` drop-in that loads through `SceneManager.LoadSceneAsync` and raises
+  progress/lifecycle events, for consumers that want a loading screen.** `UnitySceneLoader` (the default) is a
+  blocking `SceneManager.LoadScene` with no progress reporting — fine for instant transitions, a hard stall
+  for anything heavier. `AsyncSceneLoader` is a `MonoBehaviour` alternative: assign it to
+  `GraphFlowDriver.SceneLoader` (or `GameFlowContext.SceneLoader` directly) in place of the default; no
+  change to `LoadSceneAction`, which only depends on `ISceneLoader`. It exposes `SceneLoadStarted`,
+  `SceneLoadProgress(sceneName, 0..1)`, `SceneLoadReady`, and `SceneLoadCompleted` events plus an
+  `AutoActivate` gate — set it false and the scene sits ready-but-inactive until the consumer calls
+  `ActivateReadyScene()` (e.g. after a loading-screen fade-out or a "press to continue" beat), and a
+  `MinimumDisplayDuration` so a fast load doesn't flash the screen for one frame. The lib ships no visuals —
+  the UI stays consumer territory, this is only the mechanism. Persists across the load
+  (`DontDestroyOnLoad`) by default so a Single-mode transition doesn't kill its own coroutine mid-load.
+
 ## [0.10.0]
 
 ### Changed
