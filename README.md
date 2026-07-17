@@ -35,6 +35,10 @@ package do I need").
 
 Each package has its own `README.md` (usage + API) and `CHANGELOG.md` (version history).
 
+The packages form a strict, test-enforced dependency layering (foundation → capabilities → verticals →
+adapters) — see [`ARCHITECTURE.md`](ARCHITECTURE.md). Consuming the ecosystem from a Clean
+Architecture / DI-container game project is covered in [`INTEGRATION.md`](INTEGRATION.md).
+
 Internal-only (never pulled into a consumer project — see [`INSTALL.md`](INSTALL.md)):
 [`com.faolline.starterGraph`](com.faolline.starterGraph/) (template to fork for a new domain package) and
 [`com.faolline.graphTest`](com.faolline.graphTest/) (graphcore integration test suite).

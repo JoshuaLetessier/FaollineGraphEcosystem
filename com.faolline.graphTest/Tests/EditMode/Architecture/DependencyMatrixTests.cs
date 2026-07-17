@@ -1,0 +1,219 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using NUnit.Framework;
+using UnityEditor;
+using UnityEditorInternal;
+using UnityEngine;
+
+namespace Faolline.GraphTest.Tests
+{
+    /// <summary>
+    /// Locks the ecosystem's assembly dependency matrix (see <c>ARCHITECTURE.md</c> at the repo root).
+    /// The asmdef references already make an illegal <c>using</c> a compile error; this test makes adding
+    /// an illegal asmdef <em>reference</em> a test failure, so the tier rules (verticals never reference
+    /// each other, external dependencies live only in adapter assemblies, Runtime never references Editor)
+    /// survive future edits. Adding a new assembly or a new edge is fine — declare it here on purpose and
+    /// update <c>ARCHITECTURE.md</c> in the same commit.
+    /// </summary>
+    [TestFixture]
+    public class DependencyMatrixTests
+    {
+        // ── Ecosystem assembly names ────────────────────────────────────────────
+        private const string CoreRuntime         = "com.faolline.graphcore.Runtime";
+        private const string CoreEditor          = "com.faolline.graphcore.Editor";
+        private const string CoreTests           = "com.faolline.graphcore.Tests.EditMode";
+        private const string LocRuntime          = "com.faolline.graphlocalization.Runtime";
+        private const string LocEditor           = "com.faolline.graphlocalization.Editor";
+        private const string LocUnity            = "com.faolline.graphlocalization.Localization.Unity";
+        private const string LocUnityEditor      = "com.faolline.graphlocalization.Localization.Unity.Editor";
+        private const string LocTests            = "com.faolline.graphlocalization.Tests.EditMode";
+        private const string StdRuntime          = "com.faolline.graphstandard.Runtime";
+        private const string StdEditor           = "com.faolline.graphstandard.Editor";
+        private const string StdTests            = "com.faolline.graphstandard.Tests.EditMode";
+        private const string SaveRuntime         = "com.faolline.graphsave.Runtime";
+        private const string SaveTests           = "com.faolline.graphsave.Tests.EditMode";
+        private const string SaveBridgeRuntime   = "com.faolline.graphsave.savesystem.Runtime";
+        private const string SaveBridgeTests     = "com.faolline.graphsave.savesystem.Tests.EditMode";
+        private const string DialogueRuntime     = "com.faolline.graphdialoguesystem.Runtime";
+        private const string DialogueEditor      = "com.faolline.graphdialoguesystem.Editor";
+        private const string DialogueLocUnity    = "com.faolline.graphdialoguesystem.Localization.Unity";
+        private const string DialogueUI          = "com.faolline.graphdialoguesystem.UI";
+        private const string DialogueTests       = "com.faolline.graphdialoguesystem.Tests.EditMode";
+        private const string DialogueTestsPlay   = "com.faolline.graphdialoguesystem.Tests.PlayMode";
+        private const string DialogueUITests     = "com.faolline.graphdialoguesystem.UI.Tests.EditMode";
+        private const string DialogueUITestsPlay = "com.faolline.graphdialoguesystem.UI.Tests.PlayMode";
+        private const string QuestRuntime        = "com.faolline.graphquest.Runtime";
+        private const string QuestEditor         = "com.faolline.graphquest.Editor";
+        private const string QuestTests          = "com.faolline.graphquest.Tests.EditMode";
+        private const string FlowRuntime         = "com.faolline.graphgameflow.Runtime";
+        private const string FlowEditor          = "com.faolline.graphgameflow.Editor";
+        private const string FlowTests           = "com.faolline.graphgameflow.Tests.EditMode";
+        private const string FlowTestsPlay       = "com.faolline.graphgameflow.Tests.PlayMode";
+        private const string GraphTestRuntime    = "com.faolline.graphTest.Runtime";
+        private const string GraphTestEditor     = "com.faolline.graphTest.Editor";
+        private const string GraphTestTests      = "com.faolline.graphTest.Tests.EditMode";
+        private const string StarterRuntime      = "com.faolline.starterGraph.Runtime";
+        private const string StarterEditor       = "com.faolline.starterGraph.Editor";
+        private const string StarterTests        = "com.faolline.starterGraph.Tests.EditMode";
+
+        // ── External assembly names (Unity + UnitySaveSystem) ───────────────────
+        private const string TestRunner        = "UnityEngine.TestRunner";
+        private const string TestRunnerEditor  = "UnityEditor.TestRunner";
+        private const string UnityLoc          = "Unity.Localization";
+        private const string UnityLocEditor    = "Unity.Localization.Editor";
+        private const string UnityResourceMgr  = "Unity.ResourceManager";
+        private const string TextMeshPro       = "Unity.TextMeshPro";
+        private const string UGui              = "UnityEngine.UI";
+        private const string InputSystem       = "Unity.InputSystem";
+        private const string SaveSystemCore    = "SaveSystemCore";
+        private const string SaveSystemJson    = "SaveSystemJson";
+
+        /// <summary>
+        /// The allowed reference set per assembly (the architecture, as data). A reference absent from an
+        /// assembly's set fails <see cref="NoAssemblyReferencesOutsideItsAllowedSet"/>. Sets are upper
+        /// bounds — removing a reference from an asmdef never fails this test.
+        /// </summary>
+        private static readonly Dictionary<string, string[]> Allowed = new Dictionary<string, string[]>
+        {
+            // ── Tier 0 · Foundation (no references at all) ──────────────────────
+            [CoreRuntime] = new string[0],
+            [LocRuntime]  = new string[0],
+
+            // ── Tier 1 · Neutral capabilities (foundation only) ─────────────────
+            [StdRuntime]  = new[] { CoreRuntime },
+            [SaveRuntime] = new[] { CoreRuntime },
+
+            // ── Tier 2 · Verticals (tiers 0–1 only, never another vertical) ─────
+            [DialogueRuntime] = new[] { CoreRuntime, LocRuntime },
+            [QuestRuntime]    = new[] { CoreRuntime, StdRuntime, LocRuntime },
+            [FlowRuntime]     = new[] { CoreRuntime, SaveRuntime },
+
+            // ── Tier 3 · Adapters (the only runtime assemblies with external refs) ──
+            [LocUnity]          = new[] { LocRuntime, UnityLoc, UnityResourceMgr },
+            [DialogueLocUnity]  = new[] { DialogueRuntime, UnityLoc },
+            [DialogueUI]        = new[] { CoreRuntime, DialogueRuntime, LocRuntime, TextMeshPro, UGui, InputSystem },
+            [SaveBridgeRuntime] = new[] { SaveRuntime, SaveSystemCore },
+
+            // ── Editor assemblies (own package + upstream Runtime/Editor pairs) ─
+            [CoreEditor]     = new[] { CoreRuntime },
+            [LocEditor]      = new[] { LocRuntime, CoreRuntime, CoreEditor },
+            [LocUnityEditor] = new[] { LocRuntime, LocEditor, LocUnity, UnityLoc, UnityLocEditor },
+            [StdEditor]      = new[] { CoreRuntime, StdRuntime },
+            [DialogueEditor] = new[] { CoreRuntime, CoreEditor, DialogueRuntime, LocRuntime, LocEditor },
+            [QuestEditor]    = new[] { CoreRuntime, CoreEditor, QuestRuntime, StdRuntime, LocRuntime, LocEditor },
+            [FlowEditor]     = new[] { CoreRuntime, CoreEditor, FlowRuntime },
+
+            // ── Dev tooling (internal-only packages) ────────────────────────────
+            [GraphTestRuntime] = new[] { CoreRuntime, StdRuntime },
+            [GraphTestEditor]  = new[] { GraphTestRuntime, CoreRuntime, CoreEditor },
+            [StarterRuntime]   = new[] { CoreRuntime },
+            [StarterEditor]    = new[] { CoreRuntime, CoreEditor, StarterRuntime },
+
+            // ── Test assemblies ─────────────────────────────────────────────────
+            [CoreTests]           = new[] { CoreRuntime, CoreEditor, TestRunner, TestRunnerEditor },
+            [LocTests]            = new[] { LocRuntime, LocEditor, TestRunner, TestRunnerEditor },
+            [StdTests]            = new[] { StdRuntime, StdEditor, CoreRuntime, TestRunner, TestRunnerEditor },
+            [SaveTests]           = new[] { SaveRuntime, CoreRuntime, TestRunner, TestRunnerEditor },
+            [SaveBridgeTests]     = new[] { SaveBridgeRuntime, SaveRuntime, CoreRuntime, SaveSystemCore, SaveSystemJson, TestRunner, TestRunnerEditor },
+            [DialogueTests]       = new[] { DialogueRuntime, DialogueEditor, CoreRuntime, CoreEditor, LocRuntime, LocEditor, TestRunner, TestRunnerEditor },
+            [DialogueTestsPlay]   = new[] { DialogueRuntime, CoreRuntime, LocRuntime, TestRunner, TestRunnerEditor },
+            [DialogueUITests]     = new[] { DialogueUI, DialogueRuntime, CoreRuntime, LocRuntime, TextMeshPro, UGui, TestRunner, TestRunnerEditor },
+            [DialogueUITestsPlay] = new[] { DialogueUI, DialogueRuntime, CoreRuntime, LocRuntime, TextMeshPro, UGui, TestRunner, TestRunnerEditor },
+            [QuestTests]          = new[] { QuestRuntime, QuestEditor, CoreRuntime, CoreEditor, StdRuntime, LocRuntime, SaveRuntime, TestRunner, TestRunnerEditor },
+            [FlowTests]           = new[] { FlowRuntime, FlowEditor, CoreRuntime, CoreEditor, SaveRuntime, TestRunner, TestRunnerEditor },
+            [FlowTestsPlay]       = new[] { FlowRuntime, CoreRuntime, TestRunner },
+            [GraphTestTests]      = new[] { GraphTestRuntime, GraphTestEditor, CoreRuntime, CoreEditor, TestRunner, TestRunnerEditor },
+            [StarterTests]        = new[] { StarterRuntime, StarterEditor, CoreRuntime, CoreEditor, TestRunner, TestRunnerEditor },
+        };
+
+        // ── Discovery ───────────────────────────────────────────────────────────
+
+        [Serializable]
+        private class AsmdefDto
+        {
+            public string   name;
+            public string[] references;
+        }
+
+        /// <summary>
+        /// All ecosystem asmdefs found in the project, as name → resolved reference names. Ecosystem =
+        /// the com.faolline.graph* / com.faolline.starterGraph packages; the external
+        /// com.faolline.savesystem.* packages (UnitySaveSystem) are deliberately out of scope.
+        /// </summary>
+        private static Dictionary<string, string[]> FindEcosystemAssemblies()
+        {
+            var found = new Dictionary<string, string[]>();
+            foreach (var path in AssetDatabase.GetAllAssetPaths())
+            {
+                if (!path.EndsWith(".asmdef", StringComparison.Ordinal)) continue;
+                if (!path.Contains("com.faolline.graph") && !path.Contains("com.faolline.starterGraph")) continue;
+
+                var dto = ParseAsmdef(path);
+                found[dto.name] = (dto.references ?? new string[0]).Select(ResolveReferenceName).ToArray();
+            }
+            return found;
+        }
+
+        private static AsmdefDto ParseAsmdef(string assetPath)
+        {
+            var asset = AssetDatabase.LoadAssetAtPath<AssemblyDefinitionAsset>(assetPath);
+            Assert.IsNotNull(asset, $"Could not load asmdef at '{assetPath}'.");
+            return JsonUtility.FromJson<AsmdefDto>(asset.text);
+        }
+
+        /// <summary>Resolves a "GUID:…" asmdef reference to its assembly name; passes names through.</summary>
+        private static string ResolveReferenceName(string reference)
+        {
+            if (!reference.StartsWith("GUID:", StringComparison.Ordinal)) return reference;
+
+            var path = AssetDatabase.GUIDToAssetPath(reference.Substring("GUID:".Length));
+            // An unresolvable GUID stays as-is and surfaces as a disallowed reference below.
+            return string.IsNullOrEmpty(path) ? reference : ParseAsmdef(path).name;
+        }
+
+        // ── Tests ───────────────────────────────────────────────────────────────
+
+        [Test]
+        public void EveryEcosystemAssemblyIsDeclaredInTheMatrix()
+        {
+            var undeclared = FindEcosystemAssemblies().Keys.Where(n => !Allowed.ContainsKey(n)).ToList();
+
+            Assert.IsEmpty(undeclared,
+                "New ecosystem assemblies must be placed in the dependency matrix on purpose. " +
+                "Add them to DependencyMatrixTests.Allowed (respecting the tier rules) and to ARCHITECTURE.md:\n - " +
+                string.Join("\n - ", undeclared));
+        }
+
+        [Test]
+        public void EveryDeclaredAssemblyExistsOnDisk()
+        {
+            var found   = FindEcosystemAssemblies();
+            var missing = Allowed.Keys.Where(n => !found.ContainsKey(n)).ToList();
+
+            Assert.IsEmpty(missing,
+                "Stale matrix entries (renamed or deleted assemblies?). " +
+                "Update DependencyMatrixTests.Allowed and ARCHITECTURE.md:\n - " +
+                string.Join("\n - ", missing));
+        }
+
+        [Test]
+        public void NoAssemblyReferencesOutsideItsAllowedSet()
+        {
+            var violations = new List<string>();
+            foreach (var pair in FindEcosystemAssemblies())
+            {
+                if (!Allowed.TryGetValue(pair.Key, out var allowed)) continue; // reported by the test above
+
+                foreach (var reference in pair.Value.Where(r => !allowed.Contains(r)))
+                    violations.Add($"{pair.Key} → {reference}");
+            }
+
+            Assert.IsEmpty(violations,
+                "Assembly references outside the declared dependency matrix. If the edge is intended, " +
+                "add it to DependencyMatrixTests.Allowed AND ARCHITECTURE.md in the same commit — " +
+                "mind the tier rules (verticals never reference verticals; external deps only in adapters):\n - " +
+                string.Join("\n - ", violations));
+        }
+    }
+}

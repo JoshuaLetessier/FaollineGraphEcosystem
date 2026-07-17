@@ -6,6 +6,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
 
 Internal verification package — not for distribution; history starts being tracked from 0.1.3.
 
+## [0.2.0]
+
+### Added
+- `DependencyMatrixTests` (EditMode, `Tests/EditMode/Architecture/`) — locks the ecosystem's assembly
+  dependency matrix: every `com.faolline.graph*` / `starterGraph` asmdef must be declared in the
+  allowlist, every declared entry must exist on disk, and no asmdef may gain a reference outside its
+  allowed set (tier rules: verticals never reference verticals, external deps only in adapter
+  assemblies). The matrix mirrors the repo-root `ARCHITECTURE.md` — update both in the same commit
+  when adding an assembly or an edge.
+
 ## [0.1.4]
 
 ### Changed
