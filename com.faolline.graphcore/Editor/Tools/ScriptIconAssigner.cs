@@ -54,7 +54,6 @@ namespace Faolline.GraphCore.Editor
             return IconFolderAssets;
         }
 
-        [MenuItem("Faolline/Tools/Assign Script Icons")]
         public static void AssignAll()
         {
             var iconFolder = ResolveIconFolder();

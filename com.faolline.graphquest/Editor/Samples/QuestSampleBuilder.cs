@@ -17,7 +17,6 @@ namespace Faolline.GraphQuest.Editor
         private const string PackageFolder = "Assets/FaollineGraphEcosystem/com.faolline.graphquest";
         private const string Folder        = PackageFolder + "/Samples";
 
-        [MenuItem("Faolline/GraphQuest/Create Sample Quest")]
         public static void CreateSampleMenu() => CreateSample();
 
         /// <summary>Builds and saves the sample quest asset; returns the created graph.</summary>

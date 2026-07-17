@@ -28,8 +28,8 @@ namespace Faolline.GraphCore.Editor
         /// <summary>The generated class name.</summary>
         public const string ClassName = "GraphSignals";
 
-        [MenuItem("Faolline/Signals/Generate Constants")]
-        private static void GenerateMenu()
+        /// <summary>Generates <c>GraphSignals</c> from every <see cref="SignalDef"/> asset in the project and writes it to <see cref="DefaultOutputPath"/>.</summary>
+        public static void Generate()
         {
             var signals = new List<(string displayName, string guid)>();
             foreach (var guid in AssetDatabase.FindAssets($"t:{nameof(SignalDef)}"))

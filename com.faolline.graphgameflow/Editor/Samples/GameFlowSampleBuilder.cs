@@ -17,7 +17,6 @@ namespace Faolline.GraphGameFlow.Editor
         private const string PackageFolder = "Assets/FaollineGraphEcosystem/com.faolline.graphgameflow";
         private const string Folder        = PackageFolder + "/Samples";
 
-        [MenuItem("Faolline/GraphGameFlow/Create Reference Scene-Flow Sample")]
         public static void CreateSampleMenu() => CreateSample();
 
         /// <summary>Builds and saves the reference scene-flow asset; returns the created graph.</summary>

@@ -79,10 +79,6 @@ namespace Faolline.GraphCore
             if (count > 0) AssetDatabase.SaveAssets();
             return count;
         }
-
-        [MenuItem("Faolline/Graph/Persist Stable Ids")]
-        private static void PersistAllMenu()
-            => Debug.Log($"[GraphCore] Persisted {PersistAll()} stable-GUID asset(s) to disk.");
     }
 }
 #endif

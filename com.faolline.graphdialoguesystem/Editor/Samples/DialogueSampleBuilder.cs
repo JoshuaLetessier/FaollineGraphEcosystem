@@ -16,7 +16,6 @@ namespace Faolline.GraphDialogue.Editor
     {
         private const string Folder = "Assets/GraphDialogueSamples";
 
-        [MenuItem("Faolline/GraphDialogue/Generate Sample Dialogue")]
         public static void GenerateSample()
         {
             if (!AssetDatabase.IsValidFolder(Folder))
