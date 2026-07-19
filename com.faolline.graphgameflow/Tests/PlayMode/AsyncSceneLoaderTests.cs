@@ -106,5 +106,36 @@ namespace Faolline.GraphGameFlow.Tests.PlayMode
             Assert.IsTrue(completed, "the load completed after manual activation.");
             Assert.AreEqual(SceneB, SceneManager.GetActiveScene().name, "the target scene is now active.");
         }
+
+        [UnityTest]
+        public IEnumerator BackToBackLoads_AreQueued_NotDropped()
+        {
+            // Regression: a LoadScene issued while another load was in flight used to be DROPPED with a
+            // warning — fatal for a graph chaining several scene operations in one auto-advance pass. Both
+            // requests must now complete, in FIFO order.
+            var go = Track(new GameObject("async-loader-queue"));
+            var loader = go.AddComponent<EditorPathAsyncSceneLoader>();
+            loader.AutoActivate = true;
+
+            var completed = new List<string>();
+            loader.SceneLoadCompleted += s => completed.Add(s);
+
+            loader.LoadScene(SceneA, LoadSceneMode.Single);
+            loader.LoadScene(SceneB, LoadSceneMode.Additive);   // in flight → must queue, not drop
+            Assert.IsTrue(loader.IsLoading, "loading starts synchronously within LoadScene.");
+
+            float timeout = Time.realtimeSinceStartup + 10f;
+            while (loader.IsLoading && Time.realtimeSinceStartup < timeout)
+                yield return null;
+
+            Assert.IsFalse(loader.IsLoading, "both loads finished within the timeout.");
+            CollectionAssert.AreEqual(new[] { SceneA, SceneB }, completed, "both queued loads completed, in FIFO order.");
+            Assert.AreEqual(SceneA, SceneManager.GetActiveScene().name, "the Single load is the active scene.");
+            Assert.IsTrue(SceneManager.GetSceneByName(SceneB).isLoaded, "the queued Additive load is stacked on top.");
+
+            // Leave a single-scene state behind for the next test.
+            var unload = SceneManager.UnloadSceneAsync(SceneB);
+            while (!unload.isDone) yield return null;
+        }
     }
 }
