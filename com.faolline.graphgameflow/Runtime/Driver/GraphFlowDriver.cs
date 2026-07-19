@@ -86,6 +86,16 @@ namespace Faolline.GraphGameFlow
         /// <summary>True between a successful <see cref="Boot"/> and the flow ending.</summary>
         public bool IsRunning => _running;
 
+        /// <summary>
+        /// While true, <see cref="Tick"/> is a no-op — the flow's TIME stops (a parked timed wait holds its
+        /// <see cref="WaitRemaining"/>), which is what a loading screen or pause menu needs. Deliberate calls
+        /// stay live: <see cref="Advance"/>, <see cref="ChooseById"/> and <see cref="RaiseSignal(string)"/>
+        /// still drive the flow, so a completion signal raised mid-pause resumes a parked await as usual.
+        /// <see cref="AsyncSceneLoader"/> can manage this automatically while its queue is busy
+        /// (<c>PauseDriverWhileLoading</c>).
+        /// </summary>
+        public bool Paused { get; set; }
+
         /// <summary>True while running and parked on an await-signal node.</summary>
         public bool IsWaitingForSignal
             => _running && _runner != null && _runner.State == RunnerState.WaitingForSignal;
@@ -250,10 +260,10 @@ namespace Faolline.GraphGameFlow
             DrainAutoAdvance();
         }
 
-        /// <summary>Forwards <paramref name="deltaSeconds"/> of elapsed time to the runner. dt ≤ 0 is ignored.</summary>
+        /// <summary>Forwards <paramref name="deltaSeconds"/> of elapsed time to the runner. dt ≤ 0 is ignored; so is the whole call while <see cref="Paused"/>.</summary>
         public void Tick(float deltaSeconds)
         {
-            if (!_running || deltaSeconds <= 0f) return;
+            if (!_running || Paused || deltaSeconds <= 0f) return;
             if (_runner.State == RunnerState.WaitingForTime) _waitElapsed += deltaSeconds;
             _runner.Tick(deltaSeconds);
             DrainAutoAdvance();

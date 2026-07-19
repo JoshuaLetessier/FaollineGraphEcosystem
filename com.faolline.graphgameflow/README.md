@@ -60,8 +60,10 @@ public void OpenDoor()  => _flow.RaiseSignal("door");  // resume a flow parked o
 
 - **Boots itself** on `Start` (or call `Boot()` from code). No graph / no valid start ⇒ a `[GraphGameFlow]`
   warning and it stays inert (never throws).
-- **Pumps time**: `Update` forwards `Time.deltaTime` to the runner, so time-wait nodes resolve. Pausing is
-  simply not ticking (disable the component); `dt ≤ 0` is ignored.
+- **Pumps time**: `Update` forwards `Time.deltaTime` to the runner, so time-wait nodes resolve. `dt ≤ 0` is
+  ignored. Set **`Paused = true`** to stop the flow's time (a parked timed wait holds its `WaitRemaining` —
+  loading screens, pause menus) while `Advance`/`ChooseById`/`RaiseSignal` stay live; `AsyncSceneLoader`
+  can manage it automatically (`PauseDriverWhileLoading`).
 - **AutoAdvance** (default on) walks the flow node-to-node; turn it off to advance only on `Advance()`. A
   **choice** node is never auto-resolved — it pauses for a deliberate `ChooseById(id)` (re-exposed like
   `Advance`), so a host can present options and pick a branch. This makes "render an embedded dialogue
@@ -156,6 +158,11 @@ Unloading always goes through `SceneManager.UnloadSceneAsync` — Unity has no b
 guarded gracefully: a scene that isn't loaded, or is the **last** loaded scene (Unity cannot unload it),
 logs a `[GraphGameFlow]` error and the flow continues.
 
+By default an additive load leaves the previous **active scene** in charge (its lighting/fog settings keep
+applying; new objects parent into it). Set **`SetActiveOnLoad`** on the `LoadSceneAction` (Additive only —
+the inspector shows the toggle only for that mode) to make the new scene take over once it finishes
+loading; unloading it later falls back to a remaining scene, Unity-standard.
+
 ### Loading screen — `AsyncSceneLoader`
 
 `UnitySceneLoader` is a blocking `SceneManager.LoadScene`: no progress, no seam for a loading screen. For
@@ -177,6 +184,11 @@ Requests are **queued, never dropped**: a load/unload issued while another opera
 FIFO queue drained serially — so a graph that chains several scene operations in one pass (two additive
 zone loads back-to-back, a load followed by an unload…) is reliable. `IsLoading` stays true until the queue
 drains; `PendingCount` exposes the backlog.
+
+Enable **`PauseDriverWhileLoading`** to freeze the flow's time behind the loading screen: the target driver
+(`SignalDriver`, else `GraphFlowDriver.Active`) is `Paused` while the queue is busy — a parked timed wait
+holds instead of ticking down — and resumed when it drains. Signals still resume awaits during the pause
+(only the time pump stops), and a driver you paused yourself is left untouched.
 
 ### Synchronising the flow with a load — completion signals
 

@@ -53,6 +53,8 @@ namespace Faolline.GraphGameFlow
         private SignalDef _unloadCompletedSignal;
         [SerializeField, Tooltip("The driver that receives the completion signals. When null, falls back to GraphFlowDriver.Active (the persistent singleton).")]
         private GraphFlowDriver _signalDriver;
+        [SerializeField, Tooltip("When enabled, the target driver (SignalDriver, else GraphFlowDriver.Active) is Paused while the queue is busy, so timed waits don't tick down behind a loading screen. A driver the consumer already paused is left untouched.")]
+        private bool _pauseDriverWhileLoading = false;
 
         private struct Request
         {
@@ -62,9 +64,10 @@ namespace Faolline.GraphGameFlow
         }
 
         private readonly Queue<Request> _queue = new Queue<Request>();
-        private bool           _pumpRunning;
-        private AsyncOperation _pendingOperation;
-        private string         _pendingScene;
+        private bool            _pumpRunning;
+        private AsyncOperation  _pendingOperation;
+        private string          _pendingScene;
+        private GraphFlowDriver _pausedDriver;   // the driver WE paused (never one the consumer paused)
 
         /// <summary>When true, each scene activates automatically once ready (see <see cref="ActivateReadyScene"/>).</summary>
         public bool AutoActivate { get => _autoActivate; set => _autoActivate = value; }
@@ -80,6 +83,14 @@ namespace Faolline.GraphGameFlow
 
         /// <summary>Receiver of the completion signals; null falls back to <see cref="GraphFlowDriver.Active"/>.</summary>
         public GraphFlowDriver SignalDriver { get => _signalDriver; set => _signalDriver = value; }
+
+        /// <summary>
+        /// When true, the target driver (<see cref="SignalDriver"/>, else <see cref="GraphFlowDriver.Active"/>)
+        /// is <see cref="GraphFlowDriver.Paused"/> while the queue is busy, so timed waits hold behind a
+        /// loading screen instead of ticking down. A driver the consumer already paused is left untouched
+        /// (and not resumed). Signals still resume awaits while paused — only the time pump stops.
+        /// </summary>
+        public bool PauseDriverWhileLoading { get => _pauseDriverWhileLoading; set => _pauseDriverWhileLoading = value; }
 
         /// <summary>True from the moment an operation starts until the whole queue has drained.</summary>
         public bool IsLoading => _pumpRunning;
@@ -117,6 +128,9 @@ namespace Faolline.GraphGameFlow
                 DontDestroyOnLoad(gameObject);
             }
         }
+
+        // Destroying the loader also kills its coroutines: a driver we paused must not stay frozen forever.
+        private void OnDestroy() => ResumePausedDriver();
 
         /// <inheritdoc />
         public void LoadScene(string sceneName, LoadSceneMode mode)
@@ -205,8 +219,25 @@ namespace Faolline.GraphGameFlow
             if (!_pumpRunning)
             {
                 _pumpRunning = true;
+                PauseDriverIfConfigured();   // synchronous with the first request, before any frame elapses
                 StartCoroutine(PumpRoutine());
             }
+        }
+
+        private void PauseDriverIfConfigured()
+        {
+            if (!_pauseDriverWhileLoading) return;
+            var driver = _signalDriver != null ? _signalDriver : GraphFlowDriver.Active;
+            if (driver == null || driver.Paused) return;   // absent, or the consumer's own pause: not ours to manage
+            driver.Paused = true;
+            _pausedDriver = driver;
+        }
+
+        private void ResumePausedDriver()
+        {
+            if (_pausedDriver == null) return;
+            _pausedDriver.Paused = false;
+            _pausedDriver = null;
         }
 
         // Serial pump: one operation in flight at a time, strictly FIFO. Unity itself serialises scene
@@ -220,6 +251,7 @@ namespace Faolline.GraphGameFlow
                 yield return request.IsUnload ? UnloadRoutine(request.Scene) : LoadRoutine(request.Scene, request.Mode);
             }
             _pumpRunning = false;
+            ResumePausedDriver();
         }
 
         private IEnumerator LoadRoutine(string sceneName, LoadSceneMode mode)

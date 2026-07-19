@@ -22,6 +22,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
   completion into the driver (scene name as string payload) through the resume-and-drain path — park the
   graph on an await-signal node right after the load/unload action and it resumes exactly when the
   operation lands. New `SceneUnloadStarted`/`SceneUnloadCompleted` events and a `PendingCount` property.
+- **`LoadSceneAction.SetActiveOnLoad` — an additive scene can take over as the ACTIVE scene.** Unity keeps
+  the previous active scene on an additive load (its lighting/fog settings keep applying; new objects parent
+  into it) and there was no seam to change that. The new flag (Additive only — Single is activated by Unity
+  itself; the inspector shows it only for Additive) registers a one-shot `SceneManager.sceneLoaded` handler
+  that calls `SetActiveScene` once the scene has actually finished loading — loader-agnostic, so it works
+  with a consumer-written `ISceneLoader` too. Unloading the active scene falls back to a remaining scene,
+  Unity-standard.
+- **`GraphFlowDriver.Paused` + `AsyncSceneLoader.PauseDriverWhileLoading` — timed waits no longer have to
+  tick down behind a loading screen.** `Paused` gates the driver's time pump (`Tick`/`Update` become
+  no-ops: a parked timed wait holds its `WaitRemaining`) while deliberate calls stay live — `Advance`,
+  `ChooseById`, `RaiseSignal` (so a completion signal raised mid-pause resumes a parked await as usual).
+  The loader's opt-in `PauseDriverWhileLoading` manages it automatically: the target driver
+  (`SignalDriver`, else `Active`) is paused synchronously with the first queued request and resumed when
+  the queue drains; a driver the consumer already paused is left untouched, and the loader's `OnDestroy`
+  releases a pause it owns.
 
 ### Fixed
 - **`AsyncSceneLoader` queues concurrent requests instead of DROPPING them.** A `LoadScene` issued while
