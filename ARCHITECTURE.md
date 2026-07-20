@@ -14,8 +14,8 @@ one of these tiers, and the whole matrix is locked by an automated test (see
                                    ▲             ▲      │
         T2 · Verticals         graphquest   graphgameflow   graphdialoguesystem
                                                                  ▲
-        T3 · Adapters          graphsave.savesystem   *.Localization.Unity   dialoguesystem.UI
-                               (→ UnitySaveSystem)    (→ Unity.Localization) (→ TMP/UGUI/Input)
+        T3 · Adapters          graphsave.savesystem   gameflow.addressables   *.Localization.Unity   dialoguesystem.UI
+                               (→ UnitySaveSystem)    (→ com.unity.addressables)  (→ Unity.Localization) (→ TMP/UGUI/Input)
 
         Dev tooling            graphTest · starterGraph        (never shipped to consumers)
 ```
@@ -25,7 +25,7 @@ one of these tiers, and the whole matrix is locked by an automated test (see
 | **T0 · Foundation** | `graphcore`, `graphlocalization` | nothing (zero asmdef references) | anything |
 | **T1 · Capabilities** | `graphstandard`, `graphsave` | T0 | each other, T2+ |
 | **T2 · Verticals** | `graphdialoguesystem`, `graphquest`, `graphgameflow` | T0, T1 | **another vertical**, external packages |
-| **T3 · Adapters** | `graphsave.savesystem`; the `Localization.Unity` and `UI` sub-assemblies | the package they adapt + **one** external dependency family | other adapters |
+| **T3 · Adapters** | `graphsave.savesystem`, `graphgameflow.addressables`; the `Localization.Unity` and `UI` sub-assemblies | the package they adapt + **one** external dependency family | other adapters |
 | **Dev tooling** | `graphTest`, `starterGraph` | T0, T1 | being installed in a consumer project |
 
 Tier definitions:
@@ -42,7 +42,7 @@ Tier definitions:
   (Unity optional packages, UnitySaveSystem, UGUI/TMP/InputSystem). An adapter exists at one of two
   granularities, both established patterns:
   - a **separate package** when the external dependency can't be assumed installed
-    (`graphsave.savesystem` → UnitySaveSystem);
+    (`graphsave.savesystem` → UnitySaveSystem, `graphgameflow.addressables` → `com.unity.addressables`);
   - a **sub-assembly of the package** when it adapts an optional Unity package
     (`graphlocalization/Localization.Unity`, `graphdialoguesystem/UI`).
 

@@ -1,0 +1,19 @@
+{
+    "name": "com.faolline.graphgameflow.addressables.Runtime",
+    "rootNamespace": "Faolline.GraphGameFlow.Addressables",
+    "references": [
+        "com.faolline.graphgameflow.Runtime",
+        "com.faolline.graphcore.Runtime",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

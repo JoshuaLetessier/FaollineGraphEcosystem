@@ -1,0 +1,31 @@
+{
+    "name": "com.faolline.graphgameflow.addressables.Tests.EditMode",
+    "rootNamespace": "Faolline.GraphGameFlow.Addressables.Tests",
+    "references": [
+        "com.faolline.graphgameflow.addressables.Runtime",
+        "com.faolline.graphgameflow.Runtime",
+        "com.faolline.graphcore.Runtime",
+        "Unity.Addressables",
+        "Unity.ResourceManager",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false,
+    "testPlatforms": [
+        "EditMode"
+    ]
+}
