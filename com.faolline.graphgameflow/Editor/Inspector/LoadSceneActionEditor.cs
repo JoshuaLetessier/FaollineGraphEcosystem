@@ -23,9 +23,13 @@ namespace Faolline.GraphGameFlow.Editor
 
             var sceneNameProp = serializedObject.FindProperty("_sceneName");
             var modeProp      = serializedObject.FindProperty("_mode");
+            var setActiveProp = serializedObject.FindProperty("_setActiveOnLoad");
 
             DrawSceneDropdown(sceneNameProp);
             DrawModeWithHint(modeProp);
+            if ((LoadSceneMode)modeProp.enumValueIndex == LoadSceneMode.Additive)
+                EditorGUILayout.PropertyField(setActiveProp, new GUIContent("Set Active On Load",
+                    "Make this scene the ACTIVE scene once it finishes loading (its lighting/fog settings apply; new objects parent into it)."));
             DrawBuildSettingsCheck(sceneNameProp.stringValue);
 
             serializedObject.ApplyModifiedProperties();

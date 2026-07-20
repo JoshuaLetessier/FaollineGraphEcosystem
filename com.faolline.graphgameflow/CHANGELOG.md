@@ -4,6 +4,51 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.12.0]
+
+### Added
+- **`ISceneUnloader` + `UnloadSceneAction`: the other half of an additive scene flow.** `LoadSceneAction`
+  could stack scenes additively but nothing could ever remove one — a hub + streamed-zones/overlay system
+  was one-way. `ISceneUnloader` is a separate companion seam (NOT a new member on `ISceneLoader`, so every
+  existing loader implementation keeps compiling); `UnitySceneLoader` and `AsyncSceneLoader` implement it
+  via `SceneManager.UnloadSceneAsync` (the only non-deprecated unload API), guarded gracefully on "scene
+  not loaded" and "last remaining scene" (Unity cannot unload it). `UnloadSceneAction` is the matching
+  graphcore `BaseAction` (attachable to any node's enter/exit list, like its load counterpart) with a
+  scene-dropdown inspector; a context loader without unload support warns and falls back to the default.
+- **`AsyncSceneLoader` completion signals — a flow can now WAIT for its scenes with zero manual wiring.**
+  `LoadSceneAction` is fire-and-forget: the flow runs ahead of an async load unless the consumer hand-wires
+  `SceneLoadCompleted` into `driver.RaiseSignal`. New optional `LoadCompletedSignal` /
+  `UnloadCompletedSignal` (`SignalDef`) + `SignalDriver` (falls back to `GraphFlowDriver.Active`) raise each
+  completion into the driver (scene name as string payload) through the resume-and-drain path — park the
+  graph on an await-signal node right after the load/unload action and it resumes exactly when the
+  operation lands. New `SceneUnloadStarted`/`SceneUnloadCompleted` events and a `PendingCount` property.
+- **`LoadSceneAction.SetActiveOnLoad` — an additive scene can take over as the ACTIVE scene.** Unity keeps
+  the previous active scene on an additive load (its lighting/fog settings keep applying; new objects parent
+  into it) and there was no seam to change that. The new flag (Additive only — Single is activated by Unity
+  itself; the inspector shows it only for Additive) registers a one-shot `SceneManager.sceneLoaded` handler
+  that calls `SetActiveScene` once the scene has actually finished loading — loader-agnostic, so it works
+  with a consumer-written `ISceneLoader` too. Unloading the active scene falls back to a remaining scene,
+  Unity-standard.
+- **`GraphFlowDriver.Paused` + `AsyncSceneLoader.PauseDriverWhileLoading` — timed waits no longer have to
+  tick down behind a loading screen.** `Paused` gates the driver's time pump (`Tick`/`Update` become
+  no-ops: a parked timed wait holds its `WaitRemaining`) while deliberate calls stay live — `Advance`,
+  `ChooseById`, `RaiseSignal` (so a completion signal raised mid-pause resumes a parked await as usual).
+  The loader's opt-in `PauseDriverWhileLoading` manages it automatically: the target driver
+  (`SignalDriver`, else `Active`) is paused synchronously with the first queued request and resumed when
+  the queue drains; a driver the consumer already paused is left untouched, and the loader's `OnDestroy`
+  releases a pause it owns.
+
+### Fixed
+- **`AsyncSceneLoader` queues concurrent requests instead of DROPPING them.** A `LoadScene` issued while
+  another load was in flight was ignored with a warning — so a graph chaining two scene operations in one
+  auto-advance pass (e.g. two additive zone loads back-to-back) silently lost the second and could soft-lock
+  a flow gated on its completion. Requests (loads and unloads) now enter a FIFO queue drained serially by
+  one pump coroutine; `IsLoading` stays true until the whole queue drains. Event contract per load is
+  unchanged (started → progress → ready → completed, activation gate included). Covered by a PlayMode
+  regression (`BackToBackLoads_AreQueued_NotDropped`) plus a full additive end-to-end
+  (`AdditiveSceneFlowTests`: hub Single-load → overlay Additive-load → overlay unload, gated only by
+  completion signals).
+
 ## [0.11.0]
 
 ### Added

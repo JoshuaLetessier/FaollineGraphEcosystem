@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.11.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphsave` ≥ 0.5.0
+**Version**: 0.12.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphsave` ≥ 0.5.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -24,9 +24,11 @@ com.faolline.graphgameflow
 │   │   └── GameFlowContextKeys   companion keys class (Constitution VI)
 │   ├── Scene/
 │   │   ├── ISceneLoader          seam: LoadScene(name, mode)
-│   │   ├── UnitySceneLoader      default impl → blocking SceneManager.LoadScene
-│   │   ├── AsyncSceneLoader      optional impl → LoadSceneAsync + progress/ready/completed events
-│   │   └── LoadSceneAction       a graphcore BaseAction (NOT a node type)
+│   │   ├── ISceneUnloader        companion seam: UnloadScene(name) — additive scenes
+│   │   ├── UnitySceneLoader      default impl → blocking SceneManager.LoadScene (+ async unload)
+│   │   ├── AsyncSceneLoader      optional impl → queued LoadSceneAsync/UnloadSceneAsync + events + completion signals
+│   │   ├── LoadSceneAction       a graphcore BaseAction (NOT a node type)
+│   │   └── UnloadSceneAction     its additive counterpart — unload a stacked scene
 │   └── Driver/
 │       └── GraphFlowDriver       the MonoBehaviour host bridge
 │
@@ -58,8 +60,10 @@ public void OpenDoor()  => _flow.RaiseSignal("door");  // resume a flow parked o
 
 - **Boots itself** on `Start` (or call `Boot()` from code). No graph / no valid start ⇒ a `[GraphGameFlow]`
   warning and it stays inert (never throws).
-- **Pumps time**: `Update` forwards `Time.deltaTime` to the runner, so time-wait nodes resolve. Pausing is
-  simply not ticking (disable the component); `dt ≤ 0` is ignored.
+- **Pumps time**: `Update` forwards `Time.deltaTime` to the runner, so time-wait nodes resolve. `dt ≤ 0` is
+  ignored. Set **`Paused = true`** to stop the flow's time (a parked timed wait holds its `WaitRemaining` —
+  loading screens, pause menus) while `Advance`/`ChooseById`/`RaiseSignal` stay live; `AsyncSceneLoader`
+  can manage it automatically (`PauseDriverWhileLoading`).
 - **AutoAdvance** (default on) walks the flow node-to-node; turn it off to advance only on `Advance()`. A
   **choice** node is never auto-resolved — it pauses for a deliberate `ChooseById(id)` (re-exposed like
   `Advance`), so a host can present options and pick a branch. This makes "render an embedded dialogue
@@ -137,6 +141,28 @@ someNode.OnEnterActions.Add(load);          // load on entering the node
 `LoadSceneAction` resolves the active `ISceneLoader` from the running `GameFlowContext` (defaulting to a
 `UnitySceneLoader`). A missing/empty scene logs a `[GraphGameFlow]` error and the flow continues.
 
+### Additive scenes — `UnloadSceneAction`
+
+An additive system (hub + streamed zones, UI overlays) needs both directions. `UnloadSceneAction` is the
+unload counterpart — same action model, attach it to any node's enter/exit list:
+
+```csharp
+var unload = ScriptableObject.CreateInstance<UnloadSceneAction>();
+unload.SceneName = "Zone_Cellar";
+leaveCellarNode.OnExitActions.Add(unload);
+```
+
+It unloads through the context's loader when that loader implements **`ISceneUnloader`** (both shipped
+loaders do; a consumer-written `ISceneLoader`-only implementation warns and falls back to the default).
+Unloading always goes through `SceneManager.UnloadSceneAsync` — Unity has no blocking unload — and is
+guarded gracefully: a scene that isn't loaded, or is the **last** loaded scene (Unity cannot unload it),
+logs a `[GraphGameFlow]` error and the flow continues.
+
+By default an additive load leaves the previous **active scene** in charge (its lighting/fog settings keep
+applying; new objects parent into it). Set **`SetActiveOnLoad`** on the `LoadSceneAction` (Additive only —
+the inspector shows the toggle only for that mode) to make the new scene take over once it finishes
+loading; unloading it later falls back to a remaining scene, Unity-standard.
+
 ### Loading screen — `AsyncSceneLoader`
 
 `UnitySceneLoader` is a blocking `SceneManager.LoadScene`: no progress, no seam for a loading screen. For
@@ -149,9 +175,40 @@ driver.SceneLoader = asyncSceneLoader;   // an AsyncSceneLoader in the scene; IS
 
 It loads via `SceneManager.LoadSceneAsync` and raises `SceneLoadStarted`, `SceneLoadProgress(name, 0..1)`,
 `SceneLoadReady`, and `SceneLoadCompleted` — wire those into your own loading-screen UI (the lib ships no
-visuals). By default the scene activates as soon as it's ready; set `AutoActivate = false` to hold it open
+visuals). Unloads (it also implements `ISceneUnloader`) raise `SceneUnloadStarted` / `SceneUnloadCompleted`.
+By default the scene activates as soon as it's ready; set `AutoActivate = false` to hold it open
 until you call `ActivateReadyScene()` (e.g. after a fade-out), and `MinimumDisplayDuration` to keep a fast
 load from flashing the screen for one frame.
+
+Requests are **queued, never dropped**: a load/unload issued while another operation is in flight joins a
+FIFO queue drained serially — so a graph that chains several scene operations in one pass (two additive
+zone loads back-to-back, a load followed by an unload…) is reliable. `IsLoading` stays true until the queue
+drains; `PendingCount` exposes the backlog.
+
+Enable **`PauseDriverWhileLoading`** to freeze the flow's time behind the loading screen: the target driver
+(`SignalDriver`, else `GraphFlowDriver.Active`) is `Paused` while the queue is busy — a parked timed wait
+holds instead of ticking down — and resumed when it drains. Signals still resume awaits during the pause
+(only the time pump stops), and a driver you paused yourself is left untouched.
+
+### Synchronising the flow with a load — completion signals
+
+`LoadSceneAction` is fire-and-forget: with an async loader the flow keeps running while the scene loads.
+To make the flow **wait**, set the loader's completion signals — no manual event wiring:
+
+```csharp
+loader.LoadCompletedSignal   = sceneReadySignal;    // a SignalDef asset
+loader.UnloadCompletedSignal = sceneGoneSignal;     // optional
+loader.SignalDriver          = driver;              // omit to target GraphFlowDriver.Active
+```
+
+Each completed load/unload is raised as that signal into the driver (scene name as string payload), through
+the same resume-and-drain path as `GraphFlowDriver.RaiseSignal`. Authoring pattern: put an **await-signal
+node right after the node carrying the load/unload action** — the flow parks there and resumes exactly when
+the operation lands:
+
+```
+… → [enter: LoadScene "Zone_Cellar" (Additive)] → (await sceneReadySignal) → …
+```
 
 ---
 
