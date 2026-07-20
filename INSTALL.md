@@ -40,6 +40,7 @@ com.faolline.graphlocalization     (no deps)               — locale tables, CS
 com.faolline.graphstandard         → graphcore              — reactive/flow engines, collections
 com.faolline.graphdialoguesystem   → graphcore, graphlocalization — dialogue graph, speakers, UI
 com.faolline.graphgameflow         → graphcore              — scene driver, triggers, scene loader
+com.faolline.graphgameflow.addressables → graphgameflow, com.unity.addressables — Addressables scene loader bridge
 com.faolline.graphquest            → graphcore, graphstandard, graphlocalization — quest DAG, journal
 com.faolline.graphsave             → graphcore              — snapshot persistence (neutral)
 com.faolline.graphsave.savesystem  → graphsave, savesystem.core — UnitySaveSystem bridge
@@ -60,6 +61,7 @@ com.faolline.graphTest             → graphcore, graphstandard — integration 
 | Localize node text / speaker names             | `graphlocalization`                          |
 | Write dialogue trees with speakers & choices   | `graphdialoguesystem` (pulls graphcore + loc) |
 | Drive a game flow from a scene (driver, triggers) | `graphgameflow`                           |
+| Load scenes by Addressable key instead of Build Settings | `graphgameflow.addressables` (needs `com.unity.addressables`) |
 | Use reactive (k-of-N) or flow (fork/join) engines | `graphstandard`                           |
 | Model quests as objective DAGs with rewards    | `graphquest` (pulls standard + loc)          |
 | Save / restore a running graph                 | `graphsave` (+ `graphsave.savesystem` for UnitySaveSystem) |

@@ -35,6 +35,9 @@ namespace Faolline.GraphTest.Tests
         private const string SaveTests           = "com.faolline.graphsave.Tests.EditMode";
         private const string SaveBridgeRuntime   = "com.faolline.graphsave.savesystem.Runtime";
         private const string SaveBridgeTests     = "com.faolline.graphsave.savesystem.Tests.EditMode";
+        private const string AddrBridgeRuntime   = "com.faolline.graphgameflow.addressables.Runtime";
+        private const string AddrBridgeTests     = "com.faolline.graphgameflow.addressables.Tests.EditMode";
+        private const string AddrBridgeTestsPlay = "com.faolline.graphgameflow.addressables.Tests.PlayMode";
         private const string DialogueRuntime     = "com.faolline.graphdialoguesystem.Runtime";
         private const string DialogueEditor      = "com.faolline.graphdialoguesystem.Editor";
         private const string DialogueLocUnity    = "com.faolline.graphdialoguesystem.Localization.Unity";
@@ -68,6 +71,8 @@ namespace Faolline.GraphTest.Tests
         private const string InputSystem       = "Unity.InputSystem";
         private const string SaveSystemCore    = "SaveSystemCore";
         private const string SaveSystemJson    = "SaveSystemJson";
+        private const string UnityAddr         = "Unity.Addressables";
+        private const string UnityAddrEditor   = "Unity.Addressables.Editor";
 
         /// <summary>
         /// The allowed reference set per assembly (the architecture, as data). A reference absent from an
@@ -94,6 +99,7 @@ namespace Faolline.GraphTest.Tests
             [DialogueLocUnity]  = new[] { DialogueRuntime, UnityLoc },
             [DialogueUI]        = new[] { CoreRuntime, DialogueRuntime, LocRuntime, TextMeshPro, UGui, InputSystem },
             [SaveBridgeRuntime] = new[] { SaveRuntime, SaveSystemCore },
+            [AddrBridgeRuntime] = new[] { FlowRuntime, CoreRuntime, UnityAddr, UnityResourceMgr },
 
             // ── Editor assemblies (own package + upstream Runtime/Editor pairs) ─
             [CoreEditor]     = new[] { CoreRuntime },
@@ -116,6 +122,8 @@ namespace Faolline.GraphTest.Tests
             [StdTests]            = new[] { StdRuntime, StdEditor, CoreRuntime, TestRunner, TestRunnerEditor },
             [SaveTests]           = new[] { SaveRuntime, CoreRuntime, TestRunner, TestRunnerEditor },
             [SaveBridgeTests]     = new[] { SaveBridgeRuntime, SaveRuntime, CoreRuntime, SaveSystemCore, SaveSystemJson, TestRunner, TestRunnerEditor },
+            [AddrBridgeTests]     = new[] { AddrBridgeRuntime, FlowRuntime, CoreRuntime, UnityAddr, UnityResourceMgr, TestRunner, TestRunnerEditor },
+            [AddrBridgeTestsPlay] = new[] { AddrBridgeRuntime, FlowRuntime, CoreRuntime, UnityAddr, UnityAddrEditor, UnityResourceMgr, TestRunner },
             [DialogueTests]       = new[] { DialogueRuntime, DialogueEditor, CoreRuntime, CoreEditor, LocRuntime, LocEditor, TestRunner, TestRunnerEditor },
             [DialogueTestsPlay]   = new[] { DialogueRuntime, CoreRuntime, LocRuntime, TestRunner, TestRunnerEditor },
             [DialogueUITests]     = new[] { DialogueUI, DialogueRuntime, CoreRuntime, LocRuntime, TextMeshPro, UGui, TestRunner, TestRunnerEditor },

@@ -163,6 +163,14 @@ applying; new objects parent into it). Set **`SetActiveOnLoad`** on the `LoadSce
 the inspector shows the toggle only for that mode) to make the new scene take over once it finishes
 loading; unloading it later falls back to a remaining scene, Unity-standard.
 
+### Addressables — `com.faolline.graphgameflow.addressables`
+
+Want to load scenes by **Addressable key** instead of a Build Settings entry? That's a separate optional
+package (`com.faolline.graphgameflow.addressables`, needs `com.unity.addressables`) — graphgameflow core
+stays dependency-free either way. See that package's README for `AddressablesSceneLoader`, which mirrors
+`AsyncSceneLoader`'s whole contract (queue, progress events, activation gate, completion signals, driver
+pause) as a drop-in swap.
+
 ### Loading screen — `AsyncSceneLoader`
 
 `UnitySceneLoader` is a blocking `SceneManager.LoadScene`: no progress, no seam for a loading screen. For
