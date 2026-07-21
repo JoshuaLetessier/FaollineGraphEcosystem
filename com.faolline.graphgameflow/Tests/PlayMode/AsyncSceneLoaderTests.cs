@@ -226,5 +226,108 @@ namespace Faolline.GraphGameFlow.Tests.PlayMode
 
             Assert.IsTrue(ended, "the failed-load signal resumed the parked flow via the OR-await, instead of stalling it.");
         }
+
+        [UnityTest]
+        public IEnumerator LoadSceneAction_InstantFailure_ResumesLiveWithoutResumeIfAlreadyRaised()
+        {
+            // The ACTUAL trap this test guards against (found via independent testing, not the driver-
+            // external-trigger shape of the test above): a LoadSceneAction on a node's OnEnterActions,
+            // immediately followed — in the SAME synchronous auto-advance pass — by a node awaiting
+            // completed-OR-failed. Before LoadRoutine deferred its failure branch by one frame, an instant
+            // failure (bad scene name) fired the failure signal SYNCHRONOUSLY inside OnEnterActions, before
+            // the runner had even entered the awaiting node — the signal was gone by the time anything could
+            // catch it live, and ResumeIfSignalAlreadyRaised was the only way to recover it from history.
+            // ResumeIfSignalAlreadyRaised is deliberately left OFF here to prove the live path alone is
+            // now enough.
+            var loadedSig = Track(SignalDef.Create("async-trap-ok"));
+            var failedSig = Track(SignalDef.Create("async-trap-failed"));
+
+            var g = Track(ScriptableObject.CreateInstance<GameFlowGraph>());
+            g.EntryNodeId = "start";
+            var start    = new StartNodeData { Id = "start", NodeType = StartNodeData.NodeTypeId };
+            var loadNode = new StatementNodeData { Id = "load", NodeType = StatementNodeData.NodeTypeId };
+            var loadAction = Track(ScriptableObject.CreateInstance<LoadSceneAction>());
+            loadAction.SceneName = "DefinitelyNotARealSceneForTrapTest";
+            loadAction.Mode = LoadSceneMode.Additive;
+            loadNode.OnEnterActions.Add(loadAction);
+            var gate = new StatementNodeData { Id = "gate", NodeType = StatementNodeData.NodeTypeId, AwaitSignalName = (string)loadedSig };
+            gate.AwaitSignalNamesExtra.Add((string)failedSig);
+            var end = new EndNodeData { Id = "end", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
+            g.AddNode(start); g.AddNode(loadNode); g.AddNode(gate); g.AddNode(end);
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "load" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "load", ToNodeId = "gate" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "gate", ToNodeId = "end" });
+
+            var driverGo = Track(new GameObject("async-trap-driver"));
+            var driver = driverGo.AddComponent<GraphFlowDriver>();
+            driver.BootOnStart = false;
+            driver.Graph = g;
+
+            var loaderGo = Track(new GameObject("async-trap-loader"));
+            var loader = loaderGo.AddComponent<AsyncSceneLoader>();
+            loader.LoadCompletedSignal = loadedSig;
+            loader.LoadFailedSignal    = failedSig;
+            loader.SignalDriver        = driver;
+            driver.SceneLoader          = loader;
+
+            bool ended = false;
+            driver.OnEnded += _ => ended = true;
+
+            LogAssert.Expect(LogType.Error,
+                "[GraphGameFlow] Scene 'DefinitelyNotARealSceneForTrapTest' cannot be loaded (not in Build Settings / Addressables). Ignored.");
+            driver.Boot();   // start -> load (OnEnterActions runs the failing LoadSceneAction) -> gate (parks), all synchronous within this one call
+
+            Assert.IsTrue(driver.IsWaitingForSignal, "parked on the gate node — the load's own OnEnterActions already ran.");
+
+            yield return null;   // the deferred failure signal fires here, on the loader's coroutine
+
+            Assert.IsTrue(ended, "resumed via the LIVE failure signal — no ResumeIfSignalAlreadyRaised needed.");
+        }
+
+        [UnityTest]
+        public IEnumerator StuckOperationWarning_FiresOnceAfterThreshold_WhenHeldOpenByManualActivation()
+        {
+            var go = Track(new GameObject("async-loader-stuck"));
+            var loader = go.AddComponent<EditorPathAsyncSceneLoader>();
+            loader.AutoActivate = false;
+            loader.StuckOperationWarningAfter = 0.001f;   // effectively "any real delay at all"
+
+            var fired = new List<(string Name, float Elapsed)>();
+            loader.OperationTakingTooLong += (n, e) => fired.Add((n, e));
+
+            loader.LoadScene(SceneA, LoadSceneMode.Single);
+
+            // Held open well past the threshold, across several real frames, without ever activating.
+            for (int i = 0; i < 5; i++) yield return null;
+
+            Assert.AreEqual(1, fired.Count, "the warning fires exactly once, however many frames elapse past the threshold.");
+            Assert.AreEqual(SceneA, fired[0].Name);
+            Assert.Greater(fired[0].Elapsed, 0f);
+
+            loader.ActivateReadyScene();
+            float timeout = Time.realtimeSinceStartup + 10f;
+            while (loader.IsLoading && Time.realtimeSinceStartup < timeout) yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator StuckOperationWarning_Disabled_NeverFires()
+        {
+            var go = Track(new GameObject("async-loader-stuck-disabled"));
+            var loader = go.AddComponent<EditorPathAsyncSceneLoader>();
+            loader.AutoActivate = false;
+            loader.StuckOperationWarningAfter = 0f;   // 0 or less disables it
+
+            bool fired = false;
+            loader.OperationTakingTooLong += (_, __) => fired = true;
+
+            loader.LoadScene(SceneB, LoadSceneMode.Single);
+            for (int i = 0; i < 5; i++) yield return null;
+
+            Assert.IsFalse(fired, "disabled (<=0) must never fire, regardless of how long the operation is held open.");
+
+            loader.ActivateReadyScene();
+            float timeout = Time.realtimeSinceStartup + 10f;
+            while (loader.IsLoading && Time.realtimeSinceStartup < timeout) yield return null;
+        }
     }
 }
