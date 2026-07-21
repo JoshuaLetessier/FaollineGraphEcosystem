@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.12.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphsave` ≥ 0.5.0
+**Version**: 0.13.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphsave` ≥ 0.5.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -117,9 +117,28 @@ void Start()
 
 - `PersistAcrossScenes` (default off) calls `DontDestroyOnLoad` so the driver and its in-progress flow survive
   single-mode loads. A duplicate per-scene copy self-destructs, leaving the original running.
-- `GraphFlowDriver.Active` is the current persistent driver.
+- `GraphFlowDriver.Active` is the current persistent driver — a deliberate, narrow exception to "no
+  singletons, no service locator" for scene scripts with no other wiring path (see `INTEGRATION.md`). Prefer
+  an explicit reference (a DI-registered driver, or a loader's own `SignalDriver`) wherever one is threadable.
 - **Bigger games**: keep the master flow lean and model a **room / dialogue / ability as a SubGraph node**
   (graphcore's `SubGraphNodeData` → a `BaseGraph`); the substrate already nests graphs with cycle detection.
+
+### Which scenes are loaded? — `GameFlowContext.LoadedScenes`
+
+The driver keeps `Context.LoadedScenes` / `Context.IsSceneLoaded(name)` in sync automatically, from Unity's
+own `SceneManager.sceneLoaded`/`sceneUnloaded` — not from whichever `ISceneLoader` is in use, so it stays
+accurate whether a scene loaded through `UnitySceneLoader`, `AsyncSceneLoader`, an Addressables loader, or
+code entirely outside the flow. Seeded with whatever is already loaded at `Boot()`. Query it from a custom
+`BaseCondition`/`BaseAction` instead of importing `UnityEngine.SceneManagement` directly:
+
+```csharp
+public sealed class RequiresSceneLoaded : BaseCondition
+{
+    [SerializeField] private string _sceneName;
+    public override bool Evaluate(BaseContext context)
+        => (context as GameFlowContext)?.IsSceneLoaded(_sceneName) ?? false;
+}
+```
 
 ---
 
