@@ -121,6 +121,31 @@ Notes:
   `DialoguePlayer(graph, context, localizationProvider)` in a use case or bootstrap, and hand it to
   Presentation as an `IDialoguePlaybackSource`.
 
+### Cross-scene DI: keep `LifetimeScope` linked to every scene the flow loads
+
+A `LoadSceneAction` (or your own `ISceneLoader`) transitions scenes on the FLOW's schedule, not yours —
+VContainer's cross-scene `LifetimeScope` parenting (`LifetimeScope.EnqueueParent(...)`) only links up if
+something calls it *before* the newly-loaded scene's own `LifetimeScope.Awake()` runs. Miss that one call
+and every `[Inject]` in the new scene resolves against no parent: dependencies come back **null, silently**
+— no exception, nothing in the console.
+
+Wire it once, off whichever scene loader you use:
+
+```csharp
+// AsyncSceneLoader / AddressablesSceneLoader: SceneLoadStarted fires once the load has kicked off but
+// before the new scene is instantiated (Awake() included) — a safe point to enqueue the parent.
+asyncSceneLoader.SceneLoadStarted += _ => LifetimeScope.EnqueueParent(currentScope.Container);
+```
+
+`UnitySceneLoader` (blocking `SceneManager.LoadScene`) raises no such event — if any transition goes
+through it, wrap it in your own `ISceneLoader` that calls `EnqueueParent` before delegating, or standardize
+on an async loader for any transition DI needs to reach into.
+
+This is precisely what makes `GraphFlowDriver.Active` (see **Rules of thumb** below) unnecessary once set
+up: with every flow-triggered scene transition keeping its `LifetimeScope` linked, a scene script's
+`[Inject]` method reaches the persistent driver the same way it reaches any other dependency — there is no
+"reference-less" scene script left, so there is no case left for `Active` to cover.
+
 ## Presentation: subscribe to seams, render your own visuals
 
 The libs deliberately ship no mandatory visuals. A dialogue Presenter depends on the seam, not on the
@@ -200,6 +225,10 @@ posture trades for its flexibility.
   trigger dropped into a freshly-loaded scene, a UI button with no DI reach). Prefer an explicit reference
   wherever one is threadable: register the driver in your container (as the wiring example above already
   does) and inject it, or use a loader's own explicit target (`AsyncSceneLoader.SignalDriver`,
-  `AddressablesSceneLoader.SignalDriver`) instead of letting a bridge component fall back to `Active`.
+  `AddressablesSceneLoader.SignalDriver`) instead of letting a bridge component fall back to `Active`. In a
+  fully DI-composed project this "no wiring path" case shouldn't occur at all — see **Cross-scene DI**
+  above: keep every scene transition's `LifetimeScope` linked to its parent, and a scene script's `[Inject]`
+  always reaches the driver; treat any appearance of `Active` in your own code as a wiring gap to close,
+  not a normal fallback.
 - **Assets are content**: keep `Faolline` graph assets out of your Domain *code*, but don't pretend
   they're infrastructure — they're your authored game, like your prefabs.
