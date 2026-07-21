@@ -18,8 +18,14 @@ namespace Faolline.GraphGameFlow.Tests.PlayMode
     /// </summary>
     public sealed class SceneRegistryPlayModeTests
     {
-        private const string SceneA = "GameFlowCrossSceneA";
-        private const string SceneB = "GameFlowCrossSceneB";
+        // Dedicated scenes — not shared with any other PlayMode fixture in this project (see
+        // AsyncSceneLoaderTests). A Single load of one of these two still permanently claims it for the
+        // rest of the session AS FAR AS THIS FIXTURE'S OWN OTHER TESTS are concerned (see
+        // PersistentDriver_RegistryTracksAcrossSingleLoad below), since NUnit doesn't guarantee
+        // [UnityTest] method order even within one fixture — hence AdditiveLoadAndUnload_UpdatesRegistry
+        // still picks its target dynamically instead of hardcoding one.
+        private const string SceneA = "SceneRegistrySceneA";
+        private const string SceneB = "SceneRegistrySceneB";
         private const string ScenesDir = "Assets/FaollineGraphEcosystem/com.faolline.graphgameflow/Tests/PlayMode/Scenes";
 
         /// <summary>Loads/unloads by editor path instead of Build Settings, matching this package's other PlayMode fixtures.</summary>
@@ -49,11 +55,10 @@ namespace Faolline.GraphGameFlow.Tests.PlayMode
 
         private T Track<T>(T o) where T : Object { _objects.Add(o); return o; }
 
-        // GameFlowCrossSceneA/B are shared across several PlayMode fixtures in this assembly, all running in
-        // NUnit's own (randomised) order within one continuous play session. SceneManager.GetSceneByName /
-        // UnloadSceneAsync(string) only ever resolve the FIRST loaded instance of a name — if an earlier
-        // fixture left a duplicate-named instance loaded, those calls can silently miss it. Iterate the real
-        // Scene structs instead, so cleanup and assertions are correct even with duplicates in play.
+        // SceneManager.GetSceneByName / UnloadSceneAsync(string) only ever resolve the FIRST loaded instance
+        // of a name — if this fixture's own tests ran in an order that left a duplicate-named instance
+        // loaded (NUnit does not guarantee [UnityTest] method order), those calls could silently miss it.
+        // Iterate the real Scene structs instead, so cleanup and assertions stay correct regardless.
         private static bool AnyInstanceLoaded(string sceneName)
         {
             for (int i = 0; i < SceneManager.sceneCount; i++)
@@ -108,12 +113,11 @@ namespace Faolline.GraphGameFlow.Tests.PlayMode
         {
             var sceneLoader = new EditorPathSceneLoader();
 
-            // Either GameFlowCrossSceneA or B may already be the sole permanently-active scene, left behind
-            // by an earlier Single-mode test elsewhere in this run (this project's whole PlayMode session is
-            // shared across EVERY package's tests, not just this one) — a Single load never "restores", and
-            // Unity refuses to unload the last remaining scene. Pick whichever of the two is NOT the current
-            // active scene as the target: additively loading/unloading it is then always safe (there is
-            // always at least the active scene left) and it is guaranteed to start unloaded.
+            // PersistentDriver_RegistryTracksAcrossSingleLoad (this same fixture) may have already run and
+            // Single-loaded SceneA — permanently, since a Single load never "restores" — and Unity refuses
+            // to unload the last remaining scene. Pick whichever of the two is NOT the current active scene
+            // as the target: additively loading/unloading it is then always safe (there is always at least
+            // the active scene left) and it is guaranteed to start unloaded, regardless of test order.
             string target = SceneManager.GetActiveScene().name == SceneA ? SceneB : SceneA;
             yield return UnloadAllInstances(target);   // clear any stray leftover instance before asserting a clean baseline
 

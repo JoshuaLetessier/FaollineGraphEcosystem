@@ -18,8 +18,10 @@ namespace Faolline.GraphGameFlow.Tests.PlayMode
     /// </summary>
     public sealed class AdditiveSceneFlowTests
     {
-        private const string HubScene     = "GameFlowCrossSceneA";
-        private const string OverlayScene = "GameFlowCrossSceneB";
+        // Dedicated scenes — see AsyncSceneLoaderTests for why no PlayMode fixture in this project should
+        // share scene names with another one.
+        private const string HubScene     = "AdditiveHubScene";
+        private const string OverlayScene = "AdditiveOverlayScene";
         private const string ScenesDir    = "Assets/FaollineGraphEcosystem/com.faolline.graphgameflow/Tests/PlayMode/Scenes";
 
         /// <summary>Loads by editor path instead of Build Settings, exactly like <c>AsyncSceneLoaderTests</c>.</summary>

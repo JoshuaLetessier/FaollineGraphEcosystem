@@ -16,8 +16,9 @@ using UnityEditor.AddressableAssets.Settings;
 namespace Faolline.GraphGameFlow.Addressables.Tests.PlayMode
 {
     /// <summary>
-    /// Real Addressables loads of the graphgameflow package's committed cross-scene test scenes, registered
-    /// as Addressable entries for the duration of this fixture (<see cref="RegisterAddressableTestScenes"/>).
+    /// Real Addressables loads of this package's own dedicated test scenes (never shared with the
+    /// graphgameflow core package's fixtures — see the constants below), registered as Addressable entries
+    /// for the duration of this fixture (<see cref="RegisterAddressableTestScenes"/>).
     /// Runs under the "Use Asset Database (fastest)" Play Mode script — the standard way to exercise
     /// Addressables from the Editor with no content build. The registration step is Editor-only
     /// (<c>AddressableAssetSettings</c> has no Player-side equivalent — content authoring is always an
@@ -37,12 +38,16 @@ namespace Faolline.GraphGameFlow.Addressables.Tests.PlayMode
     /// </summary>
     public sealed class AddressablesSceneLoaderPlayModeTests
     {
-        private const string SceneAPath = "Assets/FaollineGraphEcosystem/com.faolline.graphgameflow/Tests/PlayMode/Scenes/GameFlowCrossSceneA.unity";
-        private const string SceneBPath = "Assets/FaollineGraphEcosystem/com.faolline.graphgameflow/Tests/PlayMode/Scenes/GameFlowCrossSceneB.unity";
-        private const string SceneAName = "GameFlowCrossSceneA";
-        private const string SceneBName = "GameFlowCrossSceneB";
-        private const string KeyA = "AddrTest.GameFlowCrossSceneA";
-        private const string KeyB = "AddrTest.GameFlowCrossSceneB";
+        // Dedicated scenes, private to this package's own tests — not the graphgameflow core package's
+        // GameFlowCrossSceneA/B (which several of ITS OWN fixtures already share), so a Single load here can
+        // never collide with an unrelated fixture in another package's test assembly. See
+        // AsyncSceneLoaderTests (core package) for the incident this convention exists to prevent.
+        private const string SceneAPath = "Assets/FaollineGraphEcosystem/com.faolline.graphgameflow.addressables/Tests/PlayMode/Scenes/AddressablesSceneA.unity";
+        private const string SceneBPath = "Assets/FaollineGraphEcosystem/com.faolline.graphgameflow.addressables/Tests/PlayMode/Scenes/AddressablesSceneB.unity";
+        private const string SceneAName = "AddressablesSceneA";
+        private const string SceneBName = "AddressablesSceneB";
+        private const string KeyA = "AddrTest.SceneA";
+        private const string KeyB = "AddrTest.SceneB";
 
 #if UNITY_EDITOR
         private AddressableAssetSettings _settings;
@@ -163,7 +168,7 @@ namespace Faolline.GraphGameFlow.Addressables.Tests.PlayMode
         }
 
         // NOTE on scene reuse across this fixture: AutoActivate_LoadsSceneToCompletion_RaisingAllEventsInOrder
-        // Single-loads KeyA — which, by Single-mode's own contract, keeps GameFlowCrossSceneA loaded for the
+        // Single-loads KeyA — which, by Single-mode's own contract, keeps AddressablesSceneA loaded for the
         // rest of the play session (there is no "restore" from a Single load; PlayMode tests share one
         // session). Every OTHER test below therefore uses KeyB exclusively, load-then-unload within itself,
         // so none of them depend on execution order — NUnit does not guarantee one.

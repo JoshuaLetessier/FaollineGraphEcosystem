@@ -15,8 +15,12 @@ namespace Faolline.GraphGameFlow.Tests.PlayMode
     /// </summary>
     public sealed class AsyncSceneLoaderTests
     {
-        private const string SceneA = "GameFlowCrossSceneA";
-        private const string SceneB = "GameFlowCrossSceneB";
+        // Dedicated scenes — not shared with any other PlayMode fixture in this project, so a Single load
+        // here (which permanently claims a scene for the rest of the whole cross-package PlayMode session)
+        // can never collide with an unrelated fixture elsewhere. See SceneRegistryPlayModeTests for the
+        // incident this convention exists to prevent.
+        private const string SceneA = "AsyncLoaderSceneA";
+        private const string SceneB = "AsyncLoaderSceneB";
         private const string ScenesDir = "Assets/FaollineGraphEcosystem/com.faolline.graphgameflow/Tests/PlayMode/Scenes";
 
         /// <summary>Loads by editor path instead of Build Settings index, exactly like <c>CrossSceneSurvivalTests.EditorPathSceneLoader</c>.</summary>
