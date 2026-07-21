@@ -195,5 +195,11 @@ posture trades for its flexibility.
   "verticals never reference verticals" rule.
 - **Never `Boot()` twice / never resolve `Context` early** — the boot-order note above covers the one
   lifecycle trap.
+- **`GraphFlowDriver.Active` is the one deliberate exception to "no singletons, no service locator" above** —
+  a static fallback for scene scripts that have no wiring path to the persistent driver at all (a physics
+  trigger dropped into a freshly-loaded scene, a UI button with no DI reach). Prefer an explicit reference
+  wherever one is threadable: register the driver in your container (as the wiring example above already
+  does) and inject it, or use a loader's own explicit target (`AsyncSceneLoader.SignalDriver`,
+  `AddressablesSceneLoader.SignalDriver`) instead of letting a bridge component fall back to `Active`.
 - **Assets are content**: keep `Faolline` graph assets out of your Domain *code*, but don't pretend
   they're infrastructure — they're your authored game, like your prefabs.

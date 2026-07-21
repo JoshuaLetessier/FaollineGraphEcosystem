@@ -36,5 +36,73 @@ namespace Faolline.GraphGameFlow.Tests
 
             Assert.AreEqual(1, ctx.Get<int>("hp"), "mutating the clone must not affect the source.");
         }
+
+        // ── Scene registry ───────────────────────────────────────────────────────
+
+        [Test]
+        public void IsSceneLoaded_FalseUntilMarked_ThenTrue()
+        {
+            var ctx = new GameFlowContext();
+
+            Assert.IsFalse(ctx.IsSceneLoaded("Hub"));
+
+            ctx.MarkSceneLoaded("Hub");
+
+            Assert.IsTrue(ctx.IsSceneLoaded("Hub"));
+            CollectionAssert.Contains(ctx.LoadedScenes, "Hub");
+        }
+
+        [Test]
+        public void MarkSceneUnloaded_RemovesFromRegistry()
+        {
+            var ctx = new GameFlowContext();
+            ctx.MarkSceneLoaded("Overlay");
+
+            ctx.MarkSceneUnloaded("Overlay");
+
+            Assert.IsFalse(ctx.IsSceneLoaded("Overlay"));
+            CollectionAssert.DoesNotContain(ctx.LoadedScenes, "Overlay");
+        }
+
+        [Test]
+        public void MarkSceneLoaded_IsIdempotent()
+        {
+            var ctx = new GameFlowContext();
+            ctx.MarkSceneLoaded("Hub");
+            ctx.MarkSceneLoaded("Hub");
+
+            Assert.AreEqual(1, ctx.LoadedScenes.Count);
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        public void MarkSceneLoaded_NullOrEmpty_IsNoOp(string sceneName)
+        {
+            var ctx = new GameFlowContext();
+            Assert.DoesNotThrow(() => ctx.MarkSceneLoaded(sceneName));
+            Assert.AreEqual(0, ctx.LoadedScenes.Count);
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        public void IsSceneLoaded_NullOrEmpty_ReturnsFalse(string sceneName)
+        {
+            var ctx = new GameFlowContext();
+            Assert.IsFalse(ctx.IsSceneLoaded(sceneName));
+        }
+
+        [Test]
+        public void DeepClone_CarriesLoadedScenes_Independently()
+        {
+            var ctx = new GameFlowContext();
+            ctx.MarkSceneLoaded("Hub");
+
+            var clone = (GameFlowContext)ctx.DeepClone();
+            Assert.IsTrue(clone.IsSceneLoaded("Hub"), "the registry carries through on clone.");
+
+            clone.MarkSceneLoaded("Overlay");
+
+            Assert.IsFalse(ctx.IsSceneLoaded("Overlay"), "mutating the clone's registry must not affect the source.");
+        }
     }
 }

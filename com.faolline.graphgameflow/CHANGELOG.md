@@ -4,6 +4,27 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.13.0]
+
+### Added
+- **`GameFlowContext.LoadedScenes` / `IsSceneLoaded`: a loaded-scene registry, kept in sync automatically.**
+  Until now the context carried the scene loader service but nothing about which scenes are actually
+  loaded — a custom `BaseCondition`/`BaseAction` that needed that had to import `UnityEngine.SceneManagement`
+  directly, breaking the "graph logic reads/writes the context" model. `GraphFlowDriver` now subscribes to
+  Unity's own `SceneManager.sceneLoaded`/`sceneUnloaded` (not the `ISceneLoader` in use — accurate whether a
+  scene loaded through `UnitySceneLoader`, `AsyncSceneLoader`, `AddressablesSceneLoader`, or code entirely
+  outside the flow) and mirrors it onto the context via `MarkSceneLoaded`/`MarkSceneUnloaded`, seeding
+  whatever is already loaded at `Boot()` time. The subscription is scoped to the driver's own
+  `Subscribe()`/`Unsubscribe()` pair (paired with `Stop()`/`OnDestroy`), not to the context's lifetime,
+  since `GameFlowContext` has no dispose hook to unhook a static event from.
+
+### Changed
+- **`GraphFlowDriver.Active` now documents itself as a deliberate, narrow exception** to this ecosystem's
+  "no singletons, no service locator" rule (see `INTEGRATION.md`) rather than leaving that tension implicit
+  — it exists only for scene scripts with no wiring path to the driver at all (a physics trigger, a UI
+  button). No behavior change; XML doc + `INTEGRATION.md` now say explicitly to prefer an explicit
+  reference (a DI-registered driver, or a loader's own `SignalDriver`) wherever one is threadable.
+
 ## [0.12.0]
 
 ### Added

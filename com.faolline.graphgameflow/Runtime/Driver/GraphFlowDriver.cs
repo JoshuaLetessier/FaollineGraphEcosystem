@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Faolline.GraphCore;
 
 namespace Faolline.GraphGameFlow
@@ -67,6 +68,16 @@ namespace Faolline.GraphGameFlow
         /// <summary>
         /// The current persistent driver (the one that booted with <see cref="PersistAcrossScenes"/>), or
         /// null. Lets scene scripts reach the cross-scene driver without writing their own singleton.
+        /// <para>
+        /// A DELIBERATE, narrow exception to this ecosystem's "no singletons, no service locator" rule (see
+        /// <c>INTEGRATION.md</c>) — it exists only because a scene script dropped into a freshly-loaded
+        /// scene (a physics trigger, a UI button) has no wiring path to the persistent driver at all, and
+        /// forcing every such script through a DI container/gateway just to raise one signal is exactly the
+        /// re-abstraction ceremony that document warns against. Wherever a reference CAN be threaded through
+        /// — a component field, a constructor, a container registration, or an explicit target like
+        /// <see cref="AsyncSceneLoader.SignalDriver"/> — prefer that over <c>Active</c>; reach for this only
+        /// from code that is genuinely reference-less (see <see cref="ContextTrigger"/>'s own fallback use).
+        /// </para>
         /// </summary>
         public static GraphFlowDriver Active { get; private set; }
 
@@ -328,10 +339,22 @@ namespace Faolline.GraphGameFlow
             _runner.OnStuck            += HandleStuck;
             _runner.OnWaitingForSignal += HandleWaitingForSignal;
             _runner.OnWaitingForTime   += HandleWaitingForTime;
+
+            // Loader-agnostic (Unity's own scene events, not the ISceneLoader in use) so the context's
+            // scene registry stays accurate whether a scene loaded through UnitySceneLoader, AsyncSceneLoader,
+            // AddressablesSceneLoader, or code entirely outside the flow. Tied to THIS subscribe/unsubscribe
+            // pair (not to the context's lifetime — GameFlowContext has no dispose hook) so a non-persistent
+            // driver never leaks a static-event subscription past its own OnDestroy.
+            SceneManager.sceneLoaded   += HandleSceneLoaded;
+            SceneManager.sceneUnloaded += HandleSceneUnloaded;
+            SeedLoadedScenes();
         }
 
         private void Unsubscribe()
         {
+            SceneManager.sceneLoaded   -= HandleSceneLoaded;
+            SceneManager.sceneUnloaded -= HandleSceneUnloaded;
+
             if (_runner == null) return;
             _runner.OnNodeEntered      -= HandleNodeEntered;
             _runner.OnNodeCompleted    -= HandleNodeCompleted;
@@ -340,6 +363,20 @@ namespace Faolline.GraphGameFlow
             _runner.OnWaitingForSignal -= HandleWaitingForSignal;
             _runner.OnWaitingForTime   -= HandleWaitingForTime;
         }
+
+        // Seeds the registry with whatever is already loaded at Boot() time, so IsSceneLoaded is accurate
+        // immediately — not just for scene changes that happen after this driver started.
+        private void SeedLoadedScenes()
+        {
+            for (int i = 0; i < SceneManager.sceneCount; i++)
+            {
+                var scene = SceneManager.GetSceneAt(i);
+                if (scene.isLoaded) _context?.MarkSceneLoaded(scene.name);
+            }
+        }
+
+        private void HandleSceneLoaded(Scene scene, LoadSceneMode mode) => _context?.MarkSceneLoaded(scene.name);
+        private void HandleSceneUnloaded(Scene scene) => _context?.MarkSceneUnloaded(scene.name);
 
         private void HandleNodeEntered(BaseNodeData node) => OnNodeEntered?.Invoke(node);
 
