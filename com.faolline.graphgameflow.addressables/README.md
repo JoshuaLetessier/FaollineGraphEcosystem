@@ -1,6 +1,6 @@
 # Faolline GraphGameFlow — Addressables Bridge
 
-**Version**: 0.1.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.13.1, `com.unity.addressables` ≥ 2.2.2
+**Version**: 0.2.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.13.1, `com.unity.addressables` ≥ 2.2.2
 
 Optional T3 adapter: an `ISceneLoader`/`ISceneUnloader` (from `com.faolline.graphgameflow`) backed by
 `com.unity.addressables`, so `LoadSceneAction`/`UnloadSceneAction` can load a scene by **Addressable key**
@@ -36,6 +36,12 @@ async loader is wanted:
 - **Completion signals**: `LoadCompletedSignal` / `UnloadCompletedSignal` (`SignalDef`) + `SignalDriver`
   raise each completion into a `GraphFlowDriver` (key as string payload) — park the flow on an await-signal
   node right after the scene action and it resumes exactly when the operation lands. No manual event wiring.
+- **Failure signals**: a failed load/unload (invalid key, missing content build…) never raises its
+  completion signal, so a node awaiting only that would park forever. Set `LoadFailedSignal` /
+  `UnloadFailedSignal` too, and add them as a SECOND `AwaitSignalNamesExtra` entry alongside the completion
+  signal (graphcore's await-signal already resolves on any one of several — logical OR) — a failure resumes
+  the flow instead of stalling it. Payload is `"{key}: {reason}"`, naming both what failed and why. Plain
+  C# events `SceneLoadFailed`/`SceneUnloadFailed` (key, then reason) are also available.
 - **`PauseDriverWhileLoading`**: freezes the target driver's time (a parked timed wait holds) while the
   queue is busy, resuming it when the queue drains; never touches a pause the consumer set themselves.
 
