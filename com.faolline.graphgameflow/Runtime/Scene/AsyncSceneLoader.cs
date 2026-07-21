@@ -42,6 +42,12 @@ namespace Faolline.GraphGameFlow
     /// <c>[GraphGameFlow]</c> error already logged.
     /// </para>
     /// <para>
+    /// <see cref="StuckOperationWarningAfter"/> logs a loud warning (and raises
+    /// <see cref="OperationTakingTooLong"/>) if a single load/unload has been in flight unusually long — a
+    /// hung operation (a request that never resolves to success or failure at all) is otherwise silent
+    /// beyond the graph parking on its await signal. Diagnostic only; it never cancels or alters the flow.
+    /// </para>
+    /// <para>
     /// Persists across the load by default (<see cref="DontDestroyOnLoad"/>): a Single-mode load unloads the
     /// scene it is dropped into, which would otherwise kill the coroutine mid-load.
     /// </para>
@@ -69,6 +75,8 @@ namespace Faolline.GraphGameFlow
         private GraphFlowDriver _signalDriver;
         [SerializeField, Tooltip("When enabled, the target driver (SignalDriver, else GraphFlowDriver.Active) is Paused while the queue is busy, so timed waits don't tick down behind a loading screen. A driver the consumer already paused is left untouched.")]
         private bool _pauseDriverWhileLoading = false;
+        [SerializeField, Tooltip("Logs a warning (and raises OperationTakingTooLong) if a single load/unload has been in flight longer than this many real seconds — a hung operation is otherwise silent beyond the graph parking on its await signal. Diagnostic only; never changes flow. 0 or less disables it.")]
+        private float _stuckOperationWarningAfter = 15f;
 
         private struct Request
         {
@@ -113,6 +121,13 @@ namespace Faolline.GraphGameFlow
         /// </summary>
         public bool PauseDriverWhileLoading { get => _pauseDriverWhileLoading; set => _pauseDriverWhileLoading = value; }
 
+        /// <summary>
+        /// Seconds a single load/unload may be in flight before a diagnostic warning fires (see
+        /// <see cref="OperationTakingTooLong"/>). 0 or less disables it. Purely a visibility aid — it never
+        /// alters the flow (no timeout, no auto-fail); it only makes a hung operation loud instead of silent.
+        /// </summary>
+        public float StuckOperationWarningAfter { get => _stuckOperationWarningAfter; set => _stuckOperationWarningAfter = value; }
+
         /// <summary>True from the moment an operation starts until the whole queue has drained.</summary>
         public bool IsLoading => _pumpRunning;
 
@@ -146,6 +161,13 @@ namespace Faolline.GraphGameFlow
 
         /// <summary>Raised when an unload fails (scene name, then a human-readable reason). No completion event follows.</summary>
         public event Action<string, string> SceneUnloadFailed;
+
+        /// <summary>
+        /// Raised at most once per operation if it has been in flight longer than
+        /// <see cref="StuckOperationWarningAfter"/> (scene name, then elapsed real seconds). Diagnostic only:
+        /// the operation is NOT cancelled and may still complete or fail normally afterward.
+        /// </summary>
+        public event Action<string, float> OperationTakingTooLong;
 
         private void Awake()
         {
@@ -287,6 +309,13 @@ namespace Faolline.GraphGameFlow
             var op = BeginLoad(sceneName, mode);
             if (op == null)
             {
+                // A synchronous failure (bad name, not in Build Settings) would otherwise raise the failure
+                // signal WITHIN the same call stack as LoadSceneAction.Execute() — before the runner's own
+                // (equally synchronous) auto-advance chain has had a chance to reach and park on an awaiting
+                // node placed right after it. One frame of delay lets that synchronous chain finish first, so
+                // the signal is delivered live instead of needing ResumeIfSignalAlreadyRaised to recover it
+                // from history. See SceneAwaitSetup for belt-and-suspenders coverage of slower-to-reach nodes.
+                yield return null;
                 var reason = ConsumeFailureReason();
                 SceneLoadFailed?.Invoke(sceneName, reason);
                 RaiseFailureSignal(_loadFailedSignal, sceneName, reason);
@@ -296,10 +325,13 @@ namespace Faolline.GraphGameFlow
             _pendingScene = sceneName;
             SceneLoadStarted?.Invoke(sceneName);
             op.allowSceneActivation = false;
+            float startTime = Time.realtimeSinceStartup;
+            bool stuckWarned = false;
 
             while (op.progress < 0.9f)
             {
                 SceneLoadProgress?.Invoke(sceneName, op.progress / 0.9f);
+                CheckStuck(sceneName, startTime, ref stuckWarned);
                 yield return null;
             }
             SceneLoadProgress?.Invoke(sceneName, 1f);
@@ -316,11 +348,18 @@ namespace Faolline.GraphGameFlow
             else
             {
                 _pendingOperation = op;
-                yield return new WaitUntil(() => op.allowSceneActivation);
+                while (!op.allowSceneActivation)
+                {
+                    CheckStuck(sceneName, startTime, ref stuckWarned);
+                    yield return null;
+                }
             }
 
             while (!op.isDone)
+            {
+                CheckStuck(sceneName, startTime, ref stuckWarned);
                 yield return null;
+            }
 
             _pendingOperation = null;
             _pendingScene = null;
@@ -333,6 +372,7 @@ namespace Faolline.GraphGameFlow
             var op = BeginUnload(sceneName);
             if (op == null)
             {
+                yield return null;   // see the matching comment in LoadRoutine
                 var reason = ConsumeFailureReason();
                 SceneUnloadFailed?.Invoke(sceneName, reason);
                 RaiseFailureSignal(_unloadFailedSignal, sceneName, reason);
@@ -340,12 +380,38 @@ namespace Faolline.GraphGameFlow
             }
 
             SceneUnloadStarted?.Invoke(sceneName);
+            float startTime = Time.realtimeSinceStartup;
+            bool stuckWarned = false;
 
             while (!op.isDone)
+            {
+                CheckStuck(sceneName, startTime, ref stuckWarned);
                 yield return null;
+            }
 
             SceneUnloadCompleted?.Invoke(sceneName);
             RaiseCompletionSignal(_unloadCompletedSignal, sceneName);
+        }
+
+        // Purely diagnostic: never changes flow behavior, only makes an abnormally slow/hung operation loud
+        // instead of silent. Deliberately scoped to the operation's OWN in-flight duration (a scene load has
+        // a naturally bounded expected time) rather than to how long a graph node has been parked on a
+        // signal — the latter is routinely minutes for a perfectly normal "await player input" node, so a
+        // generic driver-wide timeout would false-positive constantly on the ecosystem's most common
+        // await-signal use case. Fires at most once per operation.
+        private void CheckStuck(string sceneName, float startTime, ref bool warned)
+        {
+            if (warned || _stuckOperationWarningAfter <= 0f) return;
+
+            float elapsed = Time.realtimeSinceStartup - startTime;
+            if (elapsed < _stuckOperationWarningAfter) return;
+
+            warned = true;
+            Debug.LogWarning(
+                $"[GraphGameFlow] Scene operation for '{sceneName}' has been in flight for {elapsed:0.0}s " +
+                $"(over the {_stuckOperationWarningAfter:0.0}s warning threshold) — it may be hung. No " +
+                "automatic action is taken; this is a visibility aid only.");
+            OperationTakingTooLong?.Invoke(sceneName, elapsed);
         }
 
         // Reads and clears _lastFailureReason, with a fallback for the (unlikely) case a BeginLoad/BeginUnload

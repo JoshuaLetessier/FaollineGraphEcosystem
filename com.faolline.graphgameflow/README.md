@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.14.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphsave` ≥ 0.5.0
+**Version**: 0.15.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphsave` ≥ 0.5.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -257,6 +257,31 @@ instead of stalling it. The failure signal's string payload is `"{sceneName}: {r
 what failed and why in one glance, in addition to the `[GraphGameFlow]` error already logged. The plain C#
 events `SceneLoadFailed`/`SceneUnloadFailed` (scene name, then the reason) are also available for a
 loading-screen UI that wants to show the error without touching the graph at all.
+
+One call configures all of this on the awaiting node — `AwaitSignalName`, the failure signal as an
+`AwaitSignalNamesExtra` entry, and `ResumeIfSignalAlreadyRaised` — instead of three separate settings to
+remember:
+
+```csharp
+SceneAwaitSetup.ConfigureLoadAwait(gateNode, sceneReadySignal, sceneLoadFailedSignal);
+```
+
+**Why `ResumeIfSignalAlreadyRaised`, if the signal is delayed by a frame anyway?** An instant failure (bad
+name, not in Build Settings) can resolve within the SAME synchronous call as `LoadSceneAction.Execute()` —
+before an awaiting node placed right after it has even parked. The loader defers its failure signal by one
+frame precisely so the runner's own (equally synchronous) auto-advance chain has time to reach and park that
+node first — covering the common case with no extra configuration. `ResumeIfSignalAlreadyRaised` remains a
+useful backup only for a manually-advanced flow that might take longer than one frame to reach the awaiting
+node; `SceneAwaitSetup` turns it on by default so you get that safety margin without thinking about it.
+
+**A load/unload that never resolves at all** (a genuinely hung request — no success, no failure, ever) is a
+different failure shape signals can't help with, since nothing ever fires. Set
+`StuckOperationWarningAfter` (default 15s; 0 disables it) to log a loud `[GraphGameFlow]` warning — and raise
+`OperationTakingTooLong` (scene name, elapsed real seconds) — if a single operation has been in flight
+unusually long. Purely diagnostic: it never cancels or alters the flow, it only makes a hang loud instead of
+silent. Deliberately scoped to the LOADER's own in-flight duration rather than to how long a node has been
+parked on a signal in general — the latter is routinely minutes for a perfectly ordinary "await player
+input" node, so a driver-wide timeout would false-positive on the ecosystem's most common await-signal use.
 
 ---
 

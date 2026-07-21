@@ -1,6 +1,6 @@
 # Faolline GraphGameFlow — Addressables Bridge
 
-**Version**: 0.2.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.13.1, `com.unity.addressables` ≥ 2.2.2
+**Version**: 0.3.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.13.1, `com.unity.addressables` ≥ 2.2.2
 
 Optional T3 adapter: an `ISceneLoader`/`ISceneUnloader` (from `com.faolline.graphgameflow`) backed by
 `com.unity.addressables`, so `LoadSceneAction`/`UnloadSceneAction` can load a scene by **Addressable key**
@@ -41,7 +41,15 @@ async loader is wanted:
   `UnloadFailedSignal` too, and add them as a SECOND `AwaitSignalNamesExtra` entry alongside the completion
   signal (graphcore's await-signal already resolves on any one of several — logical OR) — a failure resumes
   the flow instead of stalling it. Payload is `"{key}: {reason}"`, naming both what failed and why. Plain
-  C# events `SceneLoadFailed`/`SceneUnloadFailed` (key, then reason) are also available.
+  C# events `SceneLoadFailed`/`SceneUnloadFailed` (key, then reason) are also available. An invalid key can
+  fail synchronously — the failure signal is deliberately delayed by one frame so it still delivers live to
+  a node that just parked, rather than needing `BaseNodeData.ResumeIfSignalAlreadyRaised` to recover it (a
+  useful backup for manually-advanced flows regardless). `SceneAwaitSetup.ConfigureLoadAwait` (in
+  `com.faolline.graphgameflow`) sets up an await node for all of this in one call.
+- **`StuckOperationWarningAfter`**: logs a warning (and raises `OperationTakingTooLong`) if a single
+  load/unload has been in flight longer than a configurable threshold (default 15s; 0 disables it) — for the
+  different failure shape signals can't help with, a request that never resolves to success OR failure at
+  all. Diagnostic only; never alters the flow.
 - **`PauseDriverWhileLoading`**: freezes the target driver's time (a parked timed wait holds) while the
   queue is busy, resuming it when the queue drains; never touches a pause the consumer set themselves.
 

@@ -40,6 +40,12 @@ namespace Faolline.GraphGameFlow.Addressables
     /// resumes the flow too. The failure signal's string payload is <c>"{key}: {reason}"</c> — naming both
     /// what failed and why in one glance, on top of the <c>[GraphGameFlow]</c> error already logged.
     /// </para>
+    /// <para>
+    /// <see cref="StuckOperationWarningAfter"/> logs a loud warning (and raises
+    /// <see cref="OperationTakingTooLong"/>) if a single load/unload has been in flight unusually long — a
+    /// hung request (one that never resolves to success or failure at all) is otherwise silent beyond the
+    /// graph parking on its await signal. Diagnostic only; it never cancels or alters the flow.
+    /// </para>
     /// </summary>
     [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphgameflow.addressables/README.md")]
     public class AddressablesSceneLoader : MonoBehaviour, ISceneLoader, ISceneUnloader
@@ -64,6 +70,8 @@ namespace Faolline.GraphGameFlow.Addressables
         private GraphFlowDriver _signalDriver;
         [SerializeField, Tooltip("When enabled, the target driver (SignalDriver, else GraphFlowDriver.Active) is Paused while the queue is busy, so timed waits don't tick down behind a loading screen. A driver the consumer already paused is left untouched.")]
         private bool _pauseDriverWhileLoading = false;
+        [SerializeField, Tooltip("Logs a warning (and raises OperationTakingTooLong) if a single load/unload has been in flight longer than this many real seconds — a hung operation is otherwise silent beyond the graph parking on its await signal. Diagnostic only; never changes flow. 0 or less disables it.")]
+        private float _stuckOperationWarningAfter = 15f;
 
         private struct Request
         {
@@ -112,6 +120,13 @@ namespace Faolline.GraphGameFlow.Addressables
         /// </summary>
         public bool PauseDriverWhileLoading { get => _pauseDriverWhileLoading; set => _pauseDriverWhileLoading = value; }
 
+        /// <summary>
+        /// Seconds a single load/unload may be in flight before a diagnostic warning fires (see
+        /// <see cref="OperationTakingTooLong"/>). 0 or less disables it. Purely a visibility aid — it never
+        /// alters the flow (no timeout, no auto-fail); it only makes a hung operation loud instead of silent.
+        /// </summary>
+        public float StuckOperationWarningAfter { get => _stuckOperationWarningAfter; set => _stuckOperationWarningAfter = value; }
+
         /// <summary>True from the moment an operation starts until the whole queue has drained.</summary>
         public bool IsLoading => _pumpRunning;
 
@@ -145,6 +160,13 @@ namespace Faolline.GraphGameFlow.Addressables
 
         /// <summary>Raised when an unload fails (key, then a human-readable reason). No completion event follows.</summary>
         public event Action<string, string> SceneUnloadFailed;
+
+        /// <summary>
+        /// Raised at most once per operation if it has been in flight longer than
+        /// <see cref="StuckOperationWarningAfter"/> (key, then elapsed real seconds). Diagnostic only: the
+        /// operation is NOT cancelled and may still complete or fail normally afterward.
+        /// </summary>
+        public event Action<string, float> OperationTakingTooLong;
 
         private void Awake()
         {
@@ -247,15 +269,24 @@ namespace Faolline.GraphGameFlow.Addressables
             var handle = global::UnityEngine.AddressableAssets.Addressables.LoadSceneAsync(key, mode, activateOnLoad: false);
 
             SceneLoadStarted?.Invoke(key);
+            float startTime = Time.realtimeSinceStartup;
+            bool stuckWarned = false;
 
             while (!handle.IsDone)
             {
                 SceneLoadProgress?.Invoke(key, handle.PercentComplete);
+                CheckStuck(key, startTime, ref stuckWarned);
                 yield return null;
             }
 
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
+                // An invalid key can resolve (and fail) synchronously, within the same call stack as
+                // LoadSceneAction.Execute() — before the runner's own (equally synchronous) auto-advance
+                // chain has had a chance to reach and park on an awaiting node placed right after it. One
+                // frame of delay lets that chain finish first, so the failure signal is delivered live
+                // instead of needing ResumeIfSignalAlreadyRaised to recover it from history.
+                yield return null;
                 var reason = $"Addressables scene '{key}' failed to load: {handle.OperationException}";
                 Debug.LogError($"[GraphGameFlow] {reason}");
                 SceneLoadFailed?.Invoke(key, reason);
@@ -278,7 +309,11 @@ namespace Faolline.GraphGameFlow.Addressables
             {
                 _pendingHandle = handle;
                 _activationRequested = false;
-                yield return new WaitUntil(() => _activationRequested);   // ActivateReadyScene() flips the flag; the actual ActivateAsync() call happens exactly once, below
+                while (!_activationRequested)   // ActivateReadyScene() flips the flag; ActivateAsync() itself is called exactly once, below
+                {
+                    CheckStuck(key, startTime, ref stuckWarned);
+                    yield return null;
+                }
                 yield return handle.Result.ActivateAsync();
             }
 
@@ -292,6 +327,7 @@ namespace Faolline.GraphGameFlow.Addressables
         {
             if (!_loaded.TryGetValue(key, out var handle))
             {
+                yield return null;   // see the matching comment in LoadRoutine
                 var reason = $"Scene '{key}' was not loaded by this AddressablesSceneLoader; unload ignored.";
                 Debug.LogError($"[GraphGameFlow] {reason}");
                 SceneUnloadFailed?.Invoke(key, reason);
@@ -301,6 +337,7 @@ namespace Faolline.GraphGameFlow.Addressables
 
             if (SceneManager.sceneCount <= 1)
             {
+                yield return null;   // see the matching comment in LoadRoutine
                 var reason = $"Scene '{key}' is the last loaded scene; Unity cannot unload it.";
                 Debug.LogError($"[GraphGameFlow] {reason} Ignored.");
                 SceneUnloadFailed?.Invoke(key, reason);
@@ -309,13 +346,40 @@ namespace Faolline.GraphGameFlow.Addressables
             }
 
             SceneUnloadStarted?.Invoke(key);
+            float startTime = Time.realtimeSinceStartup;
+            bool stuckWarned = false;
 
             var op = global::UnityEngine.AddressableAssets.Addressables.UnloadSceneAsync(handle);
-            yield return op;
+            while (!op.IsDone)
+            {
+                CheckStuck(key, startTime, ref stuckWarned);
+                yield return null;
+            }
 
             _loaded.Remove(key);
             SceneUnloadCompleted?.Invoke(key);
             RaiseCompletionSignal(_unloadCompletedSignal, key);
+        }
+
+        // Purely diagnostic: never changes flow behavior, only makes an abnormally slow/hung operation loud
+        // instead of silent. Deliberately scoped to the operation's OWN in-flight duration (a scene load has
+        // a naturally bounded expected time) rather than to how long a graph node has been parked on a
+        // signal — the latter is routinely minutes for a perfectly normal "await player input" node, so a
+        // generic driver-wide timeout would false-positive constantly on the ecosystem's most common
+        // await-signal use case. Fires at most once per operation.
+        private void CheckStuck(string key, float startTime, ref bool warned)
+        {
+            if (warned || _stuckOperationWarningAfter <= 0f) return;
+
+            float elapsed = Time.realtimeSinceStartup - startTime;
+            if (elapsed < _stuckOperationWarningAfter) return;
+
+            warned = true;
+            Debug.LogWarning(
+                $"[GraphGameFlow] Addressables scene operation for '{key}' has been in flight for {elapsed:0.0}s " +
+                $"(over the {_stuckOperationWarningAfter:0.0}s warning threshold) — it may be hung. No " +
+                "automatic action is taken; this is a visibility aid only.");
+            OperationTakingTooLong?.Invoke(key, elapsed);
         }
 
         // Goes through the DRIVER (not the context) so the parked await resumes AND the auto-advance pump

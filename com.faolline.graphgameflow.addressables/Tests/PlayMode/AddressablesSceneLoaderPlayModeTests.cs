@@ -369,5 +369,110 @@ namespace Faolline.GraphGameFlow.Addressables.Tests.PlayMode
             loader.UnloadScene(KeyB);
             yield return WaitForQueue(loader);
         }
+
+        [UnityTest]
+        public IEnumerator LoadSceneAction_InstantFailure_ResumesLiveWithoutResumeIfAlreadyRaised()
+        {
+            // The ACTUAL trap this test guards against (found via independent testing, not the driver-
+            // external-trigger shape of LoadCompletedSignal_ResumesAwaitingDriver above): a LoadSceneAction
+            // on a node's OnEnterActions, immediately followed — in the SAME synchronous auto-advance pass —
+            // by a node awaiting completed-OR-failed. An invalid Addressable key can resolve (and fail)
+            // synchronously, before the runner had even entered the awaiting node; without the one-frame
+            // defer in LoadRoutine's failure branch, the signal was gone by the time anything could catch it
+            // live. ResumeIfSignalAlreadyRaised is deliberately left OFF here to prove the live path alone
+            // is now enough.
+            var loadedSig = Track(SignalDef.Create("addr-trap-ok"));
+            var failedSig = Track(SignalDef.Create("addr-trap-failed"));
+
+            var g = Track(ScriptableObject.CreateInstance<GameFlowGraph>());
+            g.EntryNodeId = "start";
+            var start    = new StartNodeData { Id = "start", NodeType = StartNodeData.NodeTypeId };
+            var loadNode = new StatementNodeData { Id = "load", NodeType = StatementNodeData.NodeTypeId };
+            var loadAction = Track(ScriptableObject.CreateInstance<LoadSceneAction>());
+            loadAction.SceneName = "AddrTest.TrapTestBadKey";
+            loadAction.Mode = LoadSceneMode.Additive;
+            loadNode.OnEnterActions.Add(loadAction);
+            var gate = new StatementNodeData { Id = "gate", NodeType = StatementNodeData.NodeTypeId, AwaitSignalName = (string)loadedSig };
+            gate.AwaitSignalNamesExtra.Add((string)failedSig);
+            var end = new EndNodeData { Id = "end", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
+            g.AddNode(start); g.AddNode(loadNode); g.AddNode(gate); g.AddNode(end);
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "load" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "load", ToNodeId = "gate" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "gate", ToNodeId = "end" });
+
+            var driverGo = Track(new GameObject("addr-trap-driver"));
+            var driver = driverGo.AddComponent<GraphFlowDriver>();
+            driver.BootOnStart = false;
+            driver.Graph = g;
+
+            var loaderGo = Track(new GameObject("addr-trap-loader"));
+            var loader = loaderGo.AddComponent<AddressablesSceneLoader>();
+            loader.LoadCompletedSignal = loadedSig;
+            loader.LoadFailedSignal    = failedSig;
+            loader.SignalDriver        = driver;
+            driver.SceneLoader          = loader;
+
+            bool ended = false;
+            driver.OnEnded += _ => ended = true;
+
+            LogAssert.ignoreFailingMessages = true;   // Addressables itself also logs its own InvalidKeyException line
+            driver.Boot();   // start -> load (OnEnterActions runs the failing LoadSceneAction) -> gate (parks), all synchronous within this one call
+
+            Assert.IsTrue(driver.IsWaitingForSignal, "parked on the gate node — the load's own OnEnterActions already ran.");
+
+            yield return WaitForQueue(loader);   // the deferred failure signal fires once the loader's coroutine resolves
+            LogAssert.ignoreFailingMessages = false;
+
+            Assert.IsTrue(ended, "resumed via the LIVE failure signal — no ResumeIfSignalAlreadyRaised needed.");
+        }
+
+        [UnityTest]
+        public IEnumerator StuckOperationWarning_FiresOnceAfterThreshold_WhenHeldOpenByManualActivation()
+        {
+            var go = Track(new GameObject("addr-loader-stuck"));
+            var loader = go.AddComponent<AddressablesSceneLoader>();
+            loader.AutoActivate = false;
+            loader.StuckOperationWarningAfter = 0.001f;   // effectively "any real delay at all"
+
+            var fired = new List<(string Key, float Elapsed)>();
+            loader.OperationTakingTooLong += (k, e) => fired.Add((k, e));
+
+            loader.LoadScene(KeyB, LoadSceneMode.Additive);
+
+            for (int i = 0; i < 5; i++) yield return null;
+
+            Assert.AreEqual(1, fired.Count, "the warning fires exactly once, however many frames elapse past the threshold.");
+            Assert.AreEqual(KeyB, fired[0].Key);
+            Assert.Greater(fired[0].Elapsed, 0f);
+
+            loader.ActivateReadyScene();
+            yield return WaitForQueue(loader);
+
+            loader.UnloadScene(KeyB);
+            yield return WaitForQueue(loader);
+        }
+
+        [UnityTest]
+        public IEnumerator StuckOperationWarning_Disabled_NeverFires()
+        {
+            var go = Track(new GameObject("addr-loader-stuck-disabled"));
+            var loader = go.AddComponent<AddressablesSceneLoader>();
+            loader.AutoActivate = false;
+            loader.StuckOperationWarningAfter = 0f;   // 0 or less disables it
+
+            bool fired = false;
+            loader.OperationTakingTooLong += (_, __) => fired = true;
+
+            loader.LoadScene(KeyB, LoadSceneMode.Additive);
+            for (int i = 0; i < 5; i++) yield return null;
+
+            Assert.IsFalse(fired, "disabled (<=0) must never fire, regardless of how long the operation is held open.");
+
+            loader.ActivateReadyScene();
+            yield return WaitForQueue(loader);
+
+            loader.UnloadScene(KeyB);
+            yield return WaitForQueue(loader);
+        }
     }
 }

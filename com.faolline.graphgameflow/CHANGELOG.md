@@ -4,6 +4,36 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.15.0]
+
+### Fixed
+- **A load/unload that fails INSTANTLY (bad name, not in Build Settings) could raise its `LoadFailedSignal`/
+  `UnloadFailedSignal` too early to be caught live.** `LoadSceneAction.Execute` and the runner's own
+  auto-advance are both fully synchronous C# calls; a `LoadScene`/`UnloadScene` call whose failure guard
+  rejects the request without ever starting real async work (e.g. `BeginLoad`'s
+  `Application.CanStreamedLevelBeLoaded` check) used to raise the failure signal within that SAME synchronous
+  call stack — before an awaiting node placed right after the load node had even been entered/parked.
+  The signal fired into a runner that wasn't listening yet, and only `BaseNodeData.ResumeIfSignalAlreadyRaised`
+  could recover it from the context's raised-signal history. `AsyncSceneLoader` now defers the failure branch
+  by one frame (`yield return null` before raising), giving the synchronous auto-advance chain time to reach
+  and park the awaiting node first — the signal now delivers live in the common case, with
+  `ResumeIfSignalAlreadyRaised` remaining useful only as a backup for manually-advanced flows.
+
+### Added
+- **`AsyncSceneLoader.StuckOperationWarningAfter` / `OperationTakingTooLong`.** A load/unload that never
+  resolves to success OR failure at all (a genuinely hung request) was invisible beyond the graph parking on
+  its await signal — no error, no signal, nothing. Logs a `[GraphGameFlow]` warning (and raises
+  `OperationTakingTooLong`, scene name + elapsed real seconds) if a single operation has been in flight
+  longer than the configurable threshold (default 15s; 0 or less disables it). Purely diagnostic — never
+  cancels or alters the flow. Deliberately scoped to the LOADER's own in-flight duration, not to how long a
+  graph node has been parked on a signal in general: the latter is routinely minutes for a perfectly normal
+  "await player input" node, so a driver-wide timeout on every `WaitingForSignal` state would false-positive
+  constantly on the ecosystem's most common await-signal use case.
+- **`SceneAwaitSetup.ConfigureLoadAwait(node, completedSignal, failedSignal, resumeIfAlreadyRaised = true)`.**
+  Collapses the three separate, easy-to-forget settings a load-await node needs
+  (`AwaitSignalName`, `AwaitSignalNamesExtra`, `ResumeIfSignalAlreadyRaised`) into one call for code-first
+  graph authors.
+
 ## [0.14.0]
 
 ### Added

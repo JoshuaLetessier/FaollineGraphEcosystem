@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0]
+
+### Fixed
+- **An Addressables load that fails INSTANTLY (invalid/unregistered key) could raise `LoadFailedSignal` too
+  early to be caught live.** Mirrors `AsyncSceneLoader` 0.15.0's fix: `handle.Status != Succeeded` can be
+  known within the same synchronous call stack as `LoadSceneAction.Execute()`, before an awaiting node
+  placed right after the load node had even parked. `LoadRoutine`/`UnloadRoutine` now defer their failure
+  branch by one frame, so the signal delivers live in the common case without needing
+  `BaseNodeData.ResumeIfSignalAlreadyRaised` as the only recovery path.
+
+### Added
+- **`AddressablesSceneLoader.StuckOperationWarningAfter` / `OperationTakingTooLong`** — same diagnostic as
+  `AsyncSceneLoader` 0.15.0: logs a warning (and raises an event) if a single load/unload has been in flight
+  longer than a configurable threshold (default 15s; 0 disables it), without ever altering the flow.
+
 ## [0.2.0]
 
 ### Added
