@@ -4,6 +4,23 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.13.1]
+
+### Fixed
+- **`LoadSceneAction.SetActiveOnLoad` silently never fired for a key-based loader (Addressables).**
+  `RequestSetActiveWhenLoaded` used to match the loaded `Scene.name` against `LoadSceneAction.SceneName` —
+  correct for a Build-Settings loader (the two are identical there), but `SceneName` is really "whatever
+  identifier the `ISceneLoader` in use expects"; for `com.faolline.graphgameflow.addressables`'
+  `AddressablesSceneLoader` that's the Addressable KEY (e.g. `"AddrTest.Overlay"`), almost never the same
+  string as the resulting scene's own name (`"Overlay"`). The comparison then never matched and activation
+  never fired — no error, no warning, just silence. Found via independent testing against the real
+  `LoadSceneAction`/`AddressablesSceneLoader` consumer path (this package's own suite never exercised that
+  combination together). Fixed loader-agnostically: the handler no longer compares names at all — it claims
+  the very next scene-load event unconditionally (unsubscribing whether or not it turns out Additive),
+  bounding its lifetime to exactly one scene load instead of matching-by-name or leaking forever. Two
+  `SetActiveOnLoad` requests racing in the very same frame for two different scenes can still resolve out
+  of order — narrow, and no worse than the previous name-matching behavior's own edge cases.
+
 ## [0.13.0]
 
 ### Added

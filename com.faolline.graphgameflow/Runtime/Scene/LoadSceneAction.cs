@@ -42,7 +42,7 @@ namespace Faolline.GraphGameFlow
             }
 
             if (_setActiveOnLoad && _mode == LoadSceneMode.Additive)
-                RequestSetActiveWhenLoaded(_sceneName);
+                RequestSetActiveWhenLoaded();
 
             var loader = (context as GameFlowContext)?.SceneLoader ?? DefaultLoader;
             loader.LoadScene(_sceneName, _mode);
@@ -51,16 +51,30 @@ namespace Faolline.GraphGameFlow
         // Loader-agnostic by design: activation must wait until the scene has actually finished loading
         // (even the "blocking" SceneManager.LoadScene completes on the next frame, and SetActiveScene
         // rejects a scene that is not fully loaded), so a one-shot SceneManager.sceneLoaded handler does it
-        // regardless of which ISceneLoader runs the load — including a consumer-written one. If the load is
-        // gracefully skipped (bad name / not in Build Settings) the handler stays parked, matching by name,
-        // until such a scene loads or the domain reloads: inert either way.
-        private static void RequestSetActiveWhenLoaded(string sceneName)
+        // regardless of which ISceneLoader runs the load.
+        //
+        // Deliberately does NOT match by comparing the loaded Scene.name against _sceneName: for a
+        // Build-Settings loader the two happen to be identical, but _sceneName is really "whatever
+        // identifier this ISceneLoader expects" — for com.faolline.graphgameflow.addressables that is the
+        // Addressable KEY (e.g. "AddrTest.Overlay"), which is almost never the resulting scene's own name
+        // (e.g. "Overlay"). A name comparison would then never match and SetActiveOnLoad would silently
+        // never fire — exactly the bug this design avoids by not comparing names at all.
+        //
+        // Instead this claims the VERY NEXT scene-load event, unconditionally unsubscribing on it whether
+        // or not it turns out to be Additive — bounding the exposure window to exactly one scene load
+        // rather than leaking forever. The one accepted trade-off: if THIS call's own load fails silently
+        // (bad key/name — every shipped loader logs and returns without ever loading anything in that
+        // case) and something entirely unrelated loads additively before this one's actual target does,
+        // that unrelated scene gets activated once instead. Two SetActiveOnLoad requests racing in the
+        // same frame for two DIFFERENT scenes can likewise resolve out of order. Both are narrow, and
+        // strictly better than either leaking the subscription forever or never firing at all for a
+        // key-based loader.
+        private static void RequestSetActiveWhenLoaded()
         {
             void Handler(Scene scene, LoadSceneMode mode)
             {
-                if (scene.name != sceneName) return;
                 SceneManager.sceneLoaded -= Handler;
-                SceneManager.SetActiveScene(scene);
+                if (mode == LoadSceneMode.Additive) SceneManager.SetActiveScene(scene);
             }
             SceneManager.sceneLoaded += Handler;
         }

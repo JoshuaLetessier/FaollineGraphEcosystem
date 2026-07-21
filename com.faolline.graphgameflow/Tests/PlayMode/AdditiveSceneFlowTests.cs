@@ -211,6 +211,50 @@ namespace Faolline.GraphGameFlow.Tests.PlayMode
             yield return WaitForQueue(loader);
         }
 
+        /// <summary>
+        /// Loaded with an arbitrary KEY that never matches the real scene's own name — reproducing
+        /// com.faolline.graphgameflow.addressables' AddressablesSceneLoader without depending on that
+        /// package: it too resolves an Addressable key to a scene whose <c>Scene.name</c> is almost never
+        /// the same string as the key.
+        /// </summary>
+        private sealed class KeyMismatchSceneLoader : ISceneLoader
+        {
+            private readonly string _realSceneName;
+            public KeyMismatchSceneLoader(string realSceneName) => _realSceneName = realSceneName;
+
+            public void LoadScene(string key, LoadSceneMode mode)
+            {
+#if UNITY_EDITOR
+                var path = $"{ScenesDir}/{_realSceneName}.unity";
+                UnityEditor.SceneManagement.EditorSceneManager.LoadSceneInPlayMode(path, new LoadSceneParameters(mode));
+#else
+                SceneManager.LoadScene(_realSceneName, mode);
+#endif
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator SetActiveOnLoad_KeyDiffersFromRealSceneName_StillActivates()
+        {
+            // Regression: RequestSetActiveWhenLoaded used to compare the loaded Scene.name against
+            // LoadSceneAction.SceneName — correct for a Build-Settings loader (where they're identical),
+            // silently never firing for any loader whose key differs from the resulting scene's real name
+            // (exactly AddressablesSceneLoader's case). SceneName here deliberately holds a key that never
+            // matches OverlayScene's real name.
+            var ctx = new GameFlowContext { SceneLoader = new KeyMismatchSceneLoader(OverlayScene) };
+            var action = Load("AddrTest.Overlay", LoadSceneMode.Additive);
+            action.SetActiveOnLoad = true;
+
+            action.Execute(ctx);
+            yield return null;
+            yield return null;
+
+            Assert.AreEqual(OverlayScene, SceneManager.GetActiveScene().name,
+                "the real scene became active even though SceneName held a key that never matches its own name.");
+
+            SceneManager.UnloadSceneAsync(SceneManager.GetActiveScene());   // leave a clean baseline behind
+        }
+
         private static IEnumerator WaitForQueue(AsyncSceneLoader loader)
         {
             float timeout = Time.realtimeSinceStartup + 10f;
