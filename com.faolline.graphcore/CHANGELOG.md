@@ -4,6 +4,46 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.35.1]
+
+### Added — module selector can now add external backends (registry + cross-repo git)
+
+Until now `GraphEcosystemModuleSelector`/`GraphEcosystemModules.json` could only add packages that
+live in *this* repo. Two optional backends therefore had no selectable row at all: the Unity
+Localization provider behind `graphlocalization`'s CSV/Unity split (no package.json dependency — it's
+conditionally compiled via `versionDefines`, so nothing ever pulled it in) and the external
+UnitySaveSystem backend behind `graphsave.savesystem` (a *different* git repo the old
+`BuildGitIdentifier` had no way to address). Consumers had to edit `manifest.json` by hand for both.
+
+- `ModuleEntry` gains two optional fields: `"registry": true` (add by bare package name, resolved
+  from the Unity registry — e.g. `com.unity.localization`) and `"gitUrl"` (explicit full git URL
+  override for a package outside this repo — e.g. UnitySaveSystem). `BuildGitIdentifier` became
+  `BuildIdentifier(ModuleEntry)` to branch on these before falling back to the default
+  repo/basePath/branch URL.
+- Two new "↳" rows in the whitelist: **Unity Localization backend** (`com.unity.localization`,
+  `dependsOn: ["com.faolline.graphlocalization"]`) — ticking it also flips on the same-named
+  `Localization.Unity` bridge asmdef already shipped in both graphlocalization and
+  graphdialoguesystem via their shared `versionDefines` gate — and **UnitySaveSystem (external
+  backend)** (`com.faolline.savesystem.core`, via `gitUrl`), pulled in automatically once
+  **Graph Save — UnitySaveSystem bridge** (`com.faolline.graphsave.savesystem`, newly listed too) is
+  ticked. Dependency closure resolution (`AddClosure`) needed no changes — it already walks
+  `dependsOn` regardless of a dependency's own kind.
+
+### Fixed — module selector drift (editor-only, no runtime change)
+
+`Editor/GraphEcosystemModules.json` had two more problems, found during the same audit:
+
+- **`com.faolline.graphgameflow.addressables` was entirely missing from the whitelist.** The
+  Addressables bridge shipped in `035-addressables-scene-loader` but the selector was never updated,
+  so it could only be installed via the manual git-URL path even though nothing blocks offering it
+  (its one extra dependency, `com.unity.addressables`, is a normal Unity registry package UPM resolves
+  on its own — no `registry`/`gitUrl` override needed). Added, with
+  `dependsOn: ["com.faolline.graphgameflow"]`.
+- **Every listed `version` was stale** (e.g. graphcore itself said `0.20.0`). The install/update
+  mechanism always tracks `#master` HEAD regardless of this field, so nothing broke functionally —
+  but the "update available" comparison and the version column were misleading. Refreshed all seven
+  pre-existing entries to their current `package.json` versions.
+
 ## [0.35.0]
 
 ### Changed / Breaking — vocabulary rename (no behaviour change)

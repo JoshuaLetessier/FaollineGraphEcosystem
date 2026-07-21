@@ -6,49 +6,79 @@
     {
       "displayName": "Graph Core (base)",
       "package": "com.faolline.graphcore",
-      "version": "0.20.0",
+      "version": "0.35.1",
       "required": true,
       "dependsOn": []
     },
     {
       "displayName": "Graph Standard (buffer)",
       "package": "com.faolline.graphstandard",
-      "version": "0.12.1",
+      "version": "0.17.0",
       "required": true,
       "dependsOn": [ "com.faolline.graphcore" ]
     },
     {
       "displayName": "Graph Localization",
       "package": "com.faolline.graphlocalization",
-      "version": "0.5.0",
+      "version": "0.7.0",
       "required": false,
       "dependsOn": []
     },
     {
+      "displayName": "↳ Unity Localization backend",
+      "package": "com.unity.localization",
+      "version": "1.0.0",
+      "required": false,
+      "dependsOn": [ "com.faolline.graphlocalization" ],
+      "registry": true
+    },
+    {
       "displayName": "Graph Dialogue System",
       "package": "com.faolline.graphdialoguesystem",
-      "version": "0.9.0",
+      "version": "0.17.0",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphlocalization" ]
     },
     {
       "displayName": "Graph Save",
       "package": "com.faolline.graphsave",
-      "version": "0.3.2",
+      "version": "0.7.0",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore" ]
+    },
+    {
+      "displayName": "Graph Save — UnitySaveSystem bridge",
+      "package": "com.faolline.graphsave.savesystem",
+      "version": "0.1.3",
+      "required": false,
+      "dependsOn": [ "com.faolline.graphsave", "com.faolline.savesystem.core" ]
+    },
+    {
+      "displayName": "↳ UnitySaveSystem (external backend)",
+      "package": "com.faolline.savesystem.core",
+      "version": "1.0.0",
+      "required": false,
+      "dependsOn": [],
+      "gitUrl": "https://github.com/JoshuaLetessier/UnitySaveSystem.git?path=/Packages/com.faolline.savesystem.core#master"
     },
     {
       "displayName": "Graph GameFlow",
       "package": "com.faolline.graphgameflow",
-      "version": "0.6.3",
+      "version": "0.13.0",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore" ]
     },
     {
+      "displayName": "Graph GameFlow — Addressables bridge",
+      "package": "com.faolline.graphgameflow.addressables",
+      "version": "0.1.0",
+      "required": false,
+      "dependsOn": [ "com.faolline.graphgameflow" ]
+    },
+    {
       "displayName": "Graph Quest",
       "package": "com.faolline.graphquest",
-      "version": "0.3.0",
+      "version": "0.11.0",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphstandard", "com.faolline.graphlocalization" ]
     }

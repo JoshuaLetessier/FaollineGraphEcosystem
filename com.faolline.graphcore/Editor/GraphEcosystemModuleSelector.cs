@@ -14,6 +14,11 @@ namespace Faolline.GraphCore.Editor
     /// this script — sample/verification packages are intentionally omitted, so they are never offered.
     /// Selections are applied with the official <see cref="Client.AddAndRemove(string[], string[])"/> API
     /// (UPM rewrites the manifest correctly), and module dependencies are resolved automatically.
+    /// A row can also represent an external backend rather than an ecosystem package — a plain Unity
+    /// registry package (<c>"registry": true</c>, e.g. the optional Unity Localization backend) or a
+    /// package from a different git repo (<c>"gitUrl"</c> override, e.g. the external UnitySaveSystem
+    /// backend) — those are prefixed "↳" and pulled in automatically via <c>dependsOn</c> once the
+    /// bridge package that needs them is ticked.
     /// Menu: <c>Window ▸ Faolline ▸ Graph Ecosystem Modules</c>.
     /// </summary>
     public class GraphEcosystemModuleSelector : EditorWindow
@@ -26,6 +31,15 @@ namespace Faolline.GraphCore.Editor
             public string version;
             public bool required;
             public string[] dependsOn;
+
+            /// <summary>True for a plain registry package (e.g. Unity's own com.unity.* packages) —
+            /// added by package name/version instead of a git URL built from <see cref="ModuleConfig.repository"/>.</summary>
+            public bool registry;
+
+            /// <summary>Explicit override for modules living in a different git repository than this
+            /// ecosystem (e.g. the external UnitySaveSystem backend). Takes precedence over the default
+            /// git URL built from <see cref="ModuleConfig.repository"/>/<see cref="ModuleConfig.basePath"/>.</summary>
+            public string gitUrl;
         }
 
         [Serializable]
@@ -259,7 +273,7 @@ namespace Faolline.GraphCore.Editor
             var toAdd = new List<string>();
             foreach (var m in _config.modules)
                 if (IsUpdateAvailable(m))
-                    toAdd.Add(BuildGitIdentifier(m.package));
+                    toAdd.Add(BuildIdentifier(m));
 
             if (toAdd.Count == 0) { _status = "Nothing to update."; return; }
             _status = $"Updating {toAdd.Count} package(s)…";
@@ -271,7 +285,7 @@ namespace Faolline.GraphCore.Editor
             if (_config?.modules == null) return;
             var toAdd = new List<string>();
             foreach (var m in _config.modules)
-                toAdd.Add(BuildGitIdentifier(m.package));
+                toAdd.Add(BuildIdentifier(m));
 
             _status = $"Force-updating {toAdd.Count} package(s)…";
             _modifyRequest = Client.AddAndRemove(toAdd.ToArray(), new string[0]);
@@ -302,7 +316,7 @@ namespace Faolline.GraphCore.Editor
             {
                 bool want = final.Contains(m.package);
                 bool have = _installed.ContainsKey(m.package);
-                if (want && !have) toAdd.Add(BuildGitIdentifier(m.package));
+                if (want && !have) toAdd.Add(BuildIdentifier(m));
                 else if (!want && have && !m.required) toRemove.Add(m.package);
             }
 
@@ -316,10 +330,15 @@ namespace Faolline.GraphCore.Editor
             _modifyRequest = Client.AddAndRemove(toAdd.ToArray(), toRemove.ToArray());
         }
 
-        /// <summary>Git URL UPM identifier: repo + ?path=&lt;basePath&gt;/&lt;package&gt; (+ optional #branch).</summary>
-        private string BuildGitIdentifier(string package)
+        /// <summary>UPM identifier for a module: a bare package name for <see cref="ModuleEntry.registry"/>
+        /// packages (resolved via the registry, e.g. com.unity.*), an explicit <see cref="ModuleEntry.gitUrl"/>
+        /// override for packages living in a different repo (e.g. UnitySaveSystem), or otherwise the default
+        /// git URL built from this ecosystem's repo + basePath (+ optional #branch).</summary>
+        private string BuildIdentifier(ModuleEntry m)
         {
-            var url = $"{_config.repository}?path={_config.basePath}/{package}";
+            if (m.registry) return m.package;
+            if (!string.IsNullOrEmpty(m.gitUrl)) return m.gitUrl;
+            var url = $"{_config.repository}?path={_config.basePath}/{m.package}";
             if (!string.IsNullOrEmpty(_config.branch)) url += $"#{_config.branch}";
             return url;
         }
