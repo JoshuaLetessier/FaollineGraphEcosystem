@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1]
+
+### Fixed
+- **Bumped the `com.faolline.graphgameflow` floor to `0.13.1`.** Versions below that still carry the
+  `LoadSceneAction.SetActiveOnLoad` bug where activation silently never fired for a key-based loader —
+  exactly this package's `AddressablesSceneLoader`. The stale `0.12.0` floor let a consumer install this
+  bridge against a core version where `SetActiveOnLoad` never actually worked with it. No code change here;
+  the fix lives in `graphgameflow` itself.
+
 ## [0.1.0]
 
 ### Added

@@ -64,16 +64,24 @@
     {
       "displayName": "Graph GameFlow",
       "package": "com.faolline.graphgameflow",
-      "version": "0.13.0",
+      "version": "0.13.1",
       "required": false,
-      "dependsOn": [ "com.faolline.graphcore" ]
+      "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphsave" ]
     },
     {
       "displayName": "Graph GameFlow — Addressables bridge",
       "package": "com.faolline.graphgameflow.addressables",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "required": false,
       "dependsOn": [ "com.faolline.graphgameflow" ]
+    },
+    {
+      "displayName": "↳ Addressables backend",
+      "package": "com.unity.addressables",
+      "version": "2.2.2",
+      "required": false,
+      "dependsOn": [ "com.faolline.graphgameflow.addressables" ],
+      "registry": true
     },
     {
       "displayName": "Graph Quest",

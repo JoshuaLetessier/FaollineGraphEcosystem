@@ -39,7 +39,7 @@ com.faolline.graphcore             (no deps)               — nodes, edges, run
 com.faolline.graphlocalization     (no deps)               — locale tables, CSV/Unity provider
 com.faolline.graphstandard         → graphcore              — reactive/flow engines, collections
 com.faolline.graphdialoguesystem   → graphcore, graphlocalization — dialogue graph, speakers, UI
-com.faolline.graphgameflow         → graphcore              — scene driver, triggers, scene loader
+com.faolline.graphgameflow         → graphcore, graphsave   — scene driver, triggers, scene loader
 com.faolline.graphgameflow.addressables → graphgameflow, com.unity.addressables — Addressables scene loader bridge
 com.faolline.graphquest            → graphcore, graphstandard, graphlocalization — quest DAG, journal
 com.faolline.graphsave             → graphcore              — snapshot persistence (neutral)
