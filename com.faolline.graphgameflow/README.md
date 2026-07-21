@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.13.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphsave` ≥ 0.5.0
+**Version**: 0.14.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphsave` ≥ 0.5.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -236,6 +236,27 @@ the operation lands:
 ```
 … → [enter: LoadScene "Zone_Cellar" (Additive)] → (await sceneReadySignal) → …
 ```
+
+**A failed load/unload never raises its completion signal** (bad name, not in Build Settings, unloading the
+last scene…) — a node awaiting *only* that signal parks **forever**, with no timeout and no error signal of
+its own. Set `LoadFailedSignal`/`UnloadFailedSignal` too, and await **either**:
+
+```csharp
+loader.LoadCompletedSignal = sceneReadySignal;
+loader.LoadFailedSignal    = sceneLoadFailedSignal;
+```
+
+```
+… → [enter: LoadScene "Zone_Cellar" (Additive)] → (await sceneReadySignal OR sceneLoadFailedSignal) → …
+```
+
+graphcore's await-signal already resolves on **any one of several names** (`AwaitSignalNamesExtra` —
+logical OR): add the failure signal as a second entry on the same node, and a failure resumes the flow
+instead of stalling it. The failure signal's string payload is `"{sceneName}: {reason}"` — e.g.
+`"Zone_Cellar: Scene 'Zone_Cellar' cannot be loaded (not in Build Settings / Addressables)."` — naming both
+what failed and why in one glance, in addition to the `[GraphGameFlow]` error already logged. The plain C#
+events `SceneLoadFailed`/`SceneUnloadFailed` (scene name, then the reason) are also available for a
+loading-screen UI that wants to show the error without touching the graph at all.
 
 ---
 

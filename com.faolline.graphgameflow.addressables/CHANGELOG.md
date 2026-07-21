@@ -4,6 +4,19 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0]
+
+### Added
+- **`AddressablesSceneLoader.LoadFailedSignal`/`UnloadFailedSignal`.** Found via independent testing on a
+  fresh isolated project (see this package's own dogfood notes): a load that fails (invalid key, bundle
+  missing from a real packed build…) never raised `LoadCompletedSignal`, so a flow parked on an await-signal
+  node waiting for it stalled forever with no escape route. Mirrors `AsyncSceneLoader` 0.14.0's fix: new
+  `SceneLoadFailed`/`SceneUnloadFailed` C# events (key, then a human-readable reason) and, if
+  `LoadFailedSignal`/`UnloadFailedSignal` are set, the matching signal raised with a `"{key}: {reason}"`
+  string payload. Add the failure signal as a second `AwaitSignalNamesExtra` entry alongside the completion
+  signal on the same await node — a failure resumes the flow instead of stalling it. No graphgameflow core
+  change needed (the multi-signal await already existed).
+
 ## [0.1.1]
 
 ### Fixed

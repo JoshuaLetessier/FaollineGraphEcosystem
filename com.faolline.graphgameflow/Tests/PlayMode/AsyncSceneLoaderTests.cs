@@ -4,6 +4,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.TestTools;
+using Faolline.GraphCore;
 using Faolline.GraphGameFlow;
 
 namespace Faolline.GraphGameFlow.Tests.PlayMode
@@ -140,6 +141,90 @@ namespace Faolline.GraphGameFlow.Tests.PlayMode
             // Leave a single-scene state behind for the next test.
             var unload = SceneManager.UnloadSceneAsync(SceneB);
             while (!unload.isDone) yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator LoadScene_Failure_RaisesEventAndSignal_WithNameAndReason()
+        {
+            // The plain AsyncSceneLoader (not EditorPathAsyncSceneLoader) hits BeginLoad's real
+            // Application.CanStreamedLevelBeLoaded guard directly — no committed scene needed to prove a
+            // failure is now VISIBLE (event + signal), not just a dropped log line.
+            var go = Track(new GameObject("async-loader-load-fail"));
+            var loader = go.AddComponent<AsyncSceneLoader>();
+
+            string failedName = null, failedReason = null;
+            loader.SceneLoadFailed += (n, r) => { failedName = n; failedReason = r; };
+
+            LogAssert.Expect(LogType.Error,
+                "[GraphGameFlow] Scene 'DefinitelyNotARealScene' cannot be loaded (not in Build Settings / Addressables). Ignored.");
+            loader.LoadScene("DefinitelyNotARealScene", LoadSceneMode.Additive);
+            yield return null;
+
+            Assert.AreEqual("DefinitelyNotARealScene", failedName, "the event names which scene failed.");
+            StringAssert.Contains("not in Build Settings", failedReason, "the event explains why it failed.");
+            Assert.IsFalse(loader.IsLoading, "the pump does not get stuck on a failed request.");
+        }
+
+        [UnityTest]
+        public IEnumerator UnloadScene_Failure_RaisesEventAndSignal_WithNameAndReason()
+        {
+            var go = Track(new GameObject("async-loader-unload-fail"));
+            var loader = go.AddComponent<AsyncSceneLoader>();
+
+            string failedName = null, failedReason = null;
+            loader.SceneUnloadFailed += (n, r) => { failedName = n; failedReason = r; };
+
+            LogAssert.Expect(LogType.Error, "[GraphGameFlow] Scene 'NeverLoadedScene' is not loaded; unload ignored.");
+            loader.UnloadScene("NeverLoadedScene");
+            yield return null;
+
+            Assert.AreEqual("NeverLoadedScene", failedName);
+            StringAssert.Contains("is not loaded", failedReason);
+        }
+
+        [UnityTest]
+        public IEnumerator LoadScene_Failure_ResumesADriverAwaitingEitherCompletedOrFailedSignal()
+        {
+            // The escape hatch this whole pair of tests exists to prove: a node awaiting BOTH the completed
+            // AND the failed signal (AwaitSignalNames — logical OR) resumes on a failure instead of parking
+            // forever, with a payload identifying what failed and why.
+            var loadedSig = Track(SignalDef.Create("async-load-ok"));
+            var failedSig = Track(SignalDef.Create("async-load-failed"));
+
+            var g = Track(ScriptableObject.CreateInstance<GameFlowGraph>());
+            g.EntryNodeId = "start";
+            var start = new StartNodeData { Id = "start", NodeType = StartNodeData.NodeTypeId };
+            var gate  = new StatementNodeData { Id = "gate", NodeType = StatementNodeData.NodeTypeId, AwaitSignalName = (string)loadedSig };
+            gate.AwaitSignalNamesExtra.Add((string)failedSig);
+            var end   = new EndNodeData { Id = "end", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
+            g.AddNode(start); g.AddNode(gate); g.AddNode(end);
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "gate" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "gate", ToNodeId = "end" });
+
+            var driverGo = Track(new GameObject("async-fail-resume-driver"));
+            var driver = driverGo.AddComponent<GraphFlowDriver>();
+            driver.BootOnStart = false;
+            driver.Graph = g;
+
+            var loaderGo = Track(new GameObject("async-fail-resume-loader"));
+            var loader = loaderGo.AddComponent<AsyncSceneLoader>();
+            loader.LoadCompletedSignal = loadedSig;
+            loader.LoadFailedSignal    = failedSig;
+            loader.SignalDriver        = driver;
+            driver.SceneLoader          = loader;
+
+            bool ended = false;
+            driver.OnEnded += _ => ended = true;
+
+            driver.Boot();
+            Assert.IsTrue(driver.IsWaitingForSignal, "parked on the gate node.");
+
+            LogAssert.Expect(LogType.Error,
+                "[GraphGameFlow] Scene 'AnotherFakeScene' cannot be loaded (not in Build Settings / Addressables). Ignored.");
+            loader.LoadScene("AnotherFakeScene", LoadSceneMode.Additive);
+            yield return null;
+
+            Assert.IsTrue(ended, "the failed-load signal resumed the parked flow via the OR-await, instead of stalling it.");
         }
     }
 }

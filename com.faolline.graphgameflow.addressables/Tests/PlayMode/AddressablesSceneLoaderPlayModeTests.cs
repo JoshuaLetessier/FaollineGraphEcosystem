@@ -207,9 +207,77 @@ namespace Faolline.GraphGameFlow.Addressables.Tests.PlayMode
             yield return WaitForQueue(loader);
             Assert.IsFalse(SceneManager.GetSceneByName(SceneBName).isLoaded, "the scene is unloaded.");
 
+            string failedKey = null, failedReason = null;
+            loader.SceneUnloadFailed += (k, r) => { failedKey = k; failedReason = r; };
+
             LogAssert.Expect(LogType.Error, $"[GraphGameFlow] Scene '{KeyB}' was not loaded by this AddressablesSceneLoader; unload ignored.");
             loader.UnloadScene(KeyB);   // already unloaded through this loader — no handle on record
             yield return WaitForQueue(loader);
+
+            Assert.AreEqual(KeyB, failedKey, "the failure event names which key failed — not just a log line easy to miss.");
+            StringAssert.Contains("was not loaded", failedReason, "the failure event explains why.");
+        }
+
+        [UnityTest]
+        public IEnumerator LoadScene_UnknownKey_RaisesFailureEventAndSignal()
+        {
+            var go = Track(new GameObject("addr-loader-load-fail"));
+            var loader = go.AddComponent<AddressablesSceneLoader>();
+
+            string failedKey = null, failedReason = null;
+            loader.SceneLoadFailed += (k, r) => { failedKey = k; failedReason = r; };
+
+            LogAssert.ignoreFailingMessages = true;   // Addressables itself also logs its own InvalidKeyException line
+            loader.LoadScene("AddrTest.KeyThatWasNeverRegistered", LoadSceneMode.Additive);
+            yield return WaitForQueue(loader);
+            LogAssert.ignoreFailingMessages = false;
+
+            Assert.AreEqual("AddrTest.KeyThatWasNeverRegistered", failedKey, "the failure event names which key failed.");
+            Assert.IsFalse(string.IsNullOrEmpty(failedReason), "the failure event carries a reason, not an empty string.");
+        }
+
+        [UnityTest]
+        public IEnumerator LoadScene_Failure_ResumesADriverAwaitingEitherCompletedOrFailedSignal()
+        {
+            // The escape hatch this test exists to prove: a node awaiting BOTH the completed AND the failed
+            // signal (AwaitSignalNames — logical OR) resumes on a failure instead of parking forever.
+            var loadedSig = Track(SignalDef.Create("addr-load-ok"));
+            var failedSig = Track(SignalDef.Create("addr-load-failed"));
+
+            var g = Track(ScriptableObject.CreateInstance<GameFlowGraph>());
+            g.EntryNodeId = "start";
+            var start = new StartNodeData { Id = "start", NodeType = StartNodeData.NodeTypeId };
+            var gate  = new StatementNodeData { Id = "gate", NodeType = StatementNodeData.NodeTypeId, AwaitSignalName = (string)loadedSig };
+            gate.AwaitSignalNamesExtra.Add((string)failedSig);
+            var end   = new EndNodeData { Id = "end", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed };
+            g.AddNode(start); g.AddNode(gate); g.AddNode(end);
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "gate" });
+            g.AddEdge(new BaseEdgeData { FromNodeId = "gate", ToNodeId = "end" });
+
+            var driverGo = Track(new GameObject("addr-fail-resume-driver"));
+            var driver = driverGo.AddComponent<GraphFlowDriver>();
+            driver.BootOnStart = false;
+            driver.Graph = g;
+
+            var loaderGo = Track(new GameObject("addr-fail-resume-loader"));
+            var loader = loaderGo.AddComponent<AddressablesSceneLoader>();
+            loader.LoadCompletedSignal = loadedSig;
+            loader.LoadFailedSignal    = failedSig;
+            loader.SignalDriver        = driver;
+            driver.SceneLoader          = loader;
+
+            bool ended = false;
+            driver.OnEnded += _ => ended = true;
+
+            driver.Boot();
+            Assert.IsTrue(driver.IsWaitingForSignal, "parked on the gate node.");
+
+            LogAssert.ignoreFailingMessages = true;
+            loader.LoadScene("AddrTest.AnotherKeyThatWasNeverRegistered", LoadSceneMode.Additive);
+            yield return WaitForQueue(loader);
+            LogAssert.ignoreFailingMessages = false;
+
+            Assert.IsTrue(ended, "the failed-load signal resumed the parked flow via the OR-await, instead of stalling it.");
         }
 
         [UnityTest]

@@ -32,6 +32,14 @@ namespace Faolline.GraphGameFlow.Addressables
     /// <see cref="UnloadScene"/> only works on a scene THIS loader instance loaded (an unrecognised key logs
     /// a graceful <c>[GraphGameFlow]</c> error, exactly like the other loaders on a bad request).
     /// </para>
+    /// <para>
+    /// A load/unload that fails (bad key, a content build gap, unloading the last scene…) does NOT raise its
+    /// completion signal — a node awaiting only that signal would park forever. Set
+    /// <see cref="LoadFailedSignal"/>/<see cref="UnloadFailedSignal"/> and add them as a SECOND name on the
+    /// same await-signal node (<c>AwaitSignalNames</c> waits on any one of several, logical OR) so a failure
+    /// resumes the flow too. The failure signal's string payload is <c>"{key}: {reason}"</c> — naming both
+    /// what failed and why in one glance, on top of the <c>[GraphGameFlow]</c> error already logged.
+    /// </para>
     /// </summary>
     [HelpURL("https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphgameflow.addressables/README.md")]
     public class AddressablesSceneLoader : MonoBehaviour, ISceneLoader, ISceneUnloader
@@ -48,7 +56,11 @@ namespace Faolline.GraphGameFlow.Addressables
         private SignalDef _loadCompletedSignal;
         [SerializeField, Tooltip("Optional signal raised into the target driver each time an UNLOAD completes (scene key as string payload).")]
         private SignalDef _unloadCompletedSignal;
-        [SerializeField, Tooltip("The driver that receives the completion signals. When null, falls back to GraphFlowDriver.Active (the persistent singleton).")]
+        [SerializeField, Tooltip("Optional signal raised into the target driver when a LOAD fails (payload: \"{key}: {reason}\"). Add as a second AwaitSignalNames entry alongside LoadCompletedSignal so a failure resumes the flow instead of stalling it forever.")]
+        private SignalDef _loadFailedSignal;
+        [SerializeField, Tooltip("Optional signal raised into the target driver when an UNLOAD fails (payload: \"{key}: {reason}\"). Add as a second AwaitSignalNames entry alongside UnloadCompletedSignal.")]
+        private SignalDef _unloadFailedSignal;
+        [SerializeField, Tooltip("The driver that receives the completion/failure signals. When null, falls back to GraphFlowDriver.Active (the persistent singleton).")]
         private GraphFlowDriver _signalDriver;
         [SerializeField, Tooltip("When enabled, the target driver (SignalDriver, else GraphFlowDriver.Active) is Paused while the queue is busy, so timed waits don't tick down behind a loading screen. A driver the consumer already paused is left untouched.")]
         private bool _pauseDriverWhileLoading = false;
@@ -83,7 +95,13 @@ namespace Faolline.GraphGameFlow.Addressables
         /// <summary>Optional signal raised into <see cref="SignalDriver"/> each time an unload completes.</summary>
         public SignalDef UnloadCompletedSignal { get => _unloadCompletedSignal; set => _unloadCompletedSignal = value; }
 
-        /// <summary>Receiver of the completion signals; null falls back to <see cref="GraphFlowDriver.Active"/>.</summary>
+        /// <summary>Optional signal raised into <see cref="SignalDriver"/> when a load fails. See <see cref="SceneLoadFailed"/>.</summary>
+        public SignalDef LoadFailedSignal { get => _loadFailedSignal; set => _loadFailedSignal = value; }
+
+        /// <summary>Optional signal raised into <see cref="SignalDriver"/> when an unload fails. See <see cref="SceneUnloadFailed"/>.</summary>
+        public SignalDef UnloadFailedSignal { get => _unloadFailedSignal; set => _unloadFailedSignal = value; }
+
+        /// <summary>Receiver of the completion/failure signals; null falls back to <see cref="GraphFlowDriver.Active"/>.</summary>
         public GraphFlowDriver SignalDriver { get => _signalDriver; set => _signalDriver = value; }
 
         /// <summary>
@@ -121,6 +139,12 @@ namespace Faolline.GraphGameFlow.Addressables
 
         /// <summary>Raised once a scene has finished unloading.</summary>
         public event Action<string> SceneUnloadCompleted;
+
+        /// <summary>Raised when a load fails (key, then a human-readable reason). No completion event follows.</summary>
+        public event Action<string, string> SceneLoadFailed;
+
+        /// <summary>Raised when an unload fails (key, then a human-readable reason). No completion event follows.</summary>
+        public event Action<string, string> SceneUnloadFailed;
 
         private void Awake()
         {
@@ -232,8 +256,10 @@ namespace Faolline.GraphGameFlow.Addressables
 
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
-                Debug.LogError(
-                    $"[GraphGameFlow] Addressables scene '{key}' failed to load: {handle.OperationException}");
+                var reason = $"Addressables scene '{key}' failed to load: {handle.OperationException}";
+                Debug.LogError($"[GraphGameFlow] {reason}");
+                SceneLoadFailed?.Invoke(key, reason);
+                RaiseFailureSignal(_loadFailedSignal, key, reason);
                 yield break;
             }
 
@@ -266,15 +292,19 @@ namespace Faolline.GraphGameFlow.Addressables
         {
             if (!_loaded.TryGetValue(key, out var handle))
             {
-                Debug.LogError(
-                    $"[GraphGameFlow] Scene '{key}' was not loaded by this AddressablesSceneLoader; unload ignored.");
+                var reason = $"Scene '{key}' was not loaded by this AddressablesSceneLoader; unload ignored.";
+                Debug.LogError($"[GraphGameFlow] {reason}");
+                SceneUnloadFailed?.Invoke(key, reason);
+                RaiseFailureSignal(_unloadFailedSignal, key, reason);
                 yield break;
             }
 
             if (SceneManager.sceneCount <= 1)
             {
-                Debug.LogError(
-                    $"[GraphGameFlow] Scene '{key}' is the last loaded scene; Unity cannot unload it. Ignored.");
+                var reason = $"Scene '{key}' is the last loaded scene; Unity cannot unload it.";
+                Debug.LogError($"[GraphGameFlow] {reason} Ignored.");
+                SceneUnloadFailed?.Invoke(key, reason);
+                RaiseFailureSignal(_unloadFailedSignal, key, reason);
                 yield break;
             }
 
@@ -291,6 +321,13 @@ namespace Faolline.GraphGameFlow.Addressables
         // Goes through the DRIVER (not the context) so the parked await resumes AND the auto-advance pump
         // drains in the same call — the exact path scene code uses via GraphFlowDriver.RaiseSignal.
         private void RaiseCompletionSignal(SignalDef signal, string key)
+            => RaiseSceneSignal(signal, key, key);
+
+        /// <summary>Payload is <c>"{key}: {reason}"</c> — identifies both what failed and why in one string.</summary>
+        private void RaiseFailureSignal(SignalDef signal, string key, string reason)
+            => RaiseSceneSignal(signal, key, $"{key}: {reason}");
+
+        private void RaiseSceneSignal(SignalDef signal, string key, string payload)
         {
             if (signal == null) return;
 
@@ -301,12 +338,12 @@ namespace Faolline.GraphGameFlow.Addressables
             if (driver == null)
             {
                 Debug.LogWarning(
-                    $"[GraphGameFlow] AddressablesSceneLoader: completion signal configured but no target driver " +
+                    $"[GraphGameFlow] AddressablesSceneLoader: signal configured but no target driver " +
                     $"(SignalDriver unset and GraphFlowDriver.Active is null); signal for '{key}' dropped.");
                 return;
             }
 
-            driver.RaiseSignal(name, key);
+            driver.RaiseSignal(name, payload);
         }
     }
 }

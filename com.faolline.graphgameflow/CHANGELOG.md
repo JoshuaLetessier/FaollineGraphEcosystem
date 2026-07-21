@@ -4,6 +4,22 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.14.0]
+
+### Added
+- **`AsyncSceneLoader.LoadFailedSignal`/`UnloadFailedSignal` — a failed load/unload no longer stalls the
+  flow silently.** Until now, a load/unload that failed (bad name, not in Build Settings, unloading the
+  last scene…) only logged a `[GraphGameFlow]` error — it never raised `LoadCompletedSignal`/
+  `UnloadCompletedSignal`, so a flow parked on an await-signal node waiting for that signal stayed parked
+  **forever**, with no timeout and no way out. `AsyncSceneLoader` now raises new
+  `SceneLoadFailed`/`SceneUnloadFailed` C# events (scene name, then a human-readable reason) and, if
+  `LoadFailedSignal`/`UnloadFailedSignal` are set, the matching signal into the target driver with a
+  `"{sceneName}: {reason}"` string payload — naming both what failed and why in one glance. Add the failure
+  signal as a SECOND name on the same await-signal node (graphcore's `AwaitSignalNamesExtra` — a logical OR
+  over several names already supported by the runner) alongside the completion signal, and a failure now
+  resumes the flow exactly like a success does, instead of stalling it. No core (graphcore) change needed —
+  the multi-signal await already existed.
+
 ## [0.13.1]
 
 ### Fixed
