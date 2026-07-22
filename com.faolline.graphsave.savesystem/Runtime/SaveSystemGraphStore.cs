@@ -41,7 +41,7 @@ namespace Faolline.GraphSave.UnitySaveSystem
         {
             try
             {
-                return Exists(slot) ? _backend.Load(slot) : null;
+                return _backend.Exists(slot) ? _backend.Load(slot) : null;
             }
             catch (Exception ex)
             {
@@ -55,7 +55,11 @@ namespace Faolline.GraphSave.UnitySaveSystem
         {
             try
             {
-                return _backend.Exists(slot);
+                // A raw "is a file present" check can disagree with Load() when the backend does its own
+                // integrity validation (e.g. a checksum) on top of that: a corrupted-but-present save can
+                // report true here while Load() correctly (and gracefully) returns null for the same slot.
+                // Cross-check against Load so a caller doing `if (Exists) Load()` never gets null anyway.
+                return _backend.Exists(slot) && _backend.Load(slot) != null;
             }
             catch (Exception ex)
             {

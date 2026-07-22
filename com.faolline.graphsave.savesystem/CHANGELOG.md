@@ -4,6 +4,19 @@ All notable changes to **com.faolline.graphsave.savesystem** are documented here
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.6]
+
+### Fixed
+- **`Exists()` no longer disagrees with `Load()`.** Some backends (e.g. `JsonSaveSystem`) validate integrity
+  (a checksum) inside `Load()` but not inside their own `Exists()`, which is a raw presence check — a
+  corrupted-but-present file could make `Exists()` report `true` while `Load()` correctly (and gracefully)
+  returned `null` for that same slot. `SaveSystemGraphStore.Exists()` now cross-checks against the backend's
+  `Load()` result, so it never reports `true` for a slot `Load()` would refuse. `Load()` itself now checks the
+  raw backend `Exists()` directly (rather than through the public, now-heavier `Exists()`) so the common
+  `if (Exists) Load()` pattern doesn't pay for the validation twice.
+- The delegation-without-cross-checking gap was in this bridge's own code, even though the underlying
+  checksum mechanism that exposes it lives in the external `com.faolline.savesystem.core` backend.
+
 ## [0.1.5]
 
 ### Fixed
