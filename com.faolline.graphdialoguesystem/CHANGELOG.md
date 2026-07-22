@@ -4,6 +4,12 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.17.1]
+
+### Fixed
+- **Bumped the `com.faolline.graphlocalization` floor to `0.7.0`.** Stale at `0.6.0`. Found during an
+  ecosystem-wide version-drift sweep. No code change here.
+
 ## [0.17.0]
 
 ### Changed

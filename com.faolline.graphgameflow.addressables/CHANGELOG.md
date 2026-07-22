@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.1]
+
+### Fixed
+- **Bumped the `com.faolline.graphgameflow` floor to `0.15.0`.** Stale at `0.13.1` — two floor-worthy core
+  releases behind (0.14.0's `LoadedScenes` registry, 0.15.0's instant-failure signal-ordering fix this very
+  package's own `AddressablesSceneLoader` relies on). Found during an ecosystem-wide version-drift sweep; the
+  same category of bug as the earlier `0.12.0` floor fix, recurring because a floor isn't automatically kept
+  in sync when the depended-on package moves — see the ecosystem audit notes for the general pattern. No
+  code change here.
+
 ## [0.3.0]
 
 ### Fixed

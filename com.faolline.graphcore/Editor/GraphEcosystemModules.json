@@ -35,7 +35,7 @@
     {
       "displayName": "Graph Dialogue System",
       "package": "com.faolline.graphdialoguesystem",
-      "version": "0.17.0",
+      "version": "0.17.1",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphlocalization" ]
     },
@@ -49,7 +49,7 @@
     {
       "displayName": "Graph Save — UnitySaveSystem bridge",
       "package": "com.faolline.graphsave.savesystem",
-      "version": "0.1.3",
+      "version": "0.1.4",
       "required": false,
       "dependsOn": [ "com.faolline.graphsave", "com.faolline.savesystem.core" ]
     },
@@ -71,7 +71,7 @@
     {
       "displayName": "Graph GameFlow — Addressables bridge",
       "package": "com.faolline.graphgameflow.addressables",
-      "version": "0.3.0",
+      "version": "0.3.1",
       "required": false,
       "dependsOn": [ "com.faolline.graphgameflow" ]
     },
@@ -86,7 +86,7 @@
     {
       "displayName": "Graph Quest",
       "package": "com.faolline.graphquest",
-      "version": "0.11.0",
+      "version": "0.11.1",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphstandard", "com.faolline.graphlocalization" ]
     }

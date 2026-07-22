@@ -4,6 +4,12 @@ All notable changes to **com.faolline.graphsave.savesystem** are documented here
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.4]
+
+### Fixed
+- **Bumped the `com.faolline.graphsave` floor to `0.7.0`.** Stale at `0.3.2` — four minor releases behind.
+  Found during an ecosystem-wide version-drift sweep (this was the largest gap found). No code change here.
+
 ## [0.1.3]
 
 ### Changed

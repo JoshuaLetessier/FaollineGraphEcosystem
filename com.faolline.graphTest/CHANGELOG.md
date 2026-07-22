@@ -4,6 +4,12 @@ All notable changes to **com.faolline.graphTest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.1]
+
+### Fixed
+- **Bumped the `com.faolline.graphstandard` floor to `0.17.0`.** Stale at `0.12.1` — the largest relative gap
+  found during an ecosystem-wide version-drift sweep. No code change here.
+
 Internal verification package — not for distribution; history starts being tracked from 0.1.3.
 
 ## [0.2.0]
