@@ -32,7 +32,7 @@ package do I need").
 | [`com.faolline.graphgameflow.addressables`](com.faolline.graphgameflow.addressables/) | 0.3.2 | Bridges graphgameflow's scene loader to `com.unity.addressables` |
 | [`com.faolline.graphquest`](com.faolline.graphquest/) | 0.11.1 | Quests as objective DAGs, prerequisite gating, one-shot rewards |
 | [`com.faolline.graphsave`](com.faolline.graphsave/) | 0.7.1 | Neutral run-snapshot model + a pluggable save-store contract |
-| [`com.faolline.graphsave.savesystem`](com.faolline.graphsave.savesystem/) | 0.1.5 | Bridges graphsave to `com.faolline.savesystem.core` (UnitySaveSystem) |
+| [`com.faolline.graphsave.savesystem`](com.faolline.graphsave.savesystem/) | 0.1.6 | Bridges graphsave to `com.faolline.savesystem.core` (UnitySaveSystem) |
 
 Each package has its own `README.md` (usage + API) and `CHANGELOG.md` (version history).
 

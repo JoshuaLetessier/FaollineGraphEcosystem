@@ -76,9 +76,19 @@ namespace Faolline.GraphSave.UnitySaveSystem.Tests
         {
             IGraphSaveStore store = new SaveSystemGraphStore(new ThrowingBackend());
             GraphRunSnapshot loaded = null;
-            LogAssert.Expect(LogType.Warning, new Regex(@"\[GraphSave\] Backend threw while checking.*"));
+            LogAssert.Expect(LogType.Warning, new Regex(@"\[GraphSave\] Backend threw while loading.*"));
             Assert.DoesNotThrow(() => loaded = store.Load("s"));
             Assert.IsNull(loaded);
+        }
+
+        [Test]
+        public void Exists_BackendExistsTrueButLoadReturnsNull_ReturnsFalse()
+        {
+            // Simulates JsonSaveSystem's corrupted-checksum case: the backend's own Exists() is a raw
+            // presence check that says "yes", but its Load() additionally validates and returns null for
+            // the same slot. The bridge must not repeat that inconsistency to its own callers.
+            IGraphSaveStore store = new SaveSystemGraphStore(new InconsistentBackend());
+            Assert.IsFalse(store.Exists("s"), "Exists() must agree with Load() even when the backend itself doesn't.");
         }
 
         [Test]
@@ -118,6 +128,18 @@ namespace Faolline.GraphSave.UnitySaveSystem.Tests
             public void Delete(string key) => throw new System.InvalidOperationException("backend delete failure");
             public void DeleteAll() => throw new System.InvalidOperationException("backend deleteAll failure");
             public bool Exists(string key) => throw new System.InvalidOperationException("backend exists failure");
+        }
+
+        // Stands in for a backend whose Exists() is a raw presence check while Load() additionally
+        // validates integrity (e.g. JsonSaveSystem's on-disk checksum) and can return null for a
+        // corrupted-but-present file.
+        private sealed class InconsistentBackend : ISaveSystem<GraphRunSnapshot>
+        {
+            public bool Exists(string key) => true;
+            public GraphRunSnapshot Load(string key) => null;
+            public void Save(string key, GraphRunSnapshot data) { }
+            public void Delete(string key) { }
+            public void DeleteAll() { }
         }
     }
 }
