@@ -4,6 +4,12 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.2]
+
+### Fixed
+- **Bumped the `com.faolline.graphgameflow` floor to `0.15.1`.** Stale at `0.15.0` — one patch behind. Found
+  while fixing graphsave's corrupt-file/long-slot-name hardening. No code change here.
+
 ## [0.3.1]
 
 ### Fixed

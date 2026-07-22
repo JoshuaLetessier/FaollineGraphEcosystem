@@ -98,5 +98,47 @@ namespace Faolline.GraphSave.Tests
             Assert.AreEqual("Hero", ctx.Get<string>("name"));
             Assert.IsTrue(ctx.CollectionContains("inventory", "sword"));
         }
+
+        [Test]
+        public void Load_CorruptedFile_ReturnsNullInsteadOfThrowing()
+        {
+            _store.Save("slot1", SampleSnapshot());
+            // Simulate a crash mid-write / truncated file: overwrite with unparseable content.
+            var path = Path.Combine(_tempDir, "slot1.json");
+            File.WriteAllText(path, "{ this is not valid json ][");
+
+            GraphRunSnapshot loaded = null;
+            Assert.DoesNotThrow(() => loaded = _store.Load("slot1"));
+            Assert.IsNull(loaded);
+        }
+
+        [Test]
+        public void Save_Load_LongUnicodeSlotName_DoesNotThrow()
+        {
+            var longUnicode = new string('あ', 400) + "🎮🎮🎮🎮🎮";
+
+            Assert.DoesNotThrow(() => _store.Save(longUnicode, SampleSnapshot()));
+            GraphRunSnapshot loaded = null;
+            Assert.DoesNotThrow(() => loaded = _store.Load(longUnicode));
+            Assert.IsNotNull(loaded);
+            Assert.AreEqual("graph1", loaded.GraphId);
+        }
+
+        [Test]
+        public void Save_TwoDistinctLongSlotNames_DoNotCollide()
+        {
+            var prefix = new string('x', 400);
+            var slotA = prefix + "AAAA";
+            var slotB = prefix + "BBBB";
+
+            var snapA = GraphRunSnapshot.Capture(new BaseContext(), "graphA", "nodeA");
+            var snapB = GraphRunSnapshot.Capture(new BaseContext(), "graphB", "nodeB");
+
+            _store.Save(slotA, snapA);
+            _store.Save(slotB, snapB);
+
+            Assert.AreEqual("graphA", _store.Load(slotA).GraphId);
+            Assert.AreEqual("graphB", _store.Load(slotB).GraphId);
+        }
     }
 }
