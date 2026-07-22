@@ -4,6 +4,27 @@ All notable changes to **com.faolline.graphsave.savesystem** are documented here
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.7]
+
+### Added
+- **Three end-to-end integration tests through the REAL `JsonSaveSystem` backend** (not synthetic doubles),
+  following the external `com.faolline.savesystem.core`/`.json` repo's own path-traversal fix (commit
+  `330c049`, `JsonSaveSystem.GetPath` now rejects a key containing a separator or escaping its save folder):
+  - `Json_Backend_PathTraversalSlot_DoesNotEscapeAndDegradesGracefully` — confirms the external rejection
+    reaches callers through this bridge as graceful null/false/no-op, and that no file is ever written
+    outside the backend's own `Saves/` folder.
+  - `Json_Backend_CorruptedChecksumOnDisk_ExistsAgreesWithLoad` — re-verifies the 0.1.6 `Exists()`/`Load()`
+    consistency fix against the backend's REAL on-disk checksum mechanism (a corrupted byte on disk), not
+    just the synthetic `InconsistentBackend` double.
+  - `CrossStore_TraversalSlotName_AsymmetricBehaviorIsDocumented` — pins down a real, known trap: the same
+    traversal-shaped slot name SUCCEEDS (sanitized) through `JsonFileGraphSaveStore` but silently NO-OPS
+    (rejected) through this bridge + `JsonSaveSystem`. Same `IGraphSaveStore` contract, different backend,
+    different actual persistence outcome — this test catches it immediately if either implementation's
+    strategy ever changes.
+- No production code changed; this project's own resolved `com.faolline.savesystem.core`/`.json` git
+  packages were also refreshed locally to pick up the external fix (their declared `package.json` version
+  stayed `1.0.0` — that repo does not bump semver per fix, only the git content changed).
+
 ## [0.1.6]
 
 ### Fixed

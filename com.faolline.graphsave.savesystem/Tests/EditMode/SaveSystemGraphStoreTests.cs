@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
@@ -107,6 +108,92 @@ namespace Faolline.GraphSave.UnitySaveSystem.Tests
             IGraphSaveStore store = new SaveSystemGraphStore(new ThrowingBackend());
             LogAssert.Expect(LogType.Warning, new Regex(@"\[GraphSave\] Backend threw while deleting.*"));
             Assert.DoesNotThrow(() => store.Delete("s"));
+        }
+
+        [Test]
+        public void Json_Backend_PathTraversalSlot_DoesNotEscapeAndDegradesGracefully()
+        {
+            // End-to-end through the REAL JsonSaveSystem (not a synthetic double): confirms the external
+            // package's own path-traversal rejection actually reaches the caller as graceful null/false/no-op
+            // through our bridge, and that no file is ever written outside its own Saves/ folder.
+            var store = new SaveSystemGraphStore(new JsonSaveSystem<GraphRunSnapshot>());
+            var afterTraversal = "graphsave_bridge_traversal_" + System.Guid.NewGuid().ToString("N");
+            var slot = "../" + afterTraversal;
+            var escapedPath = Path.Combine(Application.persistentDataPath, afterTraversal + ".json");
+
+            LogAssert.ignoreFailingMessages = true;
+            try
+            {
+                Assert.DoesNotThrow(() => store.Save(slot, Sample()));
+                Assert.IsFalse(store.Exists(slot));
+                Assert.IsNull(store.Load(slot));
+                Assert.DoesNotThrow(() => store.Delete(slot));
+
+                Assert.IsFalse(File.Exists(escapedPath), "a path-traversal slot must never write outside the backend's own save folder.");
+            }
+            finally
+            {
+                LogAssert.ignoreFailingMessages = false;
+            }
+        }
+
+        [Test]
+        public void Json_Backend_CorruptedChecksumOnDisk_ExistsAgreesWithLoad()
+        {
+            // Exercises the #3 fix (Exists() cross-checking Load()) against the REAL checksum mechanism,
+            // not just the synthetic InconsistentBackend double.
+            var store = new SaveSystemGraphStore(new JsonSaveSystem<GraphRunSnapshot>());
+            var slot = "graphsave_bridge_corrupt_" + System.Guid.NewGuid().ToString("N");
+            var path = Path.Combine(Application.persistentDataPath, "Saves", slot + ".json");
+            try
+            {
+                store.Save(slot, Sample());
+                Assert.IsTrue(store.Exists(slot), "sanity: freshly-saved slot exists before corruption.");
+
+                // Flip a byte near the start of the file — always inside the JSON portion (which precedes the
+                // "---CHECKSUM---" marker) regardless of payload size — so the stored checksum no longer matches.
+                var bytes = File.ReadAllBytes(path);
+                bytes[5] ^= 0xFF;
+                File.WriteAllBytes(path, bytes);
+
+                LogAssert.ignoreFailingMessages = true;
+                Assert.IsNull(store.Load(slot), "sanity: the real checksum mechanism already returns null for corrupted data.");
+                Assert.IsFalse(store.Exists(slot), "Exists() must agree with Load() against the REAL checksum mechanism, not just a synthetic double.");
+            }
+            finally
+            {
+                LogAssert.ignoreFailingMessages = false;
+                store.Delete(slot);
+            }
+        }
+
+        [Test]
+        public void CrossStore_TraversalSlotName_AsymmetricBehaviorIsDocumented()
+        {
+            // Known trap: the two IGraphSaveStore implementations handle a "risky" slot name differently.
+            // JsonFileGraphSaveStore SANITIZES (replaces bad characters, always succeeds under a mangled
+            // name). SaveSystemGraphStore + JsonSaveSystem REJECTS (refuses the key, silently no-ops). Same
+            // slot name, same IGraphSaveStore contract, different actual persistence outcome — this test pins
+            // the asymmetry down so it breaks immediately if either implementation's strategy ever changes.
+            var slot = "../traversal_" + System.Guid.NewGuid().ToString("N");
+            var tempDir = Path.Combine(Path.GetTempPath(), "GraphSaveCrossStoreTest_" + System.Guid.NewGuid().ToString("N"));
+
+            try
+            {
+                var fileStore = new JsonFileGraphSaveStore(tempDir);
+                fileStore.Save(slot, Sample());
+                Assert.IsTrue(fileStore.Exists(slot), "JsonFileGraphSaveStore sanitizes and always succeeds, even for a traversal-shaped slot name.");
+
+                var bridgeStore = new SaveSystemGraphStore(new JsonSaveSystem<GraphRunSnapshot>());
+                LogAssert.ignoreFailingMessages = true;
+                bridgeStore.Save(slot, Sample());
+                Assert.IsFalse(bridgeStore.Exists(slot), "SaveSystemGraphStore + JsonSaveSystem rejects the same slot name and silently does not persist it.");
+            }
+            finally
+            {
+                LogAssert.ignoreFailingMessages = false;
+                if (Directory.Exists(tempDir)) Directory.Delete(tempDir, recursive: true);
+            }
         }
 
         // In-memory ISaveSystem<GraphRunSnapshot> standing in for a real backend.

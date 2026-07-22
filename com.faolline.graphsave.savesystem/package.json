@@ -1,6 +1,6 @@
 {
   "name": "com.faolline.graphsave.savesystem",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "displayName": "Faolline GraphSave — UnitySaveSystem bridge",
   "description": "Optional bridge: an IGraphSaveStore (from com.faolline.graphsave) backed by a com.faolline.savesystem.core (UnitySaveSystem) backend, so GraphRunSnapshots persist through your SaveManager backends. Add only if you use UnitySaveSystem; graphsave core stays dependency-free.",
   "unity": "6000.0",

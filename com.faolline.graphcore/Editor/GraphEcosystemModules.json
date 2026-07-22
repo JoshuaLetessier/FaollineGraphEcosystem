@@ -49,7 +49,7 @@
     {
       "displayName": "Graph Save — UnitySaveSystem bridge",
       "package": "com.faolline.graphsave.savesystem",
-      "version": "0.1.6",
+      "version": "0.1.7",
       "required": false,
       "dependsOn": [ "com.faolline.graphsave", "com.faolline.savesystem.core" ]
     },
