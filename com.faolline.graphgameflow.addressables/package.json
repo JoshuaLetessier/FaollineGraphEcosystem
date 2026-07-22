@@ -1,12 +1,12 @@
 {
   "name": "com.faolline.graphgameflow.addressables",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "displayName": "Faolline GraphGameFlow — Addressables bridge",
   "description": "Optional bridge: an ISceneLoader/ISceneUnloader (from com.faolline.graphgameflow) backed by com.unity.addressables, so LoadSceneAction/UnloadSceneAction can load scenes by Addressable key instead of a Build Settings entry. Add only if you use Addressables; graphgameflow core stays dependency-free.",
   "unity": "6000.0",
   "unityRelease": "0f1",
   "dependencies": {
-    "com.faolline.graphgameflow": "0.15.0",
+    "com.faolline.graphgameflow": "0.15.1",
     "com.unity.addressables": "2.2.2"
   },
   "keywords": [

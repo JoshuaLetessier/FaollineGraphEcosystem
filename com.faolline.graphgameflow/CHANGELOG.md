@@ -4,6 +4,12 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.15.1]
+
+### Fixed
+- **Bumped the `com.faolline.graphsave` floor to `0.7.1`.** Stale at `0.5.0` — two minor releases behind.
+  Found while fixing graphsave's corrupt-file/long-slot-name hardening (0.7.1). No code change here.
+
 ## [0.15.0]
 
 ### Fixed

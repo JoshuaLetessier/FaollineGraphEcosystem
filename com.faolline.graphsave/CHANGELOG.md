@@ -4,6 +4,24 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.1]
+
+### Fixed
+- **`JsonFileGraphSaveStore.Load` no longer throws on a corrupted/truncated save file.** A crash mid-write (or
+  any hand-edited/malformed JSON) made `JsonUtility.FromJson` throw uncaught. `Load` now catches any read/parse
+  exception, logs a `[GraphSave]` warning naming the slot and the exception, and returns `null` — the same
+  "absent" contract already used for a missing file.
+- **`JsonFileGraphSaveStore.Save`/`SlotPath` no longer throws on a long or unicode-heavy slot name.** The
+  sanitizer only replaced invalid characters, with no bound on the resulting file name's length, so a slot name
+  long enough (or unicode-dense enough, since surrogate pairs count as two UTF-16 units) to push the full path
+  past Windows' ~260-char `MAX_PATH` crashed `Directory.CreateDirectory`/`File.WriteAllText`. `SlotPath` now
+  budgets the sanitized name's length off the actual `RootPath` (so it adapts to the real
+  `persistentDataPath`), truncating (never mid-surrogate-pair) and appending a short deterministic hash when a
+  slot name would exceed it — so two different over-length slots never silently collide onto the same file, and
+  the truncated form is stable across app restarts (a plain `string.GetHashCode()` is not, since .NET may
+  randomize it per process). `Save` also now catches and logs any I/O exception instead of throwing.
+- Found via an external stress test (`GraphSaveBridgeTest`) against a fresh isolated project.
+
 ## [0.7.0]
 
 ### Changed

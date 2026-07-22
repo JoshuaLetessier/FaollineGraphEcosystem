@@ -1,6 +1,6 @@
 # Faolline GraphSave
 
-**Version**: 0.7.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0
+**Version**: 0.7.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.35.0
 
 Optional persistence layer for the Faolline graph ecosystem. It is to saving what `graphlocalization` is to
 text: a neutral model plus a backend seam, so you plug in whatever store you want.

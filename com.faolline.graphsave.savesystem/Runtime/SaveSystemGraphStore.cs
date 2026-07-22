@@ -1,5 +1,6 @@
 using System;
 using SaveSystem;
+using UnityEngine;
 
 namespace Faolline.GraphSave.UnitySaveSystem
 {
@@ -23,15 +24,57 @@ namespace Faolline.GraphSave.UnitySaveSystem
             => _backend = backend ?? throw new ArgumentNullException(nameof(backend));
 
         /// <inheritdoc/>
-        public void Save(string slot, GraphRunSnapshot snapshot) => _backend.Save(slot, snapshot);
+        public void Save(string slot, GraphRunSnapshot snapshot)
+        {
+            try
+            {
+                _backend.Save(slot, snapshot);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[GraphSave] Backend threw while saving slot '{slot}' ({ex.GetType().Name}: {ex.Message}); the snapshot was NOT persisted.");
+            }
+        }
 
         /// <inheritdoc/>
-        public GraphRunSnapshot Load(string slot) => _backend.Exists(slot) ? _backend.Load(slot) : null;
+        public GraphRunSnapshot Load(string slot)
+        {
+            try
+            {
+                return Exists(slot) ? _backend.Load(slot) : null;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[GraphSave] Backend threw while loading slot '{slot}' ({ex.GetType().Name}: {ex.Message}); treating as absent.");
+                return null;
+            }
+        }
 
         /// <inheritdoc/>
-        public bool Exists(string slot) => _backend.Exists(slot);
+        public bool Exists(string slot)
+        {
+            try
+            {
+                return _backend.Exists(slot);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[GraphSave] Backend threw while checking slot '{slot}' ({ex.GetType().Name}: {ex.Message}); reporting as absent.");
+                return false;
+            }
+        }
 
         /// <inheritdoc/>
-        public void Delete(string slot) => _backend.Delete(slot);
+        public void Delete(string slot)
+        {
+            try
+            {
+                _backend.Delete(slot);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[GraphSave] Backend threw while deleting slot '{slot}' ({ex.GetType().Name}: {ex.Message}); ignored.");
+            }
+        }
     }
 }
