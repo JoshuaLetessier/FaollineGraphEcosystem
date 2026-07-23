@@ -61,23 +61,63 @@ namespacing by convention doesn't work when tile names are assigned procedurally
 up front. `SignalPayloadMatchesCondition` (above) closes this specific case without committing to a
 scoping model — it's a point fix, not evidence the deferred design work above is no longer needed.
 
-### Why it is deferred (not just "do it")
+### Theoretical stress test (2026-07-23): this was actually two problems
 
-Scoping touches `BaseContext`, the runner's await subscription, and the meaning of `OnSignal`/`AwaitSignalName`
-across the whole ecosystem. Committing to a model (graph-scoped? instance-scoped? explicit named channels?
-hierarchical fall-through?) freezes semantics that are expensive to change later. It belongs with the
-**execution-paradigms direction** (splitting the graphcore substrate from pluggable engines), not as a bolt-on.
+Before writing more code, the three candidate models below were stress-tested on paper against the
+confirmed case above and the ecosystem's other nesting patterns. Result: **"signal scoping" was hiding
+two distinct problems** that the original "two sub-graphs (or two instances of the same sub-graph)"
+phrasing conflated without saying so.
 
-### What we need before choosing
+| | Sibling-runner (the confirmed case above) | Re-entrant/nested sub-graph |
+|---|---|---|
+| Shape | two **independent** `BaseRunner` instances, no execution-tree relationship, sharing one `BaseContext` by DI choice | **one** runner's `_graphStack`, the same or a related sub-graph reached twice (nesting or replay) |
+| Who knows the difference | only the caller (game code) — "this is tile Nord" is not derivable from graph structure | the runtime itself — parent/child is right there in `_graphStack` |
+| Which candidate model can even apply | **(b) explicit channel only.** (a) implicit instance-scope and (c) hierarchical fall-through are BOTH defined over the graph execution tree — two sibling runners have no tree relationship for either to hook into. Scoping "by instance" here requires information only the caller has, which is (b) by another name. | (a)/(c) — natural extension of the existing `OpensScope` local-context overlay, which is already exactly "child gets its own scope, reads through to parent" |
+| Status | **Resolved** (`SignalPayloadMatchesCondition` + `IResumeSignalAwareCondition`, 0.36.0) — and will PERMANENTLY need an explicit mechanism no matter what scoping model (if any) is ever built for the other problem | **Open, deliberately not fixed yet** — see below |
 
-- **≥2 independent consumers** hitting the global-signal limitation in real games (not a contrived demo), so
-  the *shape* of the need is observed rather than guessed.
-- A concrete case where the coarse `InheritParentContext` / `OpensScope` boundary is genuinely insufficient.
-- Then evaluate models: (a) implicit graph/instance scope, (b) explicit named channels on `RaiseSignal`,
-  (c) hierarchical scopes with fall-through — against migration cost and back-compat.
+The re-entrant/nested case turned out to already have a live, undocumented bug to point at:
+`BaseContext`'s local-context overlay (`OpensScope`) is a **flat overlay, not a stack** —
+`BeginLocalContext` silently discards an already-open local context if a second `OpensScope` sub-graph
+is reached while the first is still open (same context object, via `OpensScope`/`InheritParentContext`
+hops). Zero test coverage, zero validator check, zero dogfood report before this session — confirmed
+genuinely unhit in practice so far.
+
+**Decision: don't build the real fix (a proper scope stack) now.** The ecosystem is headed toward a
+non-linear/parallel execution engine (a Behavior Tree, per the execution-paradigms direction) whose
+scoping needs are structurally different from this narrow case — real concurrent branches (a `Parallel`
+composite) need a scope **tree**, not a LIFO stack, and BT memory is typically per-node, not
+per-subtree like `OpensScope`. Fixing the flat overlay now, shaped only around Linear's rare nested-
+`OpensScope` case, risks freezing something a BT engine would have to redesign anyway — the exact
+"commits to a model expensive to change later" trap this file already warns about for signal scoping
+itself. **Shipped instead (graphcore 0.36.1), cheap and non-committal:** `GraphValidator` now warns at
+authoring time when a graph nests `OpensScope` sub-graphs (through any depth of
+`InheritParentContext` hops), and the gap is documented directly on
+`SubGraphNodeData.OpensScope`. The real scope-stack design is parked until a non-linear engine is
+actually being designed — then design it ONCE as shared substrate (covering both that engine's needs
+and a retrofit of `OpensScope`), not twice.
+
+### Why the remaining (Signal-scoping-proper) piece is still deferred
+
+The sibling-runner problem is closed for good (payload+condition is the permanent answer regardless of
+scoping). What's left un-decided is only whether SIGNALS (not variables) should ever gain a scoping
+mechanism at all for the nested/re-entrant case — and per the table above, that would piggyback on
+whatever scope-stack substrate eventually gets built for a non-linear engine, not be designed standalone
+for signals today. Committing to a model now (graph-scoped? explicit named channels? hierarchical
+fall-through?) before that substrate exists freezes semantics that are expensive to change later.
+
+### What we need before building the real scope-stack substrate
+
+- A non-linear/parallel execution engine (Behavior Tree or similar) actually in design, so the stack's
+  shape (tree vs. LIFO, per-node vs. per-subtree memory) is derived from real requirements instead of
+  guessed from Linear's one rare, currently-unused nested-`OpensScope` case.
+- At that point, re-evaluate whether Signals should plug into it too (they currently don't participate
+  in the local-context overlay at all — a deliberate design choice, not an oversight, since signals are
+  transient/global by design today).
 
 ### Non-goals for now
 
 - No API surface added speculatively.
-- Consumers that need isolation today use the existing `InheritParentContext` / `OpensScope` boundary, or
-  disambiguate signal **names** (namespacing by convention, e.g. `zone1/doorOpened`).
+- Consumers that need per-instance signal disambiguation today use `SignalPayloadMatchesCondition`
+  (permanent, not a stopgap, for the sibling-runner case) or the existing `InheritParentContext` /
+  `OpensScope` boundary (for the nested-runner case, now with a validator warning against the one way
+  it currently breaks).

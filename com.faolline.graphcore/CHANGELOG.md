@@ -4,6 +4,28 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.36.1]
+
+### Added — `GraphValidator` flags nested `OpensScope` sub-graphs (editor-only, no runtime change)
+
+`BaseContext`'s local-context overlay (`OpensScope`) is a flat overlay, not a stack: reaching a second
+`OpensScope` sub-graph while the first is still open — possible along any path that keeps riding the
+same context (`OpensScope`/`InheritParentContext` all the way down) — silently discards the outer
+scope's local values, since `BeginLocalContext` only logs a runtime warning and proceeds rather than
+stacking. Nobody had hit this in practice (zero test coverage, zero validator check, zero dogfood
+report before now), so it stayed invisible. `GraphValidator` now walks a graph's `OpensScope`
+sub-graphs recursively (through any depth of `InheritParentContext` hops) and warns at authoring time
+before it becomes a silent runtime data-loss surprise. Also documented directly on
+`SubGraphNodeData.OpensScope`'s XML doc.
+
+Deliberately NOT building a real fix (a proper local-context scope stack) yet: the ecosystem is headed
+toward non-linear/parallel execution engines (see the execution-paradigms direction in `TODO.md`) whose
+scoping needs — a real scope tree with concurrent branches, not a LIFO stack — are structurally
+different from this narrow, currently-unused nested-sub-graph case. Freezing a stack shape now, before
+that design exists, risks exactly the kind of premature commitment `TODO.md`'s signal-scoping entry
+already warns against. The validator warning is the appropriate stopgap: cheap, and it does not
+foreclose any future design.
+
 ## [0.36.0]
 
 ### Added — `SignalPayloadMatchesCondition`

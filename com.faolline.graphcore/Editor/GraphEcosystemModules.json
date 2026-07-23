@@ -6,7 +6,7 @@
     {
       "displayName": "Graph Core (base)",
       "package": "com.faolline.graphcore",
-      "version": "0.36.0",
+      "version": "0.36.1",
       "required": true,
       "dependsOn": []
     },
