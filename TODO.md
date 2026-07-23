@@ -26,8 +26,40 @@ is no scoping by graph, by sub-graph instance, or by channel. For a single flow 
   sub-graph does not share signals with its parent at all (that's a boundary, not a scope). The
   `GraphValidator` even warns when that boundary would deadlock an await (graphcore 0.24.0).
 - `RaiseSignal<T>(name, payload)` carries a typed payload — an embryo of a "channel", but not addressing.
+- **`SignalPayloadMatchesCondition` (graphcore 0.36.0)** — a `BaseCondition` for
+  `BaseNodeData.ResumeConditions` that gates a resume on the raised signal's last string payload matching
+  an expected value, so a homonymous raise meant for a different instance is ignored (the node "stays
+  parked and re-armable", per `BaseRunner.ResumeConditions` semantics) instead of falsely resuming. Also
+  handles a node awaiting MORE than one signal name (e.g. a completion signal plus a failure signal on
+  `AwaitSignalNamesExtra`): put one instance per awaited name — each implements
+  `IResumeSignalAwareCondition` and abstains (passes) on any raised name that isn't its own `Signal`, so
+  `BaseRunner`'s AND-across-`ResumeConditions` composes them as the intended OR instead of one condition
+  vetoing a resume it had no opinion on. `MatchMode` (`Exact`/`StartsWith`) covers payload formats like
+  the `"{sceneName}: {reason}"` failure signals from `AsyncSceneLoader`/`AddressablesSceneLoader`.
 
-Neither gives *fine-grained* scoping (per-instance / named channel within a shared context).
+None of these give *fine-grained* scoping (per-instance / named channel within a shared context) as a
+general mechanism — they are targeted workarounds for the payload-carrying case, not a scoping model.
+
+### Confirmed real-world case (2026-07-23, consumer report)
+
+A concrete repro was worked through for the proximity-streaming pattern (world cut into tiles, additive
+loaded/unloaded by player proximity — see this project's own streaming guide, "Streaming par proximité"):
+several tile/zone flows, each its own `GraphFlowDriver`/`BaseRunner` instance, sharing one `GameFlowContext`
+(the normal DI setup so every tile can still read shared state — inventory, quest progress). All tiles go
+through one shared `AsyncSceneLoader` (needed for its FIFO queue and "preload in the direction of travel"
+behavior), which exposes exactly one `LoadCompletedSignal` per instance. Two tiles parked on that same
+signal name — tile B resumes the instant tile A's unrelated load completes, believing its own scene is
+ready when it hasn't even started loading. Verified against the actual code, not just theorized:
+`BaseRunner.ResumeIfAwaiting` (`Contains(node.AwaitSignalNames, name)`) matches on name only, and
+`BaseContext.OnSignal` subscriptions are context-scoped, so every runner sharing that context receives the
+broadcast regardless of which runner's `RaiseSignal` triggered it.
+
+This is exactly the case the "≥2 independent consumers" bar in this file was waiting for — it is not a
+contrived demo, and the two documented mitigations (`OpensScope`, name-namespacing by convention) both
+fail it specifically: `OpensScope` would cut the tile off from the shared state it needs to read, and
+namespacing by convention doesn't work when tile names are assigned procedurally at runtime, not authored
+up front. `SignalPayloadMatchesCondition` (above) closes this specific case without committing to a
+scoping model — it's a point fix, not evidence the deferred design work above is no longer needed.
 
 ### Why it is deferred (not just "do it")
 
