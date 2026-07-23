@@ -4,6 +4,12 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.15.2]
+
+### Fixed
+- **Bumped the `com.faolline.graphsave` floor to `0.8.0`.** Stale at `0.7.1` — one minor release behind
+  (`JsonFileGraphSaveStore` now rejects an invalid slot name instead of sanitizing it). No code change here.
+
 ## [0.15.1]
 
 ### Fixed

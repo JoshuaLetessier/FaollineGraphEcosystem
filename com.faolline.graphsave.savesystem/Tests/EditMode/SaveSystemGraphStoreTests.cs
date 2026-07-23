@@ -168,26 +168,27 @@ namespace Faolline.GraphSave.UnitySaveSystem.Tests
         }
 
         [Test]
-        public void CrossStore_TraversalSlotName_AsymmetricBehaviorIsDocumented()
+        public void CrossStore_TraversalSlotName_BothRejectConsistently()
         {
-            // Known trap: the two IGraphSaveStore implementations handle a "risky" slot name differently.
-            // JsonFileGraphSaveStore SANITIZES (replaces bad characters, always succeeds under a mangled
-            // name). SaveSystemGraphStore + JsonSaveSystem REJECTS (refuses the key, silently no-ops). Same
-            // slot name, same IGraphSaveStore contract, different actual persistence outcome — this test pins
-            // the asymmetry down so it breaks immediately if either implementation's strategy ever changes.
+            // Both IGraphSaveStore implementations now handle a traversal-shaped slot name the SAME way.
+            // graphsave 0.8.0 closed a previously-documented asymmetry: JsonFileGraphSaveStore used to
+            // SANITIZE (replace bad characters, always succeed under a mangled name) while this bridge +
+            // JsonSaveSystem REJECTS (refuses the key, silently no-ops) — same slot name, same
+            // IGraphSaveStore contract, different actual persistence outcome. Both now reject, matching
+            // JsonSaveSystem's own reject-and-log strategy for the same path-traversal risk (fix 330c049).
             var slot = "../traversal_" + System.Guid.NewGuid().ToString("N");
             var tempDir = Path.Combine(Path.GetTempPath(), "GraphSaveCrossStoreTest_" + System.Guid.NewGuid().ToString("N"));
 
             try
             {
                 var fileStore = new JsonFileGraphSaveStore(tempDir);
+                LogAssert.ignoreFailingMessages = true;
                 fileStore.Save(slot, Sample());
-                Assert.IsTrue(fileStore.Exists(slot), "JsonFileGraphSaveStore sanitizes and always succeeds, even for a traversal-shaped slot name.");
+                Assert.IsFalse(fileStore.Exists(slot), "JsonFileGraphSaveStore now rejects a traversal-shaped slot name instead of sanitizing it.");
 
                 var bridgeStore = new SaveSystemGraphStore(new JsonSaveSystem<GraphRunSnapshot>());
-                LogAssert.ignoreFailingMessages = true;
                 bridgeStore.Save(slot, Sample());
-                Assert.IsFalse(bridgeStore.Exists(slot), "SaveSystemGraphStore + JsonSaveSystem rejects the same slot name and silently does not persist it.");
+                Assert.IsFalse(bridgeStore.Exists(slot), "SaveSystemGraphStore + JsonSaveSystem also rejects the same slot name.");
             }
             finally
             {

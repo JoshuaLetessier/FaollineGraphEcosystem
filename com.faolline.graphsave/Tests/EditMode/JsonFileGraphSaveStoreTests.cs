@@ -1,5 +1,8 @@
 using System.IO;
+using System.Text.RegularExpressions;
 using NUnit.Framework;
+using UnityEngine;
+using UnityEngine.TestTools;
 using Faolline.GraphCore;
 
 namespace Faolline.GraphSave.Tests
@@ -139,6 +142,34 @@ namespace Faolline.GraphSave.Tests
 
             Assert.AreEqual("graphA", _store.Load(slotA).GraphId);
             Assert.AreEqual("graphB", _store.Load(slotB).GraphId);
+        }
+
+        [Test]
+        public void Save_TraversalSlot_IsRejectedAndDoesNotEscape()
+        {
+            // Reject (not sanitize) a slot that isn't a single path segment — matches
+            // com.faolline.savesystem.core's JsonSaveSystem, which rejects the same shape (fix 330c049).
+            var afterTraversal = "escape_test_" + System.Guid.NewGuid().ToString("N");
+            var slot = "../" + afterTraversal;
+            var escapedPath = Path.Combine(Path.GetDirectoryName(_tempDir), afterTraversal + ".json");
+
+            LogAssert.Expect(LogType.Error, new Regex(@"\[GraphSave\] Slot '.*' is not a valid save name.*"));
+            Assert.DoesNotThrow(() => _store.Save(slot, SampleSnapshot()));
+            Assert.IsFalse(_store.Exists(slot));
+            Assert.IsNull(_store.Load(slot));
+            Assert.DoesNotThrow(() => _store.Delete(slot));
+
+            Assert.IsFalse(File.Exists(escapedPath), "a traversal-shaped slot must never write outside the store's own folder.");
+        }
+
+        [Test]
+        public void Save_SlotWithInvalidFilenameCharacter_IsRejected()
+        {
+            var slot = "bad:name?";
+            LogAssert.Expect(LogType.Error, new Regex(@"\[GraphSave\] Slot '.*' is not a valid save name.*"));
+            Assert.DoesNotThrow(() => _store.Save(slot, SampleSnapshot()));
+            Assert.IsFalse(_store.Exists(slot));
+            Assert.IsNull(_store.Load(slot));
         }
     }
 }
