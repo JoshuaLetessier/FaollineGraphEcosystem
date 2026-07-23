@@ -4,6 +4,37 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.36.0]
+
+### Added — `SignalPayloadMatchesCondition`
+
+A shared signal name raised by several independent sources (e.g. one `AsyncSceneLoader`'s
+`LoadCompletedSignal` used by several concurrently-parked zone/tile flows in a proximity-streaming
+setup) resumes EVERY node awaiting that name, not just the one it was meant for — `BaseRunner` only
+ever compares names (`Contains(node.AwaitSignalNames, name)`), never the payload. `AwaitSignalName` /
+`OnSignal` stay global-to-context by design (see `TODO.md` — "Signal scoping" is a deliberately
+deferred substrate change); this ships the narrower, immediately-usable fix: a `BaseCondition` for
+`BaseNodeData.ResumeConditions` that gates the resume on the raised signal's last string payload
+matching an expected value. Mirrors `SignalRaisedCondition` (asset, `CreateAssetMenu`, drag-drop for
+a fixed/named set of cases); for a dynamic/procedural set, create an instance at runtime via
+`ScriptableObject.CreateInstance` and set `ExpectedValue` at the same point the corresponding load is
+issued.
+
+### Added — `IResumeSignalAwareCondition`, and multi-signal support for `SignalPayloadMatchesCondition`
+
+`BaseNodeData.ResumeConditions` evaluates as one AND across the whole list regardless of which of
+several OR'd `AwaitSignalNames` actually fired — so a payload-matching condition scoped to only ONE of
+those names (e.g. a completion signal) used to incorrectly veto a resume triggered by a DIFFERENT
+awaited name (e.g. a failure signal added via `AwaitSignalNamesExtra`), since it had no way to know it
+wasn't the one being judged. New opt-in interface `IResumeSignalAwareCondition.EvaluateResume(context,
+raisedSignalName)`: `BaseRunner` now passes the name that actually triggered the resume attempt to any
+`ResumeConditions` entry that implements it (plain `BaseCondition`s are unaffected — same
+`Evaluate(context)` as always). `SignalPayloadMatchesCondition` implements it and abstains (passes)
+on any raised name that isn't its own `Signal`, so several instances — one per awaited name — now
+compose as the intended OR instead of an accidental AND. Also gained `MatchMode`
+(`Exact`/`StartsWith`) for payload formats like `AsyncSceneLoader`/`AddressablesSceneLoader`'s failure
+signal (`"{sceneName}: {reason}"`).
+
 ## [0.35.1]
 
 ### Added — module selector can now add external backends (registry + cross-repo git)

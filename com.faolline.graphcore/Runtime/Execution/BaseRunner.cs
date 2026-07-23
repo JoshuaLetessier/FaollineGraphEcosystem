@@ -392,7 +392,7 @@ namespace Faolline.GraphCore
             // Resume only when the raised name is one this node awaits (logical OR over AwaitSignalNames) AND the
             // node's resume-gate passes. A match with a failing gate is ignored — the node stays parked and
             // re-armable (the actor may raise again once ready).
-            if (node != null && Contains(node.AwaitSignalNames, name) && ResumeConditionsPass(node))
+            if (node != null && Contains(node.AwaitSignalNames, name) && ResumeConditionsPass(node, name))
             {
                 UnsubscribeContextSignal();
                 ExitAndAdvance();
@@ -406,10 +406,20 @@ namespace Faolline.GraphCore
             return false;
         }
 
-        private bool AnyRaised(IReadOnlyList<string> names)
+        // Used by ResumeIfSignalAlreadyRaised: picks the first awaited name found in the context's raised
+        // history, so a resume-aware condition still learns which name it should be judging even on this
+        // "already fired before we parked" path (not just the live RaiseSignal path).
+        private bool TryGetAnyRaisedName(IReadOnlyList<string> names, out string raised)
         {
             for (int i = 0; i < names.Count; i++)
-                if (_context.HasSignalBeenRaised(names[i])) return true;
+            {
+                if (_context.HasSignalBeenRaised(names[i]))
+                {
+                    raised = names[i];
+                    return true;
+                }
+            }
+            raised = null;
             return false;
         }
 
@@ -433,7 +443,11 @@ namespace Faolline.GraphCore
             }
         }
 
-        private bool ResumeConditionsPass(BaseNodeData node)
+        // raisedSignalName is the awaited name that actually triggered this resume attempt (null when that
+        // can't be pinned to one name). A condition that implements IResumeSignalAwareCondition gets it and
+        // may abstain (return true) on a name it has no opinion about; a plain BaseCondition just evaluates
+        // as always, unaware of which of several OR'd names fired.
+        private bool ResumeConditionsPass(BaseNodeData node, string raisedSignalName)
         {
             foreach (var condition in node.ResumeConditions)
             {
@@ -442,7 +456,10 @@ namespace Faolline.GraphCore
                     UnityEngine.Debug.LogWarning($"[GraphCore] Null resume condition skipped on node '{node.Id}'.");
                     continue;
                 }
-                if (!condition.Evaluate(_context)) return false;
+                bool pass = condition is IResumeSignalAwareCondition aware
+                    ? aware.EvaluateResume(_context, raisedSignalName)
+                    : condition.Evaluate(_context);
+                if (!pass) return false;
             }
             return true;
         }
@@ -525,8 +542,8 @@ namespace Faolline.GraphCore
                 // the ResumeConditions gate also passes. Off by default (live-only park).
                 bool alreadySatisfied = node.ResumeIfSignalAlreadyRaised
                     && _context != null
-                    && AnyRaised(awaitNames)
-                    && ResumeConditionsPass(node);
+                    && TryGetAnyRaisedName(awaitNames, out var raisedAheadName)
+                    && ResumeConditionsPass(node, raisedAheadName);
 
                 if (!alreadySatisfied)
                 {
