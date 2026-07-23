@@ -48,6 +48,17 @@ namespace Faolline.GraphCore
         /// discarded when the sub-graph ends. Takes precedence over <see cref="InheritParentContext"/>
         /// — a scoped sub-graph always rides the parent context with a local overlay. Default
         /// <c>false</c>, so pre-existing sub-graph nodes keep their original behaviour.
+        /// <para>
+        /// <b>Known limitation:</b> <see cref="BaseContext"/> supports only ONE open local context at a
+        /// time — it is a flat overlay, not a stack. Reaching a second Opens Scope sub-graph while the
+        /// first is still open (possible along any path that keeps riding the same context — Opens Scope
+        /// or Inherit Parent Context all the way down) silently DISCARDS the outer scope's local values;
+        /// only a runtime warning fires. <c>GraphValidator</c> flags this at authoring time
+        /// (see its "Opens Scope" check). A real fix (turning the overlay into a proper scope stack) is
+        /// deliberately deferred — see <c>TODO.md</c> — until a non-linear/parallel execution engine
+        /// (e.g. a future Behavior Tree) actually needs it, so the stack shape gets designed against real
+        /// requirements instead of guessed from this one narrow, currently-unused case.
+        /// </para>
         /// </summary>
         public bool OpensScope
         {

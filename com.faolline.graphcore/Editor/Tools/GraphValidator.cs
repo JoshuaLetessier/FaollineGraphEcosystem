@@ -150,8 +150,56 @@ namespace Faolline.GraphCore.Editor
 
             CheckCircularAwaits(graph, nodes, edges, report);
             CheckVariableTypeMismatches(graph, report);
+            CheckNestedOpensScope(nodes, report);
 
             return report;
+        }
+
+        // ── Nested Opens Scope ────────────────────────────────────────────────
+        // SubGraphNodeData.OpensScope opens exactly ONE local-context overlay on the shared BaseContext
+        // instance (BaseContext.BeginLocalContext). Entering a SECOND Opens Scope sub-graph while the first
+        // is still open — reachable along a path where every step keeps riding the SAME context (Opens
+        // Scope or Inherit Parent Context; a plain fresh/isolated sub-graph creates a new BaseContext and
+        // breaks the chain) — silently DISCARDS the outer scope's local values: BeginLocalContext only logs
+        // a runtime warning and proceeds, it does not stack. Not runtime-guarded, so flagged here instead.
+        private static void CheckNestedOpensScope(List<BaseNodeData> nodes, GraphValidationReport report)
+        {
+            foreach (var n in nodes)
+            {
+                if (!(n is SubGraphNodeData sub) || !sub.OpensScope || sub.TargetGraph == null) continue;
+
+                var visited = new HashSet<BaseGraph> { sub.TargetGraph };
+                if (FindNestedOpensScope(sub.TargetGraph, visited, out var innerLabel))
+                    report.Issues.Add(new GraphIssue(GraphIssueSeverity.Warning, n.Id,
+                        $"Sub-graph '{Label(n)}' opens a local context, and a path inside it reaches another " +
+                        $"Opens Scope sub-graph ('{innerLabel}') while still riding the same context (via Opens " +
+                        $"Scope / Inherit Parent Context all the way down). BaseContext supports only ONE open " +
+                        $"local context at a time — entering the inner one silently discards the outer's local " +
+                        $"values. Route the inner sub-graph through a fresh context instead (both flags off), " +
+                        $"or restructure so the two never nest on the same context."));
+            }
+        }
+
+        private static bool FindNestedOpensScope(BaseGraph graph, HashSet<BaseGraph> visited, out string innerLabel)
+        {
+            innerLabel = null;
+            if (graph?.Nodes == null) return false;
+
+            foreach (var node in graph.Nodes)
+            {
+                if (!(node is SubGraphNodeData sub) || sub.TargetGraph == null) continue;
+
+                if (sub.OpensScope)
+                {
+                    innerLabel = Label(sub);
+                    return true;
+                }
+
+                if (sub.InheritParentContext && visited.Add(sub.TargetGraph)
+                    && FindNestedOpensScope(sub.TargetGraph, visited, out innerLabel))
+                    return true;
+            }
+            return false;
         }
 
         // ── Variable type-safety ────────────────────────────────────────────

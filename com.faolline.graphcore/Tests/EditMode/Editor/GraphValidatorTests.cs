@@ -224,6 +224,76 @@ namespace Faolline.GraphCore.Tests
                 "a self-contained signal loop needs no parent context");
         }
 
+        // ── Nested Opens Scope (local-context overlay is flat, not a stack) ────
+
+        private BaseGraph SimpleSubGraphHost(string subId, BaseGraph target, bool inherit, bool scope)
+        {
+            var g = Track(ScriptableObject.CreateInstance<BaseGraph>());
+            g.AddNode(Start("s"));
+            g.AddNode(new SubGraphNodeData
+            {
+                Id = subId, NodeType = SubGraphNodeData.NodeTypeId,
+                TargetGraph = target, InheritParentContext = inherit, OpensScope = scope
+            });
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", subId));
+            return g;
+        }
+
+        private BaseGraph LeafGraph()
+        {
+            var g = Track(ScriptableObject.CreateInstance<BaseGraph>());
+            g.AddNode(Start("s"));
+            g.EntryNodeId = "s";
+            return g;
+        }
+
+        [Test]
+        public void NestedOpensScope_TwoLevelsDeep_IsWarning()
+        {
+            var middle = SimpleSubGraphHost("subB", LeafGraph(), inherit: false, scope: true);
+            var host   = SimpleSubGraphHost("subA", middle, inherit: false, scope: true);
+
+            Assert.IsTrue(HasWarning(GraphValidator.Validate(host), "silently discards the outer's local values"));
+        }
+
+        [Test]
+        public void OpensScopeThenFreshContext_NoWarning()
+        {
+            // The inner sub-graph creates its OWN BaseContext (neither flag set) — breaks the chain.
+            var middle = SimpleSubGraphHost("subB", LeafGraph(), inherit: false, scope: false);
+            var host   = SimpleSubGraphHost("subA", middle, inherit: false, scope: true);
+
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(host), "local values"));
+        }
+
+        [Test]
+        public void OpensScopeThenInherit_WithNoDeeperOpensScope_NoWarning()
+        {
+            var middle = SimpleSubGraphHost("subB", LeafGraph(), inherit: true, scope: false);
+            var host   = SimpleSubGraphHost("subA", middle, inherit: false, scope: true);
+
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(host), "local values"),
+                "Inherit Parent Context alone doesn't open a second local context.");
+        }
+
+        [Test]
+        public void NestedOpensScope_ThreeLevelsThroughInherit_IsWarning()
+        {
+            var innerSub = SimpleSubGraphHost("subC", LeafGraph(), inherit: false, scope: true);
+            var middle   = SimpleSubGraphHost("subB", innerSub, inherit: true, scope: false);
+            var host     = SimpleSubGraphHost("subA", middle, inherit: false, scope: true);
+
+            Assert.IsTrue(HasWarning(GraphValidator.Validate(host), "silently discards the outer's local values"));
+        }
+
+        [Test]
+        public void NoOpensScopeAnywhere_NoWarning()
+        {
+            var host = SimpleSubGraphHost("sub", LeafGraph(), inherit: true, scope: false);
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(host), "local values"));
+        }
+
         // ── Unconditioned-edge shadowing (#8) ─────────────────────────────────
 
         private static StatementNodeData St(string id) => new StatementNodeData { Id = id, NodeType = StatementNodeData.NodeTypeId };
