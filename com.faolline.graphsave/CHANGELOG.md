@@ -4,6 +4,23 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.8.0]
+
+### Changed
+- **`JsonFileGraphSaveStore` now REJECTS an invalid slot name instead of sanitizing it.** A slot containing a
+  path separator (`/` or `\`) or any OS-reserved filename character used to have those characters silently
+  replaced with `_` and still succeed. It now refuses the slot entirely: `Save` logs a `[GraphSave]` error and
+  does not persist anything; `Load`/`Exists`/`Delete` treat it as absent, exactly as if the slot didn't exist.
+  This aligns with `com.faolline.savesystem.core`'s `JsonSaveSystem`, whose own fix for the same
+  path-traversal risk (external repo, commit `330c049`) chose reject-and-log over sanitize-and-succeed —
+  the two `IGraphSaveStore` implementations previously diverged on the exact same input, a real trap for a
+  consumer switching between them. A legitimate save-name should be constrained by the consumer's own input
+  field, not silently rewritten here. The length-bounding (truncate + stable-hash suffix) for an otherwise
+  valid but over-long slot name, added in 0.7.1, is unaffected — this is purely about characters/separators.
+- **Breaking for any consumer relying on the old sanitize-and-succeed behavior** for a slot name containing a
+  path separator or reserved character — such a slot now fails to save. Not expected to affect real usage:
+  slot names are normally program-chosen constants or validated save-name fields, not raw untrusted paths.
+
 ## [0.7.1]
 
 ### Fixed

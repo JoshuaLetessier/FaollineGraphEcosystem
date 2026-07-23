@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphsave.savesystem** are documented here
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.8]
+
+### Changed
+- Bumped the `com.faolline.graphsave` floor to `0.8.0` (its `JsonFileGraphSaveStore` now REJECTS an invalid
+  slot name instead of sanitizing it, closing a documented asymmetry with this bridge — see graphsave's own
+  changelog). `CrossStore_TraversalSlotName_AsymmetricBehaviorIsDocumented` was rewritten to
+  `CrossStore_TraversalSlotName_BothRejectConsistently`: both `IGraphSaveStore` implementations now reject the
+  same traversal-shaped slot name the same way, so the test that used to document the divergence now confirms
+  parity instead — a stale "still broken" assertion would have failed the moment the asymmetry was fixed.
+
 ## [0.1.7]
 
 ### Added
