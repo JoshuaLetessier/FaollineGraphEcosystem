@@ -38,7 +38,9 @@ Each package has its own `README.md` (usage + API) and `CHANGELOG.md` (version h
 
 The packages form a strict, test-enforced dependency layering (foundation → capabilities → verticals →
 adapters) — see [`ARCHITECTURE.md`](ARCHITECTURE.md). Consuming the ecosystem from a Clean
-Architecture / DI-container game project is covered in [`INTEGRATION.md`](INTEGRATION.md).
+Architecture / DI-container game project is covered in [`INTEGRATION.md`](INTEGRATION.md). Adding your
+own inspector UI to the graph editor (e.g. from a downstream package) is covered in
+[`EXTENSIBILITY.md`](EXTENSIBILITY.md).
 
 Internal-only (never pulled into a consumer project — see [`INSTALL.md`](INSTALL.md)):
 [`com.faolline.starterGraph`](com.faolline.starterGraph/) (template to fork for a new domain package) and
