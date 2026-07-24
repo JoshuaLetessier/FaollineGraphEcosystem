@@ -121,3 +121,48 @@ fall-through?) before that substrate exists freezes semantics that are expensive
   (permanent, not a stopgap, for the sibling-runner case) or the existing `InheritParentContext` /
   `OpensScope` boundary (for the nested-runner case, now with a validator warning against the one way
   it currently breaks).
+
+---
+
+## Mixed scene-loader flows (Build Settings + Addressables in one flow)
+
+**Status:** closed — not a real gap. Dropdown ergonomics SHIPPED (graphgameflow 0.16.0).
+**Origin:** design discussion, 2026-07-24.
+
+### The observation
+
+`GameFlowContext.SceneLoader` is a single field (`GameFlowContext.cs:20`) — one active `ISceneLoader` for the
+whole context. `LoadSceneAction.Execute` and `UnloadSceneAction` both resolve it fresh from the running
+context (`LoadSceneAction.cs:47`), so every scene action in a flow is interpreted the same way: all
+Build-Settings scene names, or all Addressable keys, never a per-action choice. There's no way today to have
+one `LoadSceneAction` in a flow resolve as a Build-Settings name while another resolves as an Addressable key.
+
+### Why this stopped mattering (user, 2026-07-24)
+
+The one place a real project actually needs both loading mechanisms at once is the mandatory single
+Addressables bootstrap scene (Addressables requires one Build-Settings-resolved scene to initialize itself
+before any Addressable content can load). But that boot scene is never a `LoadSceneAction`/`UnloadSceneAction`
+target in the first place — it's the scene that starts everything (including the `GraphFlowDriver` itself),
+not one this ecosystem's own graphs load or unload. So the "mixed flow" case this section was written for
+doesn't actually occur in practice: a project either drives its whole flow off Build Settings, or off
+Addressables past the boot scene — never both from inside the same graph. Per-action/hybrid loader
+resolution is therefore **not just deferred, it's a non-problem** — closing this instead of leaving it parked.
+
+### What already works around it (if a real case ever shows up)
+
+Two separate `GraphFlowDriver`/`GameFlowContext` instances — one per sub-system (e.g. core scenes on Build
+Settings, downloadable chapters on Addressables) — each with its own loader. This is two flows, not a mix
+within one flow, but it's the already-working path and needs zero lib changes.
+
+### What shipped instead (ergonomics, not the mix)
+
+`SceneNameFieldDrawer` (graphgameflow 0.16.0): a "Build Settings / Addressable" toolbar on both
+`LoadSceneAction`/`UnloadSceneAction` inspectors. In Addressable mode, a dropdown lists registered
+Addressables-group scene addresses, plus a "Mark as Addressable" button (mirrors "Add to Build Settings") to
+promote a plain project scene to an Addressable entry in one click. Gated behind a `FAOLLINE_ADDRESSABLES`
+Version Define so the core package adds no hard dependency when Addressables isn't installed.
+
+### Non-goals
+
+- No per-action or hybrid-fallback loader resolution — closed as a non-problem, not deferred.
+- No change to `GameFlowContext.SceneLoader` single-field model.

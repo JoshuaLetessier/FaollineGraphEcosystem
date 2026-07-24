@@ -36,6 +36,7 @@ namespace Faolline.GraphTest.Tests
         private const string SaveBridgeRuntime   = "com.faolline.graphsave.savesystem.Runtime";
         private const string SaveBridgeTests     = "com.faolline.graphsave.savesystem.Tests.EditMode";
         private const string AddrBridgeRuntime   = "com.faolline.graphgameflow.addressables.Runtime";
+        private const string AddrBridgeEditor    = "com.faolline.graphgameflow.addressables.Editor";
         private const string AddrBridgeTests     = "com.faolline.graphgameflow.addressables.Tests.EditMode";
         private const string AddrBridgeTestsPlay = "com.faolline.graphgameflow.addressables.Tests.PlayMode";
         private const string DialogueRuntime     = "com.faolline.graphdialoguesystem.Runtime";
@@ -109,6 +110,7 @@ namespace Faolline.GraphTest.Tests
             [DialogueEditor] = new[] { CoreRuntime, CoreEditor, DialogueRuntime, LocRuntime, LocEditor },
             [QuestEditor]    = new[] { CoreRuntime, CoreEditor, QuestRuntime, StdRuntime, LocRuntime, LocEditor },
             [FlowEditor]     = new[] { CoreRuntime, CoreEditor, FlowRuntime },
+            [AddrBridgeEditor] = new[] { FlowEditor, UnityAddrEditor },
 
             // ── Dev tooling (internal-only packages) ────────────────────────────
             [GraphTestRuntime] = new[] { CoreRuntime, StdRuntime },
