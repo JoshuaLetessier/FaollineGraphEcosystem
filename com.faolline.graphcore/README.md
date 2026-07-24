@@ -55,6 +55,8 @@ com.faolline.graphcore
 │   ├── Collections/
 │   │   ├── CollectionDef           Stable-GUID collection-key asset
 │   │   └── CollectionEntry         Stable-GUID collection-item asset
+│   ├── Grouping/
+│   │   └── GraphCategoryGroup   Label + list of BaseGraph — no-code, multi-membership organizational asset
 │   ├── Choices/
 │   │   └── BaseChoice          Named branch target on a ChoiceNodeData
 │   ├── Actions/
@@ -77,6 +79,12 @@ com.faolline.graphcore
 │   ├── SignalConstantsGenerator      → GraphSignals class    (menu: Signals ▸ Generate Constants)
 │   ├── VariableConstantsGenerator    → GraphVariables class  (menu: Variables ▸ Generate Constants)
 │   └── ConstantsGeneratorCore        Shared sanitize/collision core for both generators
+│
+├── Editor/Registry/
+│   └── InspectorExtensionRegistry    Seam for downstream libs to inject graph/node inspector UI — see EXTENSIBILITY.md
+│
+├── Editor/Grouping/
+│   └── GraphCategoryGroupInspectorExtension   Worked example consumer of the registry above
 │
 └── Tests/EditMode/
     ├── DataLayer/              Unit tests for graph structure types
@@ -595,6 +603,12 @@ whole ecosystem's 1118-test green suite):
 ## Changelog
 
 Full history in [`CHANGELOG.md`](CHANGELOG.md). Highlights:
+
+### 0.37.0 — `GraphCategoryGroup` + extensibility doc
+A no-code asset (label + list of `BaseGraph`) for organizing any graph into named, possibly-overlapping
+groups (e.g. quest "Main"/"Side"), displayed on the graph inspector via a new
+`GraphCategoryGroupInspectorExtension` — the first worked example of `InspectorExtensionRegistry` used
+to edit a *foreign* asset rather than the inspected graph itself. See [`EXTENSIBILITY.md`](../EXTENSIBILITY.md).
 
 ### 0.35.0 — vocabulary rename (no behaviour change)
 The three identity assets drop the misleading `Name` suffix (identity is a GUID, not a name), and

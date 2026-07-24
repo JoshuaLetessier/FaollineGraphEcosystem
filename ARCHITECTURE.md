@@ -91,4 +91,6 @@ The ecosystem is a set of libraries, not an application, so it doesn't reproduce
 Domain/Application/Infrastructure/Presentation folders — it implements the same *principles* at
 package granularity: compiler-enforced dependency direction (rules 1–4), ports & adapters (rule 5),
 and presentation kept out of the core (rule 6). For how a game built on Clean Architecture should
-consume these packages, see [`INTEGRATION.md`](INTEGRATION.md).
+consume these packages, see [`INTEGRATION.md`](INTEGRATION.md). For how a downstream package injects
+its own inspector UI into the graph editor without violating rule 2/3, see
+[`EXTENSIBILITY.md`](EXTENSIBILITY.md).

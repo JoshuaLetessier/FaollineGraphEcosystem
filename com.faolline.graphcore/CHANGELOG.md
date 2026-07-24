@@ -4,6 +4,35 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.37.0]
+
+### Added — `GraphCategoryGroup`
+
+A generic, `[CreateAssetMenu]`-exposed asset (`com.faolline.graphcore/Runtime/Grouping/GraphCategoryGroup.cs`)
+that lets a non-dev user organize any `BaseGraph` (quests today, other verticals later) into one or
+more named groups (e.g. "Main" / "Side") with no code required. A graph may belong to zero, one, or
+several groups at once — intentional, not a gap. Carries no stable-GUID identity (unlike
+`VariableDef`/`SignalDef`/`CollectionDef`): nothing in the runtime reads it, so it stays as simple as a
+label and a list.
+
+Membership is displayed and edited on the graph's own inspector (no-selection panel) through a new
+`GraphCategoryGroupInspectorExtension`, registered via the existing `InspectorExtensionRegistry.RegisterGraphSection`
+seam — the same pattern `graphlocalization`'s `LocalizationInspectorExtension` already uses, but for the
+first time editing a *foreign* asset (the matching `GraphCategoryGroup`(s)) rather than data embedded on
+the inspected graph itself. Since group membership is stored forward-only (group → graphs), the
+extension reverse-scans project `GraphCategoryGroup` assets once per inspector bind (not per redraw) to
+find which group(s) contain the current graph.
+
+No changes to `QuestGraph`, `BaseGraph`, or `QuestEvaluator` — this is pure editor-time organizational
+metadata with zero runtime consumer.
+
+### Added — `EXTENSIBILITY.md`
+
+New repo-root doc (alongside `ARCHITECTURE.md`/`INTEGRATION.md`) documenting `InspectorExtensionRegistry`
+as a public extension seam: its contract (`RegisterGraphSection`/`RegisterNodeSection`, call ordering,
+the `markDirty` parameter and when to bypass it for foreign-asset edits), plus `GraphCategoryGroup`
+walked end-to-end as the worked example.
+
 ## [0.36.1]
 
 ### Added — `GraphValidator` flags nested `OpensScope` sub-graphs (editor-only, no runtime change)
