@@ -124,7 +124,7 @@ namespace Faolline.GraphTest.Tests
             [StdTests]            = new[] { StdRuntime, StdEditor, CoreRuntime, TestRunner, TestRunnerEditor },
             [SaveTests]           = new[] { SaveRuntime, CoreRuntime, TestRunner, TestRunnerEditor },
             [SaveBridgeTests]     = new[] { SaveBridgeRuntime, SaveRuntime, CoreRuntime, SaveSystemCore, SaveSystemJson, TestRunner, TestRunnerEditor },
-            [AddrBridgeTests]     = new[] { AddrBridgeRuntime, FlowRuntime, CoreRuntime, UnityAddr, UnityResourceMgr, TestRunner, TestRunnerEditor },
+            [AddrBridgeTests]     = new[] { AddrBridgeRuntime, AddrBridgeEditor, FlowRuntime, FlowEditor, CoreRuntime, UnityAddr, UnityAddrEditor, UnityResourceMgr, TestRunner, TestRunnerEditor },
             [AddrBridgeTestsPlay] = new[] { AddrBridgeRuntime, FlowRuntime, CoreRuntime, UnityAddr, UnityAddrEditor, UnityResourceMgr, TestRunner },
             [DialogueTests]       = new[] { DialogueRuntime, DialogueEditor, CoreRuntime, CoreEditor, LocRuntime, LocEditor, TestRunner, TestRunnerEditor },
             [DialogueTestsPlay]   = new[] { DialogueRuntime, CoreRuntime, LocRuntime, TestRunner, TestRunnerEditor },

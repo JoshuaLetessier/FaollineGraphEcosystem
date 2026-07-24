@@ -3,9 +3,12 @@
     "rootNamespace": "Faolline.GraphGameFlow.Addressables.Tests",
     "references": [
         "com.faolline.graphgameflow.addressables.Runtime",
+        "com.faolline.graphgameflow.addressables.Editor",
         "com.faolline.graphgameflow.Runtime",
+        "com.faolline.graphgameflow.Editor",
         "com.faolline.graphcore.Runtime",
         "Unity.Addressables",
+        "Unity.Addressables.Editor",
         "Unity.ResourceManager",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
