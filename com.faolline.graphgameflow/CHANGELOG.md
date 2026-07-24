@@ -4,6 +4,23 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.16.0]
+
+### Added
+- **Addressable Key dropdown on `LoadSceneAction`/`UnloadSceneAction` inspectors.** Previously the custom
+  editors only offered a Build Settings scene picker, so authoring a scene action meant to run through
+  `com.faolline.graphgameflow.addressables`'s `AddressablesSceneLoader` required typing the Addressable key
+  by hand (easy to typo against the resulting scene's own name — the two are rarely equal, see
+  `LoadSceneAction`'s loader-agnostic design note). When the Addressables package is present in the project,
+  a "Build Settings / Addressable" toolbar switches the inspector to a second dropdown listing registered
+  scene addresses, mirroring the existing picker (guessed from the field's current value on first draw, then
+  authoring-session-persistent). A "Mark as Addressable" button — the Addressable-side mirror of "Add to
+  Build Settings" — promotes a plain project scene to an Addressable entry (default group, address = scene
+  name) in one click. Zero hard dependency added: gated behind a `FAOLLINE_ADDRESSABLES` Version Define on
+  the Editor asmdef, so the core package stays dependency-free when Addressables isn't installed. Shared
+  dropdown/build-settings-check logic between the two editors extracted into `SceneNameFieldDrawer` (was
+  duplicated verbatim between them).
+
 ## [0.15.2]
 
 ### Fixed

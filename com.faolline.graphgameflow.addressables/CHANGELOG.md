@@ -4,6 +4,19 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0]
+
+### Added
+- **`com.faolline.graphgameflow.addressables.Editor`** — new Editor sub-assembly. `AddressablesSceneKeyProvider`
+  registers with `graphgameflow`'s new `SceneKeySourceRegistry` seam (`graphgameflow` 0.16.0) so registered
+  Addressable scene addresses show up as a dropdown on the `LoadSceneAction`/`UnloadSceneAction` inspectors,
+  alongside a "Mark as Addressable" button to promote a plain project scene in one click. `graphgameflow`
+  core stays external-dependency-free — this adapter package owns the only reference to
+  `UnityEditor.AddressableAssets`, per the ecosystem's port/adapter rule (see `ARCHITECTURE.md`).
+
+### Fixed
+- **Bumped the `com.faolline.graphgameflow` floor to `0.16.0`** (needed for `SceneKeySourceRegistry`).
+
 ## [0.3.2]
 
 ### Fixed

@@ -1,0 +1,19 @@
+{
+    "name": "com.faolline.graphgameflow.addressables.Editor",
+    "rootNamespace": "Faolline.GraphGameFlow.Addressables.Editor",
+    "references": [
+        "com.faolline.graphgameflow.Editor",
+        "Unity.Addressables.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

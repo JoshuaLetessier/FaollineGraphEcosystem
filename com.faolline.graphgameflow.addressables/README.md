@@ -1,6 +1,6 @@
 # Faolline GraphGameFlow — Addressables Bridge
 
-**Version**: 0.3.2 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.15.1, `com.unity.addressables` ≥ 2.2.2
+**Version**: 0.4.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.16.0, `com.unity.addressables` ≥ 2.2.2
 
 Optional T3 adapter: an `ISceneLoader`/`ISceneUnloader` (from `com.faolline.graphgameflow`) backed by
 `com.unity.addressables`, so `LoadSceneAction`/`UnloadSceneAction` can load a scene by **Addressable key**
@@ -20,8 +20,10 @@ void Awake() => _flow.SceneLoader = _loader;   // AddressablesSceneLoader is ISc
 ```
 
 Then on a `LoadSceneAction`/`UnloadSceneAction`, set **Scene Name** to the scene's **Addressable key**
-(address, label, or GUID) — not necessarily its file name — and skip the Build Settings step entirely; a
-`LoadSceneActionEditor` "not in Build Settings" warning is a false positive here.
+(address, label, or GUID) — not necessarily its file name — and skip the Build Settings step entirely. With
+this package installed, the inspector shows a "Build Settings / Addressable" toolbar: switch to
+**Addressable** to pick from registered scene addresses via a dropdown instead of typing the key by hand, and
+use **Mark as Addressable** to promote a plain project scene into an Addressable entry in one click.
 
 `AddressablesSceneLoader` mirrors `AsyncSceneLoader`'s whole contract, so it is a drop-in swap wherever an
 async loader is wanted:
@@ -65,12 +67,17 @@ misuse in this ecosystem.
 ```
 com.faolline.graphgameflow.addressables
 │
-└── Runtime/
-    └── AddressablesSceneLoader.cs   ISceneLoader + ISceneUnloader over Addressables.LoadSceneAsync/UnloadSceneAsync
+├── Runtime/
+│   └── AddressablesSceneLoader.cs        ISceneLoader + ISceneUnloader over Addressables.LoadSceneAsync/UnloadSceneAsync
+└── Editor/
+    └── AddressablesSceneKeyProvider.cs   registers with graphgameflow's SceneKeySourceRegistry seam
 ```
 
-One file, one class — all the heavy lifting (the action model, the driver, the signal bridge) is done by
-`com.faolline.graphgameflow`. This bridge only swaps the transport.
+The `Runtime` half is the actual transport swap — all the heavy lifting (the action model, the driver, the
+signal bridge) is done by `com.faolline.graphgameflow`. The `Editor` half is purely an authoring convenience:
+it plugs registered Addressable scene entries into the existing `LoadSceneAction`/`UnloadSceneAction`
+inspector dropdown via `SceneKeySourceRegistry` — `graphgameflow` core never references
+`com.unity.addressables` itself; this package's Editor assembly is the only place that does.
 
 ---
 

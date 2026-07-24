@@ -46,6 +46,11 @@ Tier definitions:
   - a **sub-assembly of the package** when it adapts an optional Unity package
     (`graphlocalization/Localization.Unity`, `graphdialoguesystem/UI`).
 
+  An adapter package can itself split Runtime/Editor like any T0–T2 package (e.g.
+  `graphgameflow.addressables.Editor` plugs Addressables scene entries into `graphgameflow`'s
+  `LoadSceneAction`/`UnloadSceneAction` inspector via an opt-in registry the vertical's Editor
+  assembly exposes — the vertical's own Editor assembly stays external-dependency-free, per rule 3).
+
 ## The rules
 
 1. **Dependencies point downward only** (T3 → T2 → T1 → T0), enforced by the compiler through asmdef

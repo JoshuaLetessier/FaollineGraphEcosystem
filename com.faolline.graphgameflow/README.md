@@ -300,7 +300,9 @@ You don't have to build graphs in code. The package ships a visual editor mirror
   into a node's action list. Scene change is always an action, never a node type. On the action's inspector
   you **pick the scene from a dropdown of the project's scenes** (no typing); a hint explains **Single**
   (replaces the current scene) vs **Additive** (loads on top). A scene must be in **Build Settings** to load
-  at runtime — the inspector warns when it isn't and offers a one-click **Add to Build Settings**.
+  at runtime — the inspector warns when it isn't and offers a one-click **Add to Build Settings**. With
+  `com.faolline.graphgameflow.addressables` installed, a "Build Settings / Addressable" toolbar switches the
+  dropdown to registered Addressable scene addresses instead (see that package's README).
 - **One-click sample**: **Faolline ▸ GraphGameFlow ▸ Create Reference Scene-Flow Sample** generates the flow
   `start → load A → await "advance" → load B → end`. Assign it to a `GraphFlowDriver` and Play.
 
