@@ -5,6 +5,7 @@
         "com.faolline.graphgameflow.addressables.Runtime",
         "com.faolline.graphgameflow.Runtime",
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "Unity.Addressables",
         "Unity.Addressables.Editor",
         "Unity.ResourceManager",

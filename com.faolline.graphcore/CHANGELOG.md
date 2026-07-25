@@ -4,6 +4,39 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.38.0]
+
+### Added — `graphcore.Runtime.Core` (engine-agnostic run-state assembly)
+
+New `noEngineReferences` assembly (`com.faolline.graphcore/Runtime.Core/`), referenced by
+`graphcore.Runtime`. Carries the pure-C# run-state model, moved out of `graphcore.Runtime` unchanged in
+behavior: `BaseContext` and `SignalArgs`. Two seams make this possible without Core naming any
+`UnityEngine` type:
+
+- `BaseContextTypeRegistry` — Core only recognizes `bool`/`int`/`float`/`string` for
+  `BaseContext.Set`/`Get`/`RaiseSignal`; the Unity layer registers `Vector2`/`Vector3`/`Color` back at
+  load (`GraphCoreUnityBootstrap`, covers both the editor — including EditMode tests — and player
+  builds). Runtime-visible behavior is unchanged.
+- `GraphLog` — a minimal `Action<string>` logging seam; `GraphCoreUnityBootstrap` wires it to
+  `Debug.LogWarning`/`Debug.LogError`.
+- `BaseContext.InitFromGraph(BaseGraph)` and the graph-seeded `BeginLocalContext(BaseGraph)` overload
+  moved to `BaseContextGraphExtensions` (extension methods in `graphcore.Runtime`) since `BaseGraph`/
+  `VariableDef` are ScriptableObject assets — same call syntax, no call-site changes anywhere in the
+  ecosystem. Two new public primitives on `BaseContext`, `SeedGlobalIfAbsent`/`SeedLocalIfAbsent`, back
+  them.
+- `BaseContext.CopyValuesFrom` stays `internal`; `graphcore.Runtime` (where `BaseRunner` lives) gets
+  friend access via `[InternalsVisibleTo]`.
+
+Every downstream package's asmdef now references `graphcore.Runtime.Core` alongside `graphcore.Runtime`
+(mechanical sweep, ~30 asmdefs); `DependencyMatrixTests.Allowed` and `ARCHITECTURE.md` updated in the
+same commit.
+
+**Scope note:** this is deliberately narrow — the runner, nodes, and the asset/authoring model
+(`BaseAction`/`BaseCondition`/`BaseGraph`) stay in `graphcore.Runtime`. Making those engine-agnostic too
+was evaluated and rejected as out of scope (their coupling to `ScriptableObject` runs too deep to be
+worth resolving here); this slice exists to give `BaseContext` a Unity-independent test/compile surface,
+not to make the graph runner referenceable from a `noEngineReferences` Application layer.
+
 ## [0.37.0]
 
 ### Added — `GraphCategoryGroup`

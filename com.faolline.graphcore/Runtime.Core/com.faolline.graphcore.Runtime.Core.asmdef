@@ -1,9 +1,7 @@
 {
-    "name": "com.faolline.graphcore.Runtime",
+    "name": "com.faolline.graphcore.Runtime.Core",
     "rootNamespace": "Faolline.GraphCore",
-    "references": [
-        "com.faolline.graphcore.Runtime.Core"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
@@ -12,5 +10,5 @@
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],
-    "noEngineReferences": false
+    "noEngineReferences": true
 }

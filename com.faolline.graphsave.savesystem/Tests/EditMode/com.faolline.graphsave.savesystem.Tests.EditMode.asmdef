@@ -5,6 +5,7 @@
         "com.faolline.graphsave.savesystem.Runtime",
         "com.faolline.graphsave.Runtime",
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "SaveSystemCore",
         "SaveSystemJson",
         "UnityEngine.TestRunner",

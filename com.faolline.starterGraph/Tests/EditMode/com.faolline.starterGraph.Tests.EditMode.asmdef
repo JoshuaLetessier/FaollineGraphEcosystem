@@ -5,6 +5,7 @@
         "com.faolline.starterGraph.Runtime",
         "com.faolline.starterGraph.Editor",
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "com.faolline.graphcore.Editor",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

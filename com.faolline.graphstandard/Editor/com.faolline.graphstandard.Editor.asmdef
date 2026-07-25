@@ -3,6 +3,7 @@
     "rootNamespace": "Faolline.GraphStandard.Editor",
     "references": [
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "com.faolline.graphstandard.Runtime"
     ],
     "includePlatforms": [

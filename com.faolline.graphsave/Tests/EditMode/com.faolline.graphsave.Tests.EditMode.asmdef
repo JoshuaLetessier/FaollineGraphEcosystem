@@ -4,6 +4,7 @@
     "references": [
         "com.faolline.graphsave.Runtime",
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

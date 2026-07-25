@@ -5,6 +5,7 @@
         "com.faolline.graphdialoguesystem.UI",
         "com.faolline.graphdialoguesystem.Runtime",
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "com.faolline.graphlocalization.Runtime",
         "Unity.TextMeshPro",
         "UnityEngine.UI",

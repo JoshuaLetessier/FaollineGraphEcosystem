@@ -3,6 +3,7 @@
     "rootNamespace": "Faolline.GraphQuest",
     "references": [
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "com.faolline.graphstandard.Runtime",
         "com.faolline.graphlocalization.Runtime"
     ],
