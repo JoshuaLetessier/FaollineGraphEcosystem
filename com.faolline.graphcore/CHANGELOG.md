@@ -4,6 +4,23 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.40.1]
+
+### Fixed — module selector no longer hardcodes `#master`
+
+`GraphEcosystemModuleSelector` built every git URL with `GraphEcosystemModules.json`'s fixed `"branch":
+"master"`, regardless of what ref the consumer actually installed `com.faolline.graphcore` at. A project
+pinned to a tag (e.g. `#v1.3.0`, per `INSTALL.md`'s reproducible-install guidance) would still have every
+*other* module pulled from `#master` through this window — defeating the pin, and in at least one observed
+case surfacing as UPM refusing to add a module ("invalid dependencies or related test packages") because
+the two refs disagreed on what should be installed together.
+
+The window now reads back `com.faolline.graphcore`'s own resolved `PackageInfo.packageId` (which carries
+the actual `#ref` — tag, branch, or commit — for a git-sourced package) and reuses that ref for every module
+it builds a URL for, falling back to the config's `branch` only when graphcore isn't installed yet or wasn't
+installed from git. The window's header now names the ref it's about to use, so this is visible before
+clicking Apply rather than discovered from a failure. `INSTALL.md` updated to point at tagged installs.
+
 ## [0.40.0]
 
 ### Added — `FaollineGraphSettings` (project-level output folder for the constants generators)

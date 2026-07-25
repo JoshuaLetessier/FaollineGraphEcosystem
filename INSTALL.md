@@ -12,12 +12,18 @@ are never pulled into a consumer project.
    ```
    https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=com.faolline.graphcore#master
    ```
+   For a reproducible install (recommended once you're building against the ecosystem rather than just
+   trying it), use a tag instead of `#master` — e.g. `...?path=com.faolline.graphcore#v1.3.0`.
 2. Open **Window ▸ Faolline ▸ Graph Ecosystem Modules**.
 3. Tick the packages you want (e.g. *Graph Dialogue System*) and click **Apply**. Dependencies are
    added automatically; UPM rewrites your `manifest.json` for you. Un-tick + Apply to remove.
 
 The offered list is the whitelist in
 `com.faolline.graphcore/Editor/GraphEcosystemModules.json` — samples/tests are deliberately not listed.
+Every module the selector adds is pinned to whatever ref `com.faolline.graphcore` was itself actually
+installed at (read back from its resolved package id) — so once step 1 uses a tag, every module ticked in
+step 3 follows the same tag automatically, not the `master` this file shows as the bootstrap default. The
+window's status line names the ref it's about to use before you click Apply.
 
 ## Manual alternative (no selector)
 

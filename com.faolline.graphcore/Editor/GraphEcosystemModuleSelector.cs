@@ -54,6 +54,7 @@ namespace Faolline.GraphCore.Editor
         private ModuleConfig _config;
         private readonly Dictionary<string, bool> _installed = new Dictionary<string, bool>();
         private readonly Dictionary<string, string> _installedVersions = new Dictionary<string, string>();
+        private readonly Dictionary<string, string> _installedPackageIds = new Dictionary<string, string>();
         private readonly Dictionary<string, bool> _desired = new Dictionary<string, bool>();
         private ListRequest _listRequest;
         private AddAndRemoveRequest _modifyRequest;
@@ -115,10 +116,12 @@ namespace Faolline.GraphCore.Editor
                 {
                     _installed.Clear();
                     _installedVersions.Clear();
+                    _installedPackageIds.Clear();
                     foreach (var p in _listRequest.Result)
                     {
                         _installed[p.name] = true;
                         _installedVersions[p.name] = p.version;
+                        _installedPackageIds[p.name] = p.packageId;
                     }
 
                     _updatesAvailable = 0;
@@ -163,6 +166,19 @@ namespace Faolline.GraphCore.Editor
                 "Tick the packages to install. Dependencies are added automatically. Only the packages " +
                 "listed here are offered — samples and verification packages are never pulled in.",
                 MessageType.None);
+
+            if (_config != null)
+            {
+                var gitRef = ResolveRef();
+                var pinnedToCore = _installedPackageIds.ContainsKey("com.faolline.graphcore") &&
+                                   !string.IsNullOrEmpty(gitRef) && gitRef != _config.branch;
+                var refLabel = string.IsNullOrEmpty(gitRef) ? "(no ref)" : gitRef;
+                EditorGUILayout.LabelField(
+                    pinnedToCore
+                        ? $"New/updated packages will be pinned to '{refLabel}' — matching the installed Graph Core."
+                        : $"New/updated packages will be pulled from '{refLabel}' (this repo's configured default).",
+                    EditorStyles.miniLabel);
+            }
 
             bool busy = _listRequest != null || _modifyRequest != null;
 
@@ -333,14 +349,38 @@ namespace Faolline.GraphCore.Editor
         /// <summary>UPM identifier for a module: a bare package name for <see cref="ModuleEntry.registry"/>
         /// packages (resolved via the registry, e.g. com.unity.*), an explicit <see cref="ModuleEntry.gitUrl"/>
         /// override for packages living in a different repo (e.g. UnitySaveSystem), or otherwise the default
-        /// git URL built from this ecosystem's repo + basePath (+ optional #branch).</summary>
+        /// git URL built from this ecosystem's repo + basePath (+ <see cref="ResolveRef"/>).</summary>
         private string BuildIdentifier(ModuleEntry m)
         {
             if (m.registry) return m.package;
             if (!string.IsNullOrEmpty(m.gitUrl)) return m.gitUrl;
             var url = $"{_config.repository}?path={_config.basePath}/{m.package}";
-            if (!string.IsNullOrEmpty(_config.branch)) url += $"#{_config.branch}";
+            var gitRef = ResolveRef();
+            if (!string.IsNullOrEmpty(gitRef)) url += $"#{gitRef}";
             return url;
+        }
+
+        /// <summary>
+        /// The git ref every module this window installs should be pinned to. Mirrors whatever
+        /// <c>com.faolline.graphcore</c> is <em>actually</em> resolved at (read back from its own
+        /// <see cref="UnityEditor.PackageManager.PackageInfo.packageId"/>, which carries the resolved
+        /// <c>#ref</c> — a tag, branch, or commit — for a git-sourced package) rather than the fixed
+        /// <see cref="ModuleConfig.branch"/> from the config. A project pinned to a tag (see
+        /// <c>INSTALL.md</c>'s tagged-link guidance) would otherwise still pull every OTHER module from
+        /// <c>#master</c>, defeating the pin. Falls back to <see cref="ModuleConfig.branch"/> only when
+        /// graphcore isn't installed yet (first bootstrap) or wasn't installed from git at all (no <c>#</c>
+        /// in its <c>packageId</c> — e.g. a local/embedded/tarball install).
+        /// </summary>
+        private string ResolveRef()
+        {
+            if (_installedPackageIds.TryGetValue("com.faolline.graphcore", out var packageId) &&
+                !string.IsNullOrEmpty(packageId))
+            {
+                var hashIndex = packageId.LastIndexOf('#');
+                if (hashIndex >= 0 && hashIndex < packageId.Length - 1)
+                    return packageId.Substring(hashIndex + 1);
+            }
+            return _config?.branch;
         }
     }
 }
