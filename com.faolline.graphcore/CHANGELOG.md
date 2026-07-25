@@ -4,6 +4,19 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.39.0]
+
+### Added — `Generate(string outputPath)` overload on both constants generators
+
+`SignalConstantsGenerator.Generate()`/`VariableConstantsGenerator.Generate()` only ever wrote to their
+hardcoded `DefaultOutputPath` (`Assets/Generated/GraphSignals.cs` / `GraphVariables.cs`) — a folder with no
+asmdef of its own. In an asmdef-layered consumer project that means the generated class compiles into
+`Assembly-CSharp`, which no asmdef can reference back into: the generated constants were unusable from any
+layer, not just inconveniently placed. `Generate(string outputPath)` lets a consumer point generation at a
+folder their own asmdef (e.g. Domain) actually covers; `Generate()` is unchanged (`DefaultOutputPath`,
+same as before). Found via external review of `INTEGRATION.md`'s Clean Architecture guidance, which is
+exactly the audience this broke for.
+
 ## [0.38.0]
 
 ### Added — `graphcore.Runtime.Core` (engine-agnostic run-state assembly)

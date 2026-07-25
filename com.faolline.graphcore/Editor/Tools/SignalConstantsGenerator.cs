@@ -29,7 +29,16 @@ namespace Faolline.GraphCore.Editor
         public const string ClassName = "GraphSignals";
 
         /// <summary>Generates <c>GraphSignals</c> from every <see cref="SignalDef"/> asset in the project and writes it to <see cref="DefaultOutputPath"/>.</summary>
-        public static void Generate()
+        public static void Generate() => Generate(DefaultOutputPath);
+
+        /// <summary>
+        /// As <see cref="Generate()"/>, but writes to <paramref name="outputPath"/> instead of
+        /// <see cref="DefaultOutputPath"/>. <c>Assets/Generated/</c> has no asmdef of its own, so in an
+        /// asmdef-layered project anything written there compiles into <c>Assembly-CSharp</c> — which no
+        /// asmdef can reference back into. Point this at wherever your own layering expects generated code
+        /// (e.g. a folder inside your Domain asmdef) instead of working around the default.
+        /// </summary>
+        public static void Generate(string outputPath)
         {
             var signals = new List<(string displayName, string guid)>();
             foreach (var guid in AssetDatabase.FindAssets($"t:{nameof(SignalDef)}"))
@@ -53,11 +62,11 @@ namespace Faolline.GraphCore.Editor
                 return;
             }
 
-            var dir = Path.GetDirectoryName(DefaultOutputPath);
+            var dir = Path.GetDirectoryName(outputPath);
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
-            File.WriteAllText(DefaultOutputPath, source);
-            AssetDatabase.ImportAsset(DefaultOutputPath);
-            Debug.Log($"[GraphCore] Generated {signals.Count} signal constant(s) → {DefaultOutputPath}");
+            File.WriteAllText(outputPath, source);
+            AssetDatabase.ImportAsset(outputPath);
+            Debug.Log($"[GraphCore] Generated {signals.Count} signal constant(s) → {outputPath}");
         }
 
         /// <summary>
