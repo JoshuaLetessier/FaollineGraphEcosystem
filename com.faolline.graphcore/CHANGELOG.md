@@ -4,6 +4,28 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.40.0]
+
+### Added — `FaollineGraphSettings` (project-level output folder for the constants generators)
+
+The `Generate(string outputPath)` overload added in 0.39.0 fixed the asmdef problem but left every
+consumer writing their own `[MenuItem]` around it — and left the ecosystem's own default
+`Faolline ▸ Graph ▸ Generate Constants` menu still targeting the unusable `Assets/Generated/`, one reflexive
+click away from a second `GraphSignals`/`GraphVariables` compiling into `Assembly-CSharp` (CS0436 — the
+`Assembly-CSharp` copy shadows the asmdef'd one for anything in `Assembly-CSharp`, silent everywhere else,
+since both start from the same Defs and only diverge once one of the two stops being regenerated).
+
+`FaollineGraphSettings` (`ScriptableSingleton`, `ProjectSettings/FaollineGraphSettings.asset` — versioned,
+shared by the team, not per-machine `EditorPrefs`) holds one `GeneratedConstantsFolder`. Both generators'
+`Generate()` read it (falling back to the unchanged `DefaultOutputPath` when unset — no behavior change for
+an existing consumer), so the ecosystem's own menu becomes correct once the folder is set, instead of
+needing a competing one. A single folder (not one path per generator) rules out `GraphSignals` and
+`GraphVariables` landing in different assemblies. Exposed at Edit ▸ Project Settings ▸ Faolline Graph
+(`FaollineGraphSettingsProvider`) — a consumer's own tooling can set
+`FaollineGraphSettings.instance.GeneratedConstantsFolder` directly instead, both routes write the same
+asset. The settings page warns when the configured folder has no ancestor `.asmdef`, i.e. exactly the
+condition that would silently compile the output into `Assembly-CSharp` again.
+
 ## [0.39.0]
 
 ### Added — `Generate(string outputPath)` overload on both constants generators

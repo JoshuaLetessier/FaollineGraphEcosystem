@@ -28,8 +28,17 @@ namespace Faolline.GraphCore.Editor
         /// <summary>The generated class name.</summary>
         public const string ClassName = "GraphSignals";
 
-        /// <summary>Generates <c>GraphSignals</c> from every <see cref="SignalDef"/> asset in the project and writes it to <see cref="DefaultOutputPath"/>.</summary>
-        public static void Generate() => Generate(DefaultOutputPath);
+        /// <summary>
+        /// Generates <c>GraphSignals</c> from every <see cref="SignalDef"/> asset in the project. Writes to
+        /// <see cref="FaollineGraphSettings.GeneratedConstantsFolder"/> (as <c>{folder}/GraphSignals.cs</c>)
+        /// when configured, otherwise falls back to <see cref="DefaultOutputPath"/> — unchanged behavior for
+        /// a project that hasn't set the folder.
+        /// </summary>
+        public static void Generate()
+        {
+            var folder = FaollineGraphSettings.instance.GeneratedConstantsFolder;
+            Generate(string.IsNullOrEmpty(folder) ? DefaultOutputPath : $"{folder.TrimEnd('/')}/{ClassName}.cs");
+        }
 
         /// <summary>
         /// As <see cref="Generate()"/>, but writes to <paramref name="outputPath"/> instead of

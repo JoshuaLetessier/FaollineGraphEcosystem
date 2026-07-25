@@ -344,18 +344,23 @@ parked forever. That silence is what makes this worth the discipline.
 `VariableConstantsGenerator.Generate()` default to writing `GraphSignals`/`GraphVariables` under
 `Assets/Generated/` — a plain folder with no asmdef of its own. In an asmdef-layered project that means the
 generated class compiles into `Assembly-CSharp`, and no asmdef can reference back into `Assembly-CSharp` —
-so none of your layers can see it as written. Use the `Generate(string outputPath)` overload to write
-directly into a folder your Domain asmdef already covers instead of routing around the default:
+so none of your layers can see it as written. Point `FaollineGraphSettings` at a folder your Domain asmdef
+already covers instead — Edit ▸ Project Settings ▸ Faolline Graph, or programmatically:
 
 ```csharp
-SignalConstantsGenerator.Generate("Assets/YourProject/Domain/Generated/GraphSignals.cs");
-VariableConstantsGenerator.Generate("Assets/YourProject/Domain/Generated/GraphVariables.cs");
+FaollineGraphSettings.instance.GeneratedConstantsFolder = "Assets/YourProject/Domain/Generated";
 ```
 
-Wire that into your own `[MenuItem]` (or a build step) rather than the ecosystem's default one, which still
-targets `Assets/Generated/`. Since generation is manual either way, nothing tells you the constants are
-stale relative to the Defs that exist — worth a CI check (regenerate, fail on diff) if your Application
-layer leans on them the way the note above describes.
+The setting lives in `ProjectSettings/` (versioned, shared by the team, not per-machine `EditorPrefs`), and
+both generators' `Generate()` read it — so the ecosystem's own `Faolline ▸ Graph ▸ Generate Constants` menu
+becomes correct once you've set the folder once, instead of needing a competing menu item that writes
+somewhere else. Leaving it unset keeps today's behavior exactly (`Assets/Generated/`), so setting it is
+opt-in with nothing to migrate. The settings page warns if the configured folder has no ancestor `.asmdef`,
+so a wrong path is visible in the tool that set it rather than at the next compile.
+
+Since generation is manual either way, nothing tells you the constants are stale relative to the Defs that
+exist — worth a CI check (regenerate, fail on diff) if your Application layer leans on them the way the note
+above describes.
 
 ### Cross-scene DI: keep `LifetimeScope` linked to every scene the flow loads
 
