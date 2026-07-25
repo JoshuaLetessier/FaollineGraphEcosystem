@@ -23,6 +23,16 @@ You can mix per area: posture B for flow/dialogue (deeply coupled to your conten
 for persistence (where "swap the backend" is a real scenario — and the lib already gives you the port:
 `IGraphSaveStore`).
 
+**A note on `graphcore.Runtime.Core`:** since 0.38.0, `graphcore` is two Runtime assemblies — an
+engine-agnostic `Runtime.Core` (`noEngineReferences`, the run-state model: `BaseContext`, signals) under
+`Runtime` (nodes, actions, conditions, and every graph/def asset). This does not change either posture
+above. The lib services you'd actually place in Application under posture B — `QuestEvaluator`,
+`DialoguePlayer` — take a `QuestGraph`/`DialogueGraph` asset as a constructor parameter, so they stay
+Unity-typed regardless of the split; posture A's gateway ceremony is exactly as necessary (or unnecessary)
+as before. The split exists to give the ecosystem's own test suite a Unity-independent slice, not to
+extend how much of it your Application layer can reference directly — see `ARCHITECTURE.md`'s Foundation
+tier for what's actually in each assembly.
+
 ## Layer mapping
 
 | Your layer | What goes there |
