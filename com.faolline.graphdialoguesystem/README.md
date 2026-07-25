@@ -1,6 +1,6 @@
 # com.faolline.graphdialoguesystem
 
-**Version**: 0.17.1 — **Unity**: 6000.x — depends on `com.faolline.graphcore` ≥ 0.35.0, `com.faolline.graphlocalization` ≥ 0.7.0
+**Version**: 0.17.1 — **Unity**: 6000.x — depends on `com.faolline.graphcore` ≥ 0.38.0, `com.faolline.graphlocalization` ≥ 0.7.0
 
 A graph-based dialogue library built **entirely on top of** `com.faolline.graphcore` (zero core
 changes), following the `com.faolline.starterGraph` package shape. Author branching, multi-speaker,
