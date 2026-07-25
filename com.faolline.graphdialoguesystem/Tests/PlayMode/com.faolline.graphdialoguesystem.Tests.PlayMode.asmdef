@@ -4,6 +4,7 @@
     "references": [
         "com.faolline.graphdialoguesystem.Runtime",
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "com.faolline.graphlocalization.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

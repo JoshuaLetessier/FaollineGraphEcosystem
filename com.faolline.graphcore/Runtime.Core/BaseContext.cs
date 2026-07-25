@@ -4,18 +4,19 @@ using System.Collections.Generic;
 namespace Faolline.GraphCore
 {
     /// <summary>
-    /// Typed parameter blackboard for graph execution. Stores <c>bool</c>, <c>int</c>,
-    /// <c>float</c>, <c>string</c>, <c>Vector2</c>, <c>Vector3</c>, and <c>Color</c>
-    /// values by string key. Supports per-key change notifications, deep cloning
-    /// (values only, no subscribers), and initialization from a <see cref="BaseGraph"/>'s
-    /// declared parameters.
+    /// Typed parameter blackboard for graph execution. Stores <c>bool</c>, <c>int</c>, <c>float</c>,
+    /// <c>string</c>, and any type registered via <see cref="BaseContextTypeRegistry"/> (the Unity engine
+    /// layer registers <c>Vector2</c>, <c>Vector3</c>, and <c>Color</c> — see
+    /// <c>GraphCoreUnityBootstrap</c> in the Runtime assembly) by string key. Supports per-key change
+    /// notifications, deep cloning (values only, no subscribers), and seeding from graph-declared
+    /// parameters (see <c>BaseContextGraphExtensions.InitFromGraph</c> in the Runtime assembly — graph
+    /// assets are a Unity concept, so that seeding lives there, not here).
     /// <para>
     /// <b>Boxing note:</b> values are stored in a <c>Dictionary&lt;string, object&gt;</c>, so every
-    /// <see cref="Set{T}"/> of a value type (int, float, bool, Vector2, Vector3, Color) allocates a
-    /// box, and every <see cref="Get{T}"/> unboxes. This is negligible at narrative rhythm (once per
-    /// node transition) but generates GC pressure if called per-frame. For hot-loop state, prefer
-    /// <see cref="RaiseSignal(string)">signals</see> (transient, never cloned/saved) or a typed
-    /// field on a <see cref="BaseContext"/> subclass.
+    /// <see cref="Set{T}"/> of a value type allocates a box, and every <see cref="Get{T}"/> unboxes. This
+    /// is negligible at narrative rhythm (once per node transition) but generates GC pressure if called
+    /// per-frame. For hot-loop state, prefer <see cref="RaiseSignal(string)">signals</see> (transient,
+    /// never cloned/saved) or a typed field on a <see cref="BaseContext"/> subclass.
     /// </para>
     /// Subclass to add domain-specific state; override <see cref="DeepClone"/> and
     /// <see cref="CreateCloneInstance"/> to preserve additional fields across history snapshots.
@@ -127,26 +128,32 @@ namespace Faolline.GraphCore
         }
 
         // ── Supported types ────────────────────────────────────────────────────
+        // Core only knows the four true primitives. Vector2/Vector3/Color (and any other engine-specific
+        // value type) are added at runtime by BaseContextTypeRegistry — Core must stay compilable in a
+        // noEngineReferences assembly, so it cannot name UnityEngine types itself. See
+        // GraphCoreUnityBootstrap (Runtime assembly) for where Vector2/Vector3/Color get registered.
 
         private static readonly HashSet<Type> _supportedTypes = new HashSet<Type>
         {
-            typeof(bool), typeof(int), typeof(float), typeof(string),
-            typeof(UnityEngine.Vector2), typeof(UnityEngine.Vector3), typeof(UnityEngine.Color)
+            typeof(bool), typeof(int), typeof(float), typeof(string)
         };
+
+        private static bool IsSupportedType(Type type) =>
+            _supportedTypes.Contains(type) || BaseContextTypeRegistry.IsRegistered(type);
 
         // ── Variable accessors ────────────────────────────────────────────────
 
         /// <summary>
         /// Sets a typed parameter value. Fires <see cref="OnVariableChanged"/> subscribers.
-        /// <typeparamref name="T"/> must be <c>bool</c>, <c>int</c>, <c>float</c>, <c>string</c>,
-        /// <c>Vector2</c>, <c>Vector3</c>, or <c>Color</c>.
+        /// <typeparamref name="T"/> must be <c>bool</c>, <c>int</c>, <c>float</c>, <c>string</c>, or a
+        /// type registered via <see cref="BaseContextTypeRegistry"/>.
         /// </summary>
         public void Set<T>(string key, T value)
         {
-            if (!_supportedTypes.Contains(typeof(T)))
+            if (!IsSupportedType(typeof(T)))
                 throw new ArgumentException(
                     $"[GraphCore] Unsupported parameter type: {typeof(T).Name}. " +
-                    "Supported types: bool, int, float, string, Vector2, Vector3, Color.");
+                    "Supported types: bool, int, float, string, plus any type registered via BaseContextTypeRegistry.");
 
             ResolveWriteBucket(key)[key] = value;
             FireSubscribers(key, value);
@@ -213,7 +220,8 @@ namespace Faolline.GraphCore
         /// Returns a read-only snapshot of the <em>global</em> parameter values (key → boxed value).
         /// Used for serialization (e.g. save/restore). Transient local-context values are deliberately
         /// excluded, so a save taken while a local context is open captures durable global state only.
-        /// Types are limited to bool, int, float, string, Vector2, Vector3, Color.
+        /// Types are limited to bool, int, float, string, plus any type registered via
+        /// <see cref="BaseContextTypeRegistry"/>.
         /// </summary>
         public IReadOnlyDictionary<string, object> GetAllVariables()
             => new System.Collections.ObjectModel.ReadOnlyDictionary<string, object>(_params);
@@ -234,23 +242,11 @@ namespace Faolline.GraphCore
         public void BeginLocalContext()
         {
             if (_localActive)
-                UnityEngine.Debug.LogWarning(
+                GraphLog.Warning(
                     "[GraphCore] BeginLocalContext called while a local context is already open; " +
                     "discarding the existing one (nested local contexts are not supported).");
             _local = new Dictionary<string, object>();
             _localActive = true;
-        }
-
-        /// <summary>
-        /// As <see cref="BeginLocalContext()"/>, then seeds the new local context from the
-        /// <see cref="VariableDef"/> defaults <paramref name="seedFrom"/> references (same discovery as
-        /// <see cref="InitFromGraph"/>, written into the local overlay). A <c>null</c> graph seeds nothing.
-        /// </summary>
-        public void BeginLocalContext(BaseGraph seedFrom)
-        {
-            BeginLocalContext();
-            if (seedFrom != null)
-                SeedFromGraph(seedFrom, _local);
         }
 
         /// <summary>
@@ -261,7 +257,7 @@ namespace Faolline.GraphCore
         {
             if (!_localActive)
             {
-                UnityEngine.Debug.LogWarning(
+                GraphLog.Warning(
                     "[GraphCore] EndLocalContext called with no local context open; ignored.");
                 return;
             }
@@ -280,16 +276,16 @@ namespace Faolline.GraphCore
 
         /// <summary>
         /// Raises a transient signal carrying a single scalar payload. <typeparamref name="T"/> must be
-        /// <c>bool</c>, <c>int</c>, <c>float</c>, <c>string</c>, <c>Vector2</c>, <c>Vector3</c>,
-        /// or <c>Color</c> (parity with <see cref="Set{T}"/>).
+        /// <c>bool</c>, <c>int</c>, <c>float</c>, <c>string</c>, or a type registered via
+        /// <see cref="BaseContextTypeRegistry"/> (parity with <see cref="Set{T}"/>).
         /// Delivery and naming rules match <see cref="RaiseSignal(string)"/>.
         /// </summary>
         public void RaiseSignal<T>(string name, T payload)
         {
-            if (!_supportedTypes.Contains(typeof(T)))
+            if (!IsSupportedType(typeof(T)))
                 throw new ArgumentException(
                     $"[GraphCore] Unsupported signal payload type: {typeof(T).Name}. " +
-                    "Supported types: bool, int, float, string, Vector2, Vector3, Color.");
+                    "Supported types: bool, int, float, string, plus any type registered via BaseContextTypeRegistry.");
             RaiseSignalInternal(name, true, payload);
         }
 
@@ -297,7 +293,7 @@ namespace Faolline.GraphCore
         {
             if (string.IsNullOrEmpty(name))
             {
-                UnityEngine.Debug.LogWarning(
+                GraphLog.Warning(
                     "[GraphCore] RaiseSignal called with a null or empty name; ignored.");
                 return;
             }
@@ -353,7 +349,7 @@ namespace Faolline.GraphCore
         {
             if (string.IsNullOrEmpty(name))
             {
-                UnityEngine.Debug.LogWarning(
+                GraphLog.Warning(
                     "[GraphCore] OnSignal called with a null or empty name; ignored.");
                 return;
             }
@@ -373,7 +369,7 @@ namespace Faolline.GraphCore
         {
             if (string.IsNullOrEmpty(name))
             {
-                UnityEngine.Debug.LogWarning(
+                GraphLog.Warning(
                     "[GraphCore] OffSignal called with a null or empty name; ignored.");
                 return;
             }
@@ -492,32 +488,35 @@ namespace Faolline.GraphCore
             }
         }
 
-        // ── Graph initialization ──────────────────────────────────────────────
+        // ── Seeding primitives ─────────────────────────────────────────────────
+        // Graph assets are a Unity concept (BaseGraph/VariableDef are ScriptableObject), so graph-aware
+        // seeding (InitFromGraph, the graph-seeded BeginLocalContext overload) lives in
+        // BaseContextGraphExtensions (Runtime assembly) as extension methods over these two primitives —
+        // same call syntax at every existing call site, no engine reference needed here in Core.
 
         /// <summary>
-        /// Seeds this context with the defaults of every <see cref="VariableDef"/> the <paramref name="graph"/>
-        /// references from its actions/conditions (discovered via <see cref="GraphVariableScanner"/>). Variables
-        /// are declaration-free: there is no per-graph parameter list — the asset carries the type and default,
-        /// keyed by its stable GUID. A key already present is left untouched (seed-if-absent), so seeding never
-        /// clobbers a value the host set first. A parameter used only from host code is not discovered here and
-        /// is the host's responsibility to set (via a <c>GraphVariables</c> constant).
+        /// Sets the <em>global</em> bucket's <paramref name="key"/> to <paramref name="value"/> only if
+        /// not already present. Fires no subscribers — intended for silent default-seeding (e.g. from a
+        /// graph's declared parameters), not for gameplay writes (use <see cref="Set{T}"/> for those).
         /// </summary>
-        public void InitFromGraph(BaseGraph graph) => SeedFromGraph(graph, _params);
-
-        /// <summary>
-        /// Seeds <paramref name="target"/> from the graph's referenced <see cref="VariableDef"/> defaults,
-        /// keyed by GUID, seed-if-absent. Shared by <see cref="InitFromGraph"/> (seeds global) and local-context
-        /// seeding (seeds the overlay).
-        /// </summary>
-        private static void SeedFromGraph(BaseGraph graph, Dictionary<string, object> target)
+        public void SeedGlobalIfAbsent(string key, object value)
         {
-            foreach (var param in GraphVariableScanner.Collect(graph))
-            {
-                var key = param.Key;
-                if (string.IsNullOrEmpty(key) || target.ContainsKey(key)) continue;
-                // The default is stored in the field matching the parameter's type — no parsing.
-                target[key] = param.DefaultValueBoxed;
-            }
+            if (!_params.ContainsKey(key))
+                _params[key] = value;
+        }
+
+        /// <summary>
+        /// As <see cref="SeedGlobalIfAbsent"/> but targets the currently-open local overlay. Throws
+        /// <see cref="InvalidOperationException"/> when no local context is open (call
+        /// <see cref="BeginLocalContext()"/> first).
+        /// </summary>
+        public void SeedLocalIfAbsent(string key, object value)
+        {
+            if (!_localActive)
+                throw new InvalidOperationException(
+                    "[GraphCore] SeedLocalIfAbsent called with no local context open.");
+            if (!_local.ContainsKey(key))
+                _local[key] = value;
         }
 
         // ── Collections ────────────────────────────────────────────────────────
@@ -537,7 +536,7 @@ namespace Faolline.GraphCore
         {
             if (string.IsNullOrEmpty(key) || item == null)
             {
-                UnityEngine.Debug.LogWarning(
+                GraphLog.Warning(
                     "[GraphCore] AddToCollection called with a null/empty key or null item; ignored.");
                 return;
             }
@@ -561,7 +560,7 @@ namespace Faolline.GraphCore
         {
             if (string.IsNullOrEmpty(key) || item == null || count <= 0)
             {
-                UnityEngine.Debug.LogWarning(
+                GraphLog.Warning(
                     "[GraphCore] AddToCollection called with a null/empty key, null item, or non-positive " +
                     "count; ignored.");
                 return;
@@ -583,7 +582,7 @@ namespace Faolline.GraphCore
         {
             if (string.IsNullOrEmpty(key) || item == null)
             {
-                UnityEngine.Debug.LogWarning(
+                GraphLog.Warning(
                     "[GraphCore] RemoveFromCollection called with a null/empty key or null item; ignored.");
                 return;
             }
@@ -601,7 +600,7 @@ namespace Faolline.GraphCore
         {
             if (string.IsNullOrEmpty(key) || item == null || count <= 0)
             {
-                UnityEngine.Debug.LogWarning(
+                GraphLog.Warning(
                     "[GraphCore] RemoveFromCollection called with a null/empty key, null item, or " +
                     "non-positive count; ignored.");
                 return;
@@ -660,7 +659,7 @@ namespace Faolline.GraphCore
         {
             if (string.IsNullOrEmpty(key))
             {
-                UnityEngine.Debug.LogWarning(
+                GraphLog.Warning(
                     "[GraphCore] ClearCollection called with a null or empty key; ignored.");
                 return;
             }
@@ -700,7 +699,7 @@ namespace Faolline.GraphCore
         {
             if (string.IsNullOrEmpty(key))
             {
-                UnityEngine.Debug.LogWarning(
+                GraphLog.Warning(
                     "[GraphCore] OnCollectionChanged called with a null or empty key; ignored.");
                 return;
             }
@@ -720,7 +719,7 @@ namespace Faolline.GraphCore
         {
             if (string.IsNullOrEmpty(key))
             {
-                UnityEngine.Debug.LogWarning(
+                GraphLog.Warning(
                     "[GraphCore] OffCollectionChanged called with a null or empty key; ignored.");
                 return;
             }
@@ -806,8 +805,9 @@ namespace Faolline.GraphCore
 
         /// <summary>
         /// Replaces all parameter values in this context with those from <paramref name="source"/>.
-        /// Subscribers are preserved. Used by <see cref="BaseRunner"/> to restore a history
-        /// snapshot into the live context object without changing its reference.
+        /// Subscribers are preserved. Used by <c>BaseRunner</c> (Runtime assembly) to restore a history
+        /// snapshot into the live context object without changing its reference — internal visibility
+        /// extends to that assembly via <c>InternalsVisibleTo</c> (see AssemblyInfo.cs).
         /// </summary>
         internal void CopyValuesFrom(BaseContext source)
         {

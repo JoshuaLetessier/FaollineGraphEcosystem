@@ -8,7 +8,9 @@ one of these tiers, and the whole matrix is locked by an automated test (see
 ## The tiers
 
 ```
-        T0 · Foundation        graphcore          graphlocalization
+        T0 · Foundation        graphcore.Runtime.Core   graphlocalization
+                                   ▲
+                               graphcore.Runtime
                                    ▲                    ▲
         T1 · Capabilities      graphstandard  graphsave │
                                    ▲             ▲      │
@@ -20,9 +22,19 @@ one of these tiers, and the whole matrix is locked by an automated test (see
         Dev tooling            graphTest · starterGraph        (never shipped to consumers)
 ```
 
+`graphcore` is two Runtime assemblies, not one: `graphcore.Runtime.Core` is a `noEngineReferences` leaf (zero
+UnityEngine usage, checkable by the compiler, not just convention) carrying the pure-C# run-state model
+(`BaseContext`, `SignalArgs`, the extensible `BaseContextTypeRegistry`/`GraphLog` seams); `graphcore.Runtime`
+is the Unity engine layer above it — nodes, actions, conditions, the runner, and every ScriptableObject
+asset type (`BaseGraph`, `BaseAction`, `BaseCondition`, `SignalDef`, `VariableDef`, `CollectionDef`).
+Everything downstream references both (see `DependencyMatrixTests.Allowed`); nothing outside graphcore
+itself is expected to reference `Runtime.Core` alone today. This is a deliberately narrow slice — see
+`clean-architecture-research` history for why the runner and the asset/authoring model were NOT pulled into
+Core (their own coupling to ScriptableObject types runs too deep to be worth resolving for this project).
+
 | Tier | Members | May depend on | Never |
 |---|---|---|---|
-| **T0 · Foundation** | `graphcore`, `graphlocalization` | nothing (zero asmdef references) | anything |
+| **T0 · Foundation** | `graphcore.Runtime.Core`, `graphcore.Runtime`, `graphlocalization` | `graphcore.Runtime` → `graphcore.Runtime.Core` only; the other two: nothing (zero asmdef references) | anything outside that |
 | **T1 · Capabilities** | `graphstandard`, `graphsave` | T0 | each other, T2+ |
 | **T2 · Verticals** | `graphdialoguesystem`, `graphquest`, `graphgameflow` | T0, T1 | **another vertical**, external packages |
 | **T3 · Adapters** | `graphsave.savesystem`, `graphgameflow.addressables`; the `Localization.Unity` and `UI` sub-assemblies | the package they adapt + **one** external dependency family | other adapters |
@@ -30,9 +42,12 @@ one of these tiers, and the whole matrix is locked by an automated test (see
 
 Tier definitions:
 
-- **Foundation** — the substrate everyone shares. `graphcore` owns nodes, edges, the runner, and the
-  three context primitives; `graphlocalization` is a dependency-free leaf (locale tables + provider
-  contract). Both compile against `UnityEngine` core only.
+- **Foundation** — the substrate everyone shares. `graphcore.Runtime` owns nodes, edges, the runner, and
+  the graph/def assets; its one dependency, `graphcore.Runtime.Core`, owns the run-state primitives
+  (`BaseContext`, signals) and is engine-agnostic (`noEngineReferences: true`) — `graphlocalization` is
+  likewise a dependency-free leaf (locale tables + provider contract). `graphcore.Runtime` and
+  `graphlocalization` compile against `UnityEngine` core; `graphcore.Runtime.Core` does not compile
+  against `UnityEngine` at all.
 - **Capabilities** — domain-neutral services above the substrate: extra execution engines and standard
   nodes (`graphstandard`), the neutral run-snapshot model + `IGraphSaveStore` port (`graphsave`).
 - **Verticals** — one gameplay domain each: dialogue, quests, scene-flow. A vertical composes T0/T1

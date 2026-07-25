@@ -4,6 +4,7 @@
     "references": [
         "com.faolline.graphgameflow.Runtime",
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "UnityEngine.TestRunner"
     ],
     "includePlatforms": [],

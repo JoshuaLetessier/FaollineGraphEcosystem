@@ -3,6 +3,7 @@
     "rootNamespace": "Faolline.GraphTest",
     "references": [
         "GUID:a4f8e6b2c3d1e5f09a7b4c8d2e6f3a1b",
+        "GUID:1df5d1c4c52d4054810eeec2f62f4769",
         "GUID:0863a6617046b1b4bba0acbf42c1f2a6"
     ],
     "includePlatforms": [],

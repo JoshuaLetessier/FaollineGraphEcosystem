@@ -5,6 +5,7 @@
         "com.faolline.graphdialoguesystem.Runtime",
         "com.faolline.graphdialoguesystem.Editor",
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "com.faolline.graphcore.Editor",
         "com.faolline.graphlocalization.Runtime",
         "com.faolline.graphlocalization.Editor",

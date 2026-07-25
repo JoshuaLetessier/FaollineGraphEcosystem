@@ -3,6 +3,7 @@
     "rootNamespace": "Faolline.GraphDialogue",
     "references": [
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "com.faolline.graphlocalization.Runtime"
     ],
     "includePlatforms": [],

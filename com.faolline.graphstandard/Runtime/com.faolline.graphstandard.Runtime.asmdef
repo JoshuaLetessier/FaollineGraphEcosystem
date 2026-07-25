@@ -2,7 +2,8 @@
     "name": "com.faolline.graphstandard.Runtime",
     "rootNamespace": "Faolline.GraphStandard",
     "references": [
-        "com.faolline.graphcore.Runtime"
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

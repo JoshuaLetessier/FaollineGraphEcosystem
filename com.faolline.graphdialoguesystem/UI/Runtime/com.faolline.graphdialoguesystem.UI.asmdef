@@ -3,6 +3,7 @@
     "rootNamespace": "Faolline.GraphDialogue.UI",
     "references": [
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "com.faolline.graphdialoguesystem.Runtime",
         "com.faolline.graphlocalization.Runtime",
         "Unity.TextMeshPro",

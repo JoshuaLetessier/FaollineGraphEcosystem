@@ -21,6 +21,7 @@ namespace Faolline.GraphTest.Tests
     {
         // ── Ecosystem assembly names ────────────────────────────────────────────
         private const string CoreRuntime         = "com.faolline.graphcore.Runtime";
+        private const string CoreRuntimeCore     = "com.faolline.graphcore.Runtime.Core";
         private const string CoreEditor          = "com.faolline.graphcore.Editor";
         private const string CoreTests           = "com.faolline.graphcore.Tests.EditMode";
         private const string LocRuntime          = "com.faolline.graphlocalization.Runtime";
@@ -83,58 +84,59 @@ namespace Faolline.GraphTest.Tests
         private static readonly Dictionary<string, string[]> Allowed = new Dictionary<string, string[]>
         {
             // ── Tier 0 · Foundation (no references at all) ──────────────────────
-            [CoreRuntime] = new string[0],
+            [CoreRuntime] = new[] { CoreRuntimeCore },
+            [CoreRuntimeCore] = new string[0],
             [LocRuntime]  = new string[0],
 
             // ── Tier 1 · Neutral capabilities (foundation only) ─────────────────
-            [StdRuntime]  = new[] { CoreRuntime },
-            [SaveRuntime] = new[] { CoreRuntime },
+            [StdRuntime]  = new[] { CoreRuntime, CoreRuntimeCore },
+            [SaveRuntime] = new[] { CoreRuntime, CoreRuntimeCore },
 
             // ── Tier 2 · Verticals (tiers 0–1 only, never another vertical) ─────
-            [DialogueRuntime] = new[] { CoreRuntime, LocRuntime },
-            [QuestRuntime]    = new[] { CoreRuntime, StdRuntime, LocRuntime },
-            [FlowRuntime]     = new[] { CoreRuntime, SaveRuntime },
+            [DialogueRuntime] = new[] { CoreRuntime, CoreRuntimeCore, LocRuntime },
+            [QuestRuntime]    = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime, LocRuntime },
+            [FlowRuntime]     = new[] { CoreRuntime, CoreRuntimeCore, SaveRuntime },
 
             // ── Tier 3 · Adapters (the only runtime assemblies with external refs) ──
             [LocUnity]          = new[] { LocRuntime, UnityLoc, UnityResourceMgr },
             [DialogueLocUnity]  = new[] { DialogueRuntime, UnityLoc },
-            [DialogueUI]        = new[] { CoreRuntime, DialogueRuntime, LocRuntime, TextMeshPro, UGui, InputSystem },
+            [DialogueUI]        = new[] { CoreRuntime, CoreRuntimeCore, DialogueRuntime, LocRuntime, TextMeshPro, UGui, InputSystem },
             [SaveBridgeRuntime] = new[] { SaveRuntime, SaveSystemCore },
-            [AddrBridgeRuntime] = new[] { FlowRuntime, CoreRuntime, UnityAddr, UnityResourceMgr },
+            [AddrBridgeRuntime] = new[] { FlowRuntime, CoreRuntime, CoreRuntimeCore, UnityAddr, UnityResourceMgr },
 
             // ── Editor assemblies (own package + upstream Runtime/Editor pairs) ─
-            [CoreEditor]     = new[] { CoreRuntime },
-            [LocEditor]      = new[] { LocRuntime, CoreRuntime, CoreEditor },
+            [CoreEditor]     = new[] { CoreRuntime, CoreRuntimeCore },
+            [LocEditor]      = new[] { LocRuntime, CoreRuntime, CoreRuntimeCore, CoreEditor },
             [LocUnityEditor] = new[] { LocRuntime, LocEditor, LocUnity, UnityLoc, UnityLocEditor },
-            [StdEditor]      = new[] { CoreRuntime, StdRuntime },
-            [DialogueEditor] = new[] { CoreRuntime, CoreEditor, DialogueRuntime, LocRuntime, LocEditor },
-            [QuestEditor]    = new[] { CoreRuntime, CoreEditor, QuestRuntime, StdRuntime, LocRuntime, LocEditor },
-            [FlowEditor]     = new[] { CoreRuntime, CoreEditor, FlowRuntime },
+            [StdEditor]      = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime },
+            [DialogueEditor] = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, DialogueRuntime, LocRuntime, LocEditor },
+            [QuestEditor]    = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, QuestRuntime, StdRuntime, LocRuntime, LocEditor },
+            [FlowEditor]     = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, FlowRuntime },
             [AddrBridgeEditor] = new[] { FlowEditor, UnityAddrEditor },
 
             // ── Dev tooling (internal-only packages) ────────────────────────────
-            [GraphTestRuntime] = new[] { CoreRuntime, StdRuntime },
-            [GraphTestEditor]  = new[] { GraphTestRuntime, CoreRuntime, CoreEditor },
-            [StarterRuntime]   = new[] { CoreRuntime },
-            [StarterEditor]    = new[] { CoreRuntime, CoreEditor, StarterRuntime },
+            [GraphTestRuntime] = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime },
+            [GraphTestEditor]  = new[] { GraphTestRuntime, CoreRuntime, CoreRuntimeCore, CoreEditor },
+            [StarterRuntime]   = new[] { CoreRuntime, CoreRuntimeCore },
+            [StarterEditor]    = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, StarterRuntime },
 
             // ── Test assemblies ─────────────────────────────────────────────────
-            [CoreTests]           = new[] { CoreRuntime, CoreEditor, TestRunner, TestRunnerEditor },
+            [CoreTests]           = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, TestRunner, TestRunnerEditor },
             [LocTests]            = new[] { LocRuntime, LocEditor, TestRunner, TestRunnerEditor },
-            [StdTests]            = new[] { StdRuntime, StdEditor, CoreRuntime, TestRunner, TestRunnerEditor },
-            [SaveTests]           = new[] { SaveRuntime, CoreRuntime, TestRunner, TestRunnerEditor },
-            [SaveBridgeTests]     = new[] { SaveBridgeRuntime, SaveRuntime, CoreRuntime, SaveSystemCore, SaveSystemJson, TestRunner, TestRunnerEditor },
-            [AddrBridgeTests]     = new[] { AddrBridgeRuntime, AddrBridgeEditor, FlowRuntime, FlowEditor, CoreRuntime, UnityAddr, UnityAddrEditor, UnityResourceMgr, TestRunner, TestRunnerEditor },
-            [AddrBridgeTestsPlay] = new[] { AddrBridgeRuntime, FlowRuntime, CoreRuntime, UnityAddr, UnityAddrEditor, UnityResourceMgr, TestRunner },
-            [DialogueTests]       = new[] { DialogueRuntime, DialogueEditor, CoreRuntime, CoreEditor, LocRuntime, LocEditor, TestRunner, TestRunnerEditor },
-            [DialogueTestsPlay]   = new[] { DialogueRuntime, CoreRuntime, LocRuntime, TestRunner, TestRunnerEditor },
-            [DialogueUITests]     = new[] { DialogueUI, DialogueRuntime, CoreRuntime, LocRuntime, TextMeshPro, UGui, TestRunner, TestRunnerEditor },
-            [DialogueUITestsPlay] = new[] { DialogueUI, DialogueRuntime, CoreRuntime, LocRuntime, TextMeshPro, UGui, TestRunner, TestRunnerEditor },
-            [QuestTests]          = new[] { QuestRuntime, QuestEditor, CoreRuntime, CoreEditor, StdRuntime, LocRuntime, SaveRuntime, TestRunner, TestRunnerEditor },
-            [FlowTests]           = new[] { FlowRuntime, FlowEditor, CoreRuntime, CoreEditor, SaveRuntime, TestRunner, TestRunnerEditor },
-            [FlowTestsPlay]       = new[] { FlowRuntime, CoreRuntime, TestRunner },
-            [GraphTestTests]      = new[] { GraphTestRuntime, GraphTestEditor, CoreRuntime, CoreEditor, TestRunner, TestRunnerEditor },
-            [StarterTests]        = new[] { StarterRuntime, StarterEditor, CoreRuntime, CoreEditor, TestRunner, TestRunnerEditor },
+            [StdTests]            = new[] { StdRuntime, StdEditor, CoreRuntime, CoreRuntimeCore, TestRunner, TestRunnerEditor },
+            [SaveTests]           = new[] { SaveRuntime, CoreRuntime, CoreRuntimeCore, TestRunner, TestRunnerEditor },
+            [SaveBridgeTests]     = new[] { SaveBridgeRuntime, SaveRuntime, CoreRuntime, CoreRuntimeCore, SaveSystemCore, SaveSystemJson, TestRunner, TestRunnerEditor },
+            [AddrBridgeTests]     = new[] { AddrBridgeRuntime, AddrBridgeEditor, FlowRuntime, FlowEditor, CoreRuntime, CoreRuntimeCore, UnityAddr, UnityAddrEditor, UnityResourceMgr, TestRunner, TestRunnerEditor },
+            [AddrBridgeTestsPlay] = new[] { AddrBridgeRuntime, FlowRuntime, CoreRuntime, CoreRuntimeCore, UnityAddr, UnityAddrEditor, UnityResourceMgr, TestRunner },
+            [DialogueTests]       = new[] { DialogueRuntime, DialogueEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, LocRuntime, LocEditor, TestRunner, TestRunnerEditor },
+            [DialogueTestsPlay]   = new[] { DialogueRuntime, CoreRuntime, CoreRuntimeCore, LocRuntime, TestRunner, TestRunnerEditor },
+            [DialogueUITests]     = new[] { DialogueUI, DialogueRuntime, CoreRuntime, CoreRuntimeCore, LocRuntime, TextMeshPro, UGui, TestRunner, TestRunnerEditor },
+            [DialogueUITestsPlay] = new[] { DialogueUI, DialogueRuntime, CoreRuntime, CoreRuntimeCore, LocRuntime, TextMeshPro, UGui, TestRunner, TestRunnerEditor },
+            [QuestTests]          = new[] { QuestRuntime, QuestEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, StdRuntime, LocRuntime, SaveRuntime, TestRunner, TestRunnerEditor },
+            [FlowTests]           = new[] { FlowRuntime, FlowEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, SaveRuntime, TestRunner, TestRunnerEditor },
+            [FlowTestsPlay]       = new[] { FlowRuntime, CoreRuntime, CoreRuntimeCore, TestRunner },
+            [GraphTestTests]      = new[] { GraphTestRuntime, GraphTestEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, TestRunner, TestRunnerEditor },
+            [StarterTests]        = new[] { StarterRuntime, StarterEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, TestRunner, TestRunnerEditor },
         };
 
         // ── Discovery ───────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@
     "rootNamespace": "Faolline.GraphGameFlow",
     "references": [
         "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "com.faolline.graphsave.Runtime"
     ],
     "includePlatforms": [],

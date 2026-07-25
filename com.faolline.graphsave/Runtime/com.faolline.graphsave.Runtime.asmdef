@@ -2,7 +2,8 @@
     "name": "com.faolline.graphsave.Runtime",
     "rootNamespace": "Faolline.GraphSave",
     "references": [
-        "com.faolline.graphcore.Runtime"
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
