@@ -4,8 +4,8 @@ using UnityEngine;
 namespace Faolline.GraphLocalization.Editor
 {
     /// <summary>
-    /// Generic base for per-lib localization adapters. Handles the <see cref="AssetDatabase"/> scan,
-    /// metadata bookkeeping, and log — subclasses provide only key extraction.
+    /// Generic base for per-lib localization adapters. Handles the <see cref="AssetDatabase"/> scan
+    /// and metadata bookkeeping — subclasses provide only key extraction.
     /// <typeparam name="TGraph">The ScriptableObject graph type to scan (e.g. DialogueGraph, QuestGraph).</typeparam>
     /// </summary>
     public abstract class BaseGraphLocalizationAdapter<TGraph> : IGraphLocalizationAdapter
@@ -33,8 +33,6 @@ namespace Faolline.GraphLocalization.Editor
 
             database.TotalGraphsScanned = guids.Length;
             database.TotalKeysFound = totalKeys;
-
-            Debug.Log($"[{LibName}] {guids.Length} graphs, {totalKeys} keys.");
         }
 
         /// <summary>
