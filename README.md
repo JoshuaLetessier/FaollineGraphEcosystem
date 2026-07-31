@@ -25,7 +25,7 @@ package do I need").
 | Package | Version | What it is |
 |---|---|---|
 | [`com.faolline.graphcore`](com.faolline.graphcore/) | 0.38.0 | Base package — nodes, edges, runner, and the three context primitives (Variables / Signals / Collections) |
-| [`com.faolline.graphlocalization`](com.faolline.graphlocalization/) | 0.7.0 | Locale tables + CSV/Unity localization providers (no dependencies) |
+| [`com.faolline.graphlocalization`](com.faolline.graphlocalization/) | 0.7.1 | Locale tables + CSV/Unity localization providers (no dependencies) |
 | [`com.faolline.graphstandard`](com.faolline.graphstandard/) | 0.17.0 | Reactive (k-of-N) and Flow (fork/join) execution engines, domain-neutral standard nodes |
 | [`com.faolline.graphdialoguesystem`](com.faolline.graphdialoguesystem/) | 0.17.1 | Dialogue graphs — speakers, branching choices, localized text, headless playback |
 | [`com.faolline.graphgameflow`](com.faolline.graphgameflow/) | 0.16.0 | The `MonoBehaviour`/scene adapter — drives a graph live in a Unity scene |

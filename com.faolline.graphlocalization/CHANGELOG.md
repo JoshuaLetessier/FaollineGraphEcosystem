@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.1]
+
+### Fixed
+- **`ScanAndIndex` no longer logs on every call.** The per-adapter `Debug.Log` fired even when
+  `ScanAndIndex` was called for read-only purposes, notably `LocalizationDashboardWindow.Refresh()`
+  on `OnEnable`/`OnFocus` — which reruns on every domain reload (Play/Stop), spamming the console.
+  The real build path (`LocalizationBuilderCore`) already logs its own per-adapter summary, so this
+  log was redundant there too.
+
 ## [0.7.0]
 
 ### Added
