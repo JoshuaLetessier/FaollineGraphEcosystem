@@ -2,6 +2,7 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 using Faolline.GraphCore;
+using Faolline.GraphGameFlow;
 using Faolline.GraphGameFlow.Addressables;
 
 namespace Faolline.GraphGameFlow.Addressables.Tests
@@ -28,6 +29,28 @@ namespace Faolline.GraphGameFlow.Addressables.Tests
             Assert.IsNull(action.NextChapter);
             Assert.IsNull(action.CompletedSignal);
             Assert.IsNull(action.FailedSignal);
+            Assert.IsNull(action.SignalDriver, "null by default — falls back to GraphFlowDriver.Active.");
+        }
+
+        [Test]
+        public void SignalDriver_IsSettable()
+        {
+            var action = NewAction();
+            var go = new GameObject("driver");
+            try
+            {
+                var driver = go.AddComponent<GraphFlowDriver>();
+                action.SignalDriver = driver;
+                Assert.AreSame(driver, action.SignalDriver, "a graph built in code needs to target a specific driver, not just GraphFlowDriver.Active.");
+            }
+            finally { Object.DestroyImmediate(go); }
+        }
+
+        [Test]
+        public void ReleaseNextChapter_NoNextChapter_DoesNotThrow()
+        {
+            var action = NewAction();
+            Assert.DoesNotThrow(() => action.ReleaseNextChapter());
         }
 
         [Test]

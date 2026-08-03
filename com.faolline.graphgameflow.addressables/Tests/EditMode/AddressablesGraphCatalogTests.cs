@@ -32,5 +32,21 @@ namespace Faolline.GraphGameFlow.Addressables.Tests
             Assert.IsNull(resolved);
             Assert.IsNotNull(failReason);
         }
+
+        [Test]
+        public void Release_NothingHeldForGraphId_WarnsNoThrow()
+        {
+            var catalog = new AddressablesGraphCatalog();
+            LogAssert.Expect(LogType.Warning, "[GraphGameFlow] AddressablesGraphCatalog.Release: no handle held for graphId 'never-resolved'; ignored.");
+            Assert.DoesNotThrow(() => catalog.Release("never-resolved"));
+        }
+
+        [Test]
+        public void Release_NullOrEmptyGraphId_WarnsNoThrow()
+        {
+            var catalog = new AddressablesGraphCatalog();
+            LogAssert.Expect(LogType.Warning, "[GraphGameFlow] AddressablesGraphCatalog.Release: no handle held for graphId ''; ignored.");
+            Assert.DoesNotThrow(() => catalog.Release(""));
+        }
     }
 }

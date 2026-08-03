@@ -40,6 +40,22 @@ namespace Faolline.GraphGameFlow.Addressables
         /// <summary>Optional signal raised if the preload fails.</summary>
         public SignalDef FailedSignal { get => _failedSignal; set => _failedSignal = value; }
 
+        /// <summary>
+        /// Receiver of the completion/failure signals; null falls back to <see cref="GraphFlowDriver.Active"/>.
+        /// A graph built in code (rather than authored with this action already assigned in the inspector) has
+        /// no other way to target a specific driver — mirrors <see cref="AddressablesSceneLoader.SignalDriver"/>.
+        /// </summary>
+        public GraphFlowDriver SignalDriver { get => _signalDriver; set => _signalDriver = value; }
+
+        /// <summary>
+        /// Releases the Addressables handle for <see cref="NextChapter"/> (via <c>AssetReference.ReleaseAsset</c>),
+        /// letting the resolved graph be unloaded once nothing else references it. Call this once the preloaded
+        /// graph is no longer needed (e.g. after rebooting past it, or when abandoning a preload) — neither
+        /// <see cref="Execute"/> nor the completion callback releases it automatically, since the whole point of
+        /// preloading is to keep the graph alive for the host to use afterward.
+        /// </summary>
+        public void ReleaseNextChapter() => _nextChapter?.ReleaseAsset();
+
         /// <inheritdoc/>
         public override void Execute(BaseContext context)
         {

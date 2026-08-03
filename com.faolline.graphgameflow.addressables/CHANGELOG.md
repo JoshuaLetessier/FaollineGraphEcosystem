@@ -4,6 +4,22 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.1]
+
+### Fixed — two gaps found dogfooding 0.5.0 against a dedicated Addressables test project
+
+- **`PreloadNextChapterAction.SignalDriver`** — new public property (was write-only via the
+  serialized field, with no setter). A graph built in code had no way to target a specific driver;
+  it always fell back to `GraphFlowDriver.Active`, which depends on `PersistAcrossScenes` having
+  been set before `Awake()` — a real ergonomics gap, not the signal-delivery bug it first looked
+  like. Mirrors `AddressablesSceneLoader.SignalDriver` exactly.
+- **`AddressablesGraphCatalog.Release(graphId)`** — new method. Neither `AddressablesGraphCatalog`
+  nor `PreloadNextChapterAction` ever released its Addressables handle after resolving, unlike
+  `AddressablesSceneLoader`; a resolved/preloaded graph stayed in memory indefinitely with no way to
+  free it. `AddressablesGraphCatalog` now tracks its handles (mirroring `AddressablesSceneLoader`'s
+  own loaded-scenes dictionary) and exposes `Release`; `PreloadNextChapterAction` gained
+  `ReleaseNextChapter()` (delegates to `AssetReference.ReleaseAsset()`).
+
 ## [0.5.0]
 
 ### Added — graph-side Addressables adapter (soft chapter preloading)
