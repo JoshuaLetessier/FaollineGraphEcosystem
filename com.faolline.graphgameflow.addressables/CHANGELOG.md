@@ -4,6 +4,17 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.2]
+
+### Fixed — concurrent `Resolve` of the same `graphId` silently leaked a handle
+
+Found in a second dogfooding round against a dedicated Addressables test project: calling
+`AddressablesGraphCatalog.Resolve` twice for the same `graphId` before either completed — both
+succeeded, but the second completion overwrote the first's stored handle, so one of the two
+Addressables-refcounted handles was never reachable by `Release` again. Narrow (only the exact
+concurrent-same-key case), not a common usage pattern, but a real leak. `_handles` now maps each
+`graphId` to a list of handles; `Release` releases all of them.
+
 ## [0.5.1]
 
 ### Fixed — two gaps found dogfooding 0.5.0 against a dedicated Addressables test project

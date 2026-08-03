@@ -18,13 +18,16 @@ namespace Faolline.GraphGameFlow.Addressables
     /// Every resolved <c>graphId</c>'s <see cref="AsyncOperationHandle{TObject}"/> is kept (this instance's own
     /// <c>_handles</c> map, mirroring <see cref="AddressablesSceneLoader"/>'s own loaded-scenes dictionary) so it
     /// can be released later via <see cref="Release"/> — resolving never automatically releases, since the
-    /// resolved graph is typically still in use by the caller.
+    /// resolved graph is typically still in use by the caller. Each <c>graphId</c> maps to a LIST of handles,
+    /// not a single one: two concurrent <see cref="Resolve"/> calls for the same key each get their own
+    /// Addressables-refcounted handle, and overwriting one with the other would silently leak it — one handle
+    /// would never be released by anyone. <see cref="Release"/> releases every handle held for that key.
     /// </para>
     /// </summary>
     public class AddressablesGraphCatalog : IGraphCatalog
     {
-        private readonly Dictionary<string, AsyncOperationHandle<BaseGraph>> _handles =
-            new Dictionary<string, AsyncOperationHandle<BaseGraph>>();
+        private readonly Dictionary<string, List<AsyncOperationHandle<BaseGraph>>> _handles =
+            new Dictionary<string, List<AsyncOperationHandle<BaseGraph>>>();
 
         /// <inheritdoc/>
         public void Resolve(string graphId, Action<BaseGraph> onResolved, Action<string> onFailed)
@@ -44,19 +47,21 @@ namespace Faolline.GraphGameFlow.Addressables
         }
 
         /// <summary>
-        /// Releases the Addressables handle for a previously-resolved <paramref name="graphId"/> (no-op, with a
-        /// warning, if nothing was resolved for it by this instance) — call once the graph is no longer needed
-        /// so its content can be unloaded.
+        /// Releases every Addressables handle held for a previously-resolved <paramref name="graphId"/>
+        /// (no-op, with a warning, if nothing was resolved for it by this instance) — call once the graph is
+        /// no longer needed so its content can be unloaded. If <paramref name="graphId"/> was resolved more
+        /// than once concurrently, ALL of those handles are released, not just the most recent.
         /// </summary>
         public void Release(string graphId)
         {
-            if (string.IsNullOrEmpty(graphId) || !_handles.TryGetValue(graphId, out var handle))
+            if (string.IsNullOrEmpty(graphId) || !_handles.TryGetValue(graphId, out var handles) || handles.Count == 0)
             {
                 Debug.LogWarning($"[GraphGameFlow] AddressablesGraphCatalog.Release: no handle held for graphId '{graphId}'; ignored.");
                 return;
             }
 
-            global::UnityEngine.AddressableAssets.Addressables.Release(handle);
+            foreach (var handle in handles)
+                global::UnityEngine.AddressableAssets.Addressables.Release(handle);
             _handles.Remove(graphId);
         }
 
@@ -65,7 +70,9 @@ namespace Faolline.GraphGameFlow.Addressables
         {
             if (op.Status == AsyncOperationStatus.Succeeded && op.Result != null)
             {
-                _handles[graphId] = op;
+                if (!_handles.TryGetValue(graphId, out var handles))
+                    _handles[graphId] = handles = new List<AsyncOperationHandle<BaseGraph>>();
+                handles.Add(op);
                 onResolved?.Invoke(op.Result);
                 return;
             }
