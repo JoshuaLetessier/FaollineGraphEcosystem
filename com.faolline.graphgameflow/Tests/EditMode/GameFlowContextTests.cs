@@ -1,4 +1,5 @@
 using NUnit.Framework;
+using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphGameFlow;
 
@@ -23,6 +24,35 @@ namespace Faolline.GraphGameFlow.Tests
             Assert.IsInstanceOf<GameFlowContext>(clone, "clone must be the subclass, not a bare BaseContext.");
             Assert.AreSame(stub, ((GameFlowContext)clone).SceneLoader, "the loader reference must carry through.");
             Assert.AreEqual(5, clone.Get<int>("hp"), "base parameter values must carry through.");
+        }
+
+        [Test]
+        public void GraphCatalog_DefaultsToNull_IsSettable_AndCarriesThroughClone()
+        {
+            var ctx = new GameFlowContext();
+            Assert.IsNull(ctx.GraphCatalog, "a project with a single root graph never has to set this.");
+
+            var catalog = new DirectGraphCatalog();
+            ctx.GraphCatalog = catalog;
+
+            var clone = (GameFlowContext)ctx.DeepClone();
+            Assert.AreSame(catalog, clone.GraphCatalog, "a shared service reference, like SceneLoader, carries through clone.");
+        }
+
+        [Test]
+        public void PendingNextGraph_DefaultsToNull_IsSettable_AndCarriesThroughClone()
+        {
+            var ctx = new GameFlowContext();
+            Assert.IsNull(ctx.PendingNextGraph, "a project that never triggers a preload never touches this.");
+
+            var graph = ScriptableObject.CreateInstance<BaseGraph>();
+            try
+            {
+                ctx.PendingNextGraph = graph;
+                var clone = (GameFlowContext)ctx.DeepClone();
+                Assert.AreSame(graph, clone.PendingNextGraph);
+            }
+            finally { Object.DestroyImmediate(graph); }
         }
 
         [Test]

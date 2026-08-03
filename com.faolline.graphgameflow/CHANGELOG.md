@@ -4,6 +4,36 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.17.0]
+
+### Added — `IGraphCatalog` port (`GraphId → BaseGraph`, independent of loading technology)
+
+Mirrors `ISceneLoader`'s role on the graph side. `GraphRunSnapshot.GraphId` is informational only,
+and `Restore` requires the caller to already have the `BaseGraph` in hand — the moment a project has
+more than one independently-loadable root graph, that resolution needs a formal seam instead of a
+hand-maintained lookup table. `GameFlowContext.GraphCatalog` (new property, mirrors `SceneLoader`'s
+own treatment including `DeepClone`) carries it. Ships with `DirectGraphCatalog`, a zero-dependency
+in-memory implementation — the seam works identically with or without any asynchronous asset-loading
+technology installed.
+
+### Added — `GraphKeySourceRegistry` / `GraphKeyRegistryWindow` (Editor)
+
+Graph-side mirror of `SceneKeySourceRegistry`: an opt-in registry of `IGraphKeySourceProvider`s (e.g.
+registered Addressable graph addresses), consumed by a new `Faolline ▸ Graph ▸ Graph Key Registry`
+window listing project graphs, their `GraphId`, and per-source promotion status.
+
+### Added — `ChapterRootSubGraphValidatorExtension`
+
+Registers into graphcore 0.41.0's new `GraphValidatorExtensionRegistry` seam to warn when a hard
+`SubGraphNodeData` reference accidentally targets a graph registered as a chapter root — that hard
+reference would silently reintroduce the full build-time pull the soft-loading lots (graphcore
+0.41.0, this package) exist to prevent. graphcore itself has no notion of "chapter root"; this
+extension is where that meaning lives.
+
+### Changed
+- Dependency floor: `com.faolline.graphcore` raised to `0.41.0` (required for
+  `GraphValidatorExtensionRegistry`).
+
 ## [0.16.1]
 
 ### Fixed
