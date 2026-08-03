@@ -109,6 +109,33 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
+        public void GraphLink_NeverAssigned_IsNotWarning()
+        {
+            var g = NewGraph();
+            g.AddNode(Start("s")); g.AddNode(End("e"));
+            g.AddNode(new GraphLinkNodeData { Id = "note", NodeType = GraphLinkNodeData.NodeTypeId });
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "e"));
+            Assert.IsFalse(HasWarning(GraphValidator.Validate(g), "resolves to no asset"),
+                "a GraphLink that was never assigned a target (empty GUID) is not a broken reference.");
+        }
+
+        [Test]
+        public void GraphLink_UnresolvedGuid_IsWarning()
+        {
+            var g = NewGraph();
+            g.AddNode(Start("s")); g.AddNode(End("e"));
+            var link = new GraphLinkNodeData { Id = "note", NodeType = GraphLinkNodeData.NodeTypeId };
+            link.TargetGraphGuid = "00000000000000000000000000000000"; // well-formed but resolves to no asset
+            g.AddNode(link);
+            g.EntryNodeId = "s";
+            g.AddEdge(Edge("s", "e"));
+            Assert.IsTrue(HasWarning(GraphValidator.Validate(g), "resolves to no asset"),
+                "a GraphLink whose recorded GUID no longer resolves to any asset must warn — this is the check " +
+                "that replaces the compile-time safety net the hard reference used to provide.");
+        }
+
+        [Test]
         public void ChoiceWithoutOptions_IsError()
         {
             var g = NewGraph();

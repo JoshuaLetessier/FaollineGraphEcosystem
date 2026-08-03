@@ -4,6 +4,34 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.41.0]
+
+### Changed — `GraphLinkNodeData` no longer forces its target into the build (soft reference)
+
+`GraphLinkNodeData` is a documentary, non-executing cross-reference — `BaseRunner` passes straight
+through it like a comment and never touches `TargetGraph` at runtime — but its hard
+`[SerializeField] BaseGraph` field made Unity treat the link as a real serialization dependency,
+pulling the target (and everything *it* references) into the same build/bundle inclusion group as
+the host graph for zero runtime value.
+
+The field is now a GUID (`TargetGraphGuid`, new public member), resolved on demand. `TargetGraph`
+keeps its exact public signature (`BaseGraph`, get/set) — no change needed anywhere it was already
+used (drag-and-drop assignment, canvas double-click navigation) — it is simply `#if UNITY_EDITOR`
+now, since nothing at runtime ever legally dereferenced it. No migration is provided for existing
+serialized links (an intentional, authorized exception — see spec `047-graph-soft-links`); re-assign
+the target once after updating.
+
+### Added — `GraphValidator`: two new checks
+
+- A `GraphLinkNodeData` whose recorded GUID no longer resolves to any asset is flagged (`Warning`) —
+  compensates for the compile-time safety net the hard reference used to provide.
+- A new generic extension seam, `IGraphValidatorExtension`/`GraphValidatorExtensionRegistry`
+  (mirrors the existing `ContextKeyLabelRegistry` shape), lets a downstream lib flag a
+  `SubGraphNodeData` target it considers problematic — e.g. `graphgameflow` (0.17.0) uses this to
+  warn when a hard sub-graph reference accidentally crosses into a graph registered as an
+  independently-loadable chapter root, which would silently reintroduce a full build-time pull.
+  Empty/inert by default; `graphcore` itself has no opinion on what a "chapter root" is.
+
 ## [0.40.1]
 
 ### Fixed — module selector no longer hardcodes `#master`

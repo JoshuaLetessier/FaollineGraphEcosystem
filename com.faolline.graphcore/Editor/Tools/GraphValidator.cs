@@ -95,6 +95,14 @@ namespace Faolline.GraphCore.Editor
                 if (nodes.Count > 1 && !connected.Contains(n.Id) && !(n is GraphLinkNodeData))
                     report.Issues.Add(new GraphIssue(GraphIssueSeverity.Warning, n.Id, $"Isolated node '{Label(n)}' (no connection)."));
 
+                // The soft (GUID-backed) reference has no compile-time safety net — this is what replaces it.
+                // Checked by GUID (not just the resolved TargetGraph), since AssetDatabase dependency-scanning
+                // tools cannot see a key-based miss at all: a never-assigned link (empty GUID) is normal and
+                // must NOT warn, but an assigned GUID that no longer resolves to any asset must.
+                if (n is GraphLinkNodeData link && !string.IsNullOrEmpty(link.TargetGraphGuid) && link.TargetGraph == null)
+                    report.Issues.Add(new GraphIssue(GraphIssueSeverity.Warning, n.Id,
+                        $"GraphLink '{Label(n)}' references a target (GUID '{link.TargetGraphGuid}') that resolves to no asset."));
+
                 if (n is ChoiceNodeData choice)
                 {
                     var options = choice.Choices?.Where(c => c != null).ToList() ?? new List<BaseChoice>();
@@ -151,8 +159,30 @@ namespace Faolline.GraphCore.Editor
             CheckCircularAwaits(graph, nodes, edges, report);
             CheckVariableTypeMismatches(graph, report);
             CheckNestedOpensScope(nodes, report);
+            CheckSubGraphExtensions(nodes, report);
 
             return report;
+        }
+
+        // ── SubGraph extension seam ──────────────────────────────────────────
+        // graphcore has zero knowledge of what makes a SubGraph target "problematic" beyond its own
+        // structural rules — this just polls whatever a downstream lib (e.g. graphgameflow, for its
+        // chapter-root concept) registered via GraphValidatorExtensionRegistry. Empty by default.
+        private static void CheckSubGraphExtensions(List<BaseNodeData> nodes, GraphValidationReport report)
+        {
+            if (GraphValidatorExtensionRegistry.Extensions.Count == 0) return;
+
+            foreach (var n in nodes)
+            {
+                if (!(n is SubGraphNodeData sub) || sub.TargetGraph == null) continue;
+
+                foreach (var extension in GraphValidatorExtensionRegistry.Extensions)
+                {
+                    var message = extension?.CheckSubGraphTarget(sub.TargetGraph);
+                    if (!string.IsNullOrEmpty(message))
+                        report.Issues.Add(new GraphIssue(GraphIssueSeverity.Warning, n.Id, message));
+                }
+            }
         }
 
         // ── Nested Opens Scope ────────────────────────────────────────────────
