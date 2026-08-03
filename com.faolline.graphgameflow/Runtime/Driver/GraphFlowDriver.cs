@@ -45,6 +45,15 @@ namespace Faolline.GraphGameFlow
         private float           _waitTotal;
         private float           _waitElapsed;
 
+        // Tracks whether a top-level entry point (Boot/Tick/Advance/ChooseById/RaiseSignal) is currently
+        // unwinding. BaseRunner fires OnEnded synchronously and inline (from deep inside ExitAndAdvance), so a
+        // driver OnEnded subscriber that calls Boot() to reboot runs on the SAME call stack as whatever
+        // Advance/Tick/RaiseSignal triggered it. Mutating _runner/_context/_running right there would corrupt
+        // the still-unwinding outer call. Instead, a reentrant Boot() request is queued here and replayed once
+        // the outermost dispatch finishes — see BeginDispatch/EndDispatch and every Boot overload.
+        private int    _dispatchDepth;
+        private Action _pendingBoot;
+
         /// <summary>The flow to run (assignable in the inspector or by code before <see cref="Boot"/>).</summary>
         public BaseGraph Graph { get => _graph; set => _graph = value; }
 
@@ -179,7 +188,13 @@ namespace Faolline.GraphGameFlow
         /// <c>[GraphGameFlow]</c> warning and stays inert if there is no graph / no valid start node, or if
         /// already running.
         /// </summary>
-        public void Boot() => BootInternal(null, null);
+        public void Boot()
+        {
+            if (_dispatchDepth > 0) { _pendingBoot = Boot; return; }
+            BeginDispatch();
+            try { BootInternal(null, null); }
+            finally { EndDispatch(); }
+        }
 
         /// <summary>
         /// Restores a flow from a <see cref="Faolline.GraphSave.GraphRunSnapshot"/>: applies the snapshot
@@ -189,36 +204,42 @@ namespace Faolline.GraphGameFlow
         /// </summary>
         public void Boot(GraphSave.GraphRunSnapshot snapshot, GameFlowContext context = null, NodeExecutorRegistry registry = null)
         {
-            if (snapshot == null)
+            if (_dispatchDepth > 0) { _pendingBoot = () => Boot(snapshot, context, registry); return; }
+            BeginDispatch();
+            try
             {
-                Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: null snapshot; ignored.");
-                return;
+                if (snapshot == null)
+                {
+                    Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: null snapshot; ignored.");
+                    return;
+                }
+                if (_running)
+                {
+                    Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: already running; ignored.");
+                    return;
+                }
+                if (_graph == null)
+                {
+                    Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: no graph assigned; staying inert.");
+                    return;
+                }
+
+                _context = context ?? new GameFlowContext { SceneLoader = SceneLoader };
+                if (_context.SceneLoader == null) _context.SceneLoader = SceneLoader;
+
+                snapshot.ApplyTo(_context, replaceCollections: true);
+
+                _runner?.DetachEditorProbe();   // an earlier run's probe must not shadow the new one
+                _runner = new BaseRunner();
+                Subscribe();
+                _running = true;
+                _autoAdvancePending = false;
+
+                var nodeId = string.IsNullOrEmpty(snapshot.CurrentNodeId) ? _graph.EntryNodeId : snapshot.CurrentNodeId;
+                _runner.StartFrom(_graph, nodeId, _context, registry ?? new NodeExecutorRegistry());
+                DrainAutoAdvance();
             }
-            if (_running)
-            {
-                Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: already running; ignored.");
-                return;
-            }
-            if (_graph == null)
-            {
-                Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: no graph assigned; staying inert.");
-                return;
-            }
-
-            _context = context ?? new GameFlowContext { SceneLoader = SceneLoader };
-            if (_context.SceneLoader == null) _context.SceneLoader = SceneLoader;
-
-            snapshot.ApplyTo(_context, replaceCollections: true);
-
-            _runner?.DetachEditorProbe();   // an earlier run's probe must not shadow the new one
-            _runner = new BaseRunner();
-            Subscribe();
-            _running = true;
-            _autoAdvancePending = false;
-
-            var nodeId = string.IsNullOrEmpty(snapshot.CurrentNodeId) ? _graph.EntryNodeId : snapshot.CurrentNodeId;
-            _runner.StartFrom(_graph, nodeId, _context, registry ?? new NodeExecutorRegistry());
-            DrainAutoAdvance();
+            finally { EndDispatch(); }
         }
 
         /// <summary>
@@ -229,7 +250,13 @@ namespace Faolline.GraphGameFlow
         /// re-initialised from the graph, so seeded values survive); its <see cref="GameFlowContext.SceneLoader"/>
         /// is filled with the driver's only when it is null. The same boot guards apply.
         /// </summary>
-        public void Boot(GameFlowContext context, NodeExecutorRegistry registry) => BootInternal(context, registry);
+        public void Boot(GameFlowContext context, NodeExecutorRegistry registry)
+        {
+            if (_dispatchDepth > 0) { _pendingBoot = () => Boot(context, registry); return; }
+            BeginDispatch();
+            try { BootInternal(context, registry); }
+            finally { EndDispatch(); }
+        }
 
         private void BootInternal(GameFlowContext context, NodeExecutorRegistry registry)
         {
@@ -275,17 +302,27 @@ namespace Faolline.GraphGameFlow
         public void Tick(float deltaSeconds)
         {
             if (!_running || Paused || deltaSeconds <= 0f) return;
-            if (_runner.State == RunnerState.WaitingForTime) _waitElapsed += deltaSeconds;
-            _runner.Tick(deltaSeconds);
-            DrainAutoAdvance();
+            BeginDispatch();
+            try
+            {
+                if (_runner.State == RunnerState.WaitingForTime) _waitElapsed += deltaSeconds;
+                _runner.Tick(deltaSeconds);
+                DrainAutoAdvance();
+            }
+            finally { EndDispatch(); }
         }
 
         /// <summary>Advances the flow (manual advance, or programmatic). No-op when not running.</summary>
         public void Advance()
         {
             if (!_running) return;
-            _runner.Proceed();
-            DrainAutoAdvance();
+            BeginDispatch();
+            try
+            {
+                _runner.Proceed();
+                DrainAutoAdvance();
+            }
+            finally { EndDispatch(); }
         }
 
         /// <summary>
@@ -296,24 +333,39 @@ namespace Faolline.GraphGameFlow
         public void ChooseById(string id)
         {
             if (!_running) return;
-            _runner.ChooseById(id);
-            DrainAutoAdvance();
+            BeginDispatch();
+            try
+            {
+                _runner.ChooseById(id);
+                DrainAutoAdvance();
+            }
+            finally { EndDispatch(); }
         }
 
         /// <summary>Raises a named signal into the running flow, resuming a matching await. No-op when not running.</summary>
         public void RaiseSignal(string name)
         {
             if (!_running) return;
-            _runner.RaiseSignal(name);
-            DrainAutoAdvance();
+            BeginDispatch();
+            try
+            {
+                _runner.RaiseSignal(name);
+                DrainAutoAdvance();
+            }
+            finally { EndDispatch(); }
         }
 
         /// <summary>As <see cref="RaiseSignal(string)"/>, carrying a scalar payload.</summary>
         public void RaiseSignal<T>(string name, T payload)
         {
             if (!_running) return;
-            _runner.RaiseSignal<T>(name, payload);
-            DrainAutoAdvance();
+            BeginDispatch();
+            try
+            {
+                _runner.RaiseSignal<T>(name, payload);
+                DrainAutoAdvance();
+            }
+            finally { EndDispatch(); }
         }
 
         /// <summary>
@@ -418,8 +470,31 @@ namespace Faolline.GraphGameFlow
 
         private void HandleEnded(EndReason reason)
         {
+            // Detach BEFORE the flow-ended fanout, not just in Stop()/OnDestroy: Subscribe() runs again on
+            // every subsequent Boot(), and without this the driver's handlers (plus the static SceneManager
+            // subscriptions) would pile up on the dead runner every time the flow ends and reboots, instead of
+            // being replaced by the next run's subscription.
+            Unsubscribe();
             _running = false;
             OnEnded?.Invoke(reason);
+        }
+
+        // Marks a top-level dispatch (Boot/Tick/Advance/ChooseById/RaiseSignal) as in flight. A reentrant
+        // Boot() call made from inside a driver event (typically OnEnded, rebooting into the next flow) is
+        // queued in _pendingBoot instead of running immediately, and replayed here once the outermost
+        // dispatch has fully unwound — so it can never reassign _runner/_context/_running out from under a
+        // call still using them.
+        private void BeginDispatch() => _dispatchDepth++;
+
+        private void EndDispatch()
+        {
+            _dispatchDepth--;
+            if (_dispatchDepth == 0 && _pendingBoot != null)
+            {
+                var boot = _pendingBoot;
+                _pendingBoot = null;
+                boot();
+            }
         }
 
         private void HandleStuck() => OnStuck?.Invoke();

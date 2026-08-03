@@ -4,6 +4,26 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.16.1]
+
+### Fixed
+- **`GraphFlowDriver.HandleEnded` never unsubscribed.** `Subscribe()` re-attaches the driver's handlers to the
+  runner AND to the static `SceneManager.sceneLoaded`/`sceneUnloaded` events on every `Boot()`, but only
+  `Stop()` (called from `OnDestroy`) ever detached them. Every reboot cycle (flow ends, then `Boot()` again)
+  stacked a new static subscription on top of one that was never removed — a driver that reboots repeatedly
+  (e.g. a hub-and-spoke minigame flow) grew its `SceneManager` subscriber count without bound, and a later
+  `OnDestroy` only removed one of the accumulated subscriptions, permanently rooting the destroyed driver
+  instance via the leftover dangling delegates. `HandleEnded` now calls `Unsubscribe()` before the
+  flow-ended fanout, so a reboot cleanly replaces the subscription instead of stacking a second one.
+- **Reentrant `Boot()` from an `OnEnded` handler corrupted driver state.** `BaseRunner` fires `OnEnded`
+  synchronously and inline (from deep inside `ExitAndAdvance`/`Tick`), so a driver `OnEnded` subscriber that
+  calls `Boot()` to reboot into the next flow runs on the SAME call stack as whatever `Advance`/`Tick`/
+  `RaiseSignal` triggered it — reassigning `_runner`/`_context`/`_running` out from under the still-unwinding
+  outer call. Every top-level entry point (`Boot`, `Tick`, `Advance`, `ChooseById`, `RaiseSignal`) now tracks
+  dispatch depth; a `Boot()` call made reentrantly is queued and safely replayed once the outermost dispatch
+  has fully unwound, instead of mutating shared state mid-stack. Rebooting a driver from its own `OnEnded`
+  handler — a natural pattern for flow-to-flow transitions — is now a supported, safe operation.
+
 ## [0.16.0]
 
 ### Added

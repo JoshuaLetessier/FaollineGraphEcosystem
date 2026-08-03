@@ -506,6 +506,83 @@ namespace Faolline.GraphGameFlow.Tests
             Assert.DoesNotThrow(() => { d.Stop(); d.Stop(); });
         }
 
+        // ── Reentrant reboot from OnEnded (BaseRunner fires OnEnded synchronously/inline, so a driver OnEnded
+        // subscriber that reboots runs on the SAME call stack as the Advance/Tick/RaiseSignal that triggered
+        // it) ────────────────────────────────────────────────────────────────────────────────────────────
+
+        [Test]
+        public void Reboot_FromOnEnded_SwapsToNewGraph_WithoutCorruptingOuterCall()
+        {
+            var gA = NewGraph("start");
+            gA.AddNode(Start("start")); gA.AddNode(End("end"));
+            gA.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "end" });
+
+            var gB = NewGraph("start2");
+            gB.AddNode(Start("start2")); gB.AddNode(End("end2"));
+            gB.AddEdge(new BaseEdgeData { FromNodeId = "start2", ToNodeId = "end2" });
+
+            var d = NewDriver(gA, autoAdvance: false);
+            var entered = new List<string>();
+            d.OnNodeEntered += n => entered.Add(n.Id);
+
+            bool rebooted = false;
+            d.OnEnded += _ =>
+            {
+                if (rebooted) return;
+                rebooted = true;
+                d.Graph = gB;
+                d.Boot();   // reentrant: called synchronously from inside OnEnded
+            };
+
+            d.Boot();      // parks on "start"
+            d.Advance();   // start -> end (parks on "end", NodeReady)
+            d.Advance();   // exits "end" -> HandleEndNode -> OnEnded -> reentrant reboot into gB
+
+            Assert.IsTrue(rebooted);
+            Assert.IsTrue(d.IsRunning, "the reboot completed and the new flow is running.");
+            CollectionAssert.Contains(entered, "start2", "the new graph's start node was entered by the reentrant reboot.");
+            Assert.AreEqual("start2", d.Runner.CurrentNode.Id,
+                "the outer Advance() call resumes against the NEW runner, not a stale reference to the old one.");
+        }
+
+        [Test]
+        public void Reboot_DoesNotLeakStaticSceneManagerSubscriptions()
+        {
+            // HandleEnded must Unsubscribe() before the flow-ended fanout — otherwise every reboot (this
+            // driver's Boot() re-subscribes to SceneManager.sceneLoaded/unloaded on every call) stacks a
+            // second static subscription on top of one that was never removed, growing forever.
+            var field = typeof(UnityEngine.SceneManagement.SceneManager).GetField(
+                "sceneLoaded", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+            if (field == null)
+            {
+                Assert.Ignore("SceneManager.sceneLoaded backing field not found via reflection on this Unity version.");
+                return;
+            }
+
+            int CountSubscribers()
+            {
+                var del = field.GetValue(null) as System.Delegate;
+                return del == null ? 0 : del.GetInvocationList().Length;
+            }
+
+            var g = NewGraph("start");
+            g.AddNode(Start("start")); g.AddNode(End("end"));
+            g.AddEdge(new BaseEdgeData { FromNodeId = "start", ToNodeId = "end" });
+            var d = NewDriver(g, autoAdvance: false);
+
+            d.Boot();
+            int afterFirstBoot = CountSubscribers();
+
+            d.Advance();   // start -> end (parks)
+            d.Advance();   // exits end -> OnEnded -> HandleEnded unsubscribes
+
+            d.Boot();      // sequential reboot: must replace the subscription, not stack a second one
+            int afterReboot = CountSubscribers();
+
+            Assert.AreEqual(afterFirstBoot, afterReboot,
+                "a reboot after the flow ends must not grow the static SceneManager subscription count.");
+        }
+
         [Test]
         public void SubGraph_TraversesNestedGraphAndReturns()
         {
