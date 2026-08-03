@@ -68,16 +68,36 @@ misuse in this ecosystem.
 com.faolline.graphgameflow.addressables
 │
 ├── Runtime/
-│   └── AddressablesSceneLoader.cs        ISceneLoader + ISceneUnloader over Addressables.LoadSceneAsync/UnloadSceneAsync
+│   ├── AddressablesSceneLoader.cs        ISceneLoader + ISceneUnloader over Addressables.LoadSceneAsync/UnloadSceneAsync
+│   ├── AddressablesGraphCatalog.cs       IGraphCatalog over Addressables.LoadAssetAsync<BaseGraph>
+│   └── PreloadNextChapterAction.cs       BaseAction, soft AssetReferenceT<BaseGraph>, early chapter preload
 └── Editor/
-    └── AddressablesSceneKeyProvider.cs   registers with graphgameflow's SceneKeySourceRegistry seam
+    ├── AddressablesSceneKeyProvider.cs   registers with graphgameflow's SceneKeySourceRegistry seam
+    └── AddressablesGraphKeyProvider.cs   registers with graphgameflow's GraphKeySourceRegistry seam
 ```
 
 The `Runtime` half is the actual transport swap — all the heavy lifting (the action model, the driver, the
 signal bridge) is done by `com.faolline.graphgameflow`. The `Editor` half is purely an authoring convenience:
-it plugs registered Addressable scene entries into the existing `LoadSceneAction`/`UnloadSceneAction`
-inspector dropdown via `SceneKeySourceRegistry` — `graphgameflow` core never references
-`com.unity.addressables` itself; this package's Editor assembly is the only place that does.
+it plugs registered Addressable scene/graph entries into the existing `LoadSceneAction`/`UnloadSceneAction`/
+`GraphKeyRegistryWindow` dropdowns via `SceneKeySourceRegistry`/`GraphKeySourceRegistry` — `graphgameflow`
+core never references `com.unity.addressables` itself; this package's assemblies are the only place that does.
+
+### Soft chapter preloading — `PreloadNextChapterAction` (since 0.5.0)
+
+Carries a soft `AssetReferenceT<BaseGraph>` (never a build-time dependency of the graph that owns it).
+Placed early in a chapter's flow, it triggers the next chapter's load ahead of time; on completion it sets
+`GameFlowContext.PendingNextGraph` and optionally raises a `SignalDef`:
+
+```csharp
+// Form A — early trigger, reboot from OnEnded once the chapter naturally finishes:
+driver.OnEnded += () => { driver.Graph = context.PendingNextGraph; driver.Boot(context, registry); };
+
+// Form B — park on signal (pair the action's CompletedSignal with an AwaitSignalNames node):
+// no extra code — the flow just parks until the preload resolves, like any other await-signal node.
+```
+
+Verify the soft-loading contract with a real Addressables Analyze pass, not code inspection alone: the
+current chapter's group must not pull in the next chapter's content (see `specs/047-graph-soft-links/quickstart.md`).
 
 ---
 

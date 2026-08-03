@@ -4,6 +4,51 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.2]
+
+### Fixed — concurrent `Resolve` of the same `graphId` silently leaked a handle
+
+Found in a second dogfooding round against a dedicated Addressables test project: calling
+`AddressablesGraphCatalog.Resolve` twice for the same `graphId` before either completed — both
+succeeded, but the second completion overwrote the first's stored handle, so one of the two
+Addressables-refcounted handles was never reachable by `Release` again. Narrow (only the exact
+concurrent-same-key case), not a common usage pattern, but a real leak. `_handles` now maps each
+`graphId` to a list of handles; `Release` releases all of them.
+
+## [0.5.1]
+
+### Fixed — two gaps found dogfooding 0.5.0 against a dedicated Addressables test project
+
+- **`PreloadNextChapterAction.SignalDriver`** — new public property (was write-only via the
+  serialized field, with no setter). A graph built in code had no way to target a specific driver;
+  it always fell back to `GraphFlowDriver.Active`, which depends on `PersistAcrossScenes` having
+  been set before `Awake()` — a real ergonomics gap, not the signal-delivery bug it first looked
+  like. Mirrors `AddressablesSceneLoader.SignalDriver` exactly.
+- **`AddressablesGraphCatalog.Release(graphId)`** — new method. Neither `AddressablesGraphCatalog`
+  nor `PreloadNextChapterAction` ever released its Addressables handle after resolving, unlike
+  `AddressablesSceneLoader`; a resolved/preloaded graph stayed in memory indefinitely with no way to
+  free it. `AddressablesGraphCatalog` now tracks its handles (mirroring `AddressablesSceneLoader`'s
+  own loaded-scenes dictionary) and exposes `Release`; `PreloadNextChapterAction` gained
+  `ReleaseNextChapter()` (delegates to `AssetReference.ReleaseAsset()`).
+
+## [0.5.0]
+
+### Added — graph-side Addressables adapter (soft chapter preloading)
+
+- **`AddressablesGraphCatalog`** — `IGraphCatalog` (graphgameflow 0.17.0) resolving a `graphId` to a
+  `BaseGraph` via `Addressables.LoadAssetAsync`, mirroring `AddressablesSceneLoader`'s shape.
+- **`AddressablesGraphKeyProvider`** — `IGraphKeySourceProvider` mirroring `AddressablesSceneKeyProvider`,
+  filtered to `BaseGraph`-typed Addressable entries; self-registers into `GraphKeySourceRegistry`.
+- **`PreloadNextChapterAction`** — `BaseAction` carrying a soft `AssetReferenceT<BaseGraph>` (never a
+  build-time dependency of the graph that owns it). Triggers an early asynchronous load of the next
+  chapter; on completion sets `GameFlowContext.PendingNextGraph` and optionally raises a completion/failure
+  `SignalDef`, supporting both the early-trigger-then-reboot and park-on-signal usage forms — no change
+  to `BaseRunner`.
+
+### Changed
+- Dependency floor: `com.faolline.graphgameflow` raised to `0.17.0` (required for `IGraphCatalog`/
+  `GraphKeySourceRegistry`).
+
 ## [0.4.0]
 
 ### Added

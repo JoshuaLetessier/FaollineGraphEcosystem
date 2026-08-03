@@ -238,6 +238,14 @@ distinct "📎 Kind: Name" node in every lib editor, and **double-clicking it op
 editor via `GraphEditorWindowRegistry` (each lib editor registers its window; missing/unregistered → the asset
 is selected/pinged with a `[GraphCore]` diagnostic). See `specs/030-graphlink-navigation/quickstart.md`.
 
+**Soft reference, since 0.41.0.** `TargetGraph` is backed by a GUID (`TargetGraphGuid`), not a hard
+`BaseGraph` field — the target is never pulled into the owning graph's build/asset-bundle dependency
+closure, which used to happen for zero runtime benefit since this node is never touched at runtime. The
+`TargetGraph` property itself is unchanged (still a real `ObjectField`, still drag-and-drop, still
+navigable) and is Editor-only (`#if UNITY_EDITOR`) since nothing at runtime ever legally dereferences it.
+`GraphValidator` flags a GraphLink whose GUID no longer resolves to any asset. See
+`specs/047-graph-soft-links/`.
+
 ### BaseEdgeData
 
 ```csharp

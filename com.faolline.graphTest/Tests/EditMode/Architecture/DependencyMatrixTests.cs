@@ -112,7 +112,7 @@ namespace Faolline.GraphTest.Tests
             [DialogueEditor] = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, DialogueRuntime, LocRuntime, LocEditor },
             [QuestEditor]    = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, QuestRuntime, StdRuntime, LocRuntime, LocEditor },
             [FlowEditor]     = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, FlowRuntime },
-            [AddrBridgeEditor] = new[] { FlowEditor, UnityAddrEditor },
+            [AddrBridgeEditor] = new[] { CoreRuntime, CoreRuntimeCore, FlowEditor, UnityAddrEditor },
 
             // ── Dev tooling (internal-only packages) ────────────────────────────
             [GraphTestRuntime] = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime },

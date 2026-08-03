@@ -20,6 +20,21 @@ namespace Faolline.GraphGameFlow
         public ISceneLoader SceneLoader { get; set; }
 
         /// <summary>
+        /// Resolves a <c>BaseGraph.GraphId</c> to its asset — the seam a multi-root-graph project (or
+        /// <c>graphsave</c>'s restore path) uses instead of a hand-maintained lookup table. Defaults to
+        /// <c>null</c>; a project with a single root graph never needs to set it.
+        /// </summary>
+        public IGraphCatalog GraphCatalog { get; set; }
+
+        /// <summary>
+        /// Set by an early-preload action (e.g. <c>PreloadNextChapterAction</c> in the Addressables adapter)
+        /// once its target graph resolves. The host reads this after <c>OnEnded</c> to reboot the driver onto
+        /// the already-loaded next chapter with no additional wait. <c>null</c> until a preload completes;
+        /// a project that never triggers a preload never touches this.
+        /// </summary>
+        public BaseGraph PendingNextGraph { get; set; }
+
+        /// <summary>
         /// Scenes currently loaded, by Unity scene name. <see cref="GraphFlowDriver"/> keeps this in sync
         /// with <c>SceneManager.sceneLoaded</c>/<c>sceneUnloaded</c> — accurate regardless of which
         /// <see cref="ISceneLoader"/> did the loading (or whether anything outside the flow loaded a scene).
@@ -56,6 +71,8 @@ namespace Faolline.GraphGameFlow
         {
             var clone = (GameFlowContext)base.DeepClone();
             clone.SceneLoader = SceneLoader; // a shared service reference, not per-snapshot state
+            clone.GraphCatalog = GraphCatalog; // same treatment — a shared service, not per-snapshot state
+            clone.PendingNextGraph = PendingNextGraph;
             foreach (var scene in _loadedScenes) clone._loadedScenes.Add(scene);
             return clone;
         }

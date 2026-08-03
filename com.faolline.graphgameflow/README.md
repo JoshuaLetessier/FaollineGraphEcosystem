@@ -283,6 +283,36 @@ silent. Deliberately scoped to the LOADER's own in-flight duration rather than t
 parked on a signal in general — the latter is routinely minutes for a perfectly ordinary "await player
 input" node, so a driver-wide timeout would false-positive on the ecosystem's most common await-signal use.
 
+### Multiple root graphs — `IGraphCatalog` (since 0.17.0)
+
+A project with more than one independently-loadable root graph (e.g. one per chapter) needs a way to turn
+a saved `GraphRunSnapshot.GraphId` back into the `BaseGraph` asset it refers to — `Restore` needs that asset
+handed to it directly. `GameFlowContext.GraphCatalog` is that seam:
+
+```csharp
+context.GraphCatalog = new DirectGraphCatalog();          // zero-dependency default
+((DirectGraphCatalog)context.GraphCatalog).Register(graph.GraphId, graph);
+
+context.GraphCatalog.Resolve(snapshot.GraphId,
+    onResolved: graph => snapshot.Restore(runner, graph, context),
+    onFailed:   reason => Debug.LogError(reason));
+```
+
+`DirectGraphCatalog` works with zero asynchronous asset-loading technology installed. With Addressables,
+swap in `AddressablesGraphCatalog` (from `com.faolline.graphgameflow.addressables`) instead — same seam,
+resolved via an Addressable key instead of an in-memory map.
+
+### Graph Key Registry — `Faolline ▸ Graph ▸ Graph Key Registry` (Editor, since 0.17.0)
+
+Mirrors the scene-name "Mark as …" tooling: lists every `BaseGraph` asset in the project with its
+`GraphId`, and, per registered `IGraphKeySourceProvider` (e.g. `AddressablesGraphKeyProvider`), whether it's
+promoted to that source's keys — with a button to promote it. Empty/inert until an adapter registers a
+provider.
+
+**Guardrail**: a hard `SubGraphNodeData` reference that accidentally targets a graph registered here as a
+chapter root is flagged by `GraphValidator` (via graphcore's `GraphValidatorExtensionRegistry` seam) —
+that hard reference would silently pull the whole target chapter back into the build.
+
 ---
 
 ## Authoring in the editor

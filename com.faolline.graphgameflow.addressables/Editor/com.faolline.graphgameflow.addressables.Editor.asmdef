@@ -2,6 +2,8 @@
     "name": "com.faolline.graphgameflow.addressables.Editor",
     "rootNamespace": "Faolline.GraphGameFlow.Addressables.Editor",
     "references": [
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
         "com.faolline.graphgameflow.Editor",
         "Unity.Addressables.Editor"
     ],
