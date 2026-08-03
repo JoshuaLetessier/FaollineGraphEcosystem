@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
 
 Internal verification package — not for distribution; history starts being tracked from 0.4.0.
 
+## [0.5.1]
+
+### Fixed
+- **Bumped the `com.faolline.graphcore` floor to `0.41.0`.** Stale at `0.38.0` since the 047-graph-soft-links
+  merge (`GraphValidatorExtensionRegistry`, GraphLink soft reference).
+
 ## [0.5.0]
 
 ### Changed

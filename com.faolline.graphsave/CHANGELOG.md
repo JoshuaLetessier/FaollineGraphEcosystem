@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.8.1]
+
+### Fixed
+- **Bumped the `com.faolline.graphcore` floor to `0.41.0`.** Stale at `0.38.0` since the 047-graph-soft-links
+  merge. Independently notable: this is also the release the new `graphgameflow` `IGraphCatalog` port was
+  motivated by (`GraphRunSnapshot.GraphId` → `BaseGraph` resolution for multi-root-graph restore) — no code
+  change needed here, `graphgameflow` is the consumer of that seam.
+
 ## [0.8.0]
 
 ### Changed

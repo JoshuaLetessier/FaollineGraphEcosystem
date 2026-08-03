@@ -4,6 +4,12 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.11.2]
+
+### Fixed
+- **Bumped the `com.faolline.graphcore` floor to `0.41.0`.** Stale at `0.38.0` since the 047-graph-soft-links
+  merge (`GraphValidatorExtensionRegistry`, GraphLink soft reference).
+
 ## [0.11.1]
 
 ### Fixed
