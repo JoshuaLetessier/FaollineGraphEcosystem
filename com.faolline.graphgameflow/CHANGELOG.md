@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.17.1]
+
+### Removed — `ChapterRootSubGraphValidatorExtension`
+
+0.17.0 shipped this to warn when a hard `SubGraphNodeData` reference targets a graph registered as a
+key (e.g. marked Addressable). On review, the rule presumed *why* a graph was registered — it
+treated "promoted to a key" as synonymous with "must never be hard-referenced," but a project can
+legitimately register a key purely for `graphsave`/`IGraphCatalog` `GraphId` resolution with no
+soft-loading intent at all, and still compose that same graph via `SubGraphNodeData` elsewhere on
+purpose. The rule had no way to distinguish that case from an actual mistake, so it presumed intent
+it couldn't know and was removed rather than kept as a source of false-positive warnings.
+`GraphKeySourceRegistry`/`IGraphKeySourceProvider.TryResolveGuid` are unaffected (still used by
+`GraphKeyRegistryWindow`); graphcore's generic `GraphValidatorExtensionRegistry` seam stays in place
+(empty by default) for a future extension that can actually know the difference.
+
 ## [0.17.0]
 
 ### Added — `IGraphCatalog` port (`GraphId → BaseGraph`, independent of loading technology)

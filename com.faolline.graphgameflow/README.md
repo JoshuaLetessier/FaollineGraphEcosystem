@@ -309,9 +309,10 @@ Mirrors the scene-name "Mark as …" tooling: lists every `BaseGraph` asset in t
 promoted to that source's keys — with a button to promote it. Empty/inert until an adapter registers a
 provider.
 
-**Guardrail**: a hard `SubGraphNodeData` reference that accidentally targets a graph registered here as a
-chapter root is flagged by `GraphValidator` (via graphcore's `GraphValidatorExtensionRegistry` seam) —
-that hard reference would silently pull the whole target chapter back into the build.
+Registering a key here says nothing about *why* — save/restore addressing, soft preloading, or something
+else entirely are all legitimate reasons, and a graph can be both promoted to a key AND still legitimately
+composed via `SubGraphNodeData` elsewhere. There is deliberately no validator warning presuming otherwise
+(an earlier draft of this feature had one; it was removed for presuming intent it had no way to know).
 
 ---
 

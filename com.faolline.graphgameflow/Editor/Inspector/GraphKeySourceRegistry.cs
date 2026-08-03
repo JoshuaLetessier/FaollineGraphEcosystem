@@ -28,8 +28,9 @@ namespace Faolline.GraphGameFlow.Editor
 
         /// <summary>
         /// Reverse lookup: does <paramref name="assetGuid"/> currently resolve as one of this source's keys?
-        /// Needed by <c>ChapterRootSubGraphValidatorExtension</c> — unlike the scene-side registry, a graph
-        /// validator rule needs to ask "is THIS asset a registered entry point", not just list known keys.
+        /// Used by <c>GraphKeyRegistryWindow</c> to show each graph's per-source promotion status — unlike
+        /// the scene-side registry, this needs to ask "is THIS asset a registered entry point", not just
+        /// list known keys.
         /// </summary>
         bool TryResolveGuid(string assetGuid, out string key);
     }

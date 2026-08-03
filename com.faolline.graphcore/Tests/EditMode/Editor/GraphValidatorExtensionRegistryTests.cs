@@ -25,11 +25,11 @@ namespace Faolline.GraphCore.Tests
                 GraphValidatorExtensionRegistry.Unregister(ext);
         }
 
-        // No "empty by default" assertion here — a downstream lib present in the SAME project (e.g.
-        // graphgameflow's ChapterRootSubGraphValidatorExtension) self-registers via [InitializeOnLoadMethod]
-        // at domain-load, before any test runs, so the registry is legitimately non-empty in a real project.
-        // Mirrors SceneKeySourceRegistryTests.cs, which for the identical reason never asserts this either —
-        // only relative (Contains/Count-delta) assertions are safe here.
+        // No "empty by default" assertion here — a downstream lib present in the SAME project could
+        // self-register an extension via [InitializeOnLoadMethod] at domain-load, before any test runs,
+        // making the registry legitimately non-empty in a real project (exactly how SceneKeySourceRegistry's
+        // own AddressablesSceneKeyProvider behaves). Only relative (Contains/Count-delta) assertions are
+        // safe here, regardless of what else is registered.
 
         [Test]
         public void Register_AddsExtension()

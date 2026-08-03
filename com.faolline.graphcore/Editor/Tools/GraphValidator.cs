@@ -166,8 +166,8 @@ namespace Faolline.GraphCore.Editor
 
         // ── SubGraph extension seam ──────────────────────────────────────────
         // graphcore has zero knowledge of what makes a SubGraph target "problematic" beyond its own
-        // structural rules — this just polls whatever a downstream lib (e.g. graphgameflow, for its
-        // chapter-root concept) registered via GraphValidatorExtensionRegistry. Empty by default.
+        // structural rules — this just polls whatever a downstream lib registered via
+        // GraphValidatorExtensionRegistry. Empty by default; no extension ships in this ecosystem today.
         private static void CheckSubGraphExtensions(List<BaseNodeData> nodes, GraphValidationReport report)
         {
             if (GraphValidatorExtensionRegistry.Extensions.Count == 0) return;

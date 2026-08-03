@@ -3,6 +3,14 @@
 No new persisted save-data schema (no changes to `GraphRunSnapshot`). All entities below are
 in-editor authoring data or runtime seam contracts.
 
+> **Post-merge correction (graphgameflow 0.17.1):** the concrete extension this doc originally
+> described, `ChapterRootSubGraphValidatorExtension`, was removed after review — it presumed that a
+> graph registered via `GraphKeySourceRegistry` was necessarily meant to never be hard-referenced,
+> which isn't a valid inference (a key can legitimately be registered purely for `IGraphCatalog`
+> `GraphId` resolution, with no soft-loading intent at all). The generic `GraphValidatorExtensionRegistry`
+> seam it plugged into remains in graphcore (empty by default); the sections below describing the
+> removed extension are kept as historical record of what was built and then reverted, not current state.
+
 ## GraphLinkNodeData (modified)
 
 `com.faolline.graphcore/Runtime/Nodes/GraphLinkNodeData.cs`

@@ -1,6 +1,11 @@
 # Contract: IGraphCatalog port + editor key registry (Lots 2-3 — graphgameflow)
 
-**Package**: `com.faolline.graphgameflow` 0.16.1 → 0.17.0
+**Package**: `com.faolline.graphgameflow` 0.16.1 → 0.17.1
+
+> **Post-merge correction (0.17.1):** `ChapterRootSubGraphValidatorExtension`, described below, was
+> removed — it presumed a registered key always implies "never hard-reference this graph," which
+> isn't a valid inference (a key can be registered purely for `IGraphCatalog` resolution with no
+> soft-loading intent). Kept here as historical record; it is no longer part of this package.
 
 ## Runtime API surface (Lot 2)
 
