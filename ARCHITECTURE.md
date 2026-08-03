@@ -62,9 +62,12 @@ Tier definitions:
     (`graphlocalization/Localization.Unity`, `graphdialoguesystem/UI`).
 
   An adapter package can itself split Runtime/Editor like any T0–T2 package (e.g.
-  `graphgameflow.addressables.Editor` plugs Addressables scene entries into `graphgameflow`'s
-  `LoadSceneAction`/`UnloadSceneAction` inspector via an opt-in registry the vertical's Editor
-  assembly exposes — the vertical's own Editor assembly stays external-dependency-free, per rule 3).
+  `graphgameflow.addressables.Editor` plugs Addressables scene AND graph entries into `graphgameflow`'s
+  `LoadSceneAction`/`UnloadSceneAction`/`GraphKeyRegistryWindow` via opt-in registries the vertical's
+  Editor assembly exposes — the vertical's own Editor assembly stays external-dependency-free, per
+  rule 3). Since asmdef references are not transitive, `graphgameflow.addressables.Editor` also
+  references `graphcore.Runtime`/`graphcore.Runtime.Core` directly wherever it needs a T0 type
+  (e.g. `BaseGraph`) that `graphgameflow.Editor` merely re-exposes rather than owns.
 
 ## The rules
 
