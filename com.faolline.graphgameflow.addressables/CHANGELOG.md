@@ -4,6 +4,24 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.5.0]
+
+### Added — graph-side Addressables adapter (soft chapter preloading)
+
+- **`AddressablesGraphCatalog`** — `IGraphCatalog` (graphgameflow 0.17.0) resolving a `graphId` to a
+  `BaseGraph` via `Addressables.LoadAssetAsync`, mirroring `AddressablesSceneLoader`'s shape.
+- **`AddressablesGraphKeyProvider`** — `IGraphKeySourceProvider` mirroring `AddressablesSceneKeyProvider`,
+  filtered to `BaseGraph`-typed Addressable entries; self-registers into `GraphKeySourceRegistry`.
+- **`PreloadNextChapterAction`** — `BaseAction` carrying a soft `AssetReferenceT<BaseGraph>` (never a
+  build-time dependency of the graph that owns it). Triggers an early asynchronous load of the next
+  chapter; on completion sets `GameFlowContext.PendingNextGraph` and optionally raises a completion/failure
+  `SignalDef`, supporting both the early-trigger-then-reboot and park-on-signal usage forms — no change
+  to `BaseRunner`.
+
+### Changed
+- Dependency floor: `com.faolline.graphgameflow` raised to `0.17.0` (required for `IGraphCatalog`/
+  `GraphKeySourceRegistry`).
+
 ## [0.4.0]
 
 ### Added
