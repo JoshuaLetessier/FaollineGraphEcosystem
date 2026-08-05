@@ -41,11 +41,15 @@ namespace Faolline.GraphStandard
         public GraphNodeBuilder AddEnd(string title = null, EndReason reason = EndReason.Completed)
             => Add(new EndNodeData { NodeType = EndNodeData.NodeTypeId, EndReason = reason }, title);
 
+#if UNITY_EDITOR
         /// <summary>
         /// Adds a <see cref="GraphLinkNodeData"/> — a NON-executing documentary reference to
         /// <paramref name="target"/> with an optional <paramref name="note"/>. Pure authoring metadata (never
         /// run), so it normally stays unconnected; use it to make composition visible (e.g. "this flow relates
         /// to these quests"). Replaces the raw <c>graph.AddNode(new GraphLinkNodeData{…})</c> boilerplate.
+        /// Editor-only: <see cref="GraphLinkNodeData.TargetGraph"/> itself is <c>#if UNITY_EDITOR</c> (it is
+        /// GUID-backed and never dereferenced at runtime — see its own class remarks), so there is nothing a
+        /// Player-context caller could legitimately do with this node's target anyway.
         /// </summary>
         public GraphNodeBuilder AddGraphLink(BaseGraph target = null, string note = null)
             => Add(new GraphLinkNodeData
@@ -54,6 +58,7 @@ namespace Faolline.GraphStandard
                 TargetGraph = target,
                 Note = note
             }, null);   // GraphLink displays its Note, not a Title
+#endif
 
         /// <summary>
         /// Connects <paramref name="from"/> to <paramref name="to"/>. For a Choice <paramref name="from"/>, a

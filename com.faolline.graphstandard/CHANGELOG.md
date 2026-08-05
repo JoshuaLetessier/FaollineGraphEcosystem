@@ -4,6 +4,19 @@ All notable changes to **com.faolline.graphstandard** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.17.2]
+
+### Fixed
+- **`GraphBuilderBase.AddGraphLink` broke Player-target compilation.** graphcore 0.41.0 made
+  `GraphLinkNodeData.TargetGraph` `#if UNITY_EDITOR`-only (it's GUID-backed and never dereferenced
+  at runtime — see graphcore's own changelog), but this method's `TargetGraph = target` assignment
+  had no matching guard. It compiled fine for the Editor target (where every EditMode test runs,
+  which is why the whole 047-graph-soft-links test pass never caught it) but failed to compile for
+  any Player build target — exactly what Addressables' Analyze tooling needs to simulate. Found by
+  external testing against a real Player build, not by this repo's own test suite. `AddGraphLink`
+  is now `#if UNITY_EDITOR` itself (its only real caller was already an EditMode test); nothing at
+  runtime could meaningfully use a `GraphLinkNodeData`'s target anyway.
+
 ## [0.17.1]
 
 ### Fixed
