@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace Faolline.GraphSave
 {
     /// <summary>
@@ -20,5 +22,15 @@ namespace Faolline.GraphSave
 
         /// <summary>Removes the snapshot under <paramref name="slot"/> (no-op when absent).</summary>
         void Delete(string slot);
+
+        /// <summary>
+        /// Every slot currently present in this store. A slot name that had to be bounded/mangled at
+        /// <see cref="Save"/> time (e.g. an extremely long name truncated to fit a filesystem path limit)
+        /// is returned in its on-disk form, which may not equal the original string passed to <see cref="Save"/>.
+        /// </summary>
+        IEnumerable<string> GetAllKeys();
+
+        /// <summary>Removes every slot in this store (no-op on an already-empty store).</summary>
+        void DeleteAll();
     }
 }

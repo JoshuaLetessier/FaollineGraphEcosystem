@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 
 namespace Faolline.GraphSave
@@ -87,6 +89,22 @@ namespace Faolline.GraphSave
             if (string.IsNullOrEmpty(slot)) return;
             if (!TryGetSlotPath(slot, out var path)) return;
             if (File.Exists(path)) File.Delete(path);
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<string> GetAllKeys()
+        {
+            if (!Directory.Exists(RootPath)) return Enumerable.Empty<string>();
+            return Directory.GetFiles(RootPath, "*" + Extension)
+                .Select(path => Path.GetFileNameWithoutExtension(path));
+        }
+
+        /// <inheritdoc/>
+        public void DeleteAll()
+        {
+            if (!Directory.Exists(RootPath)) return;
+            foreach (var path in Directory.GetFiles(RootPath, "*" + Extension))
+                File.Delete(path);
         }
 
         private const string Extension = ".json";

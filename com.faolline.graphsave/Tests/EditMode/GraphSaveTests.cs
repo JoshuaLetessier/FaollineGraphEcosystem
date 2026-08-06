@@ -490,6 +490,8 @@ namespace Faolline.GraphSave.Tests
                 => _json.TryGetValue(slot, out var j) ? JsonUtility.FromJson<GraphRunSnapshot>(j) : null;
             public bool Exists(string slot) => _json.ContainsKey(slot);
             public void Delete(string slot) => _json.Remove(slot);
+            public IEnumerable<string> GetAllKeys() => _json.Keys;
+            public void DeleteAll() => _json.Clear();
         }
     }
 }

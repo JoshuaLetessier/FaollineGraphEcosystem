@@ -4,6 +4,20 @@ All notable changes to **com.faolline.graphsave.savesystem** are documented here
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.9]
+
+### Added
+- **`SaveSystemGraphStore.GetAllKeys()` / `DeleteAll()`** — implements the two new
+  `IGraphSaveStore` members (graphsave 0.9.0) by delegating to the wrapped backend's own
+  `ISaveSystem<T>.GetAllKeys()`/`DeleteAll()`, with the same defensive try/catch-and-log pattern as
+  every other method here.
+
+### Changed
+- Dependency floor: `com.faolline.graphsave` raised to `0.9.0`. `manifest.json`'s
+  `com.faolline.savesystem.core`/`.json` git dependencies are now pinned to an explicit commit
+  (`51a609a1`) instead of floating on the default branch — closes a reproducibility gap (there was
+  no `#ref` at all before) and is also the first commit upstream that ships `GetAllKeys()`.
+
 ## [0.1.8]
 
 ### Changed

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
@@ -111,6 +112,71 @@ namespace Faolline.GraphSave.UnitySaveSystem.Tests
         }
 
         [Test]
+        public void GetAllKeys_DelegatesToBackend()
+        {
+            var backend = new FakeBackend();
+            IGraphSaveStore store = new SaveSystemGraphStore(backend);
+            store.Save("a", Sample());
+            store.Save("b", Sample());
+
+            CollectionAssert.AreEquivalent(new[] { "a", "b" }, store.GetAllKeys());
+        }
+
+        [Test]
+        public void GetAllKeys_BackendThrows_ReturnsEmpty()
+        {
+            IGraphSaveStore store = new SaveSystemGraphStore(new ThrowingBackend());
+            LogAssert.Expect(LogType.Warning, new Regex(@"\[GraphSave\] Backend threw while listing keys.*"));
+            IEnumerable<string> keys = null;
+            Assert.DoesNotThrow(() => keys = store.GetAllKeys());
+            CollectionAssert.IsEmpty(keys);
+        }
+
+        [Test]
+        public void DeleteAll_DelegatesToBackend()
+        {
+            var backend = new FakeBackend();
+            IGraphSaveStore store = new SaveSystemGraphStore(backend);
+            store.Save("a", Sample());
+            store.Save("b", Sample());
+
+            store.DeleteAll();
+
+            Assert.IsFalse(store.Exists("a"));
+            Assert.IsFalse(store.Exists("b"));
+        }
+
+        [Test]
+        public void DeleteAll_BackendThrows_DoesNotPropagate()
+        {
+            IGraphSaveStore store = new SaveSystemGraphStore(new ThrowingBackend());
+            LogAssert.Expect(LogType.Warning, new Regex(@"\[GraphSave\] Backend threw while deleting all slots.*"));
+            Assert.DoesNotThrow(() => store.DeleteAll());
+        }
+
+        [Test]
+        public void Json_Backend_GetAllKeysAndDeleteAll_RoundTripThroughDisk()
+        {
+            var store = new SaveSystemGraphStore(new JsonSaveSystem<GraphRunSnapshot>());
+            var slotA = "graphsave_bridge_keys_" + System.Guid.NewGuid().ToString("N");
+            var slotB = "graphsave_bridge_keys_" + System.Guid.NewGuid().ToString("N");
+            try
+            {
+                store.Save(slotA, Sample());
+                store.Save(slotB, Sample());
+
+                var keys = store.GetAllKeys().ToList();
+                CollectionAssert.Contains(keys, slotA);
+                CollectionAssert.Contains(keys, slotB);
+            }
+            finally
+            {
+                store.Delete(slotA);
+                store.Delete(slotB);
+            }
+        }
+
+        [Test]
         public void Json_Backend_PathTraversalSlot_DoesNotEscapeAndDegradesGracefully()
         {
             // End-to-end through the REAL JsonSaveSystem (not a synthetic double): confirms the external
@@ -206,6 +272,7 @@ namespace Faolline.GraphSave.UnitySaveSystem.Tests
             public void Delete(string key) => Map.Remove(key);
             public void DeleteAll() => Map.Clear();
             public bool Exists(string key) => Map.ContainsKey(key);
+            public IEnumerable<string> GetAllKeys() => Map.Keys;
         }
 
         // A less-defensive custom backend that throws on every call — the scenario the bridge must survive.
@@ -216,6 +283,7 @@ namespace Faolline.GraphSave.UnitySaveSystem.Tests
             public void Delete(string key) => throw new System.InvalidOperationException("backend delete failure");
             public void DeleteAll() => throw new System.InvalidOperationException("backend deleteAll failure");
             public bool Exists(string key) => throw new System.InvalidOperationException("backend exists failure");
+            public IEnumerable<string> GetAllKeys() => throw new System.InvalidOperationException("backend getAllKeys failure");
         }
 
         // Stands in for a backend whose Exists() is a raw presence check while Load() additionally
@@ -228,6 +296,7 @@ namespace Faolline.GraphSave.UnitySaveSystem.Tests
             public void Save(string key, GraphRunSnapshot data) { }
             public void Delete(string key) { }
             public void DeleteAll() { }
+            public IEnumerable<string> GetAllKeys() => System.Array.Empty<string>();
         }
     }
 }

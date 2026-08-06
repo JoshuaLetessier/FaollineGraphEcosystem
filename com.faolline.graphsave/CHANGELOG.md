@@ -4,6 +4,19 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.9.0]
+
+### Added — `IGraphSaveStore.GetAllKeys()` / `DeleteAll()`
+
+Slot discovery and bulk-clear, matching `com.faolline.savesystem.core`'s `ISaveSystem<T>` (which
+gained the equivalent `GetAllKeys()`/`DeleteAll()` upstream). Both existing implementations updated:
+`JsonFileGraphSaveStore` scans/clears its folder directly; the `com.faolline.graphsave.savesystem`
+bridge delegates to the wrapped backend.
+
+**Breaking for any custom `IGraphSaveStore` implementation** — two new required members, added
+deliberately rather than via a default-interface-method shim, since no known consumer implements
+this interface directly yet outside this repo's own two implementations.
+
 ## [0.8.1]
 
 ### Fixed

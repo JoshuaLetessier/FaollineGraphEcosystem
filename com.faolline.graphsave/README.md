@@ -1,6 +1,6 @@
 # Faolline GraphSave
 
-**Version**: 0.8.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.38.0
+**Version**: 0.9.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.41.0
 
 Optional persistence layer for the Faolline graph ecosystem. It is to saving what `graphlocalization` is to
 text: a neutral model plus a backend seam, so you plug in whatever store you want.
@@ -33,8 +33,9 @@ https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=com.faolline.
   var snapshot = JsonUtility.FromJson<GraphRunSnapshot>(json);
   snapshot.Restore(runner, graph, context);   // rehydrates the context + re-enters the saved node
   ```
-- **`IGraphSaveStore`** — a neutral slot-based store contract (`Save`/`Load`/`Exists`/`Delete`). Implement it
-  against a file, PlayerPrefs, a cloud save, Steam, … — or skip it and (de)serialize the snapshot yourself.
+- **`IGraphSaveStore`** — a neutral slot-based store contract (`Save`/`Load`/`Exists`/`Delete`/`GetAllKeys`/
+  `DeleteAll`). Implement it against a file, PlayerPrefs, a cloud save, Steam, … — or skip it and (de)serialize
+  the snapshot yourself.
 
 ## Backends
 
@@ -51,7 +52,7 @@ graphsave ships **no** backend — it does not reinvent persistence. Two ways to
 com.faolline.graphsave/
   Runtime/
     GraphRunSnapshot.cs      ← serializable save model (variables + collections + raised-signal history + node id)
-    IGraphSaveStore.cs       ← neutral slot-based store contract (Save / Load / Exists / Delete)
+    IGraphSaveStore.cs       ← neutral slot-based store contract (Save / Load / Exists / Delete / GetAllKeys / DeleteAll)
 ```
 
 ## Full round-trip example

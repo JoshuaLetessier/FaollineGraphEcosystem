@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine;
@@ -170,6 +172,59 @@ namespace Faolline.GraphSave.Tests
             Assert.DoesNotThrow(() => _store.Save(slot, SampleSnapshot()));
             Assert.IsFalse(_store.Exists(slot));
             Assert.IsNull(_store.Load(slot));
+        }
+
+        [Test]
+        public void GetAllKeys_EmptyStore_ReturnsEmpty()
+        {
+            CollectionAssert.IsEmpty(_store.GetAllKeys());
+        }
+
+        [Test]
+        public void GetAllKeys_ReturnsEverySavedSlot()
+        {
+            _store.Save("slot1", SampleSnapshot());
+            _store.Save("slot2", SampleSnapshot());
+
+            var keys = _store.GetAllKeys().ToList();
+            CollectionAssert.AreEquivalent(new[] { "slot1", "slot2" }, keys);
+        }
+
+        [Test]
+        public void GetAllKeys_AfterDelete_ExcludesDeletedSlot()
+        {
+            _store.Save("slot1", SampleSnapshot());
+            _store.Save("slot2", SampleSnapshot());
+            _store.Delete("slot1");
+
+            CollectionAssert.AreEquivalent(new[] { "slot2" }, _store.GetAllKeys().ToList());
+        }
+
+        [Test]
+        public void DeleteAll_RemovesEverySlot()
+        {
+            _store.Save("slot1", SampleSnapshot());
+            _store.Save("slot2", SampleSnapshot());
+
+            _store.DeleteAll();
+
+            Assert.IsFalse(_store.Exists("slot1"));
+            Assert.IsFalse(_store.Exists("slot2"));
+            CollectionAssert.IsEmpty(_store.GetAllKeys());
+        }
+
+        [Test]
+        public void DeleteAll_OnEmptyStore_IsNoOp()
+        {
+            Assert.DoesNotThrow(() => _store.DeleteAll());
+        }
+
+        [Test]
+        public void DeleteAll_StoreNeverUsed_IsNoOp()
+        {
+            // RootPath's directory may not even exist yet if nothing was ever saved — DeleteAll must not throw.
+            var freshStore = new JsonFileGraphSaveStore(Path.Combine(Path.GetTempPath(), "GraphSaveTest_" + System.Guid.NewGuid().ToString("N")));
+            Assert.DoesNotThrow(() => freshStore.DeleteAll());
         }
     }
 }

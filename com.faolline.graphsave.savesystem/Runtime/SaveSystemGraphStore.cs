@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using SaveSystem;
 using UnityEngine;
 
@@ -78,6 +79,33 @@ namespace Faolline.GraphSave.UnitySaveSystem
             catch (Exception ex)
             {
                 Debug.LogWarning($"[GraphSave] Backend threw while deleting slot '{slot}' ({ex.GetType().Name}: {ex.Message}); ignored.");
+            }
+        }
+
+        /// <inheritdoc/>
+        public IEnumerable<string> GetAllKeys()
+        {
+            try
+            {
+                return _backend.GetAllKeys();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[GraphSave] Backend threw while listing keys ({ex.GetType().Name}: {ex.Message}); reporting none.");
+                return Array.Empty<string>();
+            }
+        }
+
+        /// <inheritdoc/>
+        public void DeleteAll()
+        {
+            try
+            {
+                _backend.DeleteAll();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[GraphSave] Backend threw while deleting all slots ({ex.GetType().Name}: {ex.Message}); ignored.");
             }
         }
     }
