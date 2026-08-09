@@ -1,0 +1,27 @@
+{
+  "name": "com.faolline.graphimport",
+  "version": "0.1.0",
+  "displayName": "Faolline GraphImport",
+  "description": "Generates com.faolline.graphquest and com.faolline.graphgameflow assets from structured external data (CSV/JSON tables), through a declarative per-table mapping and a pure plan-then-apply pipeline. No source table shape or column naming is assumed; only the pivot's own domain model (quest/step/branch/reference) is opinionated.",
+  "unity": "6000.0",
+  "unityRelease": "0f1",
+  "dependencies": {
+    "com.faolline.graphcore": "0.41.0",
+    "com.faolline.graphstandard": "0.17.2",
+    "com.faolline.graphquest": "0.11.2",
+    "com.faolline.graphgameflow": "0.17.1",
+    "com.unity.nuget.newtonsoft-json": "3.2.2"
+  },
+  "keywords": [
+    "graph",
+    "import",
+    "codegen",
+    "quest",
+    "gameflow",
+    "faolline"
+  ],
+  "author": {
+    "name": "JoshuaLetessier",
+    "email": "faolline@gmail.com"
+  }
+}

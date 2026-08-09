@@ -1,0 +1,29 @@
+{
+    "name": "com.faolline.graphimport.Editor",
+    "rootNamespace": "Faolline.GraphImport.Editor",
+    "references": [
+        "com.faolline.graphimport.Runtime",
+        "com.faolline.graphcore.Runtime",
+        "com.faolline.graphcore.Runtime.Core",
+        "com.faolline.graphcore.Editor",
+        "com.faolline.graphquest.Runtime",
+        "com.faolline.graphquest.Editor",
+        "com.faolline.graphgameflow.Runtime",
+        "com.faolline.graphgameflow.Editor",
+        "com.faolline.graphstandard.Runtime",
+        "com.faolline.graphstandard.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

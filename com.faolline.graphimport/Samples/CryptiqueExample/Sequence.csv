@@ -1,0 +1,4 @@
+ID,Quête (ID),Ordre,Référence_ID,Signal
+S_000,Q_001,0,jeu de dé,
+S_001,Q_001,1,récupérer la clé de la chambre,
+S_002,Q_001,2,Ouvrir l'armoire,

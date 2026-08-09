@@ -1,0 +1,5 @@
+ID,Nom,Chapitres,Type,Déclencheur(Quêtes),Statut,Notes
+Q_001,Rencontrer Tsuki,Everfrost,Principale,,À écrire,
+Q_004,Convaincre le cheval,Everfrost,Principale,Rencontrer Tsuki,À écrire,
+Q_005,Faire le tour du village,Everfrost,Secondaire,Rencontrer Tsuki,À écrire,
+Q_007,Traverser la forêt,Everfrost,Principale,Convaincre le cheval,À écrire,
