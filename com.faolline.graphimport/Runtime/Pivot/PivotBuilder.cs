@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 
 namespace Faolline.GraphImport
@@ -89,7 +90,9 @@ namespace Faolline.GraphImport
 
                     var contentRef = _resolver.Resolve(row, contentReference, sourceTables, tableMappingsByName);
 
-                    var order = int.Parse(row.Values[orderField.SourceColumn]);
+                    var rawOrder = row.Values[orderField.SourceColumn];
+                    if (!TryParseOrder(rawOrder, out var order))
+                        throw new PivotFieldParseException(sourceTable, row.RowIndex, orderField.SourceColumn, "order", rawOrder);
                     var branchOutcome = branchOutcomeField != null
                         && row.Values.TryGetValue(branchOutcomeField.SourceColumn, out var outcomeValue)
                         && !string.IsNullOrWhiteSpace(outcomeValue)
@@ -111,6 +114,28 @@ namespace Faolline.GraphImport
                 quest.Steps = linear.Concat(branches.SelectMany(b => b.Steps)).OrderBy(s => s.Order).ToList();
                 quest.Branches = branches;
             }
+        }
+
+        /// <summary>
+        /// Accepts a plain integer ("2") or an integer-valued float ("2.0" — how spreadsheet tools
+        /// commonly export a numeric column typed as float even when every value is a whole number).
+        /// A genuinely fractional value ("2.5") is rejected, not rounded: silently reordering steps
+        /// from a truncated position would be worse than failing loud.
+        /// </summary>
+        static bool TryParseOrder(string raw, out int order)
+        {
+            if (int.TryParse(raw, NumberStyles.Integer, CultureInfo.InvariantCulture, out order))
+                return true;
+
+            if (double.TryParse(raw, NumberStyles.Float, CultureInfo.InvariantCulture, out var asDouble)
+                && asDouble == Math.Floor(asDouble))
+            {
+                order = (int)asDouble;
+                return true;
+            }
+
+            order = default;
+            return false;
         }
     }
 }

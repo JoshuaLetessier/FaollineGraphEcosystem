@@ -9,7 +9,7 @@ namespace Faolline.GraphImport.Editor
     /// </summary>
     public static class GraphImportPipeline
     {
-        public static ConflictReport Run(
+        public static GraphImportRunResult Run(
             MappingConfig mapping,
             IReadOnlyDictionary<string, SourceTable> sourceTables,
             IPathTemplateResolver pathResolver,
@@ -20,9 +20,9 @@ namespace Faolline.GraphImport.Editor
             var quests = new PivotBuilder(mapping, new IdOrNameReferenceResolver()).Build(sourceTables);
             var plan = new PlanBuilder(pathResolver).Build(quests);
             var report = PlanConflictDetector.Detect(plan);
-            PlanApplier.Apply(plan, report, generators);
+            var applyResult = PlanApplier.Apply(plan, report, generators);
 
-            return report;
+            return new GraphImportRunResult(report, applyResult);
         }
     }
 }

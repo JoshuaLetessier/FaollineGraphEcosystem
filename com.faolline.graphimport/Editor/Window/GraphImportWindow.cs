@@ -111,8 +111,10 @@ namespace Faolline.GraphImport.Editor
             if (!report.IsClean)
                 Debug.LogWarning($"[GraphImport] {report.Conflicts.Count} conflict(s) — those entries will be skipped, never overwritten.");
 
-            var created = PlanApplier.Apply(_plan, report, Generators);
-            Debug.Log($"[GraphImport] Created {created.Count} asset(s).");
+            var result = PlanApplier.Apply(_plan, report, Generators);
+            Debug.Log($"[GraphImport] Created {result.Created.Count} asset(s).");
+            foreach (var failure in result.Failures)
+                Debug.LogError($"[GraphImport] Failed to generate '{failure.Entry.ProposedPath}': {failure.Exception.Message}");
         }
     }
 }
