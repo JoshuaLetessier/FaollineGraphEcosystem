@@ -68,6 +68,18 @@ namespace Faolline.GraphDialogue
             return new DialogueBasicHandle(this, node);
         }
 
+        /// <summary>Adds a SubGraph node delegating to <paramref name="target"/> — a jump into another,
+        /// separately-authored graph (e.g. a reusable sub-conversation), mirroring graphstandard's
+        /// GraphBuilderBase.AddSubGraph. A null <paramref name="target"/> is a valid, documented
+        /// "incomplete node" state (graphcore skips it with a runtime warning), never an error here.</summary>
+        public DialogueSubGraphHandle AddSubGraph(string title = null, BaseGraph target = null)
+        {
+            var node = new SubGraphNodeData { NodeType = SubGraphNodeData.NodeTypeId, TargetGraph = target };
+            if (!string.IsNullOrEmpty(title)) node.Title = title;
+            Place(node);
+            return new DialogueSubGraphHandle(this, node);
+        }
+
         /// <summary>Registers a speaker on the built graph (so the scene needs no separate speaker list).</summary>
         public DialogueGraphBuilder WithSpeaker(Speaker speaker)
         {
