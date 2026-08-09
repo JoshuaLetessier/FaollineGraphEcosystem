@@ -25,7 +25,8 @@ namespace Faolline.GraphImport.Editor
         public IReadOnlyDictionary<PlanEntryKind, IAssetGenerator> Generators { get; set; } = new Dictionary<PlanEntryKind, IAssetGenerator>
         {
             [PlanEntryKind.QuestAsset] = new QuestAssetGenerator(),
-            [PlanEntryKind.FlowAsset] = new FlowAssetGenerator()
+            [PlanEntryKind.FlowAsset] = new FlowAssetGenerator(),
+            [PlanEntryKind.DialogueAsset] = new DialogueAssetGenerator()
         };
 
         [MenuItem("Window/Faolline/Graph Import")]

@@ -13,6 +13,7 @@
         "com.faolline.graphgameflow.Editor",
         "com.faolline.graphstandard.Runtime",
         "com.faolline.graphstandard.Editor",
+        "com.faolline.graphdialoguesystem.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],

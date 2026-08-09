@@ -46,5 +46,27 @@ namespace Faolline.GraphImport.Tests
                 Assert.AreEqual(planA.Entries[i].ProposedPath, planB.Entries[i].ProposedPath);
             }
         }
+
+        [Test]
+        public void BuildDialogues_OneEntryPerDialogue_Deterministic()
+        {
+            var dialogues = new List<PivotDialogue>
+            {
+                new PivotDialogue("DLG_006", "Victoire contre le joueur de dé", "n1", new Dictionary<string, PivotDialogueNode>()),
+                new PivotDialogue("DLG_008", "Rencontre avec Tsuki", "n1", new Dictionary<string, PivotDialogueNode>())
+            };
+            var builder = new PlanBuilder(new TemplatePathResolver(new Dictionary<PlanEntryKind, string>
+            {
+                [PlanEntryKind.DialogueAsset] = "Assets/Graphs/Dialogues/{name}.asset"
+            }));
+
+            var planA = builder.BuildDialogues(dialogues);
+            var planB = builder.BuildDialogues(dialogues);
+
+            Assert.AreEqual(2, planA.Entries.Count);
+            Assert.AreEqual(PlanEntryKind.DialogueAsset, planA.Entries[0].Kind);
+            Assert.AreEqual("Assets/Graphs/Dialogues/Victoire contre le joueur de dé.asset", planA.Entries[0].ProposedPath);
+            Assert.AreEqual(planA.Entries[0].ProposedPath, planB.Entries[0].ProposedPath);
+        }
     }
 }

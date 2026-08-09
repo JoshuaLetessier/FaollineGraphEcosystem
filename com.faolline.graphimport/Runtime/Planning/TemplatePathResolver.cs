@@ -30,5 +30,19 @@ namespace Faolline.GraphImport
                 throw new InvalidOperationException($"Path template references unknown token '{{{token}}}' — not 'name', 'id', or a mapped field of quest '{quest.Id}'.");
             });
         }
+
+        public string Resolve(PlanEntryKind kind, PivotDialogue dialogue)
+        {
+            if (!_templatesByKind.TryGetValue(kind, out var template))
+                throw new InvalidOperationException($"No path template declared for asset kind '{kind}'.");
+
+            return TokenPattern.Replace(template, match =>
+            {
+                var token = match.Groups[1].Value;
+                if (token == "name") return dialogue.Name;
+                if (token == "id") return dialogue.Id;
+                throw new InvalidOperationException($"Path template references unknown token '{{{token}}}' — not 'name' or 'id' (dialogues have no mapped fields).");
+            });
+        }
     }
 }

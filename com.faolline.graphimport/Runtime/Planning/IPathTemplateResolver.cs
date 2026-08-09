@@ -4,5 +4,6 @@ namespace Faolline.GraphImport
     public interface IPathTemplateResolver
     {
         string Resolve(PlanEntryKind kind, PivotQuest quest);
+        string Resolve(PlanEntryKind kind, PivotDialogue dialogue);
     }
 }

@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using Faolline.GraphCore;
@@ -18,18 +17,18 @@ namespace Faolline.GraphImport.Editor
     /// </summary>
     public sealed class FlowAssetGenerator : IAssetGenerator
     {
-        readonly Func<PivotReference, BaseGraph> _contentResolver;
+        readonly IProjectAssetResolver _resolver;
 
-        /// <param name="contentResolver">
+        /// <param name="resolver">
         /// Resolves a step's content reference to the already-existing graph asset it should link to
-        /// (e.g. a puzzle or dialogue graph living elsewhere in the project). Locating that asset from
-        /// a bare table/id pair is not yet part of this feature's scope — the default resolver always
-        /// returns null, which graphcore documents as a valid "incomplete SubGraph node" state (skipped
-        /// with a runtime warning), never a crash.
+        /// (e.g. a puzzle or dialogue graph living elsewhere in the project) — the same shared seam
+        /// <see cref="DialogueAssetGenerator"/> uses for its own asset lookups. A null result is a
+        /// documented-valid "incomplete SubGraph node" state (graphcore skips it with a runtime
+        /// warning), never a crash.
         /// </param>
-        public FlowAssetGenerator(Func<PivotReference, BaseGraph> contentResolver = null)
+        public FlowAssetGenerator(IProjectAssetResolver resolver = null)
         {
-            _contentResolver = contentResolver ?? (_ => null);
+            _resolver = resolver ?? new NullProjectAssetResolver();
         }
 
         public void Generate(PlanEntry entry)
@@ -78,6 +77,7 @@ namespace Faolline.GraphImport.Editor
             GraphAssetBuilder.Save(graph, entry.ProposedPath);
         }
 
-        BaseGraph ResolveContent(PivotStep step) => step.ContentRef != null ? _contentResolver(step.ContentRef) : null;
+        BaseGraph ResolveContent(PivotStep step) =>
+            step.ContentRef != null ? _resolver.ResolveGraph(step.ContentRef.TargetTable, step.ContentRef.TargetId) : null;
     }
 }

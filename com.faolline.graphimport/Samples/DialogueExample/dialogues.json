@@ -1,0 +1,27 @@
+{
+  "dialogues": [
+    {
+      "id": "DLG_006",
+      "name": "Victoire contre le joueur de dé",
+      "entryNodeId": "n1",
+      "nodes": [
+        { "id": "n1", "kind": "line", "speakerKey": "antagoniste", "text": "Bien joué, tu as gagné.", "next": "n2" },
+        { "id": "n2", "kind": "choice", "options": [
+          { "label": "Continuer la conversation", "next": "n3" },
+          { "label": "Partir", "next": "n4" }
+        ] },
+        { "id": "n3", "kind": "subDialogue", "targetDialogue": "Rencontre avec Tsuki" },
+        { "id": "n4", "kind": "end", "reason": "Completed", "outcomeLabel": "left_early" }
+      ]
+    },
+    {
+      "id": "DLG_008",
+      "name": "Rencontre avec Tsuki",
+      "entryNodeId": "n1",
+      "nodes": [
+        { "id": "n1", "kind": "line", "speakerKey": "tsuki", "text": "Qui es-tu ?", "next": "n2" },
+        { "id": "n2", "kind": "end", "reason": "Completed", "outcomeLabel": "met_tsuki" }
+      ]
+    }
+  ]
+}

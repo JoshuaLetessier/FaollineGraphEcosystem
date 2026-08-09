@@ -55,6 +55,9 @@ namespace Faolline.GraphTest.Tests
         private const string FlowEditor          = "com.faolline.graphgameflow.Editor";
         private const string FlowTests           = "com.faolline.graphgameflow.Tests.EditMode";
         private const string FlowTestsPlay       = "com.faolline.graphgameflow.Tests.PlayMode";
+        private const string ImportRuntime       = "com.faolline.graphimport.Runtime";
+        private const string ImportEditor        = "com.faolline.graphimport.Editor";
+        private const string ImportTests         = "com.faolline.graphimport.Tests.EditMode";
         private const string GraphTestRuntime    = "com.faolline.graphTest.Runtime";
         private const string GraphTestEditor     = "com.faolline.graphTest.Editor";
         private const string GraphTestTests      = "com.faolline.graphTest.Tests.EditMode";
@@ -114,6 +117,19 @@ namespace Faolline.GraphTest.Tests
             [FlowEditor]     = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, FlowRuntime },
             [AddrBridgeEditor] = new[] { CoreRuntime, CoreRuntimeCore, FlowEditor, UnityAddrEditor },
 
+            // ── Tier 4 · Generation tooling (Editor-only; may reference several verticals AT ONCE
+            //    because it never executes a graph — only authors assets via their public builder
+            //    APIs; one-way — nothing in T0–T3 may reference it back) ──────────
+            [ImportRuntime] = new string[0],
+            [ImportEditor]  = new[]
+            {
+                ImportRuntime, CoreRuntime, CoreRuntimeCore, CoreEditor,
+                StdRuntime, StdEditor,
+                QuestRuntime, QuestEditor,
+                FlowRuntime, FlowEditor,
+                DialogueRuntime,
+            },
+
             // ── Dev tooling (internal-only packages) ────────────────────────────
             [GraphTestRuntime] = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime },
             [GraphTestEditor]  = new[] { GraphTestRuntime, CoreRuntime, CoreRuntimeCore, CoreEditor },
@@ -135,6 +151,12 @@ namespace Faolline.GraphTest.Tests
             [QuestTests]          = new[] { QuestRuntime, QuestEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, StdRuntime, LocRuntime, SaveRuntime, TestRunner, TestRunnerEditor },
             [FlowTests]           = new[] { FlowRuntime, FlowEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, SaveRuntime, TestRunner, TestRunnerEditor },
             [FlowTestsPlay]       = new[] { FlowRuntime, CoreRuntime, CoreRuntimeCore, TestRunner },
+            [ImportTests]         = new[]
+            {
+                ImportRuntime, ImportEditor, CoreRuntime, CoreRuntimeCore, CoreEditor,
+                StdRuntime, StdEditor, QuestRuntime, QuestEditor, FlowRuntime, FlowEditor, DialogueRuntime,
+                TestRunner, TestRunnerEditor,
+            },
             [GraphTestTests]      = new[] { GraphTestRuntime, GraphTestEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, TestRunner, TestRunnerEditor },
             [StarterTests]        = new[] { StarterRuntime, StarterEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, TestRunner, TestRunnerEditor },
         };

@@ -19,6 +19,10 @@ one of these tiers, and the whole matrix is locked by an automated test (see
         T3 · Adapters          graphsave.savesystem   gameflow.addressables   *.Localization.Unity   dialoguesystem.UI
                                (→ UnitySaveSystem)    (→ com.unity.addressables)  (→ Unity.Localization) (→ TMP/UGUI/Input)
 
+        T4 · Generation         graphimport   (Editor-only asset generation — reads T2 verticals' own
+        tooling                                builder APIs to AUTHOR assets; never referenced BY a
+                                                vertical, never runs at gameplay time)
+
         Dev tooling            graphTest · starterGraph        (never shipped to consumers)
 ```
 
@@ -38,6 +42,7 @@ Core (their own coupling to ScriptableObject types runs too deep to be worth res
 | **T1 · Capabilities** | `graphstandard`, `graphsave` | T0 | each other, T2+ |
 | **T2 · Verticals** | `graphdialoguesystem`, `graphquest`, `graphgameflow` | T0, T1 | **another vertical**, external packages |
 | **T3 · Adapters** | `graphsave.savesystem`, `graphgameflow.addressables`; the `Localization.Unity` and `UI` sub-assemblies | the package they adapt + **one** external dependency family | other adapters |
+| **T4 · Generation tooling** | `graphimport` | T0, T1, **any number of T2 verticals** (Editor-only) | being referenced BY a T0–T3 assembly (one-way: tooling depends on verticals, never the reverse); doing anything at gameplay/runtime |
 | **Dev tooling** | `graphTest`, `starterGraph` | T0, T1 | being installed in a consumer project |
 
 Tier definitions:
@@ -61,6 +66,17 @@ Tier definitions:
   - a **sub-assembly of the package** when it adapts an optional Unity package
     (`graphlocalization/Localization.Unity`, `graphdialoguesystem/UI`).
 
+- **Generation tooling** — `graphimport` reads structured external data (spreadsheets, or a small
+  dedicated dialogue interchange format) and *authors* real assets for one or more T2 verticals
+  (`graphquest`, `graphgameflow`, `graphdialoguesystem`), through those verticals' own public
+  builder/authoring APIs — never by hand-assembling their node data. This is deliberately allowed to
+  reference more than one vertical at once, which would otherwise violate rule 2. The distinction rule
+  2 actually protects — no *graph-execution-time* coupling between verticals — still holds: `graphimport`
+  never runs at gameplay time, produces no shared runtime type, and nothing in T0–T3 is allowed to
+  reference it back (a one-way, Editor-only edge). A generated flow step referencing generated dialogue
+  content still goes through `SubGraphNodeData` (rule matches the sibling constraint below), never a
+  direct C# reference between the two verticals' runtime types.
+
   An adapter package can itself split Runtime/Editor like any T0–T2 package (e.g.
   `graphgameflow.addressables.Editor` plugs Addressables scene AND graph entries into `graphgameflow`'s
   `LoadSceneAction`/`UnloadSceneAction`/`GraphKeyRegistryWindow` via opt-in registries the vertical's
@@ -75,6 +91,9 @@ Tier definitions:
    references — an illegal `using` is a compile error, not a review convention.
 2. **Verticals never reference verticals.** If two domains must cooperate at runtime, they do it
    through the shared context primitives in the consumer's composition, not through a package edge.
+   The one sanctioned exception is T4 generation tooling (`graphimport`), which may reference several
+   verticals AT ONCE because it never executes a graph — it only authors assets through their public
+   builder APIs, one-way, Editor-only (see the Generation tooling tier description above).
 3. **External dependencies live only in adapters.** A `Runtime` assembly of T0–T2 references nothing
    but other ecosystem assemblies. Wanting an external ref in a vertical is the signal that a port +
    adapter is missing.
