@@ -55,7 +55,12 @@ namespace Faolline.GraphImport.Editor
 
             EditorGUILayout.Space();
 
-            var allEntries = _questFlowEntries.Concat(_dialogueEntries).ToList();
+            // Dialogues MUST be applied before quest/flow: a quest step's content ref can target a
+            // dialogue (resolved via ProjectAssetResolver), but a dialogue never references a quest or
+            // flow asset — the dependency only ever runs this one direction. PlanApplier applies in
+            // list order, so a fixed quest-first order left same-run resolution to a not-yet-created
+            // dialogue always failing (found via real-data dogfood on this exact combined-plan path).
+            var allEntries = _dialogueEntries.Concat(_questFlowEntries).ToList();
             if (allEntries.Count == 0)
                 return;
 

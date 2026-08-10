@@ -34,8 +34,24 @@ namespace Faolline.GraphImport.Editor
 
         public ProjectAssetResolver(GenerationPlan plan, string speakerFolder)
         {
-            _pathsByPivotId = plan.Entries.ToDictionary(e => e.SourcePivotId, e => e.ProposedPath);
+            _pathsByPivotId = BuildPathsByPivotId(plan);
             _speakerFolder = speakerFolder;
+        }
+
+        /// <summary>
+        /// A plan can legitimately contain more than one entry sharing a SourcePivotId — a quest with
+        /// steps gets both a QuestAsset and a FlowAsset entry, both keyed by the same quest.Id. Nothing
+        /// ever resolves a reference TO a quest/flow asset by id (only content refs and sub-dialogue
+        /// links are ever looked up), so first-entry-wins on a duplicate id is both crash-safe and
+        /// correct for every reference kind this resolver is actually asked to resolve.
+        /// </summary>
+        static Dictionary<string, string> BuildPathsByPivotId(GenerationPlan plan)
+        {
+            var paths = new Dictionary<string, string>();
+            foreach (var entry in plan.Entries)
+                if (!paths.ContainsKey(entry.SourcePivotId))
+                    paths[entry.SourcePivotId] = entry.ProposedPath;
+            return paths;
         }
 
         public BaseGraph ResolveGraph(string targetTable, string targetId)

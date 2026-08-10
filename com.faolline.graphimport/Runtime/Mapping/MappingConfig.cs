@@ -110,6 +110,7 @@ namespace Faolline.GraphImport
                     if (!header.Contains(reference.SourceColumn))
                         errors.Add($"Table '{table.SourceTableName}': reference '{reference.PivotField}' declares sourceColumn '{reference.SourceColumn}' which is not a column of the source table.");
 
+                    var resolvedTargetTables = new List<SourceTable>();
                     foreach (var targetTableName in reference.TargetTables)
                     {
                         if (!sourceTables.TryGetValue(targetTableName, out var targetTable))
@@ -117,13 +118,20 @@ namespace Faolline.GraphImport
                             errors.Add($"Table '{table.SourceTableName}': reference '{reference.PivotField}' targets table '{targetTableName}' which was not provided.");
                             continue;
                         }
+                        resolvedTargetTables.Add(targetTable);
+                    }
 
-                        var targetHeader = new HashSet<string>(targetTable.Header);
-                        foreach (var key in reference.MatchOn)
-                        {
-                            if (!key.IsId && !targetHeader.Contains(key.NameColumn))
-                                errors.Add($"Table '{table.SourceTableName}': reference '{reference.PivotField}' declares matchOn nameColumn '{key.NameColumn}' which is not a column of target table '{targetTableName}'.");
-                        }
+                    // A nameColumn only needs to exist in AT LEAST ONE target table, not every one of
+                    // them: IdOrNameReferenceResolver already tolerates a name column being absent from
+                    // some of a reference's target tables (it simply never matches there) — requiring
+                    // it everywhere rejected mappings the resolver would otherwise handle correctly,
+                    // e.g. a multi-target reference where each table's real "name" column differs.
+                    foreach (var key in reference.MatchOn)
+                    {
+                        if (key.IsId || resolvedTargetTables.Count == 0)
+                            continue;
+                        if (!resolvedTargetTables.Any(t => t.Header.Contains(key.NameColumn)))
+                            errors.Add($"Table '{table.SourceTableName}': reference '{reference.PivotField}' declares matchOn nameColumn '{key.NameColumn}' which is not a column of ANY of its target tables ({string.Join(", ", reference.TargetTables)}).");
                     }
                 }
             }

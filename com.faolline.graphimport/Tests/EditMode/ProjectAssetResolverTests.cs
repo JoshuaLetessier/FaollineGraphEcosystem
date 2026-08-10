@@ -59,6 +59,21 @@ namespace Faolline.GraphImport.Editor.Tests
         }
 
         [Test]
+        public void Ctor_QuestWithBothQuestAndFlowEntries_DoesNotThrow()
+        {
+            // Regression: PlanBuilder.Build gives a quest's QuestAsset entry and its FlowAsset entry
+            // the SAME SourcePivotId (quest.Id) — LogicalId differs ("quest:Q_001" vs "flow:Q_001")
+            // but SourcePivotId doesn't. A naive ToDictionary(e => e.SourcePivotId, ...) throws for
+            // ANY quest that has steps (i.e. the normal case, including the shipped CryptiqueExample
+            // sample) — found via real-data dogfood.
+            var questEntry = new PlanEntry("quest:Q_001", PlanEntryKind.QuestAsset, ScratchFolder + "/Q_001.asset", "Q_001", null);
+            var flowEntry = new PlanEntry("flow:Q_001", PlanEntryKind.FlowAsset, ScratchFolder + "/Q_001_Flow.asset", "Q_001", null);
+            var plan = new GenerationPlan(new List<PlanEntry> { questEntry, flowEntry });
+
+            Assert.DoesNotThrow(() => new ProjectAssetResolver(plan, SpeakerFolder));
+        }
+
+        [Test]
         public void ResolveSpeaker_NoExistingMatch_CreatesNewSpeakerAsset()
         {
             var plan = new GenerationPlan(new List<PlanEntry>());

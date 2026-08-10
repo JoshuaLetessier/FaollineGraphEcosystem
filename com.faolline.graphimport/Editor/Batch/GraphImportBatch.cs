@@ -17,8 +17,12 @@ namespace Faolline.GraphImport.Editor
     ///
     /// Command line: -mappingJson &lt;path&gt; plus, for every table declared in that mapping's
     /// "tables" array, -&lt;sourceTableName&gt;Csv &lt;path&gt; (e.g. a table named "Quêtes" needs
-    /// -QuêtesCsv). Exits 0 only if the run is fully clean (no conflicts, no generator failures) —
-    /// this is the one signal a CI script needs to fail the job on (FR-013).
+    /// -QuêtesCsv). Optional -questPathTemplate/-flowPathTemplate override the {chapter}/{name}
+    /// default templates (kept as defaults for backward compatibility, not baked in as the only
+    /// option — a project-specific template belongs on the command line, not hardcoded here, per
+    /// the same reasoning already applied to DialogueImportBatch's -dialoguePathTemplate). Exits 0
+    /// only if the run is fully clean (no conflicts, no generator failures) — this is the one signal
+    /// a CI script needs to fail the job on (FR-013).
     /// </summary>
     public static class GraphImportBatch
     {
@@ -52,12 +56,12 @@ namespace Faolline.GraphImport.Editor
                 sourceTables[table.SourceTableName] = csv.Read(csvPath, table.SourceTableName);
             }
 
-            // Chemins d'assets propres à ce projet (Cryptique) -- voir CryptiqueBot/CLAUDE.md pour le
-            // schéma Chapitres/Nom source de ces gabarits.
+            var questPathTemplate = args.TryGetValue("-questPathTemplate", out var qpt) ? qpt : "Assets/Generated/Quests/{chapter}/{name}.asset";
+            var flowPathTemplate = args.TryGetValue("-flowPathTemplate", out var fpt) ? fpt : "Assets/Generated/GameFlow/{chapter}/{name}.asset";
             var pathResolver = new TemplatePathResolver(new Dictionary<PlanEntryKind, string>
             {
-                [PlanEntryKind.QuestAsset] = "Assets/Generated/Quests/{chapter}/{name}.asset",
-                [PlanEntryKind.FlowAsset] = "Assets/Generated/GameFlow/{chapter}/{name}.asset"
+                [PlanEntryKind.QuestAsset] = questPathTemplate,
+                [PlanEntryKind.FlowAsset] = flowPathTemplate
             });
 
             var generators = new Dictionary<PlanEntryKind, IAssetGenerator>

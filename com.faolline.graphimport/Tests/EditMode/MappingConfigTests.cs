@@ -82,5 +82,59 @@ namespace Faolline.GraphImport.Tests
             var ex = Assert.Throws<MappingValidationException>(() => mapping.Validate(sourceTables));
             Assert.IsTrue(ex.Errors.Any(e => e.Contains("Quetes")));
         }
+
+        [Test]
+        public void Validate_MultiTargetReference_NameColumnPresentInOnlyOneTargetTable_DoesNotThrow()
+        {
+            // Real-data finding: Puzzles uses "Nom", Dialogues uses a differently-named column — the
+            // resolver already tolerates a name column missing from some target tables (it just never
+            // matches there), so Validate() must not reject this as an error.
+            const string json = @"{
+                ""tables"": [
+                    {
+                        ""sourceTableName"": ""Sequence"", ""idColumn"": ""ID"", ""role"": ""step"",
+                        ""fields"": [ { ""pivotField"": ""order"", ""sourceColumn"": ""Ordre"" } ],
+                        ""references"": [
+                            { ""pivotField"": ""content"", ""sourceColumn"": ""Référence_ID"",
+                              ""targetTables"": [""Puzzles"", ""Dialogues""],
+                              ""matchOn"": [""Id"", { ""nameColumn"": ""Nom"" }] }
+                        ]
+                    }
+                ]
+            }";
+            var mapping = MappingConfig.LoadFromJson(json);
+            var sequence = new SourceTable("Sequence", new List<string> { "ID", "Ordre", "Référence_ID" });
+            var puzzles = new SourceTable("Puzzles", new List<string> { "ID", "Nom" });
+            var dialogues = new SourceTable("Dialogues", new List<string> { "ID", "Nom du dialogue" });
+            var sourceTables = new Dictionary<string, SourceTable> { ["Sequence"] = sequence, ["Puzzles"] = puzzles, ["Dialogues"] = dialogues };
+
+            Assert.DoesNotThrow(() => mapping.Validate(sourceTables));
+        }
+
+        [Test]
+        public void Validate_MultiTargetReference_NameColumnMissingFromEveryTargetTable_Throws()
+        {
+            const string json = @"{
+                ""tables"": [
+                    {
+                        ""sourceTableName"": ""Sequence"", ""idColumn"": ""ID"", ""role"": ""step"",
+                        ""fields"": [ { ""pivotField"": ""order"", ""sourceColumn"": ""Ordre"" } ],
+                        ""references"": [
+                            { ""pivotField"": ""content"", ""sourceColumn"": ""Référence_ID"",
+                              ""targetTables"": [""Puzzles"", ""Dialogues""],
+                              ""matchOn"": [""Id"", { ""nameColumn"": ""Nom"" }] }
+                        ]
+                    }
+                ]
+            }";
+            var mapping = MappingConfig.LoadFromJson(json);
+            var sequence = new SourceTable("Sequence", new List<string> { "ID", "Ordre", "Référence_ID" });
+            var puzzles = new SourceTable("Puzzles", new List<string> { "ID", "Titre" });
+            var dialogues = new SourceTable("Dialogues", new List<string> { "ID", "Nom du dialogue" });
+            var sourceTables = new Dictionary<string, SourceTable> { ["Sequence"] = sequence, ["Puzzles"] = puzzles, ["Dialogues"] = dialogues };
+
+            var ex = Assert.Throws<MappingValidationException>(() => mapping.Validate(sourceTables));
+            Assert.IsTrue(ex.Errors.Any(e => e.Contains("Nom")));
+        }
     }
 }
