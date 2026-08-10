@@ -68,5 +68,30 @@ namespace Faolline.GraphImport.Tests
             Assert.AreEqual("Assets/Graphs/Dialogues/Victoire contre le joueur de dé.asset", planA.Entries[0].ProposedPath);
             Assert.AreEqual(planA.Entries[0].ProposedPath, planB.Entries[0].ProposedPath);
         }
+
+        [Test]
+        public void BuildDialogues_ReferencedDialogueComesBeforeItsReferrer()
+        {
+            // DLG_006 (listed FIRST) sub-dialogue-links to DLG_008 (listed second) — the plan must
+            // still place DLG_008 before DLG_006, since PlanApplier applies entries in list order and
+            // a resolver can only find an already-generated asset on disk (see PlanBuilder.OrderByDependency).
+            var referrerNodes = new Dictionary<string, PivotDialogueNode>
+            {
+                ["n1"] = new PivotSubDialogueLink("n1", new PivotReference("Dialogues", "DLG_008"), null)
+            };
+            var referrer = new PivotDialogue("DLG_006", "Victoire", "n1", referrerNodes);
+            var target = new PivotDialogue("DLG_008", "Rencontre", "n1", new Dictionary<string, PivotDialogueNode>());
+
+            var builder = new PlanBuilder(new TemplatePathResolver(new Dictionary<PlanEntryKind, string>
+            {
+                [PlanEntryKind.DialogueAsset] = "Assets/Graphs/Dialogues/{id}.asset"
+            }));
+
+            var plan = builder.BuildDialogues(new List<PivotDialogue> { referrer, target });
+
+            Assert.AreEqual(2, plan.Entries.Count);
+            Assert.AreEqual("DLG_008", plan.Entries[0].SourcePivotId, "the referenced dialogue must be applied first");
+            Assert.AreEqual("DLG_006", plan.Entries[1].SourcePivotId);
+        }
     }
 }

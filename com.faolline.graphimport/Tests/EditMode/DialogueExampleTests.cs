@@ -59,5 +59,40 @@ namespace Faolline.GraphImport.Editor.Tests
             var subNode = victoire.Nodes.OfType<Faolline.GraphCore.SubGraphNodeData>().Single();
             Assert.IsNull(subNode.TargetGraph); // NullProjectAssetResolver — documented-safe unresolved state
         }
+
+        [Test]
+        public void Sample_WithRealResolver_SubDialogueLinkResolvesToTheOtherGeneratedAsset()
+        {
+            var json = File.ReadAllText(Path.Combine(SampleRoot, "dialogues.json"));
+            var interchange = InterchangeDialogueSet.LoadFromJson(json);
+            var dialogues = new DialoguePivotBuilder().Build(interchange);
+
+            var pathResolver = new TemplatePathResolver(new System.Collections.Generic.Dictionary<PlanEntryKind, string>
+            {
+                [PlanEntryKind.DialogueAsset] = ScratchFolder + "/{id}.asset"
+            });
+            var plan = new PlanBuilder(pathResolver).BuildDialogues(dialogues);
+            var report = PlanConflictDetector.Detect(plan);
+
+            var resolver = new ProjectAssetResolver(plan, ScratchFolder + "/Speakers");
+            var generators = new System.Collections.Generic.Dictionary<PlanEntryKind, IAssetGenerator>
+            {
+                [PlanEntryKind.DialogueAsset] = new DialogueAssetGenerator(resolver)
+            };
+            var result = PlanApplier.Apply(plan, report, generators);
+            Assert.IsTrue(result.IsClean);
+
+            var victoire = AssetDatabase.LoadAssetAtPath<DialogueGraph>(ScratchFolder + "/DLG_006.asset");
+            var tsuki = AssetDatabase.LoadAssetAtPath<DialogueGraph>(ScratchFolder + "/DLG_008.asset");
+            var subNode = victoire.Nodes.OfType<Faolline.GraphCore.SubGraphNodeData>().Single();
+            Assert.AreEqual(tsuki, subNode.TargetGraph, "the sub-dialogue link must resolve to the other dialogue generated in the same run");
+
+            var antagoniste = victoire.Nodes.OfType<DialogueLineNodeData>().Single().SpeakerKey;
+            Assert.AreEqual("antagoniste", antagoniste);
+            var speakerAsset = AssetDatabase.FindAssets("t:Speaker", new[] { ScratchFolder + "/Speakers" })
+                .Select(g => AssetDatabase.LoadAssetAtPath<Speaker>(AssetDatabase.GUIDToAssetPath(g)))
+                .FirstOrDefault(s => s.SpeakerId == "antagoniste");
+            Assert.IsNotNull(speakerAsset, "a Speaker asset for 'antagoniste' should have been created since none existed");
+        }
     }
 }
