@@ -1,6 +1,6 @@
 {
   "name": "com.faolline.graphimport",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "displayName": "Faolline GraphImport",
   "description": "Generates com.faolline.graphquest, com.faolline.graphgameflow, and com.faolline.graphdialoguesystem assets from structured external data (CSV/JSON tables, or a dedicated dialogue interchange format), through declarative mapping and a pure plan-then-apply pipeline. No source table shape or column naming is assumed for quest/flow data; only the pivot's own domain model (quest/step/branch/reference, or dialogue/line/choice/end/sub-dialogue) is opinionated.",
   "unity": "6000.0",
