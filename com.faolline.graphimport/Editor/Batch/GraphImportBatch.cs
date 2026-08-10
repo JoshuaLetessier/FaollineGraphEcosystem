@@ -38,7 +38,7 @@ namespace Faolline.GraphImport.Editor
 
         static void RunInternal()
         {
-            var args = ParseArgs(Environment.GetCommandLineArgs());
+            var args = BatchArgs.Parse(Environment.GetCommandLineArgs());
 
             if (!args.TryGetValue("-mappingJson", out var mappingPath) || !File.Exists(mappingPath))
                 throw new InvalidOperationException("Missing or unreadable -mappingJson <path>.");
@@ -80,15 +80,6 @@ namespace Faolline.GraphImport.Editor
             Console.WriteLine($"[GraphImportBatch] Created {result.Apply.Created.Count} asset(s), {result.Conflicts.Conflicts.Count} conflict(s), {result.Apply.Failures.Count} failure(s).");
 
             EditorApplication.Exit(result.IsClean ? 0 : 1);
-        }
-
-        static Dictionary<string, string> ParseArgs(string[] rawArgs)
-        {
-            var map = new Dictionary<string, string>();
-            for (var i = 0; i < rawArgs.Length - 1; i++)
-                if (rawArgs[i].StartsWith("-"))
-                    map[rawArgs[i]] = rawArgs[i + 1];
-            return map;
         }
     }
 }

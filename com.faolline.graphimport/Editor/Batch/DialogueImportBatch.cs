@@ -36,7 +36,7 @@ namespace Faolline.GraphImport.Editor
 
         static void RunInternal()
         {
-            var args = ParseArgs(Environment.GetCommandLineArgs());
+            var args = BatchArgs.Parse(Environment.GetCommandLineArgs());
 
             if (!args.TryGetValue("-dialoguesJson", out var jsonPath) || !File.Exists(jsonPath))
                 throw new InvalidOperationException("Missing or unreadable -dialoguesJson <path>.");
@@ -70,15 +70,6 @@ namespace Faolline.GraphImport.Editor
             Console.WriteLine($"[DialogueImportBatch] Created {applyResult.Created.Count} asset(s), {report.Conflicts.Count} conflict(s), {applyResult.Failures.Count} failure(s).");
 
             EditorApplication.Exit(isClean ? 0 : 1);
-        }
-
-        static Dictionary<string, string> ParseArgs(string[] rawArgs)
-        {
-            var map = new Dictionary<string, string>();
-            for (var i = 0; i < rawArgs.Length - 1; i++)
-                if (rawArgs[i].StartsWith("-"))
-                    map[rawArgs[i]] = rawArgs[i + 1];
-            return map;
         }
     }
 }
