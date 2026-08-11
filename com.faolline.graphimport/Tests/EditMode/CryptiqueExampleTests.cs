@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using NUnit.Framework;
-using UnityEngine;
 
 namespace Faolline.GraphImport.Tests
 {
@@ -13,7 +12,7 @@ namespace Faolline.GraphImport.Tests
     /// </summary>
     public class CryptiqueExampleTests
     {
-        static string SampleRoot => Path.Combine(Application.dataPath, "FaollineGraphEcosystem", "com.faolline.graphimport", "Samples", "CryptiqueExample");
+        static string SampleRoot => PackageRoot.Combine("Samples", "CryptiqueExample");
 
         static IReadOnlyDictionary<string, SourceTable> LoadSourceTables(MappingConfig mapping)
         {

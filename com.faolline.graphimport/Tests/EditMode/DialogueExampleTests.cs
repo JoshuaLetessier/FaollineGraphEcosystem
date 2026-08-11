@@ -1,9 +1,9 @@
 using System.IO;
 using System.Linq;
 using Faolline.GraphDialogue;
+using Faolline.GraphImport.Tests;
 using NUnit.Framework;
 using UnityEditor;
-using UnityEngine;
 
 namespace Faolline.GraphImport.Editor.Tests
 {
@@ -15,7 +15,7 @@ namespace Faolline.GraphImport.Editor.Tests
     public class DialogueExampleTests
     {
         const string ScratchFolder = "Assets/GraphImportTestScratch";
-        static string SampleRoot => Path.Combine(Application.dataPath, "FaollineGraphEcosystem", "com.faolline.graphimport", "Samples", "DialogueExample");
+        static string SampleRoot => PackageRoot.Combine("Samples", "DialogueExample");
 
         [SetUp]
         public void SetUp()
