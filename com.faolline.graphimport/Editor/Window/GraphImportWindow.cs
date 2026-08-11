@@ -16,6 +16,7 @@ namespace Faolline.GraphImport.Editor
     {
         string _mappingPath = "";
         readonly Dictionary<string, string> _tablePaths = new Dictionary<string, string>();
+        MappingConfig _loadedMapping;
 
         string _dialoguesJsonPath = "";
         string _dialoguePathTemplate = "Assets/Graphs/Dialogues/{name}.asset";
@@ -42,8 +43,25 @@ namespace Faolline.GraphImport.Editor
         {
             EditorGUILayout.LabelField("Quest / Flow data", EditorStyles.boldLabel);
             _mappingPath = EditorGUILayout.TextField("Mapping config (JSON)", _mappingPath);
-            if (GUILayout.Button("Build quest/flow plan"))
-                BuildQuestFlowPlan();
+            if (GUILayout.Button("Load mapping"))
+                LoadMapping();
+
+            if (_loadedMapping != null)
+            {
+                EditorGUILayout.LabelField("Source file per table", EditorStyles.miniBoldLabel);
+                foreach (var table in _loadedMapping.Tables)
+                {
+                    _tablePaths.TryGetValue(table.SourceTableName, out var current);
+                    var updated = EditorGUILayout.TextField(table.SourceTableName, current ?? "");
+                    _tablePaths[table.SourceTableName] = updated;
+                }
+            }
+
+            using (new EditorGUI.DisabledScope(_loadedMapping == null))
+            {
+                if (GUILayout.Button("Build quest/flow plan"))
+                    BuildQuestFlowPlan();
+            }
 
             EditorGUILayout.Space();
             EditorGUILayout.LabelField("Dialogues", EditorStyles.boldLabel);
@@ -96,7 +114,7 @@ namespace Faolline.GraphImport.Editor
             return false;
         }
 
-        void BuildQuestFlowPlan()
+        void LoadMapping()
         {
             if (!File.Exists(_mappingPath))
             {
@@ -104,7 +122,24 @@ namespace Faolline.GraphImport.Editor
                 return;
             }
 
-            var mapping = MappingConfig.LoadFromJson(File.ReadAllText(_mappingPath));
+            _loadedMapping = MappingConfig.LoadFromJson(File.ReadAllText(_mappingPath));
+
+            // Drop any stale per-table path left over from a previously loaded mapping whose table
+            // isn't part of this one, so the field list shown always matches the loaded mapping.
+            var currentTableNames = new HashSet<string>(_loadedMapping.Tables.Select(t => t.SourceTableName));
+            foreach (var stale in _tablePaths.Keys.Where(k => !currentTableNames.Contains(k)).ToList())
+                _tablePaths.Remove(stale);
+        }
+
+        void BuildQuestFlowPlan()
+        {
+            if (_loadedMapping == null)
+            {
+                Debug.LogError("[GraphImport] Load a mapping first.");
+                return;
+            }
+
+            var mapping = _loadedMapping;
             var sourceTables = new Dictionary<string, SourceTable>();
             foreach (var table in mapping.Tables)
             {
