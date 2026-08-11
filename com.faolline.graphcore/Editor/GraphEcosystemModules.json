@@ -93,7 +93,7 @@
     {
       "displayName": "Graph Import (data → graph generation)",
       "package": "com.faolline.graphimport",
-      "version": "0.3.3",
+      "version": "0.3.4",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphstandard", "com.faolline.graphquest", "com.faolline.graphgameflow", "com.faolline.graphdialoguesystem" ]
     }
