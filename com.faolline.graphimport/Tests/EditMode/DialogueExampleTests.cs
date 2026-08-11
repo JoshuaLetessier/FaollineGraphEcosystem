@@ -89,7 +89,13 @@ namespace Faolline.GraphImport.Editor.Tests
 
             var antagoniste = victoire.Nodes.OfType<DialogueLineNodeData>().Single().SpeakerKey;
             Assert.AreEqual("antagoniste", antagoniste);
-            var speakerAsset = AssetDatabase.FindAssets("t:Speaker", new[] { ScratchFolder + "/Speakers" })
+
+            // Unscoped search, matching ProjectAssetResolver.FindExistingSpeaker's own approach — a
+            // folder-scoped AssetDatabase.FindAssets(filter, folders) overload proved unreliable
+            // immediately after AssetDatabase.CreateFolder+CreateAsset in the same synchronous call
+            // (worked in this repo's Editor version, failed in a real consumer's — the production
+            // resolver never relies on the folder-scoped overload for exactly this reason).
+            var speakerAsset = AssetDatabase.FindAssets("t:Speaker")
                 .Select(g => AssetDatabase.LoadAssetAtPath<Speaker>(AssetDatabase.GUIDToAssetPath(g)))
                 .FirstOrDefault(s => s.SpeakerId == "antagoniste");
             Assert.IsNotNull(speakerAsset, "a Speaker asset for 'antagoniste' should have been created since none existed");
