@@ -2,6 +2,8 @@ using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow
 {
@@ -210,17 +212,17 @@ namespace Faolline.GraphGameFlow
             {
                 if (snapshot == null)
                 {
-                    Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: null snapshot; ignored.");
+                    Logging.Warning("GraphGameFlow", "[GraphGameFlow] GraphFlowDriver.Boot: null snapshot; ignored.");
                     return;
                 }
                 if (_running)
                 {
-                    Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: already running; ignored.");
+                    Logging.Warning("GraphGameFlow", "[GraphGameFlow] GraphFlowDriver.Boot: already running; ignored.");
                     return;
                 }
                 if (_graph == null)
                 {
-                    Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: no graph assigned; staying inert.");
+                    Logging.Warning("GraphGameFlow", "[GraphGameFlow] GraphFlowDriver.Boot: no graph assigned; staying inert.");
                     return;
                 }
 
@@ -262,17 +264,17 @@ namespace Faolline.GraphGameFlow
         {
             if (_running)
             {
-                Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: already running; ignored.");
+                Logging.Warning("GraphGameFlow", "[GraphGameFlow] GraphFlowDriver.Boot: already running; ignored.");
                 return;
             }
             if (_graph == null)
             {
-                Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: no graph assigned; staying inert.");
+                Logging.Warning("GraphGameFlow", "[GraphGameFlow] GraphFlowDriver.Boot: no graph assigned; staying inert.");
                 return;
             }
             if (!HasValidStart(_graph))
             {
-                Debug.LogWarning("[GraphGameFlow] GraphFlowDriver.Boot: graph has no valid start node (check EntryNodeId); staying inert.");
+                Logging.Warning("GraphGameFlow", "[GraphGameFlow] GraphFlowDriver.Boot: graph has no valid start node (check EntryNodeId); staying inert.");
                 return;
             }
 
@@ -460,7 +462,7 @@ namespace Faolline.GraphGameFlow
             if (_autoAdvancePending && guard >= MaxAutoAdvanceSteps)
             {
                 _autoAdvancePending = false;
-                Debug.LogWarning(
+                Logging.Warning("GraphGameFlow", 
                     $"[GraphGameFlow] Auto-advance exceeded {MaxAutoAdvanceSteps} steps in one pass — likely " +
                     "a cycle with no pause node (no await-signal, timed wait, choice, or end anywhere on the " +
                     "loop). Stopping here instead of advancing forever. Add a pause point on the cycle, or " +

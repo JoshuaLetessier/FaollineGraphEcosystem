@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphStandard;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphQuest.Editor
 {
@@ -65,7 +66,7 @@ namespace Faolline.GraphQuest.Editor
 
             Selection.activeObject = g;
             EditorGUIUtility.PingObject(g);
-            Debug.Log($"[GraphQuest] Sample created: {path}. Double-click it to open the Quest Graph editor — " +
+            Logging.Info("GraphQuest.Editor", $"[GraphQuest] Sample created: {path}. Double-click it to open the Quest Graph editor — " +
                       "set the bool params (found_clue, door_open, escaped…) on a context and the objectives derive.");
             return g;
         }

@@ -9,7 +9,7 @@
   "changelogUrl": "",
   "licensesUrl": "",
   "dependencies": {
-    "com.faolline.graphlogging": "0.1.0"
+    "com.faolline.graphlogging": "0.1.1"
   },
   "keywords": [
     "graph",

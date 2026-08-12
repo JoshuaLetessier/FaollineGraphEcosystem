@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
 
 namespace Faolline.StarterGraph.Editor
 {
@@ -25,7 +26,7 @@ namespace Faolline.StarterGraph.Editor
 
             Selection.activeObject = g;
             EditorGUIUtility.PingObject(g);
-            Debug.Log($"[StarterGraph] Minimal sample created: {SamplePath}. Open it, press Run → it pauses at the " +
+            Logging.Info("StarterGraph", $"[StarterGraph] Minimal sample created: {SamplePath}. Open it, press Run → it pauses at the " +
                       "Choice (Left is gated by the Flag bool parameter, Right is always available). Taking Left " +
                       "toggles the flag (ToggleBoolAction) so the gate flips on GoBack. It exercises the template's " +
                       "pattern to copy: graph + typed context + node + action + condition + choice.");

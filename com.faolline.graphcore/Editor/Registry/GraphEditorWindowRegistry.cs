@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore.Editor
 {
@@ -21,7 +22,7 @@ namespace Faolline.GraphCore.Editor
         {
             if (graphType == null || opener == null)
             {
-                Debug.LogWarning("[GraphCore] GraphEditorWindowRegistry.Register: null graphType/opener ignored.");
+                Logging.Warning("GraphCore", "[GraphCore] GraphEditorWindowRegistry.Register: null graphType/opener ignored.");
                 return;
             }
             Openers[graphType] = opener;
@@ -53,12 +54,12 @@ namespace Faolline.GraphCore.Editor
             {
                 Selection.activeObject = graph;
                 EditorGUIUtility.PingObject(graph);
-                Debug.LogWarning($"[GraphCore] No editor registered for graph type '{graph.GetType().Name}'; " +
-                                 "selected the asset instead. Register one via GraphEditorWindowRegistry.Register.");
+                Logging.Warning("GraphCore", $"[GraphCore] No editor registered for graph type '{graph.GetType().Name}'; " +
+                                "selected the asset instead. Register one via GraphEditorWindowRegistry.Register.");
             }
             else
             {
-                Debug.LogWarning("[GraphCore] GraphEditorWindowRegistry.Open: target graph is null (nothing to open).");
+                Logging.Warning("GraphCore", "[GraphCore] GraphEditorWindowRegistry.Open: target graph is null (nothing to open).");
             }
         }
 

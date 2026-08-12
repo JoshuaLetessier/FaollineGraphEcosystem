@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Faolline.GraphCore;
 using Faolline.GraphCore.Editor;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow.Editor
 {
@@ -137,7 +139,7 @@ namespace Faolline.GraphGameFlow.Editor
                 {
                     var result = CycleDetector.Check(_graph, proposed);
                     var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
-                    Debug.LogWarning($"[GraphGameFlow] Cycle refused: {path}");
+                    Logging.Warning("GraphGameFlow", $"[GraphGameFlow] Cycle refused: {path}");
                     targetField.SetValueWithoutNotify(node.TargetGraph);
                     return;
                 }

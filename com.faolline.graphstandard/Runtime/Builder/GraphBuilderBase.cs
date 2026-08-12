@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphStandard
 {
@@ -109,7 +111,7 @@ namespace Faolline.GraphStandard
             {
                 var match = choice.Choices.FirstOrDefault(ch => ch != null && ch.Title == portName);
                 if (match != null) return match.Id;
-                Debug.LogWarning($"[GraphStandard] GraphBuilder.Edge: no choice titled '{portName}' on the choice node; using it literally.");
+                Logging.Warning("GraphStandard", $"[GraphStandard] GraphBuilder.Edge: no choice titled '{portName}' on the choice node; using it literally.");
             }
             return portName;
         }

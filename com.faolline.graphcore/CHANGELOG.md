@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.43.0]
+
+### Changed
+- **The rest of graphcore's `Debug.Log`/`LogWarning`/`LogError` call sites migrated to `Logging`**
+  (`Faolline.GraphLogging`, 0.1.1): `BaseRunner`'s diagnostics (`GraphCore.Runtime`) and every Editor
+  tool — `GraphValidator`, `ScriptIconAssigner`, `SignalConstantsGenerator`, `VariableConstantsGenerator`,
+  `StableIdDuplicateDetector`, the graph view/inspector windows (`GraphCore.Editor`) — now go through the
+  same per-category toggle as the bootstrap/`LogAction` wiring already shipped in 0.42.0.
+
 ## [0.42.0]
 
 ### Added

@@ -3,6 +3,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using Faolline.GraphCore;
 using Faolline.GraphGameFlow;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow.Editor
 {
@@ -60,7 +62,7 @@ namespace Faolline.GraphGameFlow.Editor
 
             Selection.activeObject = g;
             EditorGUIUtility.PingObject(g);
-            Debug.Log($"[GraphGameFlow] Sample created: {path}. Assign it to a GraphFlowDriver and press Play — " +
+            Logging.Info("GraphGameFlow", $"[GraphGameFlow] Sample created: {path}. Assign it to a GraphFlowDriver and press Play — " +
                       "scene A loads, the flow waits, then RaiseSignal(\"advance\") loads scene B.");
             return g;
         }

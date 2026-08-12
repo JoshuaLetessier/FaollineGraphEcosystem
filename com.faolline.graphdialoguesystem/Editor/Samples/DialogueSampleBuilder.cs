@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphLocalization;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphDialogue.Editor
 {
@@ -96,7 +97,7 @@ namespace Faolline.GraphDialogue.Editor
 
             Selection.activeObject = graph;
             EditorGUIUtility.PingObject(graph);
-            Debug.Log($"[GraphDialogue] Sample dialogue created at {Folder}/SampleDialogue.asset");
+            Logging.Info("GraphDialogue", $"[GraphDialogue] Sample dialogue created at {Folder}/SampleDialogue.asset");
 
             // Auto-load the generated CSV into the active LocalizationContext so the editor session
             // resolves keys immediately without any manual setup.
@@ -110,14 +111,14 @@ namespace Faolline.GraphDialogue.Editor
             var settings = LocalizationSettingsLoader.Load();
             if (settings != null && settings.Mode == LocalizationMode.UnityLocalization)
             {
-                Debug.Log("[GraphDialogue] UnityLocalization mode: run Faolline ▸ Localization ▸ Build All Tables " +
+                Logging.Info("GraphDialogue", "[GraphDialogue] UnityLocalization mode: run Faolline ▸ Localization ▸ Build All Tables " +
                     "to generate the String Tables + manifest for the sample.");
                 return;
             }
 
             var provider = new CsvLocalizationProvider(csvText, "en");
             LocalizationContext.Current = new LocalizationSettings(provider, "en");
-            Debug.Log("[GraphDialogue] Sample CSV auto-loaded into LocalizationContext (en). " +
+            Logging.Info("GraphDialogue", "[GraphDialogue] Sample CSV auto-loaded into LocalizationContext (en). " +
                 "Switch locale via LocalizationContext.Current.CurrentLocale = \"fr\" to test French.");
         }
 

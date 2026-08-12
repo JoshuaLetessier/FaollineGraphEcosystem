@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphStandard
 {
@@ -76,8 +77,7 @@ namespace Faolline.GraphStandard
 
             if (graph == null || context == null)
             {
-                UnityEngine.Debug.LogWarning(
-                    "[GraphStandard] FlowRunner created with a null graph/context; it will be inert.");
+                Logging.Warning("GraphStandard", "[GraphStandard] FlowRunner created with a null graph/context; it will be inert.");
                 return;
             }
 
@@ -196,8 +196,7 @@ namespace Faolline.GraphStandard
             {
                 if (!_capWarned)
                 {
-                    UnityEngine.Debug.LogWarning(
-                        $"[GraphStandard] FlowRunner exceeded {_maxFires} fires in one propagation (possible cycle); stopping.");
+                    Logging.Warning("GraphStandard", $"[GraphStandard] FlowRunner exceeded {_maxFires} fires in one propagation (possible cycle); stopping.");
                     _capWarned = true;
                 }
                 return;

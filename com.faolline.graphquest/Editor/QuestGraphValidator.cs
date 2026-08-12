@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
-using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphCore.Editor;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphQuest.Editor
 {
@@ -88,7 +88,7 @@ namespace Faolline.GraphQuest.Editor
         {
             if (!(Selection.activeObject is QuestGraph quest))
             {
-                Debug.LogWarning("[QuestGraphValidator] Select a QuestGraph asset first.");
+                Logging.Warning("GraphQuest.Editor", "[QuestGraphValidator] Select a QuestGraph asset first.");
                 return;
             }
             GraphValidator.LogReport(quest.name, Validate(quest));

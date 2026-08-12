@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow
 {
@@ -17,14 +19,13 @@ namespace Faolline.GraphGameFlow
         {
             if (string.IsNullOrEmpty(sceneName))
             {
-                Debug.LogError("[GraphGameFlow] UnitySceneLoader.LoadScene called with a null or empty scene name; ignored.");
+                Logging.Error("GraphGameFlow", "[GraphGameFlow] UnitySceneLoader.LoadScene called with a null or empty scene name; ignored.");
                 return;
             }
 
             if (!Application.CanStreamedLevelBeLoaded(sceneName))
             {
-                Debug.LogError(
-                    $"[GraphGameFlow] Scene '{sceneName}' cannot be loaded (not in Build Settings / Addressables); ignored.");
+                Logging.Error("GraphGameFlow", $"[GraphGameFlow] Scene '{sceneName}' cannot be loaded (not in Build Settings / Addressables); ignored.");
                 return;
             }
 
@@ -36,21 +37,19 @@ namespace Faolline.GraphGameFlow
         {
             if (string.IsNullOrEmpty(sceneName))
             {
-                Debug.LogError("[GraphGameFlow] UnitySceneLoader.UnloadScene called with a null or empty scene name; ignored.");
+                Logging.Error("GraphGameFlow", "[GraphGameFlow] UnitySceneLoader.UnloadScene called with a null or empty scene name; ignored.");
                 return;
             }
 
             if (!SceneManager.GetSceneByName(sceneName).isLoaded)
             {
-                Debug.LogError(
-                    $"[GraphGameFlow] Scene '{sceneName}' is not loaded; unload ignored.");
+                Logging.Error("GraphGameFlow", $"[GraphGameFlow] Scene '{sceneName}' is not loaded; unload ignored.");
                 return;
             }
 
             if (SceneManager.sceneCount <= 1)
             {
-                Debug.LogError(
-                    $"[GraphGameFlow] Scene '{sceneName}' is the last loaded scene; Unity cannot unload it. Ignored.");
+                Logging.Error("GraphGameFlow", $"[GraphGameFlow] Scene '{sceneName}' is the last loaded scene; Unity cannot unload it. Ignored.");
                 return;
             }
 

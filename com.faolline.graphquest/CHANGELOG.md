@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.12.0]
+
+### Changed
+- **Migrated to the shared `com.faolline.graphlogging` facade.** `QuestEvaluator`'s k-of-N warning
+  (`GraphQuest.Runtime`) and `QuestGraphValidator`/`QuestSampleBuilder` (`GraphQuest.Editor`) now log
+  through `Logging.*` instead of `Debug.*`, toggleable from `Faolline ▸ Diagnostics ▸ Log Settings`.
+  New dependency: `com.faolline.graphlogging` (0.1.1).
+
 ## [0.11.2]
 
 ### Fixed

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore.Editor
 {
@@ -60,13 +61,13 @@ namespace Faolline.GraphCore.Editor
 
             if (signals.Count == 0)
             {
-                Debug.Log("[GraphCore] No SignalDef assets found — nothing to generate.");
+                Logging.Info("GraphCore.Editor","[GraphCore] No SignalDef assets found — nothing to generate.");
                 return;
             }
 
             if (!TryBuildSource(signals, out var source, out var errors))
             {
-                Debug.LogError("[GraphCore] Signal constant generation aborted (fix the display names and " +
+                Logging.Error("GraphCore.Editor","[GraphCore] Signal constant generation aborted (fix the display names and " +
                     "regenerate):\n - " + string.Join("\n - ", errors));
                 return;
             }
@@ -75,7 +76,7 @@ namespace Faolline.GraphCore.Editor
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
             File.WriteAllText(outputPath, source);
             AssetDatabase.ImportAsset(outputPath);
-            Debug.Log($"[GraphCore] Generated {signals.Count} signal constant(s) → {outputPath}");
+            Logging.Info("GraphCore.Editor","[GraphCore] Generated {signals.Count} signal constant(s) → {outputPath}");
         }
 
         /// <summary>

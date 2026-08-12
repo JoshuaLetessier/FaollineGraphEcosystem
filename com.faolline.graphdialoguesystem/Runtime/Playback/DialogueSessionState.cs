@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Text;
 using Faolline.GraphCore;
 using UnityEngine;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphDialogue
 {
@@ -91,7 +92,7 @@ namespace Faolline.GraphDialogue
             try { return JsonUtility.FromJson<DialogueSessionState>(json); }
             catch (Exception ex)
             {
-                Debug.LogError($"[GraphDialogue] DialogueSessionState.FromJson failed: {ex.Message}");
+                Logging.Error("GraphDialogue", $"[GraphDialogue] DialogueSessionState.FromJson failed: {ex.Message}");
                 return null;
             }
         }
@@ -131,13 +132,13 @@ namespace Faolline.GraphDialogue
                         context.Set(entry.Key, entry.Value);
                         break;
                     default:
-                        Debug.LogWarning($"[GraphDialogue] Unknown context type '{entry.Type}' for key '{entry.Key}' — skipped.");
+                        Logging.Warning("GraphDialogue", $"[GraphDialogue] Unknown context type '{entry.Type}' for key '{entry.Key}' — skipped.");
                         break;
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[GraphDialogue] Could not restore context key '{entry.Key}': {ex.Message}");
+                Logging.Warning("GraphDialogue", $"[GraphDialogue] Could not restore context key '{entry.Key}': {ex.Message}");
             }
         }
     }

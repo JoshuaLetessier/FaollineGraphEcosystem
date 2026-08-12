@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore.Editor
 {
@@ -59,13 +60,13 @@ namespace Faolline.GraphCore.Editor
 
             if (parameters.Count == 0)
             {
-                Debug.Log("[GraphCore] No VariableDef assets found — nothing to generate.");
+                Logging.Info("GraphCore.Editor", "[GraphCore] No VariableDef assets found — nothing to generate.");
                 return;
             }
 
             if (!TryBuildSource(parameters, out var source, out var errors))
             {
-                Debug.LogError("[GraphCore] Variable constant generation aborted (fix the display names and " +
+                Logging.Error("GraphCore.Editor", "[GraphCore] Variable constant generation aborted (fix the display names and " +
                     "regenerate):\n - " + string.Join("\n - ", errors));
                 return;
             }
@@ -74,7 +75,7 @@ namespace Faolline.GraphCore.Editor
             if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir)) Directory.CreateDirectory(dir);
             File.WriteAllText(outputPath, source);
             AssetDatabase.ImportAsset(outputPath);
-            Debug.Log($"[GraphCore] Generated {parameters.Count} parameter constant(s) → {outputPath}");
+            Logging.Info("GraphCore.Editor", $"[GraphCore] Generated {parameters.Count} parameter constant(s) → {outputPath}");
         }
 
         /// <summary>

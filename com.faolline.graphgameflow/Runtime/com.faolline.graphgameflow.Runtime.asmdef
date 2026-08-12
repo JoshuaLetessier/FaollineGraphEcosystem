@@ -4,7 +4,8 @@
     "references": [
         "com.faolline.graphcore.Runtime",
         "com.faolline.graphcore.Runtime.Core",
-        "com.faolline.graphsave.Runtime"
+        "com.faolline.graphsave.Runtime",
+        "com.faolline.graphlogging.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

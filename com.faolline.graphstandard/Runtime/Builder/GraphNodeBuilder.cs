@@ -1,6 +1,8 @@
 using System;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphStandard
 {
@@ -38,7 +40,7 @@ namespace Faolline.GraphStandard
         public GraphNodeBuilder Id(string id)
         {
             if (string.IsNullOrWhiteSpace(id))
-                Debug.LogWarning("[GraphStandard] GraphNodeBuilder.Id: empty id ignored; keeping the auto-GUID.");
+                Logging.Warning("GraphStandard", "[GraphStandard] GraphNodeBuilder.Id: empty id ignored; keeping the auto-GUID.");
             else
                 Node.Id = id;
             return this;
@@ -88,7 +90,7 @@ namespace Faolline.GraphStandard
             {
                 if (string.IsNullOrWhiteSpace(name))
                 {
-                    Debug.LogWarning("[GraphStandard] GraphNodeBuilder.Await: null/blank signal name skipped.");
+                    Logging.Warning("GraphStandard", "[GraphStandard] GraphNodeBuilder.Await: null/blank signal name skipped.");
                     continue;
                 }
                 if (string.IsNullOrEmpty(Node.AwaitSignalName))
@@ -131,7 +133,7 @@ namespace Faolline.GraphStandard
                     Condition = condition
                 });
             else
-                Debug.LogWarning("[GraphStandard] GraphNodeBuilder.Choice: node is not a Choice node; ignored.");
+                Logging.Warning("GraphStandard", "[GraphStandard] GraphNodeBuilder.Choice: node is not a Choice node; ignored.");
             return this;
         }
 

@@ -3,6 +3,8 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Faolline.GraphCore;
 using Faolline.GraphGameFlow;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow.Addressables
 {
@@ -61,7 +63,7 @@ namespace Faolline.GraphGameFlow.Addressables
         {
             if (_nextChapter == null || !_nextChapter.RuntimeKeyIsValid())
             {
-                Debug.LogError("[GraphGameFlow] PreloadNextChapterAction.Execute called with no valid NextChapter reference; ignored.");
+                Logging.Error("GraphGameFlow", "[GraphGameFlow] PreloadNextChapterAction.Execute called with no valid NextChapter reference; ignored.");
                 return;
             }
 
@@ -76,7 +78,7 @@ namespace Faolline.GraphGameFlow.Addressables
             if (op.Status != AsyncOperationStatus.Succeeded || op.Result == null)
             {
                 var reason = $"PreloadNextChapterAction: next chapter failed to preload: {op.OperationException}";
-                Debug.LogError($"[GraphGameFlow] {reason}");
+                Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason}");
                 RaiseSignal(_failedSignal, driver, reason);
                 return;
             }
@@ -93,9 +95,9 @@ namespace Faolline.GraphGameFlow.Addressables
 
             if (driver == null)
             {
-                Debug.LogWarning(
+                Logging.Warning("GraphGameFlow", (
                     "[GraphGameFlow] PreloadNextChapterAction: signal configured but no target driver " +
-                    "(SignalDriver unset and GraphFlowDriver.Active is null); signal dropped.");
+                    "(SignalDriver unset and GraphFlowDriver.Active is null); signal dropped."));
                 return;
             }
 

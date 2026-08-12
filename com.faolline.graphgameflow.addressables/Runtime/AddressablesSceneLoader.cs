@@ -8,6 +8,8 @@ using UnityEngine.ResourceManagement.ResourceProviders;
 using UnityEngine.SceneManagement;
 using Faolline.GraphCore;
 using Faolline.GraphGameFlow;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow.Addressables
 {
@@ -188,7 +190,7 @@ namespace Faolline.GraphGameFlow.Addressables
         {
             if (string.IsNullOrEmpty(sceneName))
             {
-                Debug.LogError("[GraphGameFlow] AddressablesSceneLoader.LoadScene called with a null or empty key; ignored.");
+                Logging.Error("GraphGameFlow", "[GraphGameFlow] AddressablesSceneLoader.LoadScene called with a null or empty key; ignored.");
                 return;
             }
 
@@ -200,7 +202,7 @@ namespace Faolline.GraphGameFlow.Addressables
         {
             if (string.IsNullOrEmpty(sceneName))
             {
-                Debug.LogError("[GraphGameFlow] AddressablesSceneLoader.UnloadScene called with a null or empty key; ignored.");
+                Logging.Error("GraphGameFlow", "[GraphGameFlow] AddressablesSceneLoader.UnloadScene called with a null or empty key; ignored.");
                 return;
             }
 
@@ -215,7 +217,7 @@ namespace Faolline.GraphGameFlow.Addressables
         {
             if (_pendingHandle == null)
             {
-                Debug.LogWarning("[GraphGameFlow] AddressablesSceneLoader.ActivateReadyScene called with no scene ready to activate; ignored.");
+                Logging.Warning("GraphGameFlow", "[GraphGameFlow] AddressablesSceneLoader.ActivateReadyScene called with no scene ready to activate; ignored.");
                 return;
             }
 
@@ -288,7 +290,7 @@ namespace Faolline.GraphGameFlow.Addressables
                 // instead of needing ResumeIfSignalAlreadyRaised to recover it from history.
                 yield return null;
                 var reason = $"Addressables scene '{key}' failed to load: {handle.OperationException}";
-                Debug.LogError($"[GraphGameFlow] {reason}");
+                Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason}");
                 SceneLoadFailed?.Invoke(key, reason);
                 RaiseFailureSignal(_loadFailedSignal, key, reason);
                 yield break;
@@ -329,7 +331,7 @@ namespace Faolline.GraphGameFlow.Addressables
             {
                 yield return null;   // see the matching comment in LoadRoutine
                 var reason = $"Scene '{key}' was not loaded by this AddressablesSceneLoader; unload ignored.";
-                Debug.LogError($"[GraphGameFlow] {reason}");
+                Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason}");
                 SceneUnloadFailed?.Invoke(key, reason);
                 RaiseFailureSignal(_unloadFailedSignal, key, reason);
                 yield break;
@@ -339,7 +341,7 @@ namespace Faolline.GraphGameFlow.Addressables
             {
                 yield return null;   // see the matching comment in LoadRoutine
                 var reason = $"Scene '{key}' is the last loaded scene; Unity cannot unload it.";
-                Debug.LogError($"[GraphGameFlow] {reason} Ignored.");
+                Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason} Ignored.");
                 SceneUnloadFailed?.Invoke(key, reason);
                 RaiseFailureSignal(_unloadFailedSignal, key, reason);
                 yield break;
@@ -375,10 +377,10 @@ namespace Faolline.GraphGameFlow.Addressables
             if (elapsed < _stuckOperationWarningAfter) return;
 
             warned = true;
-            Debug.LogWarning(
+            Logging.Warning("GraphGameFlow", (
                 $"[GraphGameFlow] Addressables scene operation for '{key}' has been in flight for {elapsed:0.0}s " +
                 $"(over the {_stuckOperationWarningAfter:0.0}s warning threshold) — it may be hung. No " +
-                "automatic action is taken; this is a visibility aid only.");
+                "automatic action is taken; this is a visibility aid only."));
             OperationTakingTooLong?.Invoke(key, elapsed);
         }
 
@@ -401,9 +403,9 @@ namespace Faolline.GraphGameFlow.Addressables
             var driver = _signalDriver != null ? _signalDriver : GraphFlowDriver.Active;
             if (driver == null)
             {
-                Debug.LogWarning(
+                Logging.Warning("GraphGameFlow", (
                     $"[GraphGameFlow] AddressablesSceneLoader: signal configured but no target driver " +
-                    $"(SignalDriver unset and GraphFlowDriver.Active is null); signal for '{key}' dropped.");
+                    $"(SignalDriver unset and GraphFlowDriver.Active is null); signal for '{key}' dropped."));
                 return;
             }
 

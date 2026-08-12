@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore.Editor
 {
@@ -34,7 +35,7 @@ namespace Faolline.GraphCore.Editor
 
             if (nodes.Count == 0)
             {
-                Debug.LogWarning("[GraphCore] No nodes selected — template not created.");
+                Logging.Warning("GraphCore.Editor", "[GraphCore] No nodes selected — template not created.");
                 return;
             }
 
@@ -47,7 +48,7 @@ namespace Faolline.GraphCore.Editor
             template.Capture(nodes, edges);
             AssetDatabase.CreateAsset(template, path);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[GraphCore] Template saved: {path} ({nodes.Count} nodes, {edges.Count} internal edges).");
+            Logging.Info("GraphCore.Editor", $"[GraphCore] Template saved: {path} ({nodes.Count} nodes, {edges.Count} internal edges).");
         }
 
         private void InsertTemplate(GraphTemplate template, Vector2 insertPosition)

@@ -1,5 +1,6 @@
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphDialogue
 {
@@ -37,7 +38,7 @@ namespace Faolline.GraphDialogue
         {
             if (_dialogueGraph == null)
             {
-                Debug.LogWarning("[GraphDialogue] PlayDialogueAction: no dialogue graph assigned; skipping.");
+                Logging.Warning("GraphDialogue", "[GraphDialogue] PlayDialogueAction: no dialogue graph assigned; skipping.");
                 return;
             }
 

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphStandard
 {
@@ -69,8 +70,7 @@ namespace Faolline.GraphStandard
 
             if (graph == null || context == null || string.IsNullOrEmpty(completedSetKey))
             {
-                UnityEngine.Debug.LogWarning(
-                    "[GraphStandard] ReactiveEvaluator created with a null graph/context or empty completed-set key; it will be inert.");
+                Logging.Warning("GraphStandard", "[GraphStandard] ReactiveEvaluator created with a null graph/context or empty completed-set key; it will be inert.");
                 return;
             }
 

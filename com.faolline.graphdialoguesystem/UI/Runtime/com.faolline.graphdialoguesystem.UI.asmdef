@@ -8,7 +8,8 @@
         "com.faolline.graphlocalization.Runtime",
         "Unity.TextMeshPro",
         "UnityEngine.UI",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "com.faolline.graphlogging.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

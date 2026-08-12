@@ -29,7 +29,7 @@ one of these tiers, and the whole matrix is locked by an automated test (see
 ```
 
 `graphlogging` is a zero-dependency T0 leaf, like `graphlocalization` — both `graphcore.Runtime` and
-`graphlocalization` depend on it for the shared, category-based `GraphLogging.Info/Warning/Error` facade
+`graphlocalization` depend on it for the shared, category-based `Logging.Info/Warning/Error` facade
 (any other package may adopt it too). It exists as a separate package specifically so `graphlocalization`
 can share it without depending on `graphcore` and losing its own zero-dependency, install-alone status.
 

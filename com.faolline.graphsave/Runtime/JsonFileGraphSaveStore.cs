@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEngine;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphSave
 {
@@ -42,7 +44,7 @@ namespace Faolline.GraphSave
             if (string.IsNullOrEmpty(slot) || snapshot == null) return;
             if (!TryGetSlotPath(slot, out var path))
             {
-                Debug.LogError($"[GraphSave] Slot '{slot}' is not a valid save name (must contain no path separators or filesystem-reserved characters); the snapshot was NOT persisted.");
+                Logging.Error("GraphSave", $"[GraphSave] Slot '{slot}' is not a valid save name (must contain no path separators or filesystem-reserved characters); the snapshot was NOT persisted.");
                 return;
             }
 
@@ -54,7 +56,7 @@ namespace Faolline.GraphSave
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[GraphSave] Could not save slot '{slot}' ({ex.GetType().Name}: {ex.Message}); the snapshot was NOT persisted.");
+                Logging.Error("GraphSave", $"[GraphSave] Could not save slot '{slot}' ({ex.GetType().Name}: {ex.Message}); the snapshot was NOT persisted.");
             }
         }
 
@@ -71,7 +73,7 @@ namespace Faolline.GraphSave
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[GraphSave] Slot '{slot}' could not be read/parsed ({ex.GetType().Name}: {ex.Message}); treating as absent.");
+                Logging.Warning("GraphSave", $"[GraphSave] Slot '{slot}' could not be read/parsed ({ex.GetType().Name}: {ex.Message}); treating as absent.");
                 return null;
             }
         }

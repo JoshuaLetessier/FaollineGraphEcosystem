@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore
 {
@@ -46,13 +47,13 @@ namespace Faolline.GraphCore
                 if (!context.TryGet<float>(_variable, out value))
                 {
                     if (_warnOnMissing)
-                        Debug.LogWarning($"[GraphCore] FloatCondition: parameter '{_variable.DisplayName}' not found — false.");
+                        Logging.Warning("GraphCore.Runtime", $"[GraphCore] FloatCondition: parameter '{_variable.DisplayName}' not found — false.");
                     return false;
                 }
             }
             catch (System.InvalidCastException)
             {
-                Debug.LogWarning($"[GraphCore] FloatCondition: parameter '{_variable.DisplayName}' is not a float — false.");
+                Logging.Warning("GraphCore.Runtime", $"[GraphCore] FloatCondition: parameter '{_variable.DisplayName}' is not a float — false.");
                 return false;
             }
             return _operator.Matches(value.CompareTo(_expectedValue));

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Faolline.GraphDialogue;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphDialogue.UI
 {
@@ -82,7 +83,7 @@ namespace Faolline.GraphDialogue.UI
             if (View != null)
                 View.ChoiceSelected += Choose;
             else
-                Debug.LogWarning("[GraphDialogue] DialoguePlaybackController: no IDialogueView assigned — running logic only.");
+                Logging.Warning("GraphDialogue", "[GraphDialogue] DialoguePlaybackController: no IDialogueView assigned — running logic only.");
         }
 
         /// <summary>Detaches from the source/view. Call when the host component is destroyed or rebinds.</summary>

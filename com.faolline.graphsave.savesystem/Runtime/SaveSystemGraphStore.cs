@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using SaveSystem;
 using UnityEngine;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphSave.UnitySaveSystem
 {
@@ -33,7 +35,7 @@ namespace Faolline.GraphSave.UnitySaveSystem
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[GraphSave] Backend threw while saving slot '{slot}' ({ex.GetType().Name}: {ex.Message}); the snapshot was NOT persisted.");
+                Logging.Error("GraphSave", $"[GraphSave] Backend threw while saving slot '{slot}' ({ex.GetType().Name}: {ex.Message}); the snapshot was NOT persisted.");
             }
         }
 
@@ -46,7 +48,7 @@ namespace Faolline.GraphSave.UnitySaveSystem
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[GraphSave] Backend threw while loading slot '{slot}' ({ex.GetType().Name}: {ex.Message}); treating as absent.");
+                Logging.Warning("GraphSave", $"[GraphSave] Backend threw while loading slot '{slot}' ({ex.GetType().Name}: {ex.Message}); treating as absent.");
                 return null;
             }
         }
@@ -64,7 +66,7 @@ namespace Faolline.GraphSave.UnitySaveSystem
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[GraphSave] Backend threw while checking slot '{slot}' ({ex.GetType().Name}: {ex.Message}); reporting as absent.");
+                Logging.Warning("GraphSave", $"[GraphSave] Backend threw while checking slot '{slot}' ({ex.GetType().Name}: {ex.Message}); reporting as absent.");
                 return false;
             }
         }
@@ -78,7 +80,7 @@ namespace Faolline.GraphSave.UnitySaveSystem
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[GraphSave] Backend threw while deleting slot '{slot}' ({ex.GetType().Name}: {ex.Message}); ignored.");
+                Logging.Warning("GraphSave", $"[GraphSave] Backend threw while deleting slot '{slot}' ({ex.GetType().Name}: {ex.Message}); ignored.");
             }
         }
 
@@ -91,7 +93,7 @@ namespace Faolline.GraphSave.UnitySaveSystem
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[GraphSave] Backend threw while listing keys ({ex.GetType().Name}: {ex.Message}); reporting none.");
+                Logging.Warning("GraphSave", $"[GraphSave] Backend threw while listing keys ({ex.GetType().Name}: {ex.Message}); reporting none.");
                 return Array.Empty<string>();
             }
         }
@@ -105,7 +107,7 @@ namespace Faolline.GraphSave.UnitySaveSystem
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[GraphSave] Backend threw while deleting all slots ({ex.GetType().Name}: {ex.Message}); ignored.");
+                Logging.Warning("GraphSave", $"[GraphSave] Backend threw while deleting all slots ({ex.GetType().Name}: {ex.Message}); ignored.");
             }
         }
     }

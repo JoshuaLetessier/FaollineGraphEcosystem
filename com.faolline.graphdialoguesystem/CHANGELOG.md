@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.19.0]
+
+### Changed
+- **Migrated to the shared `com.faolline.graphlogging` facade.** Playback (`DialogueBus`,
+  `DialoguePlayer`, `DialoguePresenter`, `DialogueSessionState`, `PlayDialogueAction`) and the UI layer
+  (`DialogueDriver`, `CanvasDialogueView`, `UIToolkitDialogueView`, `DialoguePlaybackController`) now log
+  through `Logging.*` under `GraphDialogue`, toggleable from `Faolline ▸ Diagnostics ▸ Log Settings`.
+  New dependency: `com.faolline.graphlogging` (0.1.1).
+
 ## [0.17.2]
 
 ### Fixed

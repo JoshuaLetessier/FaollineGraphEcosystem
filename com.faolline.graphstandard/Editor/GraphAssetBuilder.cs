@@ -4,6 +4,8 @@ using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphStandard.Editor
 {
@@ -24,12 +26,12 @@ namespace Faolline.GraphStandard.Editor
         {
             if (graph == null)
             {
-                Debug.LogError("[GraphStandard] GraphAssetBuilder.Save: null graph; ignored.");
+                Logging.Error("GraphStandard", "[GraphStandard] GraphAssetBuilder.Save: null graph; ignored.");
                 return null;
             }
             if (string.IsNullOrEmpty(path))
             {
-                Debug.LogError("[GraphStandard] GraphAssetBuilder.Save: empty path; ignored.");
+                Logging.Error("GraphStandard", "[GraphStandard] GraphAssetBuilder.Save: empty path; ignored.");
                 return graph;
             }
 

@@ -4,6 +4,13 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.10.0]
+
+### Changed
+- **Migrated to the shared `com.faolline.graphlogging` facade.** `GraphRunSnapshot`/
+  `JsonFileGraphSaveStore` now log through `Logging.*` under `GraphSave`, toggleable from
+  `Faolline ▸ Diagnostics ▸ Log Settings`. New dependency: `com.faolline.graphlogging` (0.1.1).
+
 ## [0.9.0]
 
 ### Added — `IGraphSaveStore.GetAllKeys()` / `DeleteAll()`

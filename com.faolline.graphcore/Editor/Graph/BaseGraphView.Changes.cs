@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.Experimental.GraphView;
 using UnityEngine;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore.Editor
 {
@@ -106,7 +107,7 @@ namespace Faolline.GraphCore.Editor
                     if (cycleResult.HasCycle)
                     {
                         var path = string.Join(" → ", cycleResult.CyclePath);
-                        Debug.LogError($"[GraphCore] Cycle detected: {path}");
+                        Logging.Error("GraphCore", $"[GraphCore] Cycle detected: {path}");
                         edges.Remove(edge);
                         continue;
                     }

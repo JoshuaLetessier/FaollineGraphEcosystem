@@ -4,6 +4,13 @@ All notable changes to **com.faolline.graphsave.savesystem** are documented here
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.2.0]
+
+### Changed
+- **Migrated to the shared `com.faolline.graphlogging` facade.** `SaveSystemGraphStore` now logs through
+  `Logging.*`, toggleable from `Faolline ▸ Diagnostics ▸ Log Settings`. New dependency:
+  `com.faolline.graphlogging` (0.1.1).
+
 ## [0.1.9]
 
 ### Added

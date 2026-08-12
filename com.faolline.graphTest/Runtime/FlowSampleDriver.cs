@@ -1,6 +1,7 @@
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphStandard;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphTest
 {
@@ -33,7 +34,7 @@ namespace Faolline.GraphTest
         {
             if (_graph == null)
             {
-                Debug.LogWarning("[GraphTest] FlowSampleDriver: no graph assigned; staying inert.");
+                Logging.Warning("GraphTest", "[GraphTest] FlowSampleDriver: no graph assigned; staying inert.");
                 return;
             }
             _context = new BaseContext();

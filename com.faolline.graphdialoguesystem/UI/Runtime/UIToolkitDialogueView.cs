@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UIElements;
 using Faolline.GraphDialogue;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphDialogue.UI
 {
@@ -116,7 +117,7 @@ namespace Faolline.GraphDialogue.UI
                 }
             }
             if (options.Count > shown)
-                Debug.LogWarning($"[GraphDialogue] UIToolkitDialogueView: {options.Count} options but only " +
+                Logging.Warning("GraphDialogue", $"[GraphDialogue] UIToolkitDialogueView: {options.Count} options but only " +
                     $"{shown} slot(s) found with prefix '{choiceSlotPrefix}' — extra options are not shown.");
         }
 

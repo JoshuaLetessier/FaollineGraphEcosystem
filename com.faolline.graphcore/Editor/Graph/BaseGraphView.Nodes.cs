@@ -1,6 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore.Editor
 {
@@ -18,7 +19,7 @@ namespace Faolline.GraphCore.Editor
 
             if (nodeData != null && nodeData.NodeType == StartNodeData.NodeTypeId && HasStartNode())
             {
-                Debug.LogWarning("[GraphCore] This graph already has a Start node — only one is allowed (the single entry point).");
+                Logging.Warning("GraphCore", "[GraphCore] This graph already has a Start node — only one is allowed (the single entry point).");
                 return;
             }
 

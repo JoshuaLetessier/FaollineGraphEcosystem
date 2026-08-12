@@ -3,6 +3,8 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow.Editor
 {
@@ -126,7 +128,7 @@ namespace Faolline.GraphGameFlow.Editor
             var path = ProjectScenePaths().FirstOrDefault(p => Path.GetFileNameWithoutExtension(p) == sceneName);
             if (string.IsNullOrEmpty(path))
             {
-                Debug.LogWarning($"[GraphGameFlow] No project scene named '{sceneName}' to add to Build Settings.");
+                Logging.Warning("GraphGameFlow", $"[GraphGameFlow] No project scene named '{sceneName}' to add to Build Settings.");
                 return;
             }
 
@@ -134,7 +136,7 @@ namespace Faolline.GraphGameFlow.Editor
             if (list.Any(s => s.path == path)) return;
             list.Add(new EditorBuildSettingsScene(path, true));
             EditorBuildSettings.scenes = list.ToArray();
-            Debug.Log($"[GraphGameFlow] Added '{path}' to Build Settings.");
+            Logging.Info("GraphGameFlow", $"[GraphGameFlow] Added '{path}' to Build Settings.");
         }
 
         private static void DrawProviderDropdown(SerializedProperty sceneNameProp, ISceneKeySourceProvider provider)

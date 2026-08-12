@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.18.0]
+
+### Changed
+- **Migrated to the shared `com.faolline.graphlogging` facade.** `GraphFlowDriver`, scene loaders
+  (`AsyncSceneLoader`, `UnitySceneLoader`), `LoadSceneAction`/`UnloadSceneAction`,
+  `SceneAwaitSetup`, `ContextTrigger`, `DirectGraphCatalog`, and the Editor tooling (inspector, window,
+  sample builder) now log through `Logging.*` under `GraphGameFlow`, toggleable from
+  `Faolline ▸ Diagnostics ▸ Log Settings`. New dependency: `com.faolline.graphlogging` (0.1.1).
+
 ## [0.17.1]
 
 ### Removed — `ChapterRootSubGraphValidatorExtension`

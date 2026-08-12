@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphLocalization;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphDialogue
 {
@@ -130,7 +131,7 @@ namespace Faolline.GraphDialogue
                 }
             }
             if (passing > 1)
-                Debug.LogWarning(
+                Logging.Warning("GraphDialogue", 
                     $"[GraphDialogue] Router '{node.Id}' has {passing} branches whose conditions pass at once; " +
                     $"taking the first ('{first}'). Make sibling branch conditions mutually exclusive (And/Not), " +
                     $"give an explicit priority, or add a default branch.");
@@ -193,7 +194,7 @@ namespace Faolline.GraphDialogue
                     if (!_missingKeys.Contains(key))
                     {
                         _missingKeys.Add(key);
-                        Debug.LogWarning($"[GraphDialogue] Missing localization key '{key}' for locale '{locale}'.");
+                        Logging.Warning("GraphDialogue", $"[GraphDialogue] Missing localization key '{key}' for locale '{locale}'.");
                         OnMissingKey?.Invoke(key);
                     }
                     break;

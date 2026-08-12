@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Faolline.GraphCore;
 using Faolline.GraphStandard;
 using Faolline.GraphLocalization;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphQuest
 {
@@ -75,7 +76,7 @@ namespace Faolline.GraphQuest
                         int prereqCount = 0;
                         foreach (var e in quest.Edges) if (e != null && e.ToNodeId == obj.Id) prereqCount++;
                         if (obj.RequiredPrerequisiteCount > prereqCount)
-                            UnityEngine.Debug.LogWarning(
+                            Logging.Warning("GraphQuest.Runtime",
                                 $"[GraphQuest] Objective '{obj.Id}' requires at least {obj.RequiredPrerequisiteCount} of " +
                                 $"only {prereqCount} prerequisite(s) — it can never unlock (stays Locked). Lower the " +
                                 $"count or add prerequisites.");

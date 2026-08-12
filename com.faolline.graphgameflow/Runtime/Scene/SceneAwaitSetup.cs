@@ -1,5 +1,7 @@
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow
 {
@@ -41,12 +43,12 @@ namespace Faolline.GraphGameFlow
         {
             if (node == null)
             {
-                Debug.LogError("[GraphGameFlow] SceneAwaitSetup.ConfigureLoadAwait called with a null node; ignored.");
+                Logging.Error("GraphGameFlow", "[GraphGameFlow] SceneAwaitSetup.ConfigureLoadAwait called with a null node; ignored.");
                 return;
             }
             if (completedSignal == null)
             {
-                Debug.LogError("[GraphGameFlow] SceneAwaitSetup.ConfigureLoadAwait called with a null completedSignal; ignored.");
+                Logging.Error("GraphGameFlow", "[GraphGameFlow] SceneAwaitSetup.ConfigureLoadAwait called with a null completedSignal; ignored.");
                 return;
             }
 

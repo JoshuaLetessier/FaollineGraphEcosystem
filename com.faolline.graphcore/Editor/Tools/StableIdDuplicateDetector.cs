@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore.Editor
 {
@@ -46,7 +47,7 @@ namespace Faolline.GraphCore.Editor
         private static void FixAllMenu()
         {
             int fixedCount = ScanAndFix(null);
-            Debug.Log(fixedCount == 0
+            Logging.Info("GraphCore.Editor", fixedCount == 0
                 ? "[GraphCore] No duplicate stable ids found."
                 : $"[GraphCore] Regenerated {fixedCount} duplicate stable id(s). See the warnings above for details.");
         }
@@ -102,8 +103,7 @@ namespace Faolline.GraphCore.Editor
                     var asset = AssetDatabase.LoadAssetAtPath(path, type) as ScriptableObject;
                     var newId = RegenerateId(asset, ((IStableGuidIdentity)asset).StableIdFieldName);
                     fixedCount++;
-                    Debug.LogWarning(
-                        $"[GraphCore] Duplicate {type.Name} id '{kv.Key}': '{path}' shared it with '{keeper}' — " +
+                    Logging.Warning("GraphCore", $"[GraphCore] Duplicate {type.Name} id '{kv.Key}': '{path}' shared it with '{keeper}' — " +
                         $"regenerated to '{newId}'. Stable ids must be unique within a type (cycle detection, " +
                         $"context-collection keys, and save data rely on them). If this asset was meant to " +
                         $"REPLACE the other one, delete the other asset and revert this file instead.");

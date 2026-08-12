@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore.Editor
 {
@@ -94,7 +95,7 @@ namespace Faolline.GraphCore.Editor
             }
 
             RefreshExistingAssets();
-            Debug.Log($"[GraphCore] Assigned icons to {assigned} scripts and refreshed existing assets.");
+            Logging.Info("GraphCore.Editor", $"[GraphCore] Assigned icons to {assigned} scripts and refreshed existing assets.");
         }
 
         /// <summary>
@@ -117,7 +118,7 @@ namespace Faolline.GraphCore.Editor
                 }
             }
             if (refreshed > 0)
-                Debug.Log($"[GraphCore] Reimported {refreshed} existing assets to refresh their icons.");
+                Logging.Info("GraphCore.Editor", $"[GraphCore] Reimported {refreshed} existing assets to refresh their icons.");
         }
 
         private static string ResolveIconKey(Type type)

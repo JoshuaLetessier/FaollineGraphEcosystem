@@ -4,7 +4,8 @@
     "references": [
         "com.faolline.graphcore.Runtime",
         "com.faolline.graphcore.Runtime.Core",
-        "com.faolline.graphlocalization.Runtime"
+        "com.faolline.graphlocalization.Runtime",
+        "com.faolline.graphlogging.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

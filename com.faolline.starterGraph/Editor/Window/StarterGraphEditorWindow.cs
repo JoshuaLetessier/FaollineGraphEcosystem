@@ -6,6 +6,7 @@ using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphCore.Editor;
 using Faolline.StarterGraph;
+using Faolline.GraphLogging;
 
 namespace Faolline.StarterGraph.Editor
 {
@@ -117,7 +118,7 @@ namespace Faolline.StarterGraph.Editor
         {
             if (!_waitingForChoice)
             {
-                Debug.Log("[StarterGraph] No active choice — click Run first.");
+                Logging.Info("StarterGraph", "[StarterGraph] No active choice — click Run first.");
                 return;
             }
 
@@ -140,7 +141,7 @@ namespace Faolline.StarterGraph.Editor
         {
             if (!_hasActiveSession)
             {
-                Debug.Log("[StarterGraph] No active session — click Run first.");
+                Logging.Info("StarterGraph", "[StarterGraph] No active session — click Run first.");
                 return;
             }
 
@@ -153,7 +154,7 @@ namespace Faolline.StarterGraph.Editor
 
             _activeRunner.GoBack();
             var node = _activeRunner.CurrentNode;
-            Debug.Log(node != null
+            Logging.Info("StarterGraph", node != null
                 ? $"[StarterGraph] GoBack → {node.NodeType}"
                 : "[StarterGraph] GoBack — nothing to go back to.");
         }
@@ -163,7 +164,7 @@ namespace Faolline.StarterGraph.Editor
         {
             if (!_hasActiveSession)
             {
-                Debug.Log("[StarterGraph] No active session — click Run first.");
+                Logging.Info("StarterGraph", "[StarterGraph] No active session — click Run first.");
                 return;
             }
 
@@ -176,7 +177,7 @@ namespace Faolline.StarterGraph.Editor
 
             _activeRunner.GoBackToCheckpoint();
             var node = _activeRunner.CurrentNode;
-            Debug.Log(node != null
+            Logging.Info("StarterGraph", node != null
                 ? $"[StarterGraph] GoBack to checkpoint → {node.NodeType}"
                 : "[StarterGraph] GoBackToCheckpoint — no checkpoint in history.");
         }
@@ -191,13 +192,13 @@ namespace Faolline.StarterGraph.Editor
         {
             if (graph == null)
             {
-                Debug.LogError("[StarterGraph] No graph loaded. Open a StarterGraph asset first.");
+                Logging.Error("StarterGraph", "[StarterGraph] No graph loaded. Open a StarterGraph asset first.");
                 return;
             }
 
             if (string.IsNullOrEmpty(graph.EntryNodeId))
             {
-                Debug.LogError("[StarterGraph] Graph has no entry node set. Add a Start node and save before running.");
+                Logging.Error("StarterGraph", "[StarterGraph] Graph has no entry node set. Add a Start node and save before running.");
                 return;
             }
 
@@ -218,7 +219,7 @@ namespace Faolline.StarterGraph.Editor
                 string label = (node is StarterStatementNodeData stmt && !string.IsNullOrEmpty(stmt.Label))
                     ? $" \"{stmt.Label}\""
                     : string.Empty;
-                Debug.Log($"[StarterGraph] Node: {node.NodeType}{label}");
+                Logging.Info("StarterGraph", $"[StarterGraph] Node: {node.NodeType}{label}");
             };
 
             _activeRunner.OnEnded += reason => _endReason = reason;
@@ -231,12 +232,12 @@ namespace Faolline.StarterGraph.Editor
             }
             catch (GraphCycleException ex)
             {
-                Debug.LogError($"[StarterGraph] Cycle detected in graph: {ex.CyclicGraphId}. Execution aborted.");
+                Logging.Error("StarterGraph", $"[StarterGraph] Cycle detected in graph: {ex.CyclicGraphId}. Execution aborted.");
                 return;
             }
             catch (System.InvalidOperationException ex)
             {
-                Debug.LogError($"[StarterGraph] Cannot run graph: {ex.Message}");
+                Logging.Error("StarterGraph", $"[StarterGraph] Cannot run graph: {ex.Message}");
                 return;
             }
 
@@ -251,7 +252,7 @@ namespace Faolline.StarterGraph.Editor
         {
             if (!_waitingForChoice)
             {
-                Debug.Log("[StarterGraph] No active choice — click Run first.");
+                Logging.Info("StarterGraph", "[StarterGraph] No active choice — click Run first.");
                 return;
             }
 
@@ -271,17 +272,17 @@ namespace Faolline.StarterGraph.Editor
         {
             if (!_hasActiveSession)
             {
-                Debug.Log("[StarterGraph] No active session — click Run first.");
+                Logging.Info("StarterGraph", "[StarterGraph] No active session — click Run first.");
                 return;
             }
             if (_waitingForChoice)
             {
-                Debug.Log("[StarterGraph] Paused at a choice — use Choose, not Continue.");
+                Logging.Info("StarterGraph", "[StarterGraph] Paused at a choice — use Choose, not Continue.");
                 return;
             }
             if (_activeRunner.State != RunnerState.NodeReady)
             {
-                Debug.Log("[StarterGraph] Nothing to continue — execution has ended. Use GoBack first.");
+                Logging.Info("StarterGraph", "[StarterGraph] Nothing to continue — execution has ended. Use GoBack first.");
                 return;
             }
 
@@ -301,13 +302,13 @@ namespace Faolline.StarterGraph.Editor
                     var available = GetAvailableChoices(choiceNode);
                     if (available.Count == 0)
                     {
-                        Debug.LogWarning("[StarterGraph] Execution stopped: runner is stuck (no choice passed its condition or no choices defined).");
+                        Logging.Warning("StarterGraph", "[StarterGraph] Execution stopped: runner is stuck (no choice passed its condition or no choices defined).");
                         return;
                     }
 
                     _waitingForChoice = true;
                     _waitingChoiceNode = choiceNode;
-                    Debug.Log($"[StarterGraph] Waiting for choice at node: {choiceNode.Id}");
+                    Logging.Info("StarterGraph", $"[StarterGraph] Waiting for choice at node: {choiceNode.Id}");
                     return;
                 }
 
@@ -316,11 +317,11 @@ namespace Faolline.StarterGraph.Editor
             }
 
             if (_stuck)
-                Debug.LogWarning("[StarterGraph] Execution stopped: runner is stuck (no valid outgoing edge or entry condition failed). Make sure all nodes are connected.");
+                Logging.Warning("StarterGraph", "[StarterGraph] Execution stopped: runner is stuck (no valid outgoing edge or entry condition failed). Make sure all nodes are connected.");
             else if (_steps >= MaxSteps)
-                Debug.LogError($"[StarterGraph] Execution aborted after {MaxSteps} steps — possible infinite loop.");
+                Logging.Error("StarterGraph", $"[StarterGraph] Execution aborted after {MaxSteps} steps — possible infinite loop.");
             else
-                Debug.Log($"[StarterGraph] Graph ended: {_endReason}");
+                Logging.Info("StarterGraph", $"[StarterGraph] Graph ended: {_endReason}");
         }
 
         /// <summary>

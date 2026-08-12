@@ -4,7 +4,8 @@
     "references": [
         "com.faolline.graphcore.Runtime",
         "com.faolline.graphcore.Runtime.Core",
-        "com.faolline.graphstandard.Runtime"
+        "com.faolline.graphstandard.Runtime",
+        "com.faolline.graphlogging.Runtime"
     ],
     "includePlatforms": [
         "Editor"

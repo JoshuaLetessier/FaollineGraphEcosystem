@@ -1,5 +1,6 @@
 using System;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphDialogue
 {
@@ -67,13 +68,13 @@ namespace Faolline.GraphDialogue
         {
             if (graph == null)
             {
-                UnityEngine.Debug.LogWarning("[GraphDialogue] DialogueBus.Play: null graph; ignored.");
+                Logging.Warning("GraphDialogue", "[GraphDialogue] DialogueBus.Play: null graph; ignored.");
                 return;
             }
 
             if (_player != null)
             {
-                UnityEngine.Debug.LogWarning("[GraphDialogue] DialogueBus.Play: stopping previous dialogue.");
+                Logging.Warning("GraphDialogue", "[GraphDialogue] DialogueBus.Play: stopping previous dialogue.");
                 StopInternal();
             }
 

@@ -4,6 +4,7 @@ using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphDialogue;
 using Faolline.GraphLocalization;
+using Faolline.GraphLogging;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 #endif
@@ -97,7 +98,7 @@ namespace Faolline.GraphDialogue.UI
             if (viewBehaviour != null && !(viewBehaviour is IDialogueView) &&
                 viewBehaviour.GetComponent<IDialogueView>() == null)
             {
-                Debug.LogWarning($"[GraphDialogue] DialogueDriver: assigned View Behaviour " +
+                Logging.Warning("GraphDialogue", $"[GraphDialogue] DialogueDriver: assigned View Behaviour " +
                     $"'{viewBehaviour.GetType().Name}' is not an IDialogueView and none is on its GameObject. " +
                     "Assign a CanvasDialogueView or UIToolkitDialogueView.", this);
             }
@@ -155,7 +156,7 @@ namespace Faolline.GraphDialogue.UI
         {
             if (dialogueGraph == null)
             {
-                Debug.LogError("[GraphDialogue] DialogueDriver: graph is null.");
+                Logging.Error("GraphDialogue", "[GraphDialogue] DialogueDriver: graph is null.");
                 return;
             }
             graph = dialogueGraph;
@@ -197,7 +198,7 @@ namespace Faolline.GraphDialogue.UI
 
         private void HandleStuck()
         {
-            Debug.LogWarning("[GraphDialogue] DialogueDriver: dialogue is stuck (no valid branch from the " +
+            Logging.Warning("GraphDialogue", "[GraphDialogue] DialogueDriver: dialogue is stuck (no valid branch from the " +
                 "current node). Check your edge/choice conditions.", this);
             OnStuck?.Invoke();
         }

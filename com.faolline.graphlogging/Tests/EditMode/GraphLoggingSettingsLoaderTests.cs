@@ -10,11 +10,9 @@ namespace Faolline.GraphLogging.Tests
             Assert.AreEqual("Assets/Resources/GraphLoggingSettings.asset", GraphLoggingSettingsLoader.GetDefaultAssetPath());
         }
 
-        [Test]
-        public void Load_NoAssetInProject_ReturnsNull()
-        {
-            // No GraphLoggingSettings asset exists in this dev repo's Resources folder by default.
-            Assert.IsNull(GraphLoggingSettingsLoader.Load());
-        }
+        // No "Load() returns null when no asset exists" test: whether this dev repo's own
+        // Assets/Resources/GraphLoggingSettings.asset exists is ambient, real-usage-driven state (e.g.
+        // opening Faolline ▸ Diagnostics ▸ Log Settings creates it) — not something a test should assert
+        // on. graphlocalization's equivalent LocalizationSettingsLoader has no such test either.
     }
 }

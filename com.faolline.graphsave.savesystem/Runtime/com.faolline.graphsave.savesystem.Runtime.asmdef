@@ -3,7 +3,8 @@
     "rootNamespace": "Faolline.GraphSave.UnitySaveSystem",
     "references": [
         "com.faolline.graphsave.Runtime",
-        "SaveSystemCore"
+        "SaveSystemCore",
+        "com.faolline.graphlogging.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

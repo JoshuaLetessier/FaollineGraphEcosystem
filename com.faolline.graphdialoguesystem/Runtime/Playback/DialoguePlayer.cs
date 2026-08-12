@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphLocalization;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphDialogue
 {
@@ -118,7 +119,7 @@ namespace Faolline.GraphDialogue
         {
             if (_graph == null)
             {
-                Debug.LogError("[GraphDialogue] Cannot start: graph is null.");
+                Logging.Error("GraphDialogue", "[GraphDialogue] Cannot start: graph is null.");
                 return;
             }
 
@@ -133,12 +134,12 @@ namespace Faolline.GraphDialogue
             }
             catch (GraphCycleException ex)
             {
-                Debug.LogError($"[GraphDialogue] Cycle detected: {ex.CyclicGraphId}. Playback aborted.");
+                Logging.Error("GraphDialogue", $"[GraphDialogue] Cycle detected: {ex.CyclicGraphId}. Playback aborted.");
                 return;
             }
             catch (InvalidOperationException ex)
             {
-                Debug.LogError($"[GraphDialogue] Cannot start dialogue: {ex.Message}");
+                Logging.Error("GraphDialogue", $"[GraphDialogue] Cannot start dialogue: {ex.Message}");
                 return;
             }
 
@@ -171,7 +172,7 @@ namespace Faolline.GraphDialogue
         {
             if (state == null)
             {
-                Debug.LogError("[GraphDialogue] RestoreFrom: state is null.");
+                Logging.Error("GraphDialogue", "[GraphDialogue] RestoreFrom: state is null.");
                 return;
             }
 
@@ -190,7 +191,7 @@ namespace Faolline.GraphDialogue
             }
             catch (System.Exception ex)
             {
-                Debug.LogError($"[GraphDialogue] RestoreFrom failed: {ex.Message}");
+                Logging.Error("GraphDialogue", $"[GraphDialogue] RestoreFrom failed: {ex.Message}");
                 return;
             }
 
@@ -203,7 +204,7 @@ namespace Faolline.GraphDialogue
         {
             if (_runner.State != RunnerState.NodeReady)
             {
-                Debug.LogWarning($"[GraphDialogue] Advance() ignored: the dialogue is not paused on a line " +
+                Logging.Warning("GraphDialogue", $"[GraphDialogue] Advance() ignored: the dialogue is not paused on a line " +
                                  $"(runner state {_runner.State}).");
                 return;
             }
@@ -221,20 +222,20 @@ namespace Faolline.GraphDialogue
         {
             if (_runner.State != RunnerState.NodeReady)
             {
-                Debug.LogWarning($"[GraphDialogue] Choose('{choiceId}') ignored: the dialogue is not awaiting " +
+                Logging.Warning("GraphDialogue", $"[GraphDialogue] Choose('{choiceId}') ignored: the dialogue is not awaiting " +
                                  $"input (runner state {_runner.State}).");
                 return;
             }
             if (!(_runner.CurrentNode is ChoiceNodeData choiceNode))
             {
-                Debug.LogWarning($"[GraphDialogue] Choose('{choiceId}') ignored: not paused at a choice (current " +
+                Logging.Warning("GraphDialogue", $"[GraphDialogue] Choose('{choiceId}') ignored: not paused at a choice (current " +
                                  $"node '{_runner.CurrentNode?.Id}' is a line/other). Call Advance() to step past " +
                                  $"the line to the choice point first.");
                 return;
             }
             if (!IsChoiceAvailable(choiceNode, choiceId))
             {
-                Debug.LogWarning($"[GraphDialogue] Choose('{choiceId}') ignored: no available option with that id " +
+                Logging.Warning("GraphDialogue", $"[GraphDialogue] Choose('{choiceId}') ignored: no available option with that id " +
                                  $"on choice '{choiceNode.Id}' (unknown id, or its availability condition is false).");
                 return;
             }
@@ -346,7 +347,7 @@ namespace Faolline.GraphDialogue
                     var branchId = _presenter.ResolveRouterBranchId(router, _context);
                     if (string.IsNullOrEmpty(branchId))
                     {
-                        Debug.LogWarning($"[GraphDialogue] Router '{router.Id}' has no branch whose condition " +
+                        Logging.Warning("GraphDialogue", $"[GraphDialogue] Router '{router.Id}' has no branch whose condition " +
                                          $"passes — playback stuck. Add a default (unconditional) branch.");
                         _stuck = true;
                         break;
@@ -370,7 +371,7 @@ namespace Faolline.GraphDialogue
                 }
                 catch (GraphCycleException ex)
                 {
-                    Debug.LogError($"[GraphDialogue] Cycle detected entering sub-dialogue: {ex.CyclicGraphId}. Playback stopped.");
+                    Logging.Error("GraphDialogue", $"[GraphDialogue] Cycle detected entering sub-dialogue: {ex.CyclicGraphId}. Playback stopped.");
                     _stuck = true;
                     break;
                 }
@@ -378,7 +379,7 @@ namespace Faolline.GraphDialogue
 
             if (!_stuck && guard >= MaxDrainSteps)
             {
-                Debug.LogWarning($"[GraphDialogue] Drain exceeded {MaxDrainSteps} pass-through steps — possible cycle or excessively long chain. Playback stopped.");
+                Logging.Warning("GraphDialogue", $"[GraphDialogue] Drain exceeded {MaxDrainSteps} pass-through steps — possible cycle or excessively long chain. Playback stopped.");
                 _stuck = true;
             }
 

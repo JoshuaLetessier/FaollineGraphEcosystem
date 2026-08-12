@@ -6,6 +6,8 @@ using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphGameFlow.Editor;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow.Addressables.Editor
 {
@@ -41,8 +43,7 @@ namespace Faolline.GraphGameFlow.Addressables.Editor
             var settings = AddressableAssetSettingsDefaultObject.Settings;
             if (settings == null)
             {
-                Debug.LogWarning(
-                    "[GraphGameFlow] No AddressableAssetSettings found in the project; open Window > Asset " +
+                Logging.Warning("GraphGameFlow", "[GraphGameFlow] No AddressableAssetSettings found in the project; open Window > Asset " +
                     "Management > Addressables > Groups once to create it, then try again.");
                 return;
             }
@@ -50,7 +51,7 @@ namespace Faolline.GraphGameFlow.Addressables.Editor
             var guid  = AssetDatabase.AssetPathToGUID(graphAssetPath);
             var entry = settings.CreateOrMoveEntry(guid, settings.DefaultGroup);
             entry.address = graphId;
-            Debug.Log($"[GraphGameFlow] Marked '{graphAssetPath}' as Addressable with key '{graphId}'.");
+            Logging.Info("GraphGameFlow", $"[GraphGameFlow] Marked '{graphAssetPath}' as Addressable with key '{graphId}'.");
         }
 
         public bool TryResolveGuid(string assetGuid, out string key)

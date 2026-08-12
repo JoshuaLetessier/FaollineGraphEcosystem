@@ -5,6 +5,7 @@
         "com.faolline.graphcore.Runtime",
         "com.faolline.graphcore.Runtime.Core",
         "com.faolline.graphgameflow.Editor",
+        "com.faolline.graphlogging.Runtime",
         "Unity.Addressables.Editor"
     ],
     "includePlatforms": [

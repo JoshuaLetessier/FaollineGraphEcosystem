@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
-using UnityEngine;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore.Editor
 {
@@ -389,7 +389,7 @@ namespace Faolline.GraphCore.Editor
         {
             if (!(Selection.activeObject is BaseGraph graph))
             {
-                Debug.LogWarning("[GraphValidator] Select a graph asset (BaseGraph or a subclass) first.");
+                Logging.Warning("GraphCore.Editor", "[GraphValidator] Select a graph asset (BaseGraph or a subclass) first.");
                 return;
             }
             LogReport(graph.name, Validate(graph));
@@ -399,16 +399,16 @@ namespace Faolline.GraphCore.Editor
         public static void LogReport(string title, GraphValidationReport report)
         {
             if (report == null) return;
-            Debug.Log($"[GraphValidator] '{title}' — {report.ErrorCount} error(s), {report.WarningCount} warning(s).");
+            Logging.Info("GraphCore.Editor", $"[GraphValidator] '{title}' — {report.ErrorCount} error(s), {report.WarningCount} warning(s).");
             foreach (var issue in report.Issues)
             {
                 var where = string.IsNullOrEmpty(issue.NodeId) ? "[Graph]" : $"[Node {issue.NodeId}]";
                 var msg = $"[GraphValidator] {where} {issue.Message}";
                 switch (issue.Severity)
                 {
-                    case GraphIssueSeverity.Error: Debug.LogError(msg); break;
-                    case GraphIssueSeverity.Warning: Debug.LogWarning(msg); break;
-                    default: Debug.Log(msg); break;
+                    case GraphIssueSeverity.Error: Logging.Error("GraphCore.Editor", msg); break;
+                    case GraphIssueSeverity.Warning: Logging.Warning("GraphCore.Editor", msg); break;
+                    default: Logging.Info("GraphCore.Editor", msg); break;
                 }
             }
         }

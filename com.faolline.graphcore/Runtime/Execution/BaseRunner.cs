@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore
 {
@@ -346,7 +347,7 @@ namespace Faolline.GraphCore
             if (!_historyTrimmed || _historySaturationWarned) return;
             _historySaturationWarned = true;
             var depth = _rootGraph != null ? _rootGraph.HistoryDepth : 0;
-            UnityEngine.Debug.LogWarning(
+            Logging.Warning("GraphCore.Runtime",
                 $"[GraphCore] {operation} could not rewind further: history is capped at HistoryDepth={depth} " +
                 $"and older steps have been dropped. Raise BaseGraph.HistoryDepth (0 = unlimited) if this run " +
                 $"needs deeper rewind.");
@@ -363,7 +364,7 @@ namespace Faolline.GraphCore
         {
             if (string.IsNullOrEmpty(name))
             {
-                UnityEngine.Debug.LogWarning("[GraphCore] RaiseSignal called with a null or empty name; ignored.");
+                Logging.Warning("GraphCore.Runtime", $"[GraphCore] RaiseSignal called with a null or empty name; ignored.");
                 return;
             }
             _context?.RaiseSignal(name);
@@ -378,7 +379,7 @@ namespace Faolline.GraphCore
         {
             if (string.IsNullOrEmpty(name))
             {
-                UnityEngine.Debug.LogWarning("[GraphCore] RaiseSignal called with a null or empty name; ignored.");
+                Logging.Warning("GraphCore.Runtime", $"[GraphCore] RaiseSignal called with a null or empty name; ignored.");
                 return;
             }
             _context?.RaiseSignal<T>(name, payload);
@@ -453,7 +454,7 @@ namespace Faolline.GraphCore
             {
                 if (condition == null)
                 {
-                    UnityEngine.Debug.LogWarning($"[GraphCore] Null resume condition skipped on node '{node.Id}'.");
+                    Logging.Warning("GraphCore.Runtime", $"[GraphCore] Null resume condition skipped on node '{node.Id}'.");
                     continue;
                 }
                 bool pass = condition is IResumeSignalAwareCondition aware
@@ -490,8 +491,7 @@ namespace Faolline.GraphCore
             var node  = FindNode(frame.Graph, frame.CurrentNodeId);
             if (node == null)
             {
-                UnityEngine.Debug.LogError(
-                    $"[GraphCore] Node '{frame.CurrentNodeId}' not found in graph '{frame.Graph.GraphId}'.");
+                Logging.Error("GraphCore.Runtime", $"[GraphCore] Node '{frame.CurrentNodeId}' not found in graph '{frame.Graph.GraphId}'.");
                 return;
             }
 
@@ -509,7 +509,7 @@ namespace Faolline.GraphCore
             {
                 if (condition == null)
                 {
-                    UnityEngine.Debug.LogWarning($"[GraphCore] Null condition entry skipped on node '{node.Id}'.");
+                    Logging.Warning("GraphCore.Runtime",    $"[GraphCore] Null condition entry skipped on node '{node.Id}'.");
                     continue;
                 }
                 if (!condition.Evaluate(_context))
@@ -522,7 +522,7 @@ namespace Faolline.GraphCore
             // 2. OnEnterActions
             foreach (var action in node.OnEnterActions)
             {
-                if (action == null) { UnityEngine.Debug.LogWarning($"[GraphCore] Null action entry skipped on node '{node.Id}'."); continue; }
+                if (action == null) { Logging.Warning("GraphCore.Runtime", $"[GraphCore] Null action entry skipped on node '{node.Id}'."); continue; }
                 action.Execute(_context);
             }
 
@@ -580,7 +580,7 @@ namespace Faolline.GraphCore
             // 5. OnExitActions
             foreach (var action in node.OnExitActions)
             {
-                if (action == null) { UnityEngine.Debug.LogWarning($"[GraphCore] Null action entry skipped on node '{node.Id}'."); continue; }
+                if (action == null) { Logging.Warning("GraphCore.Runtime", $"[GraphCore] Null action entry skipped on node '{node.Id}'."); continue; }
                 action.Execute(_context);
             }
 
@@ -632,7 +632,7 @@ namespace Faolline.GraphCore
             var targetGraph = subNode.TargetGraph;
             if (targetGraph == null)
             {
-                UnityEngine.Debug.LogError("[GraphCore] SubGraphNodeData.TargetGraph is null.");
+                Logging.Error("GraphCore.Runtime", $"[GraphCore] SubGraphNodeData.TargetGraph is null.");
                 OnStuck?.Invoke();
                 return;
             }
@@ -646,8 +646,7 @@ namespace Faolline.GraphCore
 
             if (string.IsNullOrEmpty(targetGraph.EntryNodeId))
             {
-                UnityEngine.Debug.LogError(
-                    $"[GraphCore] SubGraph '{targetGraph.GraphId}' has no EntryNodeId.");
+                Logging.Error("GraphCore.Runtime", $"[GraphCore] SubGraph '{targetGraph.GraphId}' has no EntryNodeId.");
                 OnStuck?.Invoke();
                 return;
             }

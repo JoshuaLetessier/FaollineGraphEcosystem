@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphTest;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphTest.Editor
 {
@@ -89,7 +90,7 @@ namespace Faolline.GraphTest.Editor
 
             Selection.activeObject = graph;
             EditorGUIUtility.PingObject(graph);
-            Debug.Log($"[GraphTest] Sample graph created at {AssetPath}. Double-click to open, press Run, then Choose at the Choice node.");
+            Logging.Info("GraphTest", $"[GraphTest] Sample graph created at {AssetPath}. Double-click to open, press Run, then Choose at the Choice node.");
         }
 
         // ── Feature 008 sample (EndReason + SubGraph + typed params) ───────────────
@@ -198,7 +199,7 @@ namespace Faolline.GraphTest.Editor
 
             Selection.activeObject = parent;
             EditorGUIUtility.PingObject(parent);
-            Debug.Log($"[GraphTest] 008 authoring sample created: {AuthoringPath} (+ child {ChildPath}). " +
+            Logging.Info("GraphTest", $"[GraphTest] 008 authoring sample created: {AuthoringPath} (+ child {ChildPath}). " +
                       "Open the parent, press Run → it descends into the sub-graph, then pauses at the Choice; " +
                       "Win/Retreat are offered (Surrender is filtered out). Win → Completed, Retreat → Cancelled.");
         }
@@ -252,7 +253,7 @@ namespace Faolline.GraphTest.Editor
 
             Selection.activeObject = g;
             EditorGUIUtility.PingObject(g);
-            Debug.Log($"[GraphTest] History-depth stress sample: {steps} steps, HistoryDepth={depth}. " +
+            Logging.Info("GraphTest", $"[GraphTest] History-depth stress sample: {steps} steps, HistoryDepth={depth}. " +
                       $"Run, then click ← GoBack repeatedly — it rewinds only ~{depth} steps before stopping " +
                       "(older history is dropped, so you cannot reach Start). Raise HistoryDepth on the asset to rewind further.");
         }

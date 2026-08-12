@@ -6,7 +6,8 @@
         "com.faolline.graphcore.Runtime",
         "com.faolline.graphcore.Runtime.Core",
         "Unity.Addressables",
-        "Unity.ResourceManager"
+        "Unity.ResourceManager",
+        "com.faolline.graphlogging.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

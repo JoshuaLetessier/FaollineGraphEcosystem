@@ -1,5 +1,6 @@
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphTest
 {
@@ -24,7 +25,7 @@ namespace Faolline.GraphTest
         {
             if (!context.TryGet<bool>(_parameterKey, out var value))
             {
-                Debug.LogWarning($"[GraphTest] Condition: parameter key '{_parameterKey}' not found in context — evaluating to false.");
+                Logging.Warning("GraphTest", $"[GraphTest] Condition: parameter key '{_parameterKey}' not found in context — evaluating to false.");
                 return false;
             }
             return value == _expectedValue;

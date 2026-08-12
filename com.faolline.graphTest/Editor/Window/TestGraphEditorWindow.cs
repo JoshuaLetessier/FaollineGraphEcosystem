@@ -6,6 +6,7 @@ using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphCore.Editor;
 using Faolline.GraphTest;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphTest.Editor
 {
@@ -117,7 +118,7 @@ namespace Faolline.GraphTest.Editor
         {
             if (!_waitingForChoice)
             {
-                Debug.Log("[GraphTest] No active choice — click Run first.");
+                Logging.Info("GraphTest", "[GraphTest] No active choice — click Run first.");
                 return;
             }
 
@@ -140,7 +141,7 @@ namespace Faolline.GraphTest.Editor
         {
             if (!_hasActiveSession)
             {
-                Debug.Log("[GraphTest] No active session — click Run first.");
+                Logging.Info("GraphTest", "[GraphTest] No active session — click Run first.");
                 return;
             }
 
@@ -153,7 +154,7 @@ namespace Faolline.GraphTest.Editor
 
             _activeRunner.GoBack();
             var node = _activeRunner.CurrentNode;
-            Debug.Log(node != null
+            Logging.Info("GraphTest", node != null
                 ? $"[GraphTest] GoBack → {node.NodeType}"
                 : "[GraphTest] GoBack — nothing to go back to.");
         }
@@ -163,7 +164,7 @@ namespace Faolline.GraphTest.Editor
         {
             if (!_hasActiveSession)
             {
-                Debug.Log("[GraphTest] No active session — click Run first.");
+                Logging.Info("GraphTest", "[GraphTest] No active session — click Run first.");
                 return;
             }
 
@@ -176,7 +177,7 @@ namespace Faolline.GraphTest.Editor
 
             _activeRunner.GoBackToCheckpoint();
             var node = _activeRunner.CurrentNode;
-            Debug.Log(node != null
+            Logging.Info("GraphTest", node != null
                 ? $"[GraphTest] GoBack to checkpoint → {node.NodeType}"
                 : "[GraphTest] GoBackToCheckpoint — no checkpoint in history.");
         }
@@ -191,13 +192,13 @@ namespace Faolline.GraphTest.Editor
         {
             if (graph == null)
             {
-                Debug.LogError("[GraphTest] No graph loaded. Open a TestGraph asset first.");
+                Logging.Error("GraphTest", "[GraphTest] No graph loaded. Open a TestGraph asset first.");
                 return;
             }
 
             if (string.IsNullOrEmpty(graph.EntryNodeId))
             {
-                Debug.LogError("[GraphTest] Graph has no entry node set. Add a Start node and save before running.");
+                Logging.Error("GraphTest", "[GraphTest] Graph has no entry node set. Add a Start node and save before running.");
                 return;
             }
 
@@ -218,7 +219,7 @@ namespace Faolline.GraphTest.Editor
                 string label = (node is TestStatementNodeData stmt && !string.IsNullOrEmpty(stmt.Label))
                     ? $" \"{stmt.Label}\""
                     : string.Empty;
-                Debug.Log($"[GraphTest] Node: {node.NodeType}{label}");
+                Logging.Info("GraphTest", $"[GraphTest] Node: {node.NodeType}{label}");
             };
 
             _activeRunner.OnEnded += reason => _endReason = reason;
@@ -231,12 +232,12 @@ namespace Faolline.GraphTest.Editor
             }
             catch (GraphCycleException ex)
             {
-                Debug.LogError($"[GraphTest] Cycle detected in graph: {ex.CyclicGraphId}. Execution aborted.");
+                Logging.Error("GraphTest", $"[GraphTest] Cycle detected in graph: {ex.CyclicGraphId}. Execution aborted.");
                 return;
             }
             catch (System.InvalidOperationException ex)
             {
-                Debug.LogError($"[GraphTest] Cannot run graph: {ex.Message}");
+                Logging.Error("GraphTest", $"[GraphTest] Cannot run graph: {ex.Message}");
                 return;
             }
 
@@ -251,7 +252,7 @@ namespace Faolline.GraphTest.Editor
         {
             if (!_waitingForChoice)
             {
-                Debug.Log("[GraphTest] No active choice — click Run first.");
+                Logging.Info("GraphTest", "[GraphTest] No active choice — click Run first.");
                 return;
             }
 
@@ -271,17 +272,17 @@ namespace Faolline.GraphTest.Editor
         {
             if (!_hasActiveSession)
             {
-                Debug.Log("[GraphTest] No active session — click Run first.");
+                Logging.Info("GraphTest", "[GraphTest] No active session — click Run first.");
                 return;
             }
             if (_waitingForChoice)
             {
-                Debug.Log("[GraphTest] Paused at a choice — use Choose, not Continue.");
+                Logging.Info("GraphTest", "[GraphTest] Paused at a choice — use Choose, not Continue.");
                 return;
             }
             if (_activeRunner.State != RunnerState.NodeReady)
             {
-                Debug.Log("[GraphTest] Nothing to continue — execution has ended. Use GoBack first.");
+                Logging.Info("GraphTest", "[GraphTest] Nothing to continue — execution has ended. Use GoBack first.");
                 return;
             }
 
@@ -301,13 +302,13 @@ namespace Faolline.GraphTest.Editor
                     var available = GetAvailableChoices(choiceNode);
                     if (available.Count == 0)
                     {
-                        Debug.LogWarning("[GraphTest] Execution stopped: runner is stuck (no choice passed its condition or no choices defined).");
+                        Logging.Warning("GraphTest", "[GraphTest] Execution stopped: runner is stuck (no choice passed its condition or no choices defined).");
                         return;
                     }
 
                     _waitingForChoice = true;
                     _waitingChoiceNode = choiceNode;
-                    Debug.Log($"[GraphTest] Waiting for choice at node: {choiceNode.Id}");
+                    Logging.Info("GraphTest", $"[GraphTest] Waiting for choice at node: {choiceNode.Id}");
                     return;
                 }
 
@@ -316,11 +317,11 @@ namespace Faolline.GraphTest.Editor
             }
 
             if (_stuck)
-                Debug.LogWarning("[GraphTest] Execution stopped: runner is stuck (no valid outgoing edge or entry condition failed). Make sure all nodes are connected.");
+                Logging.Warning("GraphTest", "[GraphTest] Execution stopped: runner is stuck (no valid outgoing edge or entry condition failed). Make sure all nodes are connected.");
             else if (_steps >= MaxSteps)
-                Debug.LogError($"[GraphTest] Execution aborted after {MaxSteps} steps — possible infinite loop.");
+                Logging.Error("GraphTest", $"[GraphTest] Execution aborted after {MaxSteps} steps — possible infinite loop.");
             else
-                Debug.Log($"[GraphTest] Graph ended: {_endReason}");
+                Logging.Info("GraphTest", $"[GraphTest] Graph ended: {_endReason}");
         }
 
         /// <summary>

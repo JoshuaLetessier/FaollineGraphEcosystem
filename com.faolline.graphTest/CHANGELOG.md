@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphTest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.0]
+
+### Changed
+- **Migrated to the shared `com.faolline.graphlogging` facade.** Sample builders, sample
+  drivers/conditions/actions, and `TestGraphEditorWindow` now log through `Logging.*` under `GraphTest`,
+  toggleable from `Faolline ▸ Diagnostics ▸ Log Settings`. New dependency: `com.faolline.graphlogging`
+  (0.1.1).
+
 ## [0.2.2]
 
 ### Fixed

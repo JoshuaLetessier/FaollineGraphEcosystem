@@ -5,6 +5,8 @@ using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
 using Faolline.GraphGameFlow.Editor;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow.Addressables.Editor
 {
@@ -41,8 +43,7 @@ namespace Faolline.GraphGameFlow.Addressables.Editor
             var settings = AddressableAssetSettingsDefaultObject.Settings;
             if (settings == null)
             {
-                Debug.LogWarning(
-                    "[GraphGameFlow] No AddressableAssetSettings found in the project; open Window > Asset " +
+                Logging.Warning("GraphGameFlow", "[GraphGameFlow] No AddressableAssetSettings found in the project; open Window > Asset " +
                     "Management > Addressables > Groups once to create it, then try again.");
                 return;
             }
@@ -50,7 +51,7 @@ namespace Faolline.GraphGameFlow.Addressables.Editor
             var guid  = AssetDatabase.AssetPathToGUID(projectScenePath);
             var entry = settings.CreateOrMoveEntry(guid, settings.DefaultGroup);
             entry.address = sceneName;
-            Debug.Log($"[GraphGameFlow] Marked '{projectScenePath}' as Addressable with key '{sceneName}'.");
+            Logging.Info("GraphGameFlow", $"[GraphGameFlow] Marked '{projectScenePath}' as Addressable with key '{sceneName}'.");
         }
 
         [InitializeOnLoadMethod]

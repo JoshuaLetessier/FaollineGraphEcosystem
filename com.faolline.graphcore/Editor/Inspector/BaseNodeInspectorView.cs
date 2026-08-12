@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore.Editor
 {
@@ -175,7 +176,7 @@ namespace Faolline.GraphCore.Editor
                 if (result.HasCycle)
                 {
                     var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
-                    Debug.LogWarning($"[{LogContext}] Cycle refused: {path}");
+                    Logging.Warning("GraphCore", $"[{LogContext}] Cycle refused: {path}");
                     return false;
                 }
             }
@@ -216,7 +217,7 @@ namespace Faolline.GraphCore.Editor
                 {
                     var result = CycleDetector.Check(Graph, proposed);
                     var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
-                    Debug.LogWarning($"[{LogContext}] Cycle refused: {path}");
+                    Logging.Warning("GraphCore", $"[{LogContext}] Cycle refused: {path}");
                     targetField.SetValueWithoutNotify(node.TargetGraph);
                     return;
                 }

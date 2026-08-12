@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.0]
+
+### Changed
+- **Migrated to the shared `com.faolline.graphlogging` facade.** `AddressablesSceneLoader`,
+  `AddressablesGraphCatalog`, `PreloadNextChapterAction`, and the Editor key-provider tools now log
+  through `Logging.*`, toggleable from `Faolline ▸ Diagnostics ▸ Log Settings`. New dependency:
+  `com.faolline.graphlogging` (0.1.1).
+
 ## [0.5.2]
 
 ### Fixed — concurrent `Resolve` of the same `graphId` silently leaked a handle

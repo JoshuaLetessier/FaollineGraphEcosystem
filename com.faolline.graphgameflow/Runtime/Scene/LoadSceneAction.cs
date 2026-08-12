@@ -1,6 +1,8 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow
 {
@@ -37,7 +39,7 @@ namespace Faolline.GraphGameFlow
         {
             if (string.IsNullOrEmpty(_sceneName))
             {
-                Debug.LogError("[GraphGameFlow] LoadSceneAction has an empty scene name; ignored.");
+                Logging.Error("GraphGameFlow", "[GraphGameFlow] LoadSceneAction has an empty scene name; ignored.");
                 return;
             }
 

@@ -8,6 +8,7 @@ using Faolline.GraphCore;
 using Faolline.GraphCore.Editor;
 using Faolline.GraphLocalization;
 using Faolline.GraphLocalization.Editor;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphDialogue.Editor
 {
@@ -172,12 +173,12 @@ namespace Faolline.GraphDialogue.Editor
             var graph = LoadedGraph as DialogueGraph;
             if (graph == null)
             {
-                Debug.LogError("[GraphDialogue] No DialogueGraph loaded. Open a dialogue asset first.");
+                Logging.Error("GraphDialogue", "[GraphDialogue] No DialogueGraph loaded. Open a dialogue asset first.");
                 return;
             }
             if (string.IsNullOrEmpty(graph.EntryNodeId))
             {
-                Debug.LogError("[GraphDialogue] Graph has no entry node. Add a Start node and save before running.");
+                Logging.Error("GraphDialogue", "[GraphDialogue] Graph has no entry node. Add a Start node and save before running.");
                 return;
             }
 
@@ -194,21 +195,21 @@ namespace Faolline.GraphDialogue.Editor
                 LocalizationContext.Current.StrictMode);
 
             _player.OnLine += step =>
-                Debug.Log($"[GraphDialogue] Line [{step.SpeakerId}] {step.ResolvedText}");
+                Logging.Info("GraphDialogue", $"[GraphDialogue] Line [{step.SpeakerId}] {step.ResolvedText}");
             _player.OnChoices += step =>
             {
                 _waitingChoice = step;
-                Debug.Log($"[GraphDialogue] Choice at {step.NodeId} ({step.Options.Count} options)");
+                Logging.Info("GraphDialogue", $"[GraphDialogue] Choice at {step.NodeId} ({step.Options.Count} options)");
             };
             _player.OnEnded += step =>
             {
                 _waitingChoice = null;
-                Debug.Log($"[GraphDialogue] Ended: {step.EndReason}");
+                Logging.Info("GraphDialogue", $"[GraphDialogue] Ended: {step.EndReason}");
             };
             _player.OnStuck += () =>
             {
                 _waitingChoice = null;
-                Debug.LogWarning("[GraphDialogue] Stuck — no valid branch.");
+                Logging.Warning("GraphDialogue", "[GraphDialogue] Stuck — no valid branch.");
             };
 
             _hasSession = true;
@@ -218,7 +219,7 @@ namespace Faolline.GraphDialogue.Editor
         /// <summary>Selects a choice by id and resumes. No-op when not waiting at a choice.</summary>
         public void Choose(string choiceId)
         {
-            if (!_hasSession || _player == null) { Debug.Log("[GraphDialogue] No active session — click Run first."); return; }
+            if (!_hasSession || _player == null) { Logging.Info("GraphDialogue", "[GraphDialogue] No active session — click Run first."); return; }
             _waitingChoice = null;
             _player.Choose(choiceId);
         }
@@ -226,15 +227,15 @@ namespace Faolline.GraphDialogue.Editor
         /// <summary>Advances past the current line.</summary>
         public void Continue()
         {
-            if (!_hasSession || _player == null) { Debug.Log("[GraphDialogue] No active session — click Run first."); return; }
-            if (IsWaitingForChoice) { Debug.Log("[GraphDialogue] Paused at a choice — use Choose."); return; }
+            if (!_hasSession || _player == null) { Logging.Info("GraphDialogue", "[GraphDialogue] No active session — click Run first."); return; }
+            if (IsWaitingForChoice) { Logging.Info("GraphDialogue", "[GraphDialogue] Paused at a choice — use Choose."); return; }
             _player.Advance();
         }
 
         /// <summary>Steps back one entry.</summary>
         public void Back()
         {
-            if (!_hasSession || _player == null) { Debug.Log("[GraphDialogue] No active session — click Run first."); return; }
+            if (!_hasSession || _player == null) { Logging.Info("GraphDialogue", "[GraphDialogue] No active session — click Run first."); return; }
             _waitingChoice = null;
             _player.Back();
         }
@@ -242,7 +243,7 @@ namespace Faolline.GraphDialogue.Editor
         /// <summary>Steps back to the most recent checkpoint.</summary>
         public void BackToCheckpoint()
         {
-            if (!_hasSession || _player == null) { Debug.Log("[GraphDialogue] No active session — click Run first."); return; }
+            if (!_hasSession || _player == null) { Logging.Info("GraphDialogue", "[GraphDialogue] No active session — click Run first."); return; }
             _waitingChoice = null;
             _player.BackToCheckpoint();
         }
@@ -253,7 +254,7 @@ namespace Faolline.GraphDialogue.Editor
             var graph = LoadedGraph;
             if (graph == null)
             {
-                Debug.LogWarning("[GraphDialogue] No graph loaded to validate.");
+                Logging.Warning("GraphDialogue", "[GraphDialogue] No graph loaded to validate.");
                 return;
             }
             GraphValidator.LogReport(graph.name, GraphValidator.Validate(graph));
@@ -265,7 +266,7 @@ namespace Faolline.GraphDialogue.Editor
         {
             if (!IsWaitingForChoice)
             {
-                Debug.Log("[GraphDialogue] No active choice — click Run first.");
+                Logging.Info("GraphDialogue", "[GraphDialogue] No active choice — click Run first.");
                 return;
             }
 

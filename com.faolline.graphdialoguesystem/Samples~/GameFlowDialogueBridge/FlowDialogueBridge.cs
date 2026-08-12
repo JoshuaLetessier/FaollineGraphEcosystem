@@ -4,6 +4,7 @@ using Faolline.GraphDialogue;
 using Faolline.GraphDialogue.UI;
 using Faolline.GraphGameFlow;
 using Faolline.GraphLocalization;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphDialogue.Samples.GameFlowBridge
 {
@@ -100,7 +101,7 @@ namespace Faolline.GraphDialogue.Samples.GameFlowBridge
                 if (_unboundTime > 1f && !_warnedNoDriver)
                 {
                     _warnedNoDriver = true;
-                    Debug.LogWarning("[GraphDialogue] FlowDialogueBridge: still no GraphFlowDriver after 1s — " +
+                    Logging.Warning("GraphDialogue", "[GraphDialogue] FlowDialogueBridge: still no GraphFlowDriver after 1s — " +
                         "assign one in the inspector, or make sure a persistent driver " +
                         "(GraphFlowDriver.Active) gets created (are you playing the game scene without the " +
                         "boot scene?). The bridge will bind automatically if one appears.", this);

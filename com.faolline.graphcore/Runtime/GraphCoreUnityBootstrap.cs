@@ -12,7 +12,7 @@ namespace Faolline.GraphCore
     /// that class) and points <see cref="GraphLog"/> at <see cref="Faolline.GraphLogging.Logging"/> under the
     /// "GraphCore.Context" category — Core's own warnings/errors go through the same shared,
     /// per-category on/off control as every other package instead of hardcoding straight to
-    /// <c>Debug.LogWarning</c>/<c>Debug.LogError</c>.
+    /// <c>Logging.Warning</c>/<c>Logging.Error</c>.
     /// <see cref="InitializeOnLoadAttribute"/> covers the editor (including EditMode tests, which run
     /// inside the editor process); <see cref="RuntimeInitializeOnLoadMethodAttribute"/> covers player
     /// builds, where the editor-only attribute above does not exist.

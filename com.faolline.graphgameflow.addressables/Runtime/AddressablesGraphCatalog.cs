@@ -5,6 +5,8 @@ using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using Faolline.GraphCore;
 using Faolline.GraphGameFlow;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow.Addressables
 {
@@ -35,7 +37,7 @@ namespace Faolline.GraphGameFlow.Addressables
             if (string.IsNullOrEmpty(graphId))
             {
                 const string reason = "AddressablesGraphCatalog.Resolve called with a null or empty graphId.";
-                Debug.LogError($"[GraphGameFlow] {reason}");
+                Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason}");
                 onFailed?.Invoke(reason);
                 return;
             }
@@ -56,7 +58,7 @@ namespace Faolline.GraphGameFlow.Addressables
         {
             if (string.IsNullOrEmpty(graphId) || !_handles.TryGetValue(graphId, out var handles) || handles.Count == 0)
             {
-                Debug.LogWarning($"[GraphGameFlow] AddressablesGraphCatalog.Release: no handle held for graphId '{graphId}'; ignored.");
+                Logging.Warning("GraphGameFlow", $"[GraphGameFlow] AddressablesGraphCatalog.Release: no handle held for graphId '{graphId}'; ignored.");
                 return;
             }
 
@@ -78,7 +80,7 @@ namespace Faolline.GraphGameFlow.Addressables
             }
 
             var reason = $"Addressables graph '{graphId}' failed to resolve: {op.OperationException}";
-            Debug.LogError($"[GraphGameFlow] {reason}");
+            Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason}");
             onFailed?.Invoke(reason);
         }
     }

@@ -1,5 +1,6 @@
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphTest
 {
@@ -18,7 +19,7 @@ namespace Faolline.GraphTest
         /// <inheritdoc/>
         public override void Execute(BaseContext context)
         {
-            Debug.Log($"[GraphTest] Action: {_message}");
+            Logging.Info("GraphTest", $"[GraphTest] Action: {_message}");
         }
     }
 }

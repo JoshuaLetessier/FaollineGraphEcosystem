@@ -1,5 +1,6 @@
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphTest
 {
@@ -32,13 +33,13 @@ namespace Faolline.GraphTest
             {
                 if (!context.TryGet<string>(_parameterKey, out value))
                 {
-                    Debug.LogWarning($"[GraphTest] Condition: string parameter '{_parameterKey}' not found in context — evaluating to false.");
+                    Logging.Warning("GraphTest", $"[GraphTest] Condition: string parameter '{_parameterKey}' not found in context — evaluating to false.");
                     return false;
                 }
             }
             catch (System.InvalidCastException)
             {
-                Debug.LogWarning($"[GraphTest] Condition: parameter '{_parameterKey}' is not a string — evaluating to false.");
+                Logging.Warning("GraphTest", $"[GraphTest] Condition: parameter '{_parameterKey}' is not a string — evaluating to false.");
                 return false;
             }
             bool equal = value == _expectedValue;

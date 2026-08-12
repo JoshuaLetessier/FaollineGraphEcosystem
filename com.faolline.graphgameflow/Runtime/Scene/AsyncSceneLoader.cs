@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow
 {
@@ -186,7 +188,7 @@ namespace Faolline.GraphGameFlow
         {
             if (string.IsNullOrEmpty(sceneName))
             {
-                Debug.LogError("[GraphGameFlow] AsyncSceneLoader.LoadScene called with a null or empty scene name; ignored.");
+                Logging.Error("GraphGameFlow", "[GraphGameFlow] AsyncSceneLoader.LoadScene called with a null or empty scene name; ignored.");
                 return;
             }
 
@@ -198,7 +200,7 @@ namespace Faolline.GraphGameFlow
         {
             if (string.IsNullOrEmpty(sceneName))
             {
-                Debug.LogError("[GraphGameFlow] AsyncSceneLoader.UnloadScene called with a null or empty scene name; ignored.");
+                Logging.Error("GraphGameFlow", "[GraphGameFlow] AsyncSceneLoader.UnloadScene called with a null or empty scene name; ignored.");
                 return;
             }
 
@@ -213,7 +215,7 @@ namespace Faolline.GraphGameFlow
         {
             if (_pendingOperation == null)
             {
-                Debug.LogWarning("[GraphGameFlow] AsyncSceneLoader.ActivateReadyScene called with no scene ready to activate; ignored.");
+                Logging.Warning("GraphGameFlow", "[GraphGameFlow] AsyncSceneLoader.ActivateReadyScene called with no scene ready to activate; ignored.");
                 return;
             }
 
@@ -232,7 +234,7 @@ namespace Faolline.GraphGameFlow
             if (!Application.CanStreamedLevelBeLoaded(sceneName))
             {
                 _lastFailureReason = $"Scene '{sceneName}' cannot be loaded (not in Build Settings / Addressables).";
-                Debug.LogError($"[GraphGameFlow] {_lastFailureReason} Ignored.");
+                Logging.Error("GraphGameFlow", $"[GraphGameFlow] {_lastFailureReason} Ignored.");
                 return null;
             }
 
@@ -249,14 +251,14 @@ namespace Faolline.GraphGameFlow
             if (!SceneManager.GetSceneByName(sceneName).isLoaded)
             {
                 _lastFailureReason = $"Scene '{sceneName}' is not loaded; unload ignored.";
-                Debug.LogError($"[GraphGameFlow] {_lastFailureReason}");
+                Logging.Error("GraphGameFlow", $"[GraphGameFlow] {_lastFailureReason}");
                 return null;
             }
 
             if (SceneManager.sceneCount <= 1)
             {
                 _lastFailureReason = $"Scene '{sceneName}' is the last loaded scene; Unity cannot unload it.";
-                Debug.LogError($"[GraphGameFlow] {_lastFailureReason} Ignored.");
+                Logging.Error("GraphGameFlow", $"[GraphGameFlow] {_lastFailureReason} Ignored.");
                 return null;
             }
 
@@ -407,7 +409,7 @@ namespace Faolline.GraphGameFlow
             if (elapsed < _stuckOperationWarningAfter) return;
 
             warned = true;
-            Debug.LogWarning(
+            Logging.Warning("GraphGameFlow", 
                 $"[GraphGameFlow] Scene operation for '{sceneName}' has been in flight for {elapsed:0.0}s " +
                 $"(over the {_stuckOperationWarningAfter:0.0}s warning threshold) — it may be hung. No " +
                 "automatic action is taken; this is a visibility aid only.");
@@ -442,7 +444,7 @@ namespace Faolline.GraphGameFlow
             var driver = _signalDriver != null ? _signalDriver : GraphFlowDriver.Active;
             if (driver == null)
             {
-                Debug.LogWarning(
+                Logging.Warning("GraphGameFlow", 
                     $"[GraphGameFlow] AsyncSceneLoader: signal configured but no target driver " +
                     $"(SignalDriver unset and GraphFlowDriver.Active is null); signal for '{sceneName}' dropped.");
                 return;

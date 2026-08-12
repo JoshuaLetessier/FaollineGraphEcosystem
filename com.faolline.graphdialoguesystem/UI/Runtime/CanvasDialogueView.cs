@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using Faolline.GraphDialogue;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphDialogue.UI
 {
@@ -47,7 +48,7 @@ namespace Faolline.GraphDialogue.UI
             if (options == null) return;
 
             if (options.Count > choiceButtons.Count)
-                Debug.LogWarning($"[GraphDialogue] CanvasDialogueView: {options.Count} options but only " +
+                Logging.Warning("GraphDialogue", $"[GraphDialogue] CanvasDialogueView: {options.Count} options but only " +
                     $"{choiceButtons.Count} choice buttons — extra options are not shown.");
 
             for (int i = 0; i < choiceButtons.Count && i < options.Count; i++)

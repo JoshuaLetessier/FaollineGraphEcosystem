@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
 
 Internal verification package — not for distribution; history starts being tracked from 0.4.0.
 
+## [0.6.0]
+
+### Changed
+- **Migrated to the shared `com.faolline.graphlogging` facade.** `StarterSampleBuilder` and
+  `StarterGraphEditorWindow` now log through `Logging.*` under `StarterGraph`, toggleable from
+  `Faolline ▸ Diagnostics ▸ Log Settings`. New dependency: `com.faolline.graphlogging` (0.1.1).
+
 ## [0.5.1]
 
 ### Fixed

@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Globalization;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphSave
 {
@@ -188,31 +190,31 @@ namespace Faolline.GraphSave
                     if (int.TryParse(p.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var i))
                         context.Set<int>(p.Key, i);
                     else
-                        Debug.LogWarning($"[GraphSave] Skipping param '{p.Key}': cannot parse '{p.Value}' as int.");
+                        Logging.Warning("GraphSave", $"[GraphSave] Skipping param '{p.Key}': cannot parse '{p.Value}' as int.");
                     break;
                 case "float":
                     if (float.TryParse(p.Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var f))
                         context.Set<float>(p.Key, f);
                     else
-                        Debug.LogWarning($"[GraphSave] Skipping param '{p.Key}': cannot parse '{p.Value}' as float.");
+                        Logging.Warning("GraphSave", $"[GraphSave] Skipping param '{p.Key}': cannot parse '{p.Value}' as float.");
                     break;
                 case "vector2":
                     if (TryParseComponents(p.Value, 2, out var v2))
                         context.Set<Vector2>(p.Key, new Vector2(v2[0], v2[1]));
                     else
-                        Debug.LogWarning($"[GraphSave] Skipping param '{p.Key}': cannot parse '{p.Value}' as Vector2.");
+                        Logging.Warning("GraphSave", $"[GraphSave] Skipping param '{p.Key}': cannot parse '{p.Value}' as Vector2.");
                     break;
                 case "vector3":
                     if (TryParseComponents(p.Value, 3, out var v3))
                         context.Set<Vector3>(p.Key, new Vector3(v3[0], v3[1], v3[2]));
                     else
-                        Debug.LogWarning($"[GraphSave] Skipping param '{p.Key}': cannot parse '{p.Value}' as Vector3.");
+                        Logging.Warning("GraphSave", $"[GraphSave] Skipping param '{p.Key}': cannot parse '{p.Value}' as Vector3.");
                     break;
                 case "color":
                     if (TryParseComponents(p.Value, 4, out var c))
                         context.Set<Color>(p.Key, new Color(c[0], c[1], c[2], c[3]));
                     else
-                        Debug.LogWarning($"[GraphSave] Skipping param '{p.Key}': cannot parse '{p.Value}' as Color.");
+                        Logging.Warning("GraphSave", $"[GraphSave] Skipping param '{p.Key}': cannot parse '{p.Value}' as Color.");
                     break;
                 default:
                     context.Set<string>(p.Key, p.Value ?? string.Empty);

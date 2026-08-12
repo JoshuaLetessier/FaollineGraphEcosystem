@@ -2,6 +2,7 @@ using UnityEditor;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphTest;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphTest.Editor
 {
@@ -27,7 +28,7 @@ namespace Faolline.GraphTest.Editor
             CreateFlow();
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
-            Debug.Log($"[GraphTest] Reactive + Flow samples created:\n  {ReactivePath}\n  {FlowPath}\n" +
+            Logging.Info("GraphTest", $"[GraphTest] Reactive + Flow samples created:\n  {ReactivePath}\n  {FlowPath}\n" +
                       "Open one, add its sample driver (ReactiveSampleDriver / FlowSampleDriver) to a scene " +
                       "GameObject with the graph assigned, then press Play to watch the run-cursor map.");
         }

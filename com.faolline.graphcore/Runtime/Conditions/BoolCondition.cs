@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphCore
 {
@@ -39,7 +40,7 @@ namespace Faolline.GraphCore
             if (!context.TryGet<bool>(_variable, out var value))
             {
                 if (_warnOnMissing)
-                    Debug.LogWarning($"[GraphCore] BoolCondition: parameter '{_variable.DisplayName}' not found — false.");
+                    Logging.Warning("GraphCore.Runtime", $"[GraphCore] BoolCondition: parameter '{_variable.DisplayName}' not found — false.");
                 return false;
             }
             return value == _expectedValue;

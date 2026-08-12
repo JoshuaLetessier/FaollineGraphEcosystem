@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow
 {
@@ -73,7 +75,7 @@ namespace Faolline.GraphGameFlow
             var driver = _targetDriver != null ? _targetDriver : GraphFlowDriver.Active;
             if (driver == null || driver.Context == null)
             {
-                Debug.LogWarning($"[GraphGameFlow] ContextTrigger '{name}': no active GraphFlowDriver; ignored.");
+                Logging.Warning("GraphGameFlow", $"[GraphGameFlow] ContextTrigger '{name}': no active GraphFlowDriver; ignored.");
                 return;
             }
 

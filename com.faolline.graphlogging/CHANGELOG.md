@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphlogging** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.1.1]
+
+### Added
+- **Optional `UnityEngine.Object context` parameter on `Info`/`Warning`/`Error`** (default `null`),
+  mirroring `Debug.Log(message, context)` — pass `this` from a `MonoBehaviour` to keep click-to-ping
+  working in the console. Needed once real call sites (e.g. `DialogueDriver`) that previously passed a
+  context object to `Debug.LogWarning` were migrated to this facade.
+
+### Fixed
+- **`Error` no longer recurses into itself.** An ecosystem-wide mechanical migration of every remaining
+  `Debug.Log`/`LogWarning`/`LogError` call site (10 more packages) to this facade accidentally rewrote
+  `Logging.Error`'s own internal `Debug.LogError(message)` call into a call to `Logging.Error` itself —
+  a guaranteed stack overflow on the very first `Error` call anywhere in the ecosystem. Caught by reading
+  the file while investigating an unrelated compile error, before it was ever run.
+
 ## [0.1.0]
 
 ### Added

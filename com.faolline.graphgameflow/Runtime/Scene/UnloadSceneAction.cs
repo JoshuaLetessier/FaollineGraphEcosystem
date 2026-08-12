@@ -1,5 +1,7 @@
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow
 {
@@ -29,14 +31,13 @@ namespace Faolline.GraphGameFlow
         {
             if (string.IsNullOrEmpty(_sceneName))
             {
-                Debug.LogError("[GraphGameFlow] UnloadSceneAction has an empty scene name; ignored.");
+                Logging.Error("GraphGameFlow", "[GraphGameFlow] UnloadSceneAction has an empty scene name; ignored.");
                 return;
             }
 
             var loader = (context as GameFlowContext)?.SceneLoader;
             if (loader != null && !(loader is ISceneUnloader))
-                Debug.LogWarning(
-                    $"[GraphGameFlow] UnloadSceneAction: the context's scene loader ({loader.GetType().Name}) " +
+                Logging.Warning("GraphGameFlow", $"[GraphGameFlow] UnloadSceneAction: the context's scene loader ({loader.GetType().Name}) " +
                     "does not implement ISceneUnloader; falling back to the default UnitySceneLoader unload.");
 
             ((loader as ISceneUnloader) ?? DefaultUnloader).UnloadScene(_sceneName);

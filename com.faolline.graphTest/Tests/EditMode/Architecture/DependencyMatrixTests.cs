@@ -97,31 +97,31 @@ namespace Faolline.GraphTest.Tests
             [LogRuntime]  = new string[0],
 
             // ── Tier 1 · Neutral capabilities (foundation only) ─────────────────
-            [StdRuntime]  = new[] { CoreRuntime, CoreRuntimeCore },
-            [SaveRuntime] = new[] { CoreRuntime, CoreRuntimeCore },
+            [StdRuntime]  = new[] { CoreRuntime, CoreRuntimeCore, LogRuntime },
+            [SaveRuntime] = new[] { CoreRuntime, CoreRuntimeCore, LogRuntime },
 
             // ── Tier 2 · Verticals (tiers 0–1 only, never another vertical) ─────
-            [DialogueRuntime] = new[] { CoreRuntime, CoreRuntimeCore, LocRuntime },
-            [QuestRuntime]    = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime, LocRuntime },
-            [FlowRuntime]     = new[] { CoreRuntime, CoreRuntimeCore, SaveRuntime },
+            [DialogueRuntime] = new[] { CoreRuntime, CoreRuntimeCore, LocRuntime, LogRuntime },
+            [QuestRuntime]    = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime, LocRuntime, LogRuntime },
+            [FlowRuntime]     = new[] { CoreRuntime, CoreRuntimeCore, SaveRuntime, LogRuntime },
 
             // ── Tier 3 · Adapters (the only runtime assemblies with external refs) ──
             [LocUnity]          = new[] { LocRuntime, LogRuntime, UnityLoc, UnityResourceMgr },
             [DialogueLocUnity]  = new[] { DialogueRuntime, UnityLoc },
-            [DialogueUI]        = new[] { CoreRuntime, CoreRuntimeCore, DialogueRuntime, LocRuntime, TextMeshPro, UGui, InputSystem },
-            [SaveBridgeRuntime] = new[] { SaveRuntime, SaveSystemCore },
-            [AddrBridgeRuntime] = new[] { FlowRuntime, CoreRuntime, CoreRuntimeCore, UnityAddr, UnityResourceMgr },
+            [DialogueUI]        = new[] { CoreRuntime, CoreRuntimeCore, DialogueRuntime, LocRuntime, LogRuntime, TextMeshPro, UGui, InputSystem },
+            [SaveBridgeRuntime] = new[] { SaveRuntime, LogRuntime, SaveSystemCore },
+            [AddrBridgeRuntime] = new[] { FlowRuntime, CoreRuntime, CoreRuntimeCore, LogRuntime, UnityAddr, UnityResourceMgr },
 
             // ── Editor assemblies (own package + upstream Runtime/Editor pairs) ─
-            [CoreEditor]     = new[] { CoreRuntime, CoreRuntimeCore },
+            [CoreEditor]     = new[] { CoreRuntime, CoreRuntimeCore, LogRuntime },
             [LocEditor]      = new[] { LocRuntime, CoreRuntime, CoreRuntimeCore, CoreEditor, LogRuntime },
             [LocUnityEditor] = new[] { LocRuntime, LocEditor, LocUnity, LogRuntime, UnityLoc, UnityLocEditor },
             [LogEditor]      = new[] { LogRuntime },
-            [StdEditor]      = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime },
-            [DialogueEditor] = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, DialogueRuntime, LocRuntime, LocEditor },
-            [QuestEditor]    = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, QuestRuntime, StdRuntime, LocRuntime, LocEditor },
-            [FlowEditor]     = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, FlowRuntime },
-            [AddrBridgeEditor] = new[] { CoreRuntime, CoreRuntimeCore, FlowEditor, UnityAddrEditor },
+            [StdEditor]      = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime, LogRuntime },
+            [DialogueEditor] = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, DialogueRuntime, LocRuntime, LocEditor, LogRuntime },
+            [QuestEditor]    = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, QuestRuntime, StdRuntime, LocRuntime, LocEditor, LogRuntime },
+            [FlowEditor]     = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, FlowRuntime, LogRuntime },
+            [AddrBridgeEditor] = new[] { CoreRuntime, CoreRuntimeCore, FlowEditor, LogRuntime, UnityAddrEditor },
 
             // ── Tier 4 · Generation tooling (Editor-only; may reference several verticals AT ONCE
             //    because it never executes a graph — only authors assets via their public builder
@@ -133,14 +133,14 @@ namespace Faolline.GraphTest.Tests
                 StdRuntime, StdEditor,
                 QuestRuntime, QuestEditor,
                 FlowRuntime, FlowEditor,
-                DialogueRuntime,
+                DialogueRuntime, LogRuntime,
             },
 
             // ── Dev tooling (internal-only packages) ────────────────────────────
-            [GraphTestRuntime] = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime },
-            [GraphTestEditor]  = new[] { GraphTestRuntime, CoreRuntime, CoreRuntimeCore, CoreEditor },
+            [GraphTestRuntime] = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime, LogRuntime },
+            [GraphTestEditor]  = new[] { GraphTestRuntime, CoreRuntime, CoreRuntimeCore, CoreEditor, LogRuntime },
             [StarterRuntime]   = new[] { CoreRuntime, CoreRuntimeCore },
-            [StarterEditor]    = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, StarterRuntime },
+            [StarterEditor]    = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, StarterRuntime, LogRuntime },
 
             // ── Test assemblies ─────────────────────────────────────────────────
             [CoreTests]           = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, TestRunner, TestRunnerEditor },

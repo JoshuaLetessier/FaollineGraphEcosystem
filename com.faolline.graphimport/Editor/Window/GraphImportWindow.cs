@@ -3,6 +3,8 @@ using System.IO;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphImport.Editor
 {
@@ -118,7 +120,7 @@ namespace Faolline.GraphImport.Editor
         {
             if (!File.Exists(_mappingPath))
             {
-                Debug.LogError($"[GraphImport] Mapping file not found: {_mappingPath}");
+                Logging.Error("GraphImport", $"[GraphImport] Mapping file not found: {_mappingPath}");
                 return;
             }
 
@@ -135,7 +137,7 @@ namespace Faolline.GraphImport.Editor
         {
             if (_loadedMapping == null)
             {
-                Debug.LogError("[GraphImport] Load a mapping first.");
+                Logging.Error("GraphImport", "[GraphImport] Load a mapping first.");
                 return;
             }
 
@@ -145,7 +147,7 @@ namespace Faolline.GraphImport.Editor
             {
                 if (!_tablePaths.TryGetValue(table.SourceTableName, out var path) || !File.Exists(path))
                 {
-                    Debug.LogError($"[GraphImport] No source file configured for table '{table.SourceTableName}'.");
+                    Logging.Error("GraphImport", $"[GraphImport] No source file configured for table '{table.SourceTableName}'.");
                     return;
                 }
 
@@ -170,7 +172,7 @@ namespace Faolline.GraphImport.Editor
         {
             if (!File.Exists(_dialoguesJsonPath))
             {
-                Debug.LogError($"[GraphImport] Dialogues JSON not found: {_dialoguesJsonPath}");
+                Logging.Error("GraphImport", $"[GraphImport] Dialogues JSON not found: {_dialoguesJsonPath}");
                 return;
             }
 
@@ -189,13 +191,13 @@ namespace Faolline.GraphImport.Editor
         {
             var report = PlanConflictDetector.Detect(_plan);
             if (!report.IsClean)
-                Debug.LogWarning($"[GraphImport] {report.Conflicts.Count} conflict(s) — those entries will be skipped, never overwritten.");
+                Logging.Warning("GraphImport", $"[GraphImport] {report.Conflicts.Count} conflict(s) — those entries will be skipped, never overwritten.");
 
             var generators = Generators ?? BuildDefaultGenerators();
             var result = PlanApplier.Apply(_plan, report, generators);
-            Debug.Log($"[GraphImport] Created {result.Created.Count} asset(s).");
+            Logging.Info("GraphImport", $"[GraphImport] Created {result.Created.Count} asset(s).");
             foreach (var failure in result.Failures)
-                Debug.LogError($"[GraphImport] Failed to generate '{failure.Entry.ProposedPath}': {failure.Exception.Message}");
+                Logging.Error("GraphImport", $"[GraphImport] Failed to generate '{failure.Entry.ProposedPath}': {failure.Exception.Message}");
         }
 
         IReadOnlyDictionary<PlanEntryKind, IAssetGenerator> BuildDefaultGenerators()

@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow
 {
@@ -43,7 +45,7 @@ namespace Faolline.GraphGameFlow
             }
 
             var reason = $"DirectGraphCatalog has no graph registered for id '{graphId}'.";
-            Debug.LogError($"[GraphGameFlow] {reason}");
+            Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason}");
             onFailed?.Invoke(reason);
         }
     }

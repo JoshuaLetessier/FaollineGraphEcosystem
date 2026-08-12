@@ -12,7 +12,8 @@
         "com.faolline.graphgameflow.Editor",
         "com.faolline.graphstandard.Runtime",
         "com.faolline.graphstandard.Editor",
-        "com.faolline.graphdialoguesystem.Runtime"
+        "com.faolline.graphdialoguesystem.Runtime",
+        "com.faolline.graphlogging.Runtime"
     ],
     "includePlatforms": [
         "Editor"

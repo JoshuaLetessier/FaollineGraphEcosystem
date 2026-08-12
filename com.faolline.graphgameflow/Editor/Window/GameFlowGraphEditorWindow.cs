@@ -5,6 +5,8 @@ using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphCore.Editor;
 using Faolline.GraphGameFlow;
+using Faolline.GraphLogging;
+
 
 namespace Faolline.GraphGameFlow.Editor
 {
@@ -81,14 +83,14 @@ namespace Faolline.GraphGameFlow.Editor
         {
             if (LoadedGraph == null)
             {
-                Debug.LogWarning("[GraphGameFlow] No graph loaded to validate.");
+                Logging.Warning("GraphGameFlow", "[GraphGameFlow] No graph loaded to validate.");
                 return;
             }
 
             var report = GraphValidator.Validate(LoadedGraph);
             if (report.Issues.Count == 0)
             {
-                Debug.Log("[GraphGameFlow] Validation passed: no issues.");
+                Logging.Info("GraphGameFlow", "[GraphGameFlow] Validation passed: no issues.");
                 return;
             }
 
@@ -96,9 +98,9 @@ namespace Faolline.GraphGameFlow.Editor
             {
                 var msg = $"[GraphGameFlow] {issue.Severity}: {issue.Message}" +
                           (string.IsNullOrEmpty(issue.NodeId) ? "" : $" (node {issue.NodeId})");
-                if (issue.Severity == GraphIssueSeverity.Error) Debug.LogError(msg);
-                else if (issue.Severity == GraphIssueSeverity.Warning) Debug.LogWarning(msg);
-                else Debug.Log(msg);
+                if (issue.Severity == GraphIssueSeverity.Error) Logging.Error("GraphGameFlow", msg);
+                else if (issue.Severity == GraphIssueSeverity.Warning) Logging.Warning("GraphGameFlow", msg);
+                else Logging.Info("GraphGameFlow", msg);
             }
         }
     }
