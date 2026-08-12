@@ -116,5 +116,57 @@ namespace Faolline.GraphImport.Editor.Tests
 
             Assert.AreEqual(first, second);
         }
+
+        [Test]
+        public void ResolveSpeaker_WithFolderTemplateAndContentLookup_CreatesUnderJoinedChapterFolder()
+        {
+            var contentFieldsBySpeakerKey = new Dictionary<string, IReadOnlyDictionary<string, string>>
+            {
+                ["antagoniste"] = new Dictionary<string, string> { ["chapter"] = "Everfrost" }
+            };
+            var plan = new GenerationPlan(new List<PlanEntry>());
+            var resolver = new ProjectAssetResolver(plan, SpeakerFolder,
+                ScratchFolder + "/Content/{chapter}/Speakers", contentFieldsBySpeakerKey);
+
+            var speaker = resolver.ResolveSpeaker("antagoniste");
+
+            Assert.AreEqual(ScratchFolder + "/Content/Everfrost/Speakers/antagoniste.asset", AssetDatabase.GetAssetPath(speaker));
+        }
+
+        [Test]
+        public void ResolveSpeaker_WithFolderTemplate_UnjoinedSpeakerKey_Throws()
+        {
+            var contentFieldsBySpeakerKey = new Dictionary<string, IReadOnlyDictionary<string, string>>
+            {
+                ["other"] = new Dictionary<string, string> { ["chapter"] = "Ashwake" }
+            };
+            var plan = new GenerationPlan(new List<PlanEntry>());
+            var resolver = new ProjectAssetResolver(plan, SpeakerFolder,
+                ScratchFolder + "/Content/{chapter}/Speakers", contentFieldsBySpeakerKey);
+
+            Assert.Throws<System.InvalidOperationException>(() => resolver.ResolveSpeaker("antagoniste"));
+        }
+
+        [Test]
+        public void ResolveSpeaker_WithFolderTemplate_SpeakerKeyToken_NeedsNoContentLookup()
+        {
+            var plan = new GenerationPlan(new List<PlanEntry>());
+            var resolver = new ProjectAssetResolver(plan, SpeakerFolder, ScratchFolder + "/Content/{speakerKey}");
+
+            var speaker = resolver.ResolveSpeaker("tsuki");
+
+            Assert.AreEqual(ScratchFolder + "/Content/tsuki/tsuki.asset", AssetDatabase.GetAssetPath(speaker));
+        }
+
+        [Test]
+        public void ResolveSpeaker_NoFolderTemplate_StillUsesFlatSpeakerFolder()
+        {
+            var plan = new GenerationPlan(new List<PlanEntry>());
+            var resolver = new ProjectAssetResolver(plan, SpeakerFolder);
+
+            var speaker = resolver.ResolveSpeaker("tsuki");
+
+            Assert.AreEqual(SpeakerFolder + "/tsuki.asset", AssetDatabase.GetAssetPath(speaker));
+        }
     }
 }

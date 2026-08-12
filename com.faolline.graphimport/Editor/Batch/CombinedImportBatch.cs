@@ -23,8 +23,12 @@ namespace Faolline.GraphImport.Editor
     /// combined run; omit both to behave like a quest/flow-only run but still going through the shared
     /// ProjectAssetResolver (harmless — a resolver built from a plan with no dialogue entries just never
     /// finds one, same documented-safe null as before). Optional: -questPathTemplate/-flowPathTemplate/
-    /// -speakerFolder overrides, same defaults as the two standalone batch entry points. Exits 0 only if
-    /// the combined run is fully clean (no conflicts, no generator failures).
+    /// -speakerFolder overrides, same defaults as the two standalone batch entry points. Also optional:
+    /// -speakerFolderTemplate (e.g. "Content/{chapter}/Graph/Speakers") — when given, a newly-created
+    /// Speaker's folder is routed by the SAME mapping-declared "content"-role table lookup used for
+    /// dialogue path tokens (see PivotBuilder.BuildContentFields), joined by speaker key instead of
+    /// dialogue id; -speakerFolder is then only the fallback default, unused for actual creation. Exits
+    /// 0 only if the combined run is fully clean (no conflicts, no generator failures).
     /// </summary>
     public static class CombinedImportBatch
     {
@@ -53,7 +57,8 @@ namespace Faolline.GraphImport.Editor
                 throw new InvalidOperationException("Nothing to generate: no quest/flow mapping and no -dialoguesJson given.");
 
             var speakerFolder = args.TryGetValue("-speakerFolder", out var sf) ? sf : "Assets/Generated/Speakers";
-            var result = BuildAndApply(dialogueEntries, questFlowEntries, speakerFolder);
+            var speakerFolderTemplate = args.TryGetValue("-speakerFolderTemplate", out var sft) ? sft : null;
+            var result = BuildAndApply(dialogueEntries, questFlowEntries, speakerFolder, speakerFolderTemplate, contentFieldsById);
 
             foreach (var conflict in result.Conflicts.Conflicts)
                 Console.Error.WriteLine($"[CombinedImportBatch] Conflict ({conflict.Reason}): {conflict.PlanEntry.ProposedPath}");
@@ -72,13 +77,15 @@ namespace Faolline.GraphImport.Editor
         /// built from the FULL combined plan, so a quest step's content ref and a dialogue's
         /// sub-link can both resolve to anything else generated in this same run.
         /// </summary>
-        public static GraphImportRunResult BuildAndApply(IReadOnlyList<PlanEntry> dialogueEntries, IReadOnlyList<PlanEntry> questFlowEntries, string speakerFolder)
+        public static GraphImportRunResult BuildAndApply(IReadOnlyList<PlanEntry> dialogueEntries, IReadOnlyList<PlanEntry> questFlowEntries, string speakerFolder,
+            string speakerFolderTemplate = null,
+            IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> contentFieldsById = null)
         {
             var allEntries = dialogueEntries.Concat(questFlowEntries).ToList();
             var plan = new GenerationPlan(allEntries);
             var report = PlanConflictDetector.Detect(plan);
 
-            var resolver = new ProjectAssetResolver(plan, speakerFolder);
+            var resolver = new ProjectAssetResolver(plan, speakerFolder, speakerFolderTemplate, contentFieldsById);
             var generators = new Dictionary<PlanEntryKind, IAssetGenerator>
             {
                 [PlanEntryKind.QuestAsset] = new QuestAssetGenerator(),
