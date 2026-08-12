@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
+using Faolline.GraphLogging;
 using UnityEditor;
-using UnityEngine;
 
 namespace Faolline.GraphLocalization.Editor
 {
@@ -43,7 +43,7 @@ namespace Faolline.GraphLocalization.Editor
                 try { instance = (IGraphLocalizationAdapter)Activator.CreateInstance(type); }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[GraphLocalizationAdapterRegistry] Could not instantiate '{type.FullName}': {ex.Message}");
+                    Logging.Warning("GraphLocalization.Validation", $"[GraphLocalizationAdapterRegistry] Could not instantiate '{type.FullName}': {ex.Message}");
                     continue;
                 }
 

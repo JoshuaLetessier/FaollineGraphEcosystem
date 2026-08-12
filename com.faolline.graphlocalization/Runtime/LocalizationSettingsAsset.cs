@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Faolline.GraphLogging;
 using UnityEngine;
 
 namespace Faolline.GraphLocalization
@@ -136,7 +137,7 @@ namespace Faolline.GraphLocalization
                 var collections = manifest != null ? manifest.AllUnityCollections() : new List<string>();
                 var unityProvider = TryCreateUnityProvider(collections, null);
                 if (unityProvider != null) return unityProvider;
-                Debug.LogWarning("[GraphLocalization] Mode is UnityLocalization but the Unity provider could not " +
+                Logging.Warning("GraphLocalization.Playback", "[GraphLocalization] Mode is UnityLocalization but the Unity provider could not " +
                     "be created (is com.unity.localization installed?). Falling back to CSV.");
             }
 

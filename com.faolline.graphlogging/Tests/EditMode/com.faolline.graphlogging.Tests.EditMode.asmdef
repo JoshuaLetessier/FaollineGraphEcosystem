@@ -1,0 +1,23 @@
+{
+    "name": "com.faolline.graphlogging.Tests.EditMode",
+    "rootNamespace": "Faolline.GraphLogging.Tests",
+    "references": [
+        "com.faolline.graphlogging.Runtime",
+        "com.faolline.graphlogging.Editor",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -8,9 +8,11 @@ one of these tiers, and the whole matrix is locked by an automated test (see
 ## The tiers
 
 ```
-        T0 · Foundation        graphcore.Runtime.Core   graphlocalization
-                                   ▲
-                               graphcore.Runtime
+        T0 · Foundation        graphcore.Runtime.Core   graphlocalization   graphlogging
+                                   ▲                          ▲   ▲              ▲ ▲
+                               graphcore.Runtime ──────────────────────────────┘  │
+                                   │                                              │
+                                   └── graphlocalization also depends on graphlogging (leaf, zero deps)
                                    ▲                    ▲
         T1 · Capabilities      graphstandard  graphsave │
                                    ▲             ▲      │
@@ -26,6 +28,11 @@ one of these tiers, and the whole matrix is locked by an automated test (see
         Dev tooling            graphTest · starterGraph        (never shipped to consumers)
 ```
 
+`graphlogging` is a zero-dependency T0 leaf, like `graphlocalization` — both `graphcore.Runtime` and
+`graphlocalization` depend on it for the shared, category-based `GraphLogging.Info/Warning/Error` facade
+(any other package may adopt it too). It exists as a separate package specifically so `graphlocalization`
+can share it without depending on `graphcore` and losing its own zero-dependency, install-alone status.
+
 `graphcore` is two Runtime assemblies, not one: `graphcore.Runtime.Core` is a `noEngineReferences` leaf (zero
 UnityEngine usage, checkable by the compiler, not just convention) carrying the pure-C# run-state model
 (`BaseContext`, `SignalArgs`, the extensible `BaseContextTypeRegistry`/`GraphLog` seams); `graphcore.Runtime`
@@ -38,7 +45,7 @@ Core (their own coupling to ScriptableObject types runs too deep to be worth res
 
 | Tier | Members | May depend on | Never |
 |---|---|---|---|
-| **T0 · Foundation** | `graphcore.Runtime.Core`, `graphcore.Runtime`, `graphlocalization` | `graphcore.Runtime` → `graphcore.Runtime.Core` only; the other two: nothing (zero asmdef references) | anything outside that |
+| **T0 · Foundation** | `graphcore.Runtime.Core`, `graphcore.Runtime`, `graphlocalization`, `graphlogging` | `graphcore.Runtime` → `graphcore.Runtime.Core` + `graphlogging`; `graphlocalization` → `graphlogging` only; `graphcore.Runtime.Core` and `graphlogging`: nothing (zero asmdef references) | anything outside that |
 | **T1 · Capabilities** | `graphstandard`, `graphsave` | T0 | each other, T2+ |
 | **T2 · Verticals** | `graphdialoguesystem`, `graphquest`, `graphgameflow` | T0, T1 | **another vertical**, external packages |
 | **T3 · Adapters** | `graphsave.savesystem`, `graphgameflow.addressables`; the `Localization.Unity` and `UI` sub-assemblies | the package they adapt + **one** external dependency family | other adapters |
@@ -48,11 +55,13 @@ Core (their own coupling to ScriptableObject types runs too deep to be worth res
 Tier definitions:
 
 - **Foundation** — the substrate everyone shares. `graphcore.Runtime` owns nodes, edges, the runner, and
-  the graph/def assets; its one dependency, `graphcore.Runtime.Core`, owns the run-state primitives
-  (`BaseContext`, signals) and is engine-agnostic (`noEngineReferences: true`) — `graphlocalization` is
-  likewise a dependency-free leaf (locale tables + provider contract). `graphcore.Runtime` and
-  `graphlocalization` compile against `UnityEngine` core; `graphcore.Runtime.Core` does not compile
-  against `UnityEngine` at all.
+  the graph/def assets; its dependencies are `graphcore.Runtime.Core` (the engine-agnostic run-state
+  primitives — `BaseContext`, signals, `noEngineReferences: true`) and `graphlogging` (the shared logging
+  facade). `graphlocalization` is likewise a near-dependency-free leaf (locale tables + provider
+  contract), with exactly one dependency of its own — `graphlogging` — for the same reason. `graphlogging`
+  itself has zero dependencies: any T0/T1/T2 package can adopt it directly without pulling in `graphcore`.
+  `graphcore.Runtime`, `graphlocalization`, and `graphlogging` all compile against `UnityEngine` core;
+  `graphcore.Runtime.Core` does not compile against `UnityEngine` at all.
 - **Capabilities** — domain-neutral services above the substrate: extra execution engines and standard
   nodes (`graphstandard`), the neutral run-snapshot model + `IGraphSaveStore` port (`graphsave`).
 - **Verticals** — one gameplay domain each: dialogue, quests, scene-flow. A vertical composes T0/T1

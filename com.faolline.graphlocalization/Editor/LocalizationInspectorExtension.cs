@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
 using UnityEditor;
-using UnityEngine;
 using UnityEngine.UIElements;
 using Faolline.GraphCore;
 using Faolline.GraphCore.Editor;
+using Faolline.GraphLogging;
 
 namespace Faolline.GraphLocalization.Editor
 {
@@ -90,7 +90,7 @@ namespace Faolline.GraphLocalization.Editor
                     if (n != null && !string.IsNullOrEmpty(n.Id)) nodeIds.Add(n.Id);
                 locData.ApplyDefaultToAll(nodeIds);
                 EditorUtility.SetDirty(graph);
-                Debug.Log($"[GraphLocalization] Applied {locData.DefaultFlags} to {nodeIds.Count} nodes.");
+                Logging.Info("GraphLocalization.Editor", $"[GraphLocalization] Applied {locData.DefaultFlags} to {nodeIds.Count} nodes.");
             })
             { text = "Apply to all nodes" };
             applyBtn.style.marginTop = 4;

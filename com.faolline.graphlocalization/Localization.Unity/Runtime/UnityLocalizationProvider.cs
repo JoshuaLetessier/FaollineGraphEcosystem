@@ -45,7 +45,7 @@ namespace Faolline.GraphLocalization.Unity
             try { UnityLocalizationSettings.InitializationOperation.WaitForCompletion(); }
             catch (System.Exception e)
             {
-                UnityEngine.Debug.LogWarning(
+                Faolline.GraphLogging.Logging.Warning("GraphLocalization.Playback",
                     $"[GraphLocalization] Unity Localization failed to initialize: {e.Message}. " +
                     "Locale queries/changes may not apply.");
             }
@@ -68,7 +68,7 @@ namespace Faolline.GraphLocalization.Unity
             var available = UnityLocalizationSettings.AvailableLocales;
             if (available == null || available.Locales == null || available.Locales.Count == 0)
             {
-                UnityEngine.Debug.LogWarning(
+                Faolline.GraphLogging.Logging.Warning("GraphLocalization.Playback",
                     $"[GraphLocalization] SetLocale('{locale}') ignored: Unity Localization has no available " +
                     "locales (initialization failed, or no locales are configured in Project Settings ▸ " +
                     "Localization).");
@@ -83,7 +83,7 @@ namespace Faolline.GraphLocalization.Unity
             var codes = new List<string>();
             foreach (var l in available.Locales)
                 if (l != null) codes.Add(l.Identifier.Code);
-            UnityEngine.Debug.LogWarning(
+            Faolline.GraphLogging.Logging.Warning("GraphLocalization.Playback",
                 $"[GraphLocalization] SetLocale('{locale}') ignored: no such locale among the project's " +
                 $"({string.Join(", ", codes)}).");
         }
@@ -98,7 +98,7 @@ namespace Faolline.GraphLocalization.Unity
             if (_collections.Count == 0 && !_warnedNoCollections)
             {
                 _warnedNoCollections = true;
-                UnityEngine.Debug.LogWarning("[GraphLocalization] UnityLocalizationProvider has no collections to " +
+                Faolline.GraphLogging.Logging.Warning("GraphLocalization.Playback", "[GraphLocalization] UnityLocalizationProvider has no collections to " +
                     "search. Run Faolline ▸ Localization ▸ Build All Tables to (re)generate the manifest.");
             }
 

@@ -1,10 +1,7 @@
 {
-    "name": "com.faolline.graphcore.Runtime",
-    "rootNamespace": "Faolline.GraphCore",
-    "references": [
-        "com.faolline.graphcore.Runtime.Core",
-        "com.faolline.graphlogging.Runtime"
-    ],
+    "name": "com.faolline.graphlogging.Runtime",
+    "rootNamespace": "Faolline.GraphLogging",
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using Faolline.GraphLogging;
 using UnityEditor;
 using UnityEngine;
 
@@ -30,7 +31,7 @@ namespace Faolline.GraphLocalization.Editor
             if (db == null) return written;
             if (locales == null || locales.Count == 0)
             {
-                Debug.LogWarning($"[CsvLocalizationExporter] [{libName}] No CSV locales configured. Skipping.");
+                Logging.Warning("GraphLocalization.Validation", $"[CsvLocalizationExporter] [{libName}] No CSV locales configured. Skipping.");
                 return written;
             }
 
@@ -64,10 +65,10 @@ namespace Faolline.GraphLocalization.Editor
             IReadOnlyList<string> locales, string sourceLocale, LocaleValidationMode validation)
         {
             var existing = System.IO.File.Exists(path) ? System.IO.File.ReadAllText(path) : null;
-            var csv = BuildCsv(existing, desired, locales, sourceLocale, out var coverage, out int removed);
+            var csv = BuildCsv(existing, desired, locales, sourceLocale, out var coverage, out _);
             System.IO.File.WriteAllText(path, csv);
             AssetDatabase.ImportAsset(path);
-            ReportCoverage(label, coverage, validation, removed);
+            ReportCoverage(label, coverage, validation);
         }
 
         // ── Desired keys ────────────────────────────────────────────────────────────
@@ -150,21 +151,15 @@ namespace Faolline.GraphLocalization.Editor
         // ── Reporting ─────────────────────────────────────────────────────────────────
 
         private static void ReportCoverage(string libName, List<(string locale, int filled, int total)> coverage,
-            LocaleValidationMode validation, int removed)
+            LocaleValidationMode validation)
         {
-            var sb = new StringBuilder();
-            sb.AppendLine($"[CsvLocalizationExporter] [{libName}] CSV written. Orphans removed: {removed}");
-            foreach (var (loc, filled, total) in coverage)
-                sb.AppendLine($"  {loc}: {filled}/{total} ({Pct(filled, total)}%)");
-            Debug.Log(sb.ToString().TrimEnd());
-
             if (validation == LocaleValidationMode.Permissive) return;
             foreach (var (loc, filled, total) in coverage)
             {
                 if (total == 0 || filled >= total) continue;
                 var msg = $"[CsvLocalizationExporter] [{libName}] Locale '{loc}': {filled}/{total} ({Pct(filled, total)}%), {total - filled} missing.";
-                if (validation == LocaleValidationMode.Strict) Debug.LogError(msg);
-                else Debug.LogWarning(msg);
+                if (validation == LocaleValidationMode.Strict) Logging.Error("GraphLocalization.Validation", msg);
+                else Logging.Warning("GraphLocalization.Validation", msg);
             }
         }
 

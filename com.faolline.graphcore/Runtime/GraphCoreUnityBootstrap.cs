@@ -1,3 +1,4 @@
+using Faolline.GraphLogging;
 using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
@@ -8,7 +9,10 @@ namespace Faolline.GraphCore
     /// <summary>
     /// Wires the Unity engine layer into Core once per domain load: registers <c>Vector2</c>/<c>Vector3</c>/
     /// <c>Color</c> with <see cref="BaseContextTypeRegistry"/> (Core cannot name these types itself — see
-    /// that class) and points <see cref="GraphLog"/> at <c>Debug.LogWarning</c>/<c>Debug.LogError</c>.
+    /// that class) and points <see cref="GraphLog"/> at <see cref="Faolline.GraphLogging.Logging"/> under the
+    /// "GraphCore.Context" category — Core's own warnings/errors go through the same shared,
+    /// per-category on/off control as every other package instead of hardcoding straight to
+    /// <c>Debug.LogWarning</c>/<c>Debug.LogError</c>.
     /// <see cref="InitializeOnLoadAttribute"/> covers the editor (including EditMode tests, which run
     /// inside the editor process); <see cref="RuntimeInitializeOnLoadMethodAttribute"/> covers player
     /// builds, where the editor-only attribute above does not exist.
@@ -31,8 +35,8 @@ namespace Faolline.GraphCore
             BaseContextTypeRegistry.RegisterSupportedType<Vector3>();
             BaseContextTypeRegistry.RegisterSupportedType<Color>();
 
-            GraphLog.WarningSink = Debug.LogWarning;
-            GraphLog.ErrorSink = Debug.LogError;
+            GraphLog.WarningSink = msg => Logging.Warning("GraphCore.Context", msg);
+            GraphLog.ErrorSink = msg => Logging.Error("GraphCore.Context", msg);
         }
     }
 }

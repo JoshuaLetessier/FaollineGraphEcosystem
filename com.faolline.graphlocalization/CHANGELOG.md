@@ -4,6 +4,32 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.8.0]
+
+### Changed
+- **Removed low-value auto-fired `Debug.Log` noise.** `LocalizationBuilderCore`'s per-lib "Phase 1"/
+  "Mode is CSV, skipping"/"Phase 2 complete" lines, `CsvLocalizationExporter`'s per-lib coverage dump,
+  and `UnityLocalizationSyncer`'s "Sync complete" report all fired on every single autobuild (i.e. on
+  every graph save when Auto Build On Save is enabled), flooding the console with routine progress
+  narration. Genuine problems (translation gaps) were already separately reported via `LogWarning`/
+  `LogError` right next to each of these and are unaffected.
+- **Every remaining `Debug.Log`/`LogWarning`/`LogError` call now routes through the new
+  `com.faolline.graphlogging` package's `Logging.Info/Warning/Error(category, message)`.** Three
+  categories: `GraphLocalization.AutoBuild` (the two lines an autosave now prints — "Auto-rebuilding
+  tables..." and "Done. N lib(s) processed." — plus one-time asset-creation notices),
+  `GraphLocalization.Validation` (every build-time config/coverage-gap warning and error, editor-side),
+  `GraphLocalization.Playback` (the two runtime warnings: missing key during playback, Unity Localization
+  provider fallback). Each is independently toggleable from `Faolline ▸ Diagnostics ▸ Log Settings` —
+  `Error` calls are never gated, matching this package's existing `Strict` validation precedent. New
+  dependency: `com.faolline.graphlogging` (0.1.0) — a zero-dependency T0 leaf, chosen specifically so this
+  package keeps its own zero-dependency, install-alone status (see `ARCHITECTURE.md`).
+
+### Fixed
+- **Orphan Unity Localization collections are no longer silently dropped from the log.** They were only
+  ever surfaced inside `UnityLocalizationSyncer`'s removed "Sync complete" report; now reported directly
+  as a warning when found, so removing the noisy summary didn't also remove the one genuinely
+  actionable piece of information it carried.
+
 ## [0.7.2]
 
 ### Fixed

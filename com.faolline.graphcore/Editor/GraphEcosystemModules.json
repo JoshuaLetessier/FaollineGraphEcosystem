@@ -4,11 +4,18 @@
   "basePath": "",
   "modules": [
     {
-      "displayName": "Graph Core (base)",
-      "package": "com.faolline.graphcore",
-      "version": "0.41.0",
+      "displayName": "Graph Logging (shared diagnostics)",
+      "package": "com.faolline.graphlogging",
+      "version": "0.1.0",
       "required": true,
       "dependsOn": []
+    },
+    {
+      "displayName": "Graph Core (base)",
+      "package": "com.faolline.graphcore",
+      "version": "0.42.0",
+      "required": true,
+      "dependsOn": [ "com.faolline.graphlogging" ]
     },
     {
       "displayName": "Graph Standard (buffer)",
@@ -20,9 +27,9 @@
     {
       "displayName": "Graph Localization",
       "package": "com.faolline.graphlocalization",
-      "version": "0.7.2",
+      "version": "0.8.0",
       "required": false,
-      "dependsOn": []
+      "dependsOn": [ "com.faolline.graphlogging" ]
     },
     {
       "displayName": "↳ Unity Localization backend",

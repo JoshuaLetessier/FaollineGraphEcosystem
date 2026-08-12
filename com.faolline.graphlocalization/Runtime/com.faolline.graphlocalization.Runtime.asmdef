@@ -1,7 +1,9 @@
 {
     "name": "com.faolline.graphlocalization.Runtime",
     "rootNamespace": "Faolline.GraphLocalization",
-    "references": [],
+    "references": [
+        "com.faolline.graphlogging.Runtime"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

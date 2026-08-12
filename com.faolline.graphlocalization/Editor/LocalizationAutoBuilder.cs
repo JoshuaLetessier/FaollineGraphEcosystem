@@ -1,5 +1,5 @@
+using Faolline.GraphLogging;
 using UnityEditor;
-using UnityEngine;
 
 namespace Faolline.GraphLocalization.Editor
 {
@@ -48,7 +48,7 @@ namespace Faolline.GraphLocalization.Editor
 
             if (GraphLocalizationAdapterRegistry.DiscoverAdapters().Count == 0) return;
 
-            Debug.Log("[GraphLocalization] Auto-rebuilding tables (graph asset changed).");
+            Logging.Info("GraphLocalization.AutoBuild", "[GraphLocalization] Auto-rebuilding tables (graph asset changed).");
             Building = true;
             try { LocalizationBuilderCore.BuildAll(); }
             finally { Building = false; }

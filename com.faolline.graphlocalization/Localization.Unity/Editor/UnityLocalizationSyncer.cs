@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using Faolline.GraphLogging;
 using UnityEditor;
 using UnityEngine;
 using UnityEditor.Localization;
@@ -36,7 +36,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
             var locales = LocalizationEditorSettings.GetLocales();
             if (locales == null || locales.Count == 0)
             {
-                Debug.LogWarning($"[UnityLocalizationSyncer] [{libName}] No locales configured in Project Settings > Localization.");
+                Logging.Warning("GraphLocalization.Validation", $"[UnityLocalizationSyncer] [{libName}] No locales configured in Project Settings > Localization.");
                 return System.Array.Empty<string>();
             }
 
@@ -87,7 +87,6 @@ namespace Faolline.GraphLocalization.Unity.Editor
             ReportOrphanCollections(libFolder, desiredNames, report);
             AssetDatabase.SaveAssets();
             ReportCoverage(managed, locales, sourceLocale, validation, report);
-            Debug.Log(report.Build());
 
             // Return text names, then a separator, then asset names — the builder splits on it.
             var result = new List<string>(desiredNames);
@@ -164,7 +163,7 @@ namespace Faolline.GraphLocalization.Unity.Editor
                 if (path == newPath) continue;
                 var error = AssetDatabase.MoveAsset(path, newPath);
                 if (!string.IsNullOrEmpty(error))
-                    Debug.LogWarning($"[UnityLocalizationSyncer] Could not move '{path}' → '{newPath}': {error}");
+                    Logging.Warning("GraphLocalization.Validation", $"[UnityLocalizationSyncer] Could not move '{path}' → '{newPath}': {error}");
             }
             report.CollectionsMoved++;
         }
@@ -200,6 +199,10 @@ namespace Faolline.GraphLocalization.Unity.Editor
                 if (!desired.Contains(col.TableCollectionName))
                     report.OrphanCollections.Add(col.TableCollectionName);
             }
+
+            if (report.OrphanCollections.Count > 0)
+                Logging.Warning("GraphLocalization.Validation", $"[UnityLocalizationSyncer] [{report.LibName}] Orphan collection(s) under '{libFolder}' " +
+                    $"no longer referenced by any graph (not deleted automatically): {string.Join(", ", report.OrphanCollections)}");
         }
 
         // ── Asset tables (mirror of the string collection, same keys) ──────────────
@@ -327,8 +330,8 @@ namespace Faolline.GraphLocalization.Unity.Editor
             {
                 if (total == 0 || filled >= total) continue;
                 var msg = $"[UnityLocalizationSyncer] [{report.LibName}] Locale '{code}': {filled}/{total} ({Pct(filled, total)}%), {total - filled} missing.";
-                if (validation == LocaleValidationMode.Strict) Debug.LogError(msg);
-                else Debug.LogWarning(msg);
+                if (validation == LocaleValidationMode.Strict) Logging.Error("GraphLocalization.Validation", msg);
+                else Logging.Warning("GraphLocalization.Validation", msg);
             }
         }
 
@@ -343,14 +346,14 @@ namespace Faolline.GraphLocalization.Unity.Editor
             {
                 foreach (var l in locales)
                     if (l != null && l.Identifier.Code == sourceLocaleCode) return l;
-                Debug.LogWarning($"[UnityLocalizationSyncer] [{libName}] Unity Source Locale '{sourceLocaleCode}' " +
+                Logging.Warning("GraphLocalization.Validation", $"[UnityLocalizationSyncer] [{libName}] Unity Source Locale '{sourceLocaleCode}' " +
                     "(from the localization settings) is not among the project's locales " +
                     "(Project Settings ▸ Localization); falling back.");
             }
             try { var p = UnityLocalizationSettings.ProjectLocale; if (p != null) return p; } catch { }
             if (locales?.Count > 0)
             {
-                Debug.LogWarning($"[UnityLocalizationSyncer] [{libName}] No source locale declared: neither the " +
+                Logging.Warning("GraphLocalization.Validation", $"[UnityLocalizationSyncer] [{libName}] No source locale declared: neither the " +
                     "settings' Unity Source Locale nor a Project Locale is set. Using the FIRST configured " +
                     $"locale ('{locales[0].Identifier.Code}') as the source — authored text will be pre-filled " +
                     "into that column. Set one of the two if this is not the authoring language.");
@@ -376,17 +379,6 @@ namespace Faolline.GraphLocalization.Unity.Editor
             public readonly List<(string code, int filled, int total, bool isSource)> Coverage = new();
             public LocaleValidationMode Validation;
             public SyncReport(string libName) => LibName = libName;
-
-            public string Build()
-            {
-                var sb = new StringBuilder();
-                sb.AppendLine($"[UnityLocalizationSyncer] [{LibName}] Sync complete. Collections +{CollectionsCreated}~{CollectionsMoved} | Keys +{KeysAdded}/-{KeysRemoved}");
-                foreach (var (code, filled, total, isSource) in Coverage)
-                    sb.AppendLine($"  {code}{(isSource ? " (source)" : "")}: {filled}/{total} ({Pct(filled, total)}%)");
-                if (OrphanCollections.Count > 0)
-                    sb.AppendLine($"  Orphan collections (not deleted): {string.Join(", ", OrphanCollections)}");
-                return sb.ToString().TrimEnd();
-            }
         }
     }
 }

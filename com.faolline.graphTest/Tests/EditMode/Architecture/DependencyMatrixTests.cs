@@ -29,6 +29,9 @@ namespace Faolline.GraphTest.Tests
         private const string LocUnity            = "com.faolline.graphlocalization.Localization.Unity";
         private const string LocUnityEditor      = "com.faolline.graphlocalization.Localization.Unity.Editor";
         private const string LocTests            = "com.faolline.graphlocalization.Tests.EditMode";
+        private const string LogRuntime          = "com.faolline.graphlogging.Runtime";
+        private const string LogEditor           = "com.faolline.graphlogging.Editor";
+        private const string LogTests            = "com.faolline.graphlogging.Tests.EditMode";
         private const string StdRuntime          = "com.faolline.graphstandard.Runtime";
         private const string StdEditor           = "com.faolline.graphstandard.Editor";
         private const string StdTests            = "com.faolline.graphstandard.Tests.EditMode";
@@ -86,10 +89,12 @@ namespace Faolline.GraphTest.Tests
         /// </summary>
         private static readonly Dictionary<string, string[]> Allowed = new Dictionary<string, string[]>
         {
-            // ── Tier 0 · Foundation (no references at all) ──────────────────────
-            [CoreRuntime] = new[] { CoreRuntimeCore },
+            // ── Tier 0 · Foundation (no references at all, except graphlogging which every other
+            //    T0 member may share as a leaf utility) ───────────────────────────
+            [CoreRuntime] = new[] { CoreRuntimeCore, LogRuntime },
             [CoreRuntimeCore] = new string[0],
-            [LocRuntime]  = new string[0],
+            [LocRuntime]  = new[] { LogRuntime },
+            [LogRuntime]  = new string[0],
 
             // ── Tier 1 · Neutral capabilities (foundation only) ─────────────────
             [StdRuntime]  = new[] { CoreRuntime, CoreRuntimeCore },
@@ -101,7 +106,7 @@ namespace Faolline.GraphTest.Tests
             [FlowRuntime]     = new[] { CoreRuntime, CoreRuntimeCore, SaveRuntime },
 
             // ── Tier 3 · Adapters (the only runtime assemblies with external refs) ──
-            [LocUnity]          = new[] { LocRuntime, UnityLoc, UnityResourceMgr },
+            [LocUnity]          = new[] { LocRuntime, LogRuntime, UnityLoc, UnityResourceMgr },
             [DialogueLocUnity]  = new[] { DialogueRuntime, UnityLoc },
             [DialogueUI]        = new[] { CoreRuntime, CoreRuntimeCore, DialogueRuntime, LocRuntime, TextMeshPro, UGui, InputSystem },
             [SaveBridgeRuntime] = new[] { SaveRuntime, SaveSystemCore },
@@ -109,8 +114,9 @@ namespace Faolline.GraphTest.Tests
 
             // ── Editor assemblies (own package + upstream Runtime/Editor pairs) ─
             [CoreEditor]     = new[] { CoreRuntime, CoreRuntimeCore },
-            [LocEditor]      = new[] { LocRuntime, CoreRuntime, CoreRuntimeCore, CoreEditor },
-            [LocUnityEditor] = new[] { LocRuntime, LocEditor, LocUnity, UnityLoc, UnityLocEditor },
+            [LocEditor]      = new[] { LocRuntime, CoreRuntime, CoreRuntimeCore, CoreEditor, LogRuntime },
+            [LocUnityEditor] = new[] { LocRuntime, LocEditor, LocUnity, LogRuntime, UnityLoc, UnityLocEditor },
+            [LogEditor]      = new[] { LogRuntime },
             [StdEditor]      = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime },
             [DialogueEditor] = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, DialogueRuntime, LocRuntime, LocEditor },
             [QuestEditor]    = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, QuestRuntime, StdRuntime, LocRuntime, LocEditor },
@@ -139,6 +145,7 @@ namespace Faolline.GraphTest.Tests
             // ── Test assemblies ─────────────────────────────────────────────────
             [CoreTests]           = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, TestRunner, TestRunnerEditor },
             [LocTests]            = new[] { LocRuntime, LocEditor, TestRunner, TestRunnerEditor },
+            [LogTests]            = new[] { LogRuntime, LogEditor, TestRunner, TestRunnerEditor },
             [StdTests]            = new[] { StdRuntime, StdEditor, CoreRuntime, CoreRuntimeCore, TestRunner, TestRunnerEditor },
             [SaveTests]           = new[] { SaveRuntime, CoreRuntime, CoreRuntimeCore, TestRunner, TestRunnerEditor },
             [SaveBridgeTests]     = new[] { SaveBridgeRuntime, SaveRuntime, CoreRuntime, CoreRuntimeCore, SaveSystemCore, SaveSystemJson, TestRunner, TestRunnerEditor },

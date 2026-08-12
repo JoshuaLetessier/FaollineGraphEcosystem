@@ -1,11 +1,12 @@
 {
-    "name": "com.faolline.graphcore.Runtime",
-    "rootNamespace": "Faolline.GraphCore",
+    "name": "com.faolline.graphlogging.Editor",
+    "rootNamespace": "Faolline.GraphLogging.Editor",
     "references": [
-        "com.faolline.graphcore.Runtime.Core",
         "com.faolline.graphlogging.Runtime"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

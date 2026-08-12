@@ -61,7 +61,7 @@ namespace Faolline.GraphLocalization
                 case LocalizationStrictMode.Audit:
                     var stamp = $"{_currentLocale} {key}";
                     if ((_auditedMissing ??= new System.Collections.Generic.HashSet<string>()).Add(stamp))
-                        UnityEngine.Debug.LogWarning(
+                        Faolline.GraphLogging.Logging.Warning("GraphLocalization.Playback",
                             $"[GraphLocalization] Missing localization key '{key}' for locale '{_currentLocale}'.");
                     break;
                 // Permissive: return the marker silently.

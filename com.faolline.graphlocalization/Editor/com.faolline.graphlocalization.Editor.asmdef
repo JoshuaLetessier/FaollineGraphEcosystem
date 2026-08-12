@@ -5,7 +5,8 @@
         "com.faolline.graphlocalization.Runtime",
         "com.faolline.graphcore.Runtime",
         "com.faolline.graphcore.Runtime.Core",
-        "com.faolline.graphcore.Editor"
+        "com.faolline.graphcore.Editor",
+        "com.faolline.graphlogging.Runtime"
     ],
     "includePlatforms": [
         "Editor"

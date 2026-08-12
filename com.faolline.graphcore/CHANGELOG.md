@@ -4,6 +4,20 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.42.0]
+
+### Added
+- **New dependency: `com.faolline.graphlogging` (0.1.0).** `GraphCoreUnityBootstrap` now wires the
+  existing `GraphLog` seam (the engine-agnostic `Runtime.Core` warning/error sink used by `BaseContext`)
+  to `Logging.Warning/Error("GraphCore.Context", ...)` instead of calling `Debug.LogWarning`/
+  `Debug.LogError` directly — Core's own diagnostics now share the same per-category on/off control
+  (`Faolline ▸ Diagnostics ▸ Log Settings`) as every other package that adopts the facade. `Runtime.Core`
+  itself is untouched (still zero `UnityEngine` references) — only the bootstrap wiring, already in the
+  engine-referencing `Runtime` assembly, changed.
+- **`LogAction` gained a `Category` field** (default `"GraphCore.LogAction"`), routed through
+  `Logging.Info` instead of a raw `Debug.Log` — a designer can silence or scope a specific Log
+  node's output project-wide without deleting it.
+
 ## [0.41.0]
 
 ### Changed — `GraphLinkNodeData` no longer forces its target into the build (soft reference)

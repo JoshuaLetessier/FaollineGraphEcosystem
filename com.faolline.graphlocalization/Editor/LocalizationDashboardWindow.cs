@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using Faolline.GraphLogging;
 using UnityEditor;
 using UnityEngine;
 
@@ -173,7 +174,7 @@ namespace Faolline.GraphLocalization.Editor
             AssetDatabase.CreateAsset(asset, path);
             AssetDatabase.SaveAssets();
             Selection.activeObject = asset;
-            Debug.Log($"[GraphLocalization] Created LocalizationSettingsAsset at {path}");
+            Logging.Info("GraphLocalization.AutoBuild", $"[GraphLocalization] Created LocalizationSettingsAsset at {path}");
         }
 
         private void DrawLibReport(LibReport report)

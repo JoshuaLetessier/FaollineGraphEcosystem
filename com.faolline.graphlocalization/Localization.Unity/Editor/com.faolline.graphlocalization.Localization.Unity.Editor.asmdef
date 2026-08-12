@@ -5,6 +5,7 @@
         "com.faolline.graphlocalization.Runtime",
         "com.faolline.graphlocalization.Editor",
         "com.faolline.graphlocalization.Localization.Unity",
+        "com.faolline.graphlogging.Runtime",
         "Unity.Localization",
         "Unity.Localization.Editor"
     ],
