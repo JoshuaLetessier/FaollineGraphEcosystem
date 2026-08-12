@@ -113,12 +113,10 @@ namespace Faolline.GraphLocalization.Unity.Editor
         private static string EnsureLibFolder(string libName)
         {
             var safeName = Sanitize(libName);
+            if (!AssetDatabase.IsValidFolder("Assets/Localization"))
+                AssetDatabase.CreateFolder("Assets", "Localization");
             if (!AssetDatabase.IsValidFolder(CollectionsRoot))
-            {
-                AssetDatabase.CreateFolder(
-                    AssetDatabase.IsValidFolder("Assets/Localization") ? "Assets/Localization" : "Assets",
-                    AssetDatabase.IsValidFolder("Assets/Localization") ? "Collections" : "Localization");
-            }
+                AssetDatabase.CreateFolder("Assets/Localization", "Collections");
             var libPath = $"{CollectionsRoot}/{safeName}";
             if (!AssetDatabase.IsValidFolder(libPath))
                 AssetDatabase.CreateFolder(CollectionsRoot, safeName);

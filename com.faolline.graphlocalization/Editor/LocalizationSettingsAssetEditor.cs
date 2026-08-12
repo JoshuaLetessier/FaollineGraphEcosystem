@@ -30,6 +30,7 @@ namespace Faolline.GraphLocalization.Editor
         private SerializedProperty _csvLocales;
         private SerializedProperty _csvOutputFolder;
         private SerializedProperty _unitySourceLocale;
+        private SerializedProperty _autoBuild;
 
         private void OnEnable()
         {
@@ -40,6 +41,7 @@ namespace Faolline.GraphLocalization.Editor
             _playerStrictMode = serializedObject.FindProperty("_playerStrictMode");
             _csvLocales = serializedObject.FindProperty("_csvLocales");
             _csvOutputFolder = serializedObject.FindProperty("_csvOutputFolder");
+            _autoBuild = serializedObject.FindProperty("_autoBuild");
         }
 
         public override void OnInspectorGUI()
@@ -67,6 +69,10 @@ namespace Faolline.GraphLocalization.Editor
                 EditorGUILayout.HelpBox("Build All Tables writes one CSV per lib here. The first locale " +
                     "is the source column (pre-filled from node/choice/speaker text).", MessageType.None);
             }
+
+            EditorGUILayout.Space(6);
+            EditorGUILayout.LabelField("Editor", EditorStyles.boldLabel);
+            EditorGUILayout.PropertyField(_autoBuild, new GUIContent("Auto Build On Save"));
 
             EditorGUILayout.Space(6);
             EditorGUILayout.LabelField("Build-time Validation", EditorStyles.boldLabel);

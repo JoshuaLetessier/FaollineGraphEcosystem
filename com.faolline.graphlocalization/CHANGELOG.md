@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.2]
+
+### Fixed
+- **`UnityLocalizationSyncer.EnsureLibFolder` could fail to create `Assets/Localization/Collections`
+  on the very first sync.** When neither `Assets/Localization` nor `.../Collections` existed yet, a
+  single conditional `CreateFolder` call created only `Assets/Localization`, never `Collections`
+  underneath it in the same pass — the next `CreateFolder(CollectionsRoot, libName)` call then
+  failed with Unity's own "Failed to create folder" (its parent didn't exist), self-healing only on
+  the following sync. Now creates each folder level explicitly, one at a time.
+
+### Added
+- **`Auto Build On Save` is now visible in the Localization Settings inspector.** `LocalizationSettingsAsset.AutoBuild`
+  was already read by `LocalizationAutoBuilder` to gate the on-save rebuild, but the custom inspector
+  never drew the field — there was no way to toggle it from the Editor.
+
 ## [0.7.1]
 
 ### Fixed

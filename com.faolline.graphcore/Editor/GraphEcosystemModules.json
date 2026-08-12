@@ -20,7 +20,7 @@
     {
       "displayName": "Graph Localization",
       "package": "com.faolline.graphlocalization",
-      "version": "0.7.1",
+      "version": "0.7.2",
       "required": false,
       "dependsOn": []
     },
