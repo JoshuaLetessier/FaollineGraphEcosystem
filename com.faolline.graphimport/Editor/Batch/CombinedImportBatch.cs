@@ -45,8 +45,10 @@ namespace Faolline.GraphImport.Editor
         {
             var args = BatchArgs.Parse(Environment.GetCommandLineArgs());
 
-            var questFlowEntries = BuildQuestFlowEntries(args);
-            var dialogueEntries = BuildDialogueEntries(args);
+            var (mapping, sourceTables) = LoadMappingAndSourceTables(args);
+            var questFlowEntries = BuildQuestFlowEntries(args, mapping, sourceTables);
+            var contentFieldsById = new PivotBuilder(mapping, new IdOrNameReferenceResolver()).BuildContentFields(sourceTables);
+            var dialogueEntries = BuildDialogueEntries(args, contentFieldsById);
             if (questFlowEntries.Count == 0 && dialogueEntries.Count == 0)
                 throw new InvalidOperationException("Nothing to generate: no quest/flow mapping and no -dialoguesJson given.");
 
@@ -88,7 +90,13 @@ namespace Faolline.GraphImport.Editor
             return new GraphImportRunResult(report, applyResult);
         }
 
-        static List<PlanEntry> BuildQuestFlowEntries(Dictionary<string, string> args)
+        /// <summary>
+        /// Loads the quest/flow mapping + every table it declares. Always required by this combined
+        /// entry point (see class docstring), so this is also the one place a dialogue path template
+        /// can join against a "content"-role table (e.g. a chapter column) — see
+        /// <see cref="PivotBuilder.BuildContentFields"/>.
+        /// </summary>
+        static (MappingConfig mapping, Dictionary<string, SourceTable> sourceTables) LoadMappingAndSourceTables(Dictionary<string, string> args)
         {
             if (!args.TryGetValue("-mappingJson", out var mappingPath) || !File.Exists(mappingPath))
                 throw new InvalidOperationException("Missing or unreadable -mappingJson <path>.");
@@ -108,6 +116,11 @@ namespace Faolline.GraphImport.Editor
 
             mapping.Validate(sourceTables);
 
+            return (mapping, sourceTables);
+        }
+
+        static List<PlanEntry> BuildQuestFlowEntries(Dictionary<string, string> args, MappingConfig mapping, IReadOnlyDictionary<string, SourceTable> sourceTables)
+        {
             var quests = new PivotBuilder(mapping, new IdOrNameReferenceResolver()).Build(sourceTables);
             var questPathTemplate = args.TryGetValue("-questPathTemplate", out var qpt) ? qpt : "Assets/Generated/Quests/{chapter}/{name}.asset";
             var flowPathTemplate = args.TryGetValue("-flowPathTemplate", out var fpt) ? fpt : "Assets/Generated/GameFlow/{chapter}/{name}.asset";
@@ -120,7 +133,7 @@ namespace Faolline.GraphImport.Editor
             return new PlanBuilder(pathResolver).Build(quests).Entries.ToList();
         }
 
-        static List<PlanEntry> BuildDialogueEntries(Dictionary<string, string> args)
+        static List<PlanEntry> BuildDialogueEntries(Dictionary<string, string> args, IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> contentFieldsById)
         {
             if (!args.TryGetValue("-dialoguesJson", out var jsonPath))
                 return new List<PlanEntry>();
@@ -135,7 +148,7 @@ namespace Faolline.GraphImport.Editor
             var pathResolver = new TemplatePathResolver(new Dictionary<PlanEntryKind, string>
             {
                 [PlanEntryKind.DialogueAsset] = pathTemplate
-            });
+            }, contentFieldsById);
 
             return new PlanBuilder(pathResolver).BuildDialogues(dialogues).Entries.ToList();
         }

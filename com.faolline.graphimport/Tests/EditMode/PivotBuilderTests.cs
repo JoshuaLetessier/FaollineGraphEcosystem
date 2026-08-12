@@ -69,5 +69,68 @@ namespace Faolline.GraphImport.Tests
             var q001 = quests[0];
             Assert.AreEqual(0, q001.References["triggeredBy"].Count);
         }
+
+        [Test]
+        public void BuildContentFields_MapsRowsByIdColumn_FromContentRoleTable()
+        {
+            var dialogues = new SourceTable("Dialogues", new List<string> { "ID", "Chapitres", "Notes" });
+            dialogues.AddRow(new Dictionary<string, string> { ["ID"] = "DLG_006", ["Chapitres"] = "Everfrost", ["Notes"] = "ignored" });
+            dialogues.AddRow(new Dictionary<string, string> { ["ID"] = "DLG_008", ["Chapitres"] = "Ashwake", ["Notes"] = "ignored" });
+
+            var tableMapping = new TableMapping("Dialogues", "ID", TableRole.Content,
+                new List<FieldMapping> { new FieldMapping("chapter", "Chapitres") },
+                new List<string> { "Notes" },
+                new List<ReferenceMapping>());
+
+            var mapping = new MappingConfig(new List<TableMapping> { tableMapping });
+            var sourceTables = new Dictionary<string, SourceTable> { ["Dialogues"] = dialogues };
+
+            var fields = new PivotBuilder(mapping, new IdOrNameReferenceResolver()).BuildContentFields(sourceTables);
+
+            Assert.AreEqual(2, fields.Count);
+            Assert.AreEqual("Everfrost", fields["DLG_006"]["chapter"]);
+            Assert.AreEqual("Ashwake", fields["DLG_008"]["chapter"]);
+        }
+
+        [Test]
+        public void BuildContentFields_IgnoresNonContentRoleTables()
+        {
+            var quetes = new SourceTable("Quetes", new List<string> { "ID", "Nom" });
+            quetes.AddRow(new Dictionary<string, string> { ["ID"] = "Q_001", ["Nom"] = "Rencontrer Tsuki" });
+
+            var tableMapping = new TableMapping("Quetes", "ID", TableRole.Quest,
+                new List<FieldMapping> { new FieldMapping("name", "Nom") },
+                new List<string>(),
+                new List<ReferenceMapping>());
+
+            var mapping = new MappingConfig(new List<TableMapping> { tableMapping });
+            var sourceTables = new Dictionary<string, SourceTable> { ["Quetes"] = quetes };
+
+            var fields = new PivotBuilder(mapping, new IdOrNameReferenceResolver()).BuildContentFields(sourceTables);
+
+            Assert.AreEqual(0, fields.Count);
+        }
+
+        [Test]
+        public void BuildContentFields_OnDuplicateIdAcrossContentTables_FirstDeclarationWins()
+        {
+            var puzzles = new SourceTable("Puzzles", new List<string> { "ID", "Chapitres" });
+            puzzles.AddRow(new Dictionary<string, string> { ["ID"] = "SHARED_001", ["Chapitres"] = "FromPuzzles" });
+
+            var dialogues = new SourceTable("Dialogues", new List<string> { "ID", "Chapitres" });
+            dialogues.AddRow(new Dictionary<string, string> { ["ID"] = "SHARED_001", ["Chapitres"] = "FromDialogues" });
+
+            var puzzlesMapping = new TableMapping("Puzzles", "ID", TableRole.Content,
+                new List<FieldMapping> { new FieldMapping("chapter", "Chapitres") }, new List<string>(), new List<ReferenceMapping>());
+            var dialoguesMapping = new TableMapping("Dialogues", "ID", TableRole.Content,
+                new List<FieldMapping> { new FieldMapping("chapter", "Chapitres") }, new List<string>(), new List<ReferenceMapping>());
+
+            var mapping = new MappingConfig(new List<TableMapping> { puzzlesMapping, dialoguesMapping });
+            var sourceTables = new Dictionary<string, SourceTable> { ["Puzzles"] = puzzles, ["Dialogues"] = dialogues };
+
+            var fields = new PivotBuilder(mapping, new IdOrNameReferenceResolver()).BuildContentFields(sourceTables);
+
+            Assert.AreEqual("FromPuzzles", fields["SHARED_001"]["chapter"]);
+        }
     }
 }

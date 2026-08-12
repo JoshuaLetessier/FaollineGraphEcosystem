@@ -34,6 +34,35 @@ namespace Faolline.GraphImport
             return quests;
         }
 
+        /// <summary>
+        /// Builds an id -> mapped-fields lookup from every table declared with <see cref="TableRole.Content"/>,
+        /// keyed by that table's own idColumn value. Lets a dialogue path template pull in a field (e.g. a
+        /// "chapter" column) tracked only in the same tabular source data quest/flow already reads — without
+        /// requiring the external dialogue-authoring tool to know about or export it, and without giving
+        /// <see cref="PivotDialogue"/> a general-purpose Fields bag it has no other use for. On a duplicate id
+        /// across multiple content tables, the first one wins (mapping declaration order).
+        /// </summary>
+        public IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> BuildContentFields(IReadOnlyDictionary<string, SourceTable> sourceTables)
+        {
+            var result = new Dictionary<string, IReadOnlyDictionary<string, string>>();
+
+            foreach (var table in _mapping.Tables.Where(t => t.Role == TableRole.Content))
+            {
+                var sourceTable = sourceTables[table.SourceTableName];
+
+                foreach (var row in sourceTable.Rows)
+                {
+                    var id = row.Values[table.IdColumn];
+                    if (result.ContainsKey(id))
+                        continue;
+
+                    result[id] = table.Fields.ToDictionary(f => f.PivotField, f => row.Values.TryGetValue(f.SourceColumn, out var v) ? v : string.Empty);
+                }
+            }
+
+            return result;
+        }
+
         List<PivotQuest> BuildQuests(IReadOnlyDictionary<string, SourceTable> sourceTables, IReadOnlyDictionary<string, TableMapping> tableMappingsByName)
         {
             var quests = new List<PivotQuest>();
