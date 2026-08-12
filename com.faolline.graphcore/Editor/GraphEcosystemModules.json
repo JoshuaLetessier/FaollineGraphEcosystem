@@ -27,7 +27,7 @@
     {
       "displayName": "Graph Localization",
       "package": "com.faolline.graphlocalization",
-      "version": "0.8.0",
+      "version": "0.9.0",
       "required": false,
       "dependsOn": [ "com.faolline.graphlogging" ]
     },

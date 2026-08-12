@@ -4,6 +4,20 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.9.0]
+
+### Added
+- **`TranslationImportBatch`** (`Localization.Unity/Editor/Batch`) — `-executeMethod` entry point that
+  imports externally-authored translation CSVs (Dialogue Studio's export format: `Key` + one column per
+  locale, RFC4180) into the String Table Collections `UnityLocalizationSyncer` already created for the
+  project's graphs. `-dialogueTranslationsDir <path>` imports every `*.csv` in the folder into
+  `{fileNameWithoutExtension}_Text` (the same sanitized-name convention the syncer used to create the
+  collection); `-speakersCsv <path>` imports into the fixed `Global_Text` collection. At least one of the
+  two is required. Never creates a collection itself — an import targeting a collection that doesn't
+  exist yet (its graph was never generated/synced) is reported as a failure, not silently skipped nor
+  auto-created, matching this ecosystem's "never guess" precedent. Exits 0 only if every requested import
+  succeeded.
+
 ## [0.8.0]
 
 ### Changed
