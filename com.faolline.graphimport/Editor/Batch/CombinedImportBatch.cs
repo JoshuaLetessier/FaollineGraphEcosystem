@@ -27,8 +27,11 @@ namespace Faolline.GraphImport.Editor
     /// -speakerFolderTemplate (e.g. "Content/{chapter}/Graph/Speakers") — when given, a newly-created
     /// Speaker's folder is routed by the SAME mapping-declared "content"-role table lookup used for
     /// dialogue path tokens (see PivotBuilder.BuildContentFields), joined by speaker key instead of
-    /// dialogue id; -speakerFolder is then only the fallback default, unused for actual creation. Exits
-    /// 0 only if the combined run is fully clean (no conflicts, no generator failures).
+    /// dialogue id; -speakerFolder is then only the fallback default, unused for actual creation. The
+    /// same content-field lookup also feeds FlowAssetGenerator: a step's SubGraph node is titled with
+    /// its resolved content's own "name" field (e.g. "Intro joueur de dé") instead of the raw step id
+    /// whenever the mapping declares one, falling back to the step id otherwise. Exits 0 only if the
+    /// combined run is fully clean (no conflicts, no generator failures).
     /// </summary>
     public static class CombinedImportBatch
     {
@@ -89,7 +92,7 @@ namespace Faolline.GraphImport.Editor
             var generators = new Dictionary<PlanEntryKind, IAssetGenerator>
             {
                 [PlanEntryKind.QuestAsset] = new QuestAssetGenerator(),
-                [PlanEntryKind.FlowAsset] = new FlowAssetGenerator(resolver),
+                [PlanEntryKind.FlowAsset] = new FlowAssetGenerator(resolver, contentFieldsById),
                 [PlanEntryKind.DialogueAsset] = new DialogueAssetGenerator(resolver)
             };
             var applyResult = PlanApplier.Apply(plan, report, generators);

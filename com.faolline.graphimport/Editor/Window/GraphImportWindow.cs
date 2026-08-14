@@ -26,6 +26,7 @@ namespace Faolline.GraphImport.Editor
 
         readonly List<PlanEntry> _questFlowEntries = new List<PlanEntry>();
         readonly List<PlanEntry> _dialogueEntries = new List<PlanEntry>();
+        IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> _contentFieldsById = new Dictionary<string, IReadOnlyDictionary<string, string>>();
         GenerationPlan _plan;
         ConflictReport _report;
         Vector2 _scroll;
@@ -157,7 +158,9 @@ namespace Faolline.GraphImport.Editor
 
             mapping.Validate(sourceTables);
 
-            var quests = new PivotBuilder(mapping, new IdOrNameReferenceResolver()).Build(sourceTables);
+            var pivotBuilder = new PivotBuilder(mapping, new IdOrNameReferenceResolver());
+            var quests = pivotBuilder.Build(sourceTables);
+            _contentFieldsById = pivotBuilder.BuildContentFields(sourceTables);
             var pathResolver = new TemplatePathResolver(new Dictionary<PlanEntryKind, string>
             {
                 [PlanEntryKind.QuestAsset] = "Assets/Graphs/{chapter}/Quests/{name}.asset",
@@ -181,7 +184,7 @@ namespace Faolline.GraphImport.Editor
             var pathResolver = new TemplatePathResolver(new Dictionary<PlanEntryKind, string>
             {
                 [PlanEntryKind.DialogueAsset] = _dialoguePathTemplate
-            });
+            }, _contentFieldsById);
 
             _dialogueEntries.Clear();
             _dialogueEntries.AddRange(new PlanBuilder(pathResolver).BuildDialogues(dialogues).Entries);
@@ -202,11 +205,11 @@ namespace Faolline.GraphImport.Editor
 
         IReadOnlyDictionary<PlanEntryKind, IAssetGenerator> BuildDefaultGenerators()
         {
-            var resolver = new ProjectAssetResolver(_plan, _speakerFolder);
+            var resolver = new ProjectAssetResolver(_plan, _speakerFolder, contentFieldsBySpeakerKey: _contentFieldsById);
             return new Dictionary<PlanEntryKind, IAssetGenerator>
             {
                 [PlanEntryKind.QuestAsset] = new QuestAssetGenerator(),
-                [PlanEntryKind.FlowAsset] = new FlowAssetGenerator(resolver),
+                [PlanEntryKind.FlowAsset] = new FlowAssetGenerator(resolver, _contentFieldsById),
                 [PlanEntryKind.DialogueAsset] = new DialogueAssetGenerator(resolver)
             };
         }

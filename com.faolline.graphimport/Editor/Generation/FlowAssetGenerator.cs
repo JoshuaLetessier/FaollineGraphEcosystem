@@ -18,6 +18,7 @@ namespace Faolline.GraphImport.Editor
     public sealed class FlowAssetGenerator : IAssetGenerator
     {
         readonly IProjectAssetResolver _resolver;
+        readonly IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> _contentFieldsById;
 
         /// <param name="resolver">
         /// Resolves a step's content reference to the already-existing graph asset it should link to
@@ -26,9 +27,19 @@ namespace Faolline.GraphImport.Editor
         /// documented-valid "incomplete SubGraph node" state (graphcore skips it with a runtime
         /// warning), never a crash.
         /// </param>
-        public FlowAssetGenerator(IProjectAssetResolver resolver = null)
+        /// <param name="contentFieldsById">
+        /// The same content-table join <see cref="PivotBuilder.BuildContentFields"/> produces for
+        /// dialogue path tokens and Speaker folder routing — reused here so a SubGraph node's title
+        /// is the content's own declared "name" field (e.g. "Intro joueur de dé") instead of the raw
+        /// step id ("S_001") whenever the content table declares one. Falls back to the step id when
+        /// null, when the content isn't in the lookup, or when its table declares no "name" field —
+        /// never a crash, just a less legible title.
+        /// </param>
+        public FlowAssetGenerator(IProjectAssetResolver resolver = null,
+            IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> contentFieldsById = null)
         {
             _resolver = resolver ?? new NullProjectAssetResolver();
+            _contentFieldsById = contentFieldsById;
         }
 
         public void Generate(PlanEntry entry)
@@ -46,7 +57,7 @@ namespace Faolline.GraphImport.Editor
                 if (members.Count == 1)
                 {
                     var step = members[0];
-                    var node = builder.AddSubGraph(step.Id, ResolveContent(step));
+                    var node = builder.AddSubGraph(ResolveTitle(step), ResolveContent(step));
                     foreach (var exit in exits)
                         exit.To(node);
                     exits = new List<GraphNodeBuilder> { node };
@@ -61,7 +72,7 @@ namespace Faolline.GraphImport.Editor
                     foreach (var step in members)
                     {
                         choice.Choice(step.BranchOutcome);
-                        var node = builder.AddSubGraph(step.Id, ResolveContent(step));
+                        var node = builder.AddSubGraph(ResolveTitle(step), ResolveContent(step));
                         choice.To(node, step.BranchOutcome);
                         branchExits.Add(node);
                     }
@@ -79,5 +90,17 @@ namespace Faolline.GraphImport.Editor
 
         BaseGraph ResolveContent(PivotStep step) =>
             step.ContentRef != null ? _resolver.ResolveGraph(step.ContentRef.TargetTable, step.ContentRef.TargetId) : null;
+
+        string ResolveTitle(PivotStep step)
+        {
+            if (step.ContentRef != null
+                && _contentFieldsById != null
+                && _contentFieldsById.TryGetValue(step.ContentRef.TargetId, out var fields)
+                && fields.TryGetValue("name", out var name)
+                && !string.IsNullOrEmpty(name))
+                return name;
+
+            return step.Id;
+        }
     }
 }

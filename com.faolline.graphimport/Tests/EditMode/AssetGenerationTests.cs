@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Faolline.GraphCore;
 using Faolline.GraphGameFlow;
 using Faolline.GraphQuest;
@@ -99,6 +100,38 @@ namespace Faolline.GraphImport.Editor.Tests
                         edgesIntoConverger++;
 
             Assert.AreEqual(2, edgesIntoConverger);
+        }
+
+        [Test]
+        public void FlowAssetGenerator_ContentFieldsProvided_TitlesSubGraphNodeWithResolvedContentName()
+        {
+            var quest = MakeLinearQuest(); // step S_000 -> Puzzles:PZ_000
+            var entry = new PlanEntry("flow:Q_001", PlanEntryKind.FlowAsset, ScratchFolder + "/Q_001_Flow.asset", "Q_001", quest);
+            var contentFieldsById = new Dictionary<string, IReadOnlyDictionary<string, string>>
+            {
+                ["PZ_000"] = new Dictionary<string, string> { ["name"] = "jeu de dé" }
+            };
+
+            new FlowAssetGenerator(contentFieldsById: contentFieldsById).Generate(entry);
+
+            var graph = AssetDatabase.LoadAssetAtPath<GameFlowGraph>(entry.ProposedPath);
+            var subGraphNode = System.Linq.Enumerable.OfType<SubGraphNodeData>(graph.Nodes).Single();
+            Assert.AreEqual("jeu de dé", subGraphNode.Title,
+                "the step's title is the resolved content's own declared 'name' field, not the raw step id");
+        }
+
+        [Test]
+        public void FlowAssetGenerator_ContentFieldsMissingForStep_FallsBackToStepId()
+        {
+            var quest = MakeLinearQuest(); // step S_000 -> Puzzles:PZ_000, not in the lookup below
+            var entry = new PlanEntry("flow:Q_001", PlanEntryKind.FlowAsset, ScratchFolder + "/Q_001_Flow.asset", "Q_001", quest);
+
+            new FlowAssetGenerator(contentFieldsById: new Dictionary<string, IReadOnlyDictionary<string, string>>()).Generate(entry);
+
+            var graph = AssetDatabase.LoadAssetAtPath<GameFlowGraph>(entry.ProposedPath);
+            var subGraphNode = System.Linq.Enumerable.OfType<SubGraphNodeData>(graph.Nodes).Single();
+            Assert.AreEqual("S_000", subGraphNode.Title,
+                "no content-table 'name' field known for this step's content -> falls back to the raw step id, never throws");
         }
     }
 }

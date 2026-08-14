@@ -20,9 +20,11 @@ namespace Faolline.GraphImport.Editor
     /// -QuêtesCsv). Optional -questPathTemplate/-flowPathTemplate override the {chapter}/{name}
     /// default templates (kept as defaults for backward compatibility, not baked in as the only
     /// option — a project-specific template belongs on the command line, not hardcoded here, per
-    /// the same reasoning already applied to DialogueImportBatch's -dialoguePathTemplate). Exits 0
-    /// only if the run is fully clean (no conflicts, no generator failures) — this is the one signal
-    /// a CI script needs to fail the job on (FR-013).
+    /// the same reasoning already applied to DialogueImportBatch's -dialoguePathTemplate). A step's
+    /// SubGraph node is titled with its resolved content's own declared "name" field (e.g. "Intro
+    /// joueur de dé") instead of the raw step id, whenever the mapping's content-role tables declare
+    /// one — see PivotBuilder.BuildContentFields. Exits 0 only if the run is fully clean (no conflicts,
+    /// no generator failures) — this is the one signal a CI script needs to fail the job on (FR-013).
     /// </summary>
     public static class GraphImportBatch
     {
@@ -64,10 +66,11 @@ namespace Faolline.GraphImport.Editor
                 [PlanEntryKind.FlowAsset] = flowPathTemplate
             });
 
+            var contentFieldsById = new PivotBuilder(mapping, new IdOrNameReferenceResolver()).BuildContentFields(sourceTables);
             var generators = new Dictionary<PlanEntryKind, IAssetGenerator>
             {
                 [PlanEntryKind.QuestAsset] = new QuestAssetGenerator(),
-                [PlanEntryKind.FlowAsset] = new FlowAssetGenerator()
+                [PlanEntryKind.FlowAsset] = new FlowAssetGenerator(contentFieldsById: contentFieldsById)
             };
 
             var result = GraphImportPipeline.Run(mapping, sourceTables, pathResolver, generators);

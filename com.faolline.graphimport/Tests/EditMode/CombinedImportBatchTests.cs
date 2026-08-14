@@ -53,6 +53,39 @@ namespace Faolline.GraphImport.Editor.Tests
         }
 
         [Test]
+        public void BuildAndApply_ContentFieldsProvided_FlowStepIsTitledWithResolvedContentName()
+        {
+            var quest = new PivotQuest("Q_001", "Rencontrer Tsuki",
+                new Dictionary<string, string>(), new Dictionary<string, IReadOnlyList<PivotReference>>());
+            quest.Steps = new List<PivotStep> { new PivotStep("S_000", quest, 0, new PivotReference("Dialogues", "DLG_006"), null) };
+
+            var dialogue = new PivotDialogue("DLG_006", "Victoire", "n1",
+                new Dictionary<string, PivotDialogueNode> { ["n1"] = new PivotEnd("n1", "Completed", null) });
+
+            var questEntry = new PlanEntry("quest:Q_001", PlanEntryKind.QuestAsset, ScratchFolder + "/Q_001.asset", "Q_001", quest);
+            var flowEntry = new PlanEntry("flow:Q_001", PlanEntryKind.FlowAsset, ScratchFolder + "/Q_001_Flow.asset", "Q_001", quest);
+            var dialogueEntry = new PlanEntry("dialogue:DLG_006", PlanEntryKind.DialogueAsset, ScratchFolder + "/DLG_006.asset", "DLG_006", dialogue);
+
+            var contentFieldsById = new Dictionary<string, IReadOnlyDictionary<string, string>>
+            {
+                ["DLG_006"] = new Dictionary<string, string> { ["name"] = "Victoire contre le joueur de dé" }
+            };
+
+            var result = CombinedImportBatch.BuildAndApply(
+                new List<PlanEntry> { dialogueEntry },
+                new List<PlanEntry> { questEntry, flowEntry },
+                ScratchFolder + "/Speakers",
+                contentFieldsById: contentFieldsById);
+
+            Assert.IsTrue(result.IsClean, string.Join("; ", result.Apply.Failures.Select(f => f.Exception.Message)));
+
+            var flowGraph = AssetDatabase.LoadAssetAtPath<Faolline.GraphGameFlow.GameFlowGraph>(flowEntry.ProposedPath);
+            var subNode = flowGraph.Nodes.OfType<SubGraphNodeData>().Single();
+            Assert.AreEqual("Victoire contre le joueur de dé", subNode.Title,
+                "CombinedImportBatch.BuildAndApply threads contentFieldsById through to FlowAssetGenerator, not just ProjectAssetResolver/dialogue path tokens");
+        }
+
+        [Test]
         public void BuildAndApply_NoDialogueEntries_QuestFlowOnlyRunStillSucceeds()
         {
             var quest = new PivotQuest("Q_002", "Aller à l'orphelinat",
