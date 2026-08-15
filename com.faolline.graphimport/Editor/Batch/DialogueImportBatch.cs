@@ -8,11 +8,11 @@ namespace Faolline.GraphImport.Editor
 {
     /// <summary>
     /// Minimal -executeMethod entry point for an unattended/CI run of dialogue generation from a
-    /// dialogue-studio-style interchange JSON export — the "other direction" of
-    /// <see cref="GraphImportBatch"/>: something (a cron job, a CI step) drops an exported JSON file
-    /// somewhere, this method turns it into real DialogueGraph assets. Wires together already-tested
-    /// pieces (InterchangeDialogueSet/DialoguePivotBuilder/PlanBuilder/PlanApplier/ProjectAssetResolver)
-    /// for a batchmode invocation; introduces no new business logic of its own.
+    /// dialogue-studio-style interchange JSON export: something (a cron job, a CI step) drops an
+    /// exported JSON file somewhere, this method turns it into real DialogueGraph assets. Wires
+    /// together already-tested pieces (InterchangeDialogueSet/DialoguePivotBuilder/PlanBuilder/
+    /// PlanApplier/ProjectAssetResolver) for a batchmode invocation; introduces no new business
+    /// logic of its own.
     ///
     /// Command line: -dialoguesJson &lt;path&gt; -dialoguePathTemplate &lt;template&gt;
     /// [-speakerFolder &lt;path&gt;]. The path template supports {id}/{name} tokens

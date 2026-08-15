@@ -37,31 +37,31 @@ namespace Faolline.GraphImport.Editor.Tests
         }
 
         static PlanEntry Entry(string logicalId, string path) =>
-            new PlanEntry(logicalId, PlanEntryKind.QuestAsset, path, logicalId, null);
+            new PlanEntry(logicalId, PlanEntryKind.DialogueAsset, path, logicalId, null);
 
         [Test]
         public void Apply_NoConflicts_CreatesEveryEntry()
         {
             var plan = new GenerationPlan(new List<PlanEntry>
             {
-                Entry("quest:Q_001", "Assets/A.asset"),
-                Entry("quest:Q_004", "Assets/B.asset")
+                Entry("dialogue:DLG_001", "Assets/A.asset"),
+                Entry("dialogue:DLG_004", "Assets/B.asset")
             });
             var report = new ConflictReport(new List<ConflictEntry>());
             var generator = new RecordingGenerator();
 
-            var result = PlanApplier.Apply(plan, report, new Dictionary<PlanEntryKind, IAssetGenerator> { [PlanEntryKind.QuestAsset] = generator });
+            var result = PlanApplier.Apply(plan, report, new Dictionary<PlanEntryKind, IAssetGenerator> { [PlanEntryKind.DialogueAsset] = generator });
 
             Assert.AreEqual(2, result.Created.Count);
             Assert.IsTrue(result.IsClean);
-            CollectionAssert.AreEquivalent(new[] { "quest:Q_001", "quest:Q_004" }, generator.GeneratedLogicalIds);
+            CollectionAssert.AreEquivalent(new[] { "dialogue:DLG_001", "dialogue:DLG_004" }, generator.GeneratedLogicalIds);
         }
 
         [Test]
         public void Apply_ConflictingEntry_IsNeverGeneratedAndNotReturned()
         {
-            var conflicting = Entry("quest:Q_001", "Assets/Existing.asset");
-            var clean = Entry("quest:Q_004", "Assets/B.asset");
+            var conflicting = Entry("dialogue:DLG_001", "Assets/Existing.asset");
+            var clean = Entry("dialogue:DLG_004", "Assets/B.asset");
             var plan = new GenerationPlan(new List<PlanEntry> { conflicting, clean });
             var report = new ConflictReport(new List<ConflictEntry>
             {
@@ -69,24 +69,24 @@ namespace Faolline.GraphImport.Editor.Tests
             });
             var generator = new RecordingGenerator();
 
-            var result = PlanApplier.Apply(plan, report, new Dictionary<PlanEntryKind, IAssetGenerator> { [PlanEntryKind.QuestAsset] = generator });
+            var result = PlanApplier.Apply(plan, report, new Dictionary<PlanEntryKind, IAssetGenerator> { [PlanEntryKind.DialogueAsset] = generator });
 
             Assert.AreEqual(1, result.Created.Count);
-            Assert.AreEqual("quest:Q_004", result.Created[0].LogicalId);
-            CollectionAssert.DoesNotContain(generator.GeneratedLogicalIds, "quest:Q_001");
+            Assert.AreEqual("dialogue:DLG_004", result.Created[0].LogicalId);
+            CollectionAssert.DoesNotContain(generator.GeneratedLogicalIds, "dialogue:DLG_001");
         }
 
         [Test]
         public void Apply_DestinationFolderDoesNotExist_IsCreatedBeforeGenerating()
         {
-            var deepPath = ScratchFolder + "/Nested/Deeper/Q_001.asset";
-            var plan = new GenerationPlan(new List<PlanEntry> { Entry("quest:Q_001", deepPath) });
+            var deepPath = ScratchFolder + "/Nested/Deeper/DLG_001.asset";
+            var plan = new GenerationPlan(new List<PlanEntry> { Entry("dialogue:DLG_001", deepPath) });
             var report = new ConflictReport(new List<ConflictEntry>());
             var generator = new RecordingGenerator();
 
             Assert.IsFalse(AssetDatabase.IsValidFolder(ScratchFolder + "/Nested/Deeper"));
 
-            var result = PlanApplier.Apply(plan, report, new Dictionary<PlanEntryKind, IAssetGenerator> { [PlanEntryKind.QuestAsset] = generator });
+            var result = PlanApplier.Apply(plan, report, new Dictionary<PlanEntryKind, IAssetGenerator> { [PlanEntryKind.DialogueAsset] = generator });
 
             Assert.IsTrue(AssetDatabase.IsValidFolder(ScratchFolder + "/Nested/Deeper"));
             Assert.AreEqual(1, result.Created.Count);
@@ -95,19 +95,19 @@ namespace Faolline.GraphImport.Editor.Tests
         [Test]
         public void Apply_OneEntryGeneratorThrows_OthersStillSucceedAndFailureIsReported()
         {
-            var failing = Entry("quest:Q_001", ScratchFolder + "/A.asset");
-            var clean = Entry("quest:Q_004", ScratchFolder + "/B.asset");
+            var failing = Entry("dialogue:DLG_001", ScratchFolder + "/A.asset");
+            var clean = Entry("dialogue:DLG_004", ScratchFolder + "/B.asset");
             var plan = new GenerationPlan(new List<PlanEntry> { failing, clean });
             var report = new ConflictReport(new List<ConflictEntry>());
-            var generator = new ThrowingGenerator("quest:Q_001");
+            var generator = new ThrowingGenerator("dialogue:DLG_001");
 
-            var result = PlanApplier.Apply(plan, report, new Dictionary<PlanEntryKind, IAssetGenerator> { [PlanEntryKind.QuestAsset] = generator });
+            var result = PlanApplier.Apply(plan, report, new Dictionary<PlanEntryKind, IAssetGenerator> { [PlanEntryKind.DialogueAsset] = generator });
 
             Assert.IsFalse(result.IsClean);
             Assert.AreEqual(1, result.Created.Count);
-            Assert.AreEqual("quest:Q_004", result.Created[0].LogicalId);
+            Assert.AreEqual("dialogue:DLG_004", result.Created[0].LogicalId);
             Assert.AreEqual(1, result.Failures.Count);
-            Assert.AreEqual("quest:Q_001", result.Failures[0].Entry.LogicalId);
+            Assert.AreEqual("dialogue:DLG_001", result.Failures[0].Entry.LogicalId);
             StringAssert.Contains("boom", result.Failures[0].Exception.Message);
         }
     }

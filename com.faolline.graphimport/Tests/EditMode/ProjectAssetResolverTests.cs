@@ -59,21 +59,6 @@ namespace Faolline.GraphImport.Editor.Tests
         }
 
         [Test]
-        public void Ctor_QuestWithBothQuestAndFlowEntries_DoesNotThrow()
-        {
-            // Regression: PlanBuilder.Build gives a quest's QuestAsset entry and its FlowAsset entry
-            // the SAME SourcePivotId (quest.Id) — LogicalId differs ("quest:Q_001" vs "flow:Q_001")
-            // but SourcePivotId doesn't. A naive ToDictionary(e => e.SourcePivotId, ...) throws for
-            // ANY quest that has steps (i.e. the normal case, including the shipped CryptiqueExample
-            // sample) — found via real-data dogfood.
-            var questEntry = new PlanEntry("quest:Q_001", PlanEntryKind.QuestAsset, ScratchFolder + "/Q_001.asset", "Q_001", null);
-            var flowEntry = new PlanEntry("flow:Q_001", PlanEntryKind.FlowAsset, ScratchFolder + "/Q_001_Flow.asset", "Q_001", null);
-            var plan = new GenerationPlan(new List<PlanEntry> { questEntry, flowEntry });
-
-            Assert.DoesNotThrow(() => new ProjectAssetResolver(plan, SpeakerFolder));
-        }
-
-        [Test]
         public void ResolveSpeaker_NoExistingMatch_CreatesNewSpeakerAsset()
         {
             var plan = new GenerationPlan(new List<PlanEntry>());
@@ -118,48 +103,7 @@ namespace Faolline.GraphImport.Editor.Tests
         }
 
         [Test]
-        public void ResolveSpeaker_WithFolderTemplateAndContentLookup_CreatesUnderJoinedChapterFolder()
-        {
-            var contentFieldsBySpeakerKey = new Dictionary<string, IReadOnlyDictionary<string, string>>
-            {
-                ["antagoniste"] = new Dictionary<string, string> { ["chapter"] = "Everfrost" }
-            };
-            var plan = new GenerationPlan(new List<PlanEntry>());
-            var resolver = new ProjectAssetResolver(plan, SpeakerFolder,
-                ScratchFolder + "/Content/{chapter}/Speakers", contentFieldsBySpeakerKey);
-
-            var speaker = resolver.ResolveSpeaker("antagoniste");
-
-            Assert.AreEqual(ScratchFolder + "/Content/Everfrost/Speakers/antagoniste.asset", AssetDatabase.GetAssetPath(speaker));
-        }
-
-        [Test]
-        public void ResolveSpeaker_WithFolderTemplate_UnjoinedSpeakerKey_Throws()
-        {
-            var contentFieldsBySpeakerKey = new Dictionary<string, IReadOnlyDictionary<string, string>>
-            {
-                ["other"] = new Dictionary<string, string> { ["chapter"] = "Ashwake" }
-            };
-            var plan = new GenerationPlan(new List<PlanEntry>());
-            var resolver = new ProjectAssetResolver(plan, SpeakerFolder,
-                ScratchFolder + "/Content/{chapter}/Speakers", contentFieldsBySpeakerKey);
-
-            Assert.Throws<System.InvalidOperationException>(() => resolver.ResolveSpeaker("antagoniste"));
-        }
-
-        [Test]
-        public void ResolveSpeaker_WithFolderTemplate_SpeakerKeyToken_NeedsNoContentLookup()
-        {
-            var plan = new GenerationPlan(new List<PlanEntry>());
-            var resolver = new ProjectAssetResolver(plan, SpeakerFolder, ScratchFolder + "/Content/{speakerKey}");
-
-            var speaker = resolver.ResolveSpeaker("tsuki");
-
-            Assert.AreEqual(ScratchFolder + "/Content/tsuki/tsuki.asset", AssetDatabase.GetAssetPath(speaker));
-        }
-
-        [Test]
-        public void ResolveSpeaker_NoFolderTemplate_StillUsesFlatSpeakerFolder()
+        public void ResolveSpeaker_CreatesUnderFlatSpeakerFolder()
         {
             var plan = new GenerationPlan(new List<PlanEntry>());
             var resolver = new ProjectAssetResolver(plan, SpeakerFolder);

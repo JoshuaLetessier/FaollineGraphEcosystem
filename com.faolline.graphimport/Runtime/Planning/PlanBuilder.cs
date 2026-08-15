@@ -16,33 +16,7 @@ namespace Faolline.GraphImport
             _pathResolver = pathResolver;
         }
 
-        public GenerationPlan Build(IReadOnlyList<PivotQuest> quests)
-        {
-            var entries = new List<PlanEntry>();
-
-            foreach (var quest in quests)
-            {
-                var questPath = _pathResolver.Resolve(PlanEntryKind.QuestAsset, quest);
-                entries.Add(new PlanEntry($"quest:{quest.Id}", PlanEntryKind.QuestAsset, questPath, quest.Id, quest));
-
-                // A quest with no steps has nothing to build a playable flow from — no FlowAsset entry.
-                if (quest.Steps.Count > 0)
-                {
-                    var flowPath = _pathResolver.Resolve(PlanEntryKind.FlowAsset, quest);
-                    entries.Add(new PlanEntry($"flow:{quest.Id}", PlanEntryKind.FlowAsset, flowPath, quest.Id, quest));
-                }
-            }
-
-            return new GenerationPlan(entries);
-        }
-
-        /// <summary>
-        /// One DialogueAsset entry per dialogue — a separate method rather than an overload of
-        /// <see cref="Build(IReadOnlyList{PivotQuest})"/> because the quest and dialogue pivots don't
-        /// share a base type (see research.md in specs/049-dialogue-import-unity-side on why they
-        /// deliberately don't). Callers combine the two plans' <see cref="GenerationPlan.Entries"/> when
-        /// they want one preview covering both (FR-008 — same downstream Plan/Apply, not a parallel one).
-        /// </summary>
+        /// <summary>One DialogueAsset entry per dialogue.</summary>
         public GenerationPlan BuildDialogues(IReadOnlyList<PivotDialogue> dialogues)
         {
             var entries = new List<PlanEntry>();

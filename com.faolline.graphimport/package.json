@@ -1,15 +1,13 @@
 {
   "name": "com.faolline.graphimport",
-  "version": "0.4.1",
+  "version": "0.5.0",
   "displayName": "Faolline GraphImport",
-  "description": "Generates com.faolline.graphquest, com.faolline.graphgameflow, and com.faolline.graphdialoguesystem assets from structured external data (CSV/JSON tables, or a dedicated dialogue interchange format), through declarative mapping and a pure plan-then-apply pipeline. No source table shape or column naming is assumed for quest/flow data; only the pivot's own domain model (quest/step/branch/reference, or dialogue/line/choice/end/sub-dialogue) is opinionated.",
+  "description": "Generates com.faolline.graphdialoguesystem dialogue and speaker assets from a dedicated dialogue interchange JSON format, through a pure plan-then-apply pipeline. No source shape or column naming is assumed; only the pivot's own domain model (dialogue/line/choice/end/sub-dialogue) is opinionated.",
   "unity": "6000.0",
   "unityRelease": "0f1",
   "dependencies": {
     "com.faolline.graphcore": "0.41.0",
     "com.faolline.graphstandard": "0.17.2",
-    "com.faolline.graphquest": "0.12.0",
-    "com.faolline.graphgameflow": "0.18.0",
     "com.faolline.graphdialoguesystem": "0.19.0",
     "com.unity.nuget.newtonsoft-json": "3.2.2",
     "com.faolline.graphlogging": "0.1.1"
@@ -18,8 +16,6 @@
     "graph",
     "import",
     "codegen",
-    "quest",
-    "gameflow",
     "dialogue",
     "faolline"
   ],

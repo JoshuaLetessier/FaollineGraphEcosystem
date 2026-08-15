@@ -4,14 +4,12 @@ using Faolline.GraphDialogue;
 namespace Faolline.GraphImport.Editor
 {
     /// <summary>
-    /// The single seam every generator uses to find an existing project asset from an external
-    /// identifier — shared by <see cref="FlowAssetGenerator"/> (content refs) and
-    /// <see cref="DialogueAssetGenerator"/> (sub-dialogue refs, speaker refs), so a real
-    /// implementation only ever needs to be written once.
+    /// The single seam <see cref="DialogueAssetGenerator"/> uses to find an existing project asset
+    /// from an external identifier (sub-dialogue refs, speaker refs).
     /// </summary>
     public interface IProjectAssetResolver
     {
-        /// <summary>Resolves a quest-step content ref or a sub-dialogue ref to its graph asset, or null if not found.</summary>
+        /// <summary>Resolves a sub-dialogue ref to its graph asset, or null if not found.</summary>
         BaseGraph ResolveGraph(string targetTable, string targetId);
 
         /// <summary>Resolves a speaker key to its <see cref="Speaker"/> asset, or null if not found.</summary>

@@ -28,15 +28,12 @@ namespace Faolline.GraphImport.Editor.Tests
         }
 
         static PlanEntry Entry(string logicalId, string path) =>
-            new PlanEntry(logicalId, PlanEntryKind.QuestAsset, path, logicalId, null);
-
-        static PlanEntry Entry(string logicalId, PlanEntryKind kind, string path) =>
-            new PlanEntry(logicalId, kind, path, logicalId, null);
+            new PlanEntry(logicalId, PlanEntryKind.DialogueAsset, path, logicalId, null);
 
         [Test]
         public void Detect_PathAlreadyHoldsAnAsset_IsConflict()
         {
-            var plan = new GenerationPlan(new List<PlanEntry> { Entry("quest:Q_001", ExistingAssetPath) });
+            var plan = new GenerationPlan(new List<PlanEntry> { Entry("dialogue:DLG_001", ExistingAssetPath) });
 
             var report = PlanConflictDetector.Detect(plan);
 
@@ -49,8 +46,8 @@ namespace Faolline.GraphImport.Editor.Tests
         {
             var plan = new GenerationPlan(new List<PlanEntry>
             {
-                Entry("quest:Q_001", ScratchFolder + "/New.asset"),
-                Entry("flow:Q_001", ScratchFolder + "/New.asset")
+                Entry("dialogue:DLG_001", ScratchFolder + "/New.asset"),
+                Entry("dialogue:DLG_002", ScratchFolder + "/New.asset")
             });
 
             var report = PlanConflictDetector.Detect(plan);
@@ -63,31 +60,12 @@ namespace Faolline.GraphImport.Editor.Tests
         [Test]
         public void Detect_NoCollisions_IsClean()
         {
-            var plan = new GenerationPlan(new List<PlanEntry> { Entry("quest:Q_001", ScratchFolder + "/BrandNew.asset") });
+            var plan = new GenerationPlan(new List<PlanEntry> { Entry("dialogue:DLG_001", ScratchFolder + "/BrandNew.asset") });
 
             var report = PlanConflictDetector.Detect(plan);
 
             Assert.IsTrue(report.IsClean);
             Assert.AreEqual(0, report.Conflicts.Count);
-        }
-
-        [Test]
-        public void Detect_MixedQuestAndDialogueEntries_DialogueCollisionReportedTheSameWay()
-        {
-            // FR-008/FR-009: a dialogue asset collision goes through the exact same detector as
-            // quest/flow — no dialogue-specific conflict mechanism.
-            var plan = new GenerationPlan(new List<PlanEntry>
-            {
-                Entry("quest:Q_001", PlanEntryKind.QuestAsset, ScratchFolder + "/NewQuest.asset"),
-                Entry("dialogue:DLG_006", PlanEntryKind.DialogueAsset, ExistingAssetPath)
-            });
-
-            var report = PlanConflictDetector.Detect(plan);
-
-            Assert.IsFalse(report.IsClean);
-            Assert.AreEqual(1, report.Conflicts.Count);
-            Assert.AreEqual("dialogue:DLG_006", report.Conflicts[0].PlanEntry.LogicalId);
-            Assert.AreEqual(ConflictReason.AlreadyExists, report.Conflicts[0].Reason);
         }
     }
 }
