@@ -6,8 +6,8 @@
   "unity": "6000.0",
   "unityRelease": "0f1",
   "dependencies": {
-    "com.faolline.graphcore": "0.41.0",
-    "com.faolline.graphsave": "0.8.0",
+    "com.faolline.graphcore": "0.43.0",
+    "com.faolline.graphsave": "0.10.0",
     "com.faolline.graphlogging": "0.1.1"
   },
   "keywords": [

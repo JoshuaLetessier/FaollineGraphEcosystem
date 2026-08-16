@@ -24,15 +24,17 @@ package do I need").
 
 | Package | Version | What it is |
 |---|---|---|
-| [`com.faolline.graphcore`](com.faolline.graphcore/) | 0.38.0 | Base package — nodes, edges, runner, and the three context primitives (Variables / Signals / Collections) |
-| [`com.faolline.graphlocalization`](com.faolline.graphlocalization/) | 0.7.1 | Locale tables + CSV/Unity localization providers (no dependencies) |
-| [`com.faolline.graphstandard`](com.faolline.graphstandard/) | 0.17.0 | Reactive (k-of-N) and Flow (fork/join) execution engines, domain-neutral standard nodes |
-| [`com.faolline.graphdialoguesystem`](com.faolline.graphdialoguesystem/) | 0.17.1 | Dialogue graphs — speakers, branching choices, localized text, headless playback |
-| [`com.faolline.graphgameflow`](com.faolline.graphgameflow/) | 0.16.0 | The `MonoBehaviour`/scene adapter — drives a graph live in a Unity scene |
-| [`com.faolline.graphgameflow.addressables`](com.faolline.graphgameflow.addressables/) | 0.4.0 | Bridges graphgameflow's scene loader to `com.unity.addressables` |
-| [`com.faolline.graphquest`](com.faolline.graphquest/) | 0.11.1 | Quests as objective DAGs, prerequisite gating, one-shot rewards |
-| [`com.faolline.graphsave`](com.faolline.graphsave/) | 0.8.0 | Neutral run-snapshot model + a pluggable save-store contract |
-| [`com.faolline.graphsave.savesystem`](com.faolline.graphsave.savesystem/) | 0.1.8 | Bridges graphsave to `com.faolline.savesystem.core` (UnitySaveSystem) |
+| [`com.faolline.graphcore`](com.faolline.graphcore/) | 0.43.0 | Base package — nodes, edges, runner, and the three context primitives (Variables / Signals / Collections) |
+| [`com.faolline.graphlocalization`](com.faolline.graphlocalization/) | 0.9.0 | Locale tables + CSV/Unity localization providers |
+| [`com.faolline.graphlogging`](com.faolline.graphlogging/) | 0.1.1 | Shared, category-based `Logging.Info/Warning/Error` facade — zero dependencies, adoptable by any package |
+| [`com.faolline.graphstandard`](com.faolline.graphstandard/) | 0.18.0 | Reactive (k-of-N) and Flow (fork/join) execution engines, domain-neutral standard nodes |
+| [`com.faolline.graphdialoguesystem`](com.faolline.graphdialoguesystem/) | 0.19.0 | Dialogue graphs — speakers, branching choices, localized text, headless playback |
+| [`com.faolline.graphgameflow`](com.faolline.graphgameflow/) | 0.18.0 | The `MonoBehaviour`/scene adapter — drives a graph live in a Unity scene |
+| [`com.faolline.graphgameflow.addressables`](com.faolline.graphgameflow.addressables/) | 0.6.0 | Bridges graphgameflow's scene loader to `com.unity.addressables` |
+| [`com.faolline.graphquest`](com.faolline.graphquest/) | 0.12.0 | Quests as objective DAGs, prerequisite gating, one-shot rewards |
+| [`com.faolline.graphsave`](com.faolline.graphsave/) | 0.10.0 | Neutral run-snapshot model + a pluggable save-store contract |
+| [`com.faolline.graphsave.savesystem`](com.faolline.graphsave.savesystem/) | 0.2.0 | Bridges graphsave to `com.faolline.savesystem.core` (UnitySaveSystem) |
+| [`com.faolline.graphimport`](com.faolline.graphimport/) | 0.5.0 | Editor-only: generates `graphdialoguesystem` dialogue/speaker assets from a dedicated interchange format |
 
 Each package has its own `README.md` (usage + API) and `CHANGELOG.md` (version history).
 

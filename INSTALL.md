@@ -41,8 +41,9 @@ Pin `#master` to a tag (e.g. `#v0.1.0`) for reproducible installs.
 ## Package dependency graph
 
 ```
-com.faolline.graphcore             (no deps)               — nodes, edges, runner, context
-com.faolline.graphlocalization     (no deps)               — locale tables, CSV/Unity provider
+com.faolline.graphlogging          (no deps)               — shared category-based logging facade
+com.faolline.graphcore             → graphlogging           — nodes, edges, runner, context
+com.faolline.graphlocalization     → graphlogging           — locale tables, CSV/Unity provider
 com.faolline.graphstandard         → graphcore              — reactive/flow engines, collections
 com.faolline.graphdialoguesystem   → graphcore, graphlocalization — dialogue graph, speakers, UI
 com.faolline.graphgameflow         → graphcore, graphsave   — scene driver, triggers, scene loader
@@ -50,6 +51,7 @@ com.faolline.graphgameflow.addressables → graphgameflow, com.unity.addressable
 com.faolline.graphquest            → graphcore, graphstandard, graphlocalization — quest DAG, journal
 com.faolline.graphsave             → graphcore              — snapshot persistence (neutral)
 com.faolline.graphsave.savesystem  → graphsave, savesystem.core — UnitySaveSystem bridge
+com.faolline.graphimport           → graphcore, graphstandard, graphdialoguesystem — Editor-only asset generation
 ```
 
 Internal / not distributed:
@@ -71,6 +73,7 @@ com.faolline.graphTest             → graphcore, graphstandard — integration 
 | Use reactive (k-of-N) or flow (fork/join) engines | `graphstandard`                           |
 | Model quests as objective DAGs with rewards    | `graphquest` (pulls standard + loc)          |
 | Save / restore a running graph                 | `graphsave` (+ `graphsave.savesystem` for UnitySaveSystem) |
+| Generate dialogue/speaker assets from an external interchange file (Editor-only, not for gameplay) | `graphimport` (pulls graphcore + graphstandard + graphdialoguesystem) |
 
 ## Authoring paths
 
