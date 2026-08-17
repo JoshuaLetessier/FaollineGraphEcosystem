@@ -1,6 +1,6 @@
 # com.faolline.graphcore
 
-**Version**: 0.38.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
+**Version**: 0.43.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
 
 Shared foundation library for graph-based systems in the Faolline ecosystem. Provides the
 **data layer** (graph structure, nodes, edges) and the **execution runtime** (headless state
@@ -15,7 +15,7 @@ graphcore is the **base package** of the ecosystem. Install it via **Package Man
 package from git URL**:
 
 ```
-https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=Assets/FaollineGraphEcosystem/com.faolline.graphcore#master
+https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=com.faolline.graphcore#master
 ```
 
 Then open **Window ▸ Faolline ▸ Graph Ecosystem Modules** to add the other packages (Graph
@@ -31,10 +31,15 @@ See [`../INSTALL.md`](../INSTALL.md) for the full install guide.
 ```
 com.faolline.graphcore
 │
-├── Runtime/
+├── Runtime.Core/            Separate assembly (`noEngineReferences: true` — zero UnityEngine usage)
+│   ├── BaseContext              Typed blackboard: variables + signals + collections + scopes
+│   ├── BaseContextTypeRegistry  Extensible set of types Set/Get/RaiseSignal accept — see below
+│   ├── SignalArgs               Signal payload envelope
+│   └── GraphLog                 Warning/Error sink Core can call without an engine dependency
+│
+├── Runtime/                 References Runtime.Core; everything engine-facing lives here
 │   ├── Graph/
-│   │   ├── BaseGraph           ScriptableObject container (nodes, edges, GraphId)
-│   │   └── BaseContext         Typed blackboard: variables + signals + collections + scopes
+│   │   └── BaseGraph           ScriptableObject container (nodes, edges, GraphId)
 │   ├── Nodes/
 │   │   ├── BaseNodeData        Abstract base for all nodes
 │   │   ├── StartNodeData       Graph entry point
@@ -76,6 +81,7 @@ com.faolline.graphcore
 │
 ├── Editor/Tools/
 │   ├── GraphValidator                Structural + type-safety lint (menu: Validate Selected Graph)
+│   ├── GraphValidatorExtensionRegistry  Seam for downstream libs to add their own validator checks (0.41.0) — see EXTENSIBILITY.md
 │   ├── SignalConstantsGenerator      → GraphSignals class    (menu: Signals ▸ Generate Constants)
 │   ├── VariableConstantsGenerator    → GraphVariables class  (menu: Variables ▸ Generate Constants)
 │   └── ConstantsGeneratorCore        Shared sanitize/collision core for both generators
@@ -178,7 +184,7 @@ corrupting the stored value at runtime.
 | `Nodes` | `IReadOnlyList<BaseNodeData>` |
 | `Edges` | `IReadOnlyList<BaseEdgeData>` |
 | `EntryNodeId` | Id of the node where execution starts |
-| `HistoryDepth` | Max history entries (default: 20; 0 = unlimited) |
+| `HistoryDepth` | Max history entries (default: 20; 0 = unlimited — deep-clones the full context on every step with no cap, so memory grows linearly with traversal length; keep the default unless full rewind is required, and consider checkpointing instead) |
 | `AddNode / AddEdge` | Mutation helpers (use from tooling only) |
 
 There is **no declared parameter/variable list on the graph** — a graph's variables are whichever
@@ -211,6 +217,7 @@ All nodes derive from `BaseNodeData`. Key members:
 | `IsCheckpoint` | If `true`, `GoBackToCheckpoint` can restore to this node |
 | `AwaitSignalName` / `AwaitSignals` | When set, entering the node **parks** the runner until a matching `SignalDef`/raw signal is raised (0.4.0; asset list 0.26.0) — the **only** primitive that can resume a parked node |
 | `ResumeConditions` | `List<BaseCondition>` — optional gate a matching await-signal must pass to resume; empty = none. A failing gate ignores the raise and keeps the node parked (re-armable) (0.7.0) |
+| `ResumeIfSignalAlreadyRaised` | When `true`, an await node does not park if its awaited signal is already in the context's raised-signal history on entry (`HasSignalBeenRaised`) — it resumes immediately, provided `ResumeConditions` also pass. Guards against a signal that fired ahead of the cursor (e.g. a quest reward) parking the flow forever. Default `false` keeps the live-only behaviour: only a raise while parked resumes the node |
 | `WaitDuration` | When `> 0`, entering the node holds for this many seconds of host-fed time via `Tick` before advancing (0.6.0) |
 
 `AwaitSignalName`/`AwaitSignals` and `WaitDuration` are append-only universal metadata on every
@@ -305,6 +312,10 @@ ctx.Get<int>(hpVariableDef);
 
 // Supported types: bool, int, float, string, Vector2, Vector3, Color
 // Unsupported types (object/GameObject references) throw ArgumentException on Set<T>
+// ...but that list isn't fixed: BaseContextTypeRegistry.RegisterSupportedType<T>() lets an engine layer
+// extend it. Vector2/Vector3/Color aren't Core built-ins at all — GraphCoreUnityBootstrap registers them
+// this way on domain load, precisely so the noEngineReferences Runtime.Core assembly never has to name
+// a UnityEngine type itself.
 
 // Change notifications (per key, either channel)
 ctx.OnVariableChanged("Score", val => Debug.Log($"Score: {val}"));
@@ -387,7 +398,7 @@ Idle ──Start()──► NodeReady ──Proceed() / ChooseById()──► ..
 | `OnNodeEntered(BaseNodeData)` | After conditions pass, enter-actions run, executor called |
 | `OnNodeCompleted(BaseNodeData)` | Immediately after `OnNodeEntered` — runner pauses here |
 | `OnEnded(EndReason)` | When an `EndNodeData` is reached at root level |
-| `OnStuck()` | When an entry condition fails or no outgoing edge is available |
+| `OnStuck()` | When an entry condition fails, or outgoing edges exist but **all** of them fail their own conditions. A node with **zero** outgoing edges is NOT stuck — it's treated as a terminal node and raises `OnEnded(EndReason.Completed)` instead (see step 6 below) |
 | `OnWaitingForSignal(BaseNodeData, string)` | The node declared `AwaitSignalName`; the runner parks (0.4.0) |
 | `OnWaitingForTime(BaseNodeData, float)` | The node declared `WaitDuration`; the runner holds on time (0.6.0) |
 
@@ -400,7 +411,7 @@ Idle ──Start()──► NodeReady ──Proceed() / ChooseById()──► ..
 3. Call `INodeExecutor.Execute` (if registered)
 4. Raise `OnNodeEntered`, then `OnNodeCompleted` — **runner pauses here**
 5. *(on Proceed / ChooseById)* Run `OnExitActions`
-6. Evaluate outgoing edges, append history snapshot
+6. Evaluate outgoing edges, append history snapshot — **zero** edges: terminal, raise `OnEnded(Completed)`; edges exist but none pass: raise `OnStuck`, stay `NodeReady`
 7. Advance to next node
 
 **Linear execution:**
@@ -431,8 +442,12 @@ runner.OnNodeCompleted += node =>
 
 When `BaseRunner` encounters a `SubGraphNodeData` it pushes a new stack frame and enters
 the sub-graph. On `EndNodeData` inside the sub-graph, the frame is popped and the parent
-resumes automatically. Context is either shared (`InheritParentContext = true`) or isolated
-(`false` — fresh `BaseContext`, seeded from whichever `VariableDef`s the sub-graph's own
+resumes automatically. `OpensScope` is checked **first** and takes precedence over
+`InheritParentContext`, giving three context modes: scoped (`OpensScope = true` — rides the
+parent context via a local overlay, see `BeginLocalContext` under
+[Context API reference](#context-api-reference)), shared (`OpensScope = false`,
+`InheritParentContext = true` — the same `BaseContext` instance, no overlay), or isolated
+(both `false` — fresh `BaseContext`, seeded from whichever `VariableDef`s the sub-graph's own
 actions/conditions reference).
 
 Cycle detection is automatic: if the sub-graph's `GraphId` is already on the stack,
@@ -585,8 +600,15 @@ condition-await assembled from the two existing primitives, no host-side polling
 
 | Assembly | Platforms | Auto-referenced |
 |----------|-----------|-----------------|
+| `com.faolline.graphcore.Runtime.Core` | All | Yes |
 | `com.faolline.graphcore.Runtime` | All | Yes |
+| `com.faolline.graphcore.Editor` | Editor only | Yes |
 | `com.faolline.graphcore.Tests.EditMode` | Editor only | No (test-only) |
+
+`Runtime.Core` is `noEngineReferences: true` — zero `UnityEngine` usage, zero asmdef references of its
+own. `Runtime` references `Runtime.Core` (plus `graphlogging`); the engine-facing layer (nodes, actions,
+conditions, the runner, all ScriptableObject asset types) sits above the engine-agnostic substrate. See
+[`../ARCHITECTURE.md`](../ARCHITECTURE.md) for the ecosystem-wide tier picture.
 
 ---
 

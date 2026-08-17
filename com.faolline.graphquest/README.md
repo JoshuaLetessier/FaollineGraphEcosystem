@@ -1,6 +1,6 @@
 # Faolline GraphQuest
 
-**Version**: 0.11.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.38.0, `com.faolline.graphstandard` ≥ 0.17.0, `com.faolline.graphlocalization` ≥ 0.7.0
+**Version**: 0.12.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.0, `com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphlocalization` ≥ 0.9.0, `com.faolline.graphlogging` ≥ 0.1.1
 
 `com.faolline.graphquest` — a **quest & objective** domain library above
 [`com.faolline.graphcore`](../com.faolline.graphcore) and [`com.faolline.graphstandard`](../com.faolline.graphstandard).
@@ -20,12 +20,19 @@ smaller completed-set), never an undo.
   is recorded done (cascading unlocks); a fail condition gives the fourth `Failed` state (fail precedes complete).
 - **One-shot reward hooks** — graphcore `BaseAction`s fired **exactly once** on completion (guarded by a context
   "rewarded" set, so they never re-fire on re-evaluation or after a load).
-- **Quest aggregation** — a quest completes when all its *required* objectives complete; an unlock condition gates
-  the whole quest; optional objectives track state + rewards without blocking completion.
+- **Quest aggregation** — the quest completes per its completion rule: **AllRequired** (default) needs every
+  *required* objective complete; `.CompleteOnAny()` completes as soon as one required objective is done;
+  `.CompleteOnThreshold(count)` completes once `count` required objectives are done. An unlock condition gates the
+  whole quest; optional objectives track state + rewards without blocking completion.
 - **Code-first fluent builder** — `QuestBuilder`; cyclic prerequisites are rejected at `Build()`. Prerequisites are
-  all-of-N (`Requires("a", "b")`) or **k-of-N** (`RequiresAtLeast(2, "a", "b", "c")` — unlocks at any two).
+  all-of-N (`Requires("a", "b")`) or **k-of-N** (`RequiresAtLeast(2, "a", "b", "c")` — unlocks at any two). The
+  editor-side `QuestGraphValidator` (**Faolline ▸ Quest ▸ Validate Selected Quest**) catches the resulting
+  footguns statically: an objective with no `CompletionCondition` (can never auto-complete), a k-of-N gate that
+  requires more prerequisites than exist (stays Locked forever), and a `Threshold` completion rule set to zero or
+  above the number of required objectives.
 - **Replay** — `QuestEvaluator.Reset()` clears a quest's scoped progress (other quests on the same context are
-  untouched), so it can be played again and one-shot rewards fire anew.
+  untouched), so it can be played again and one-shot rewards fire anew. For a single objective, use the granular
+  `ResetObjective(id)` instead (see *The observe / derive contract* below).
 - **Journal data layer** — name/describe objectives (`.Named(...)` / `.Describe(...)`) and the quest; read
   `QuestEvaluator.GetObjectives()` (`ObjectiveView`: id + label + description + required + state) and
   `RequiredCompleted`/`RequiredTotal` to drive a quest-log UI without keeping your own id→label table.
@@ -36,8 +43,10 @@ smaller completed-set), never an undo.
 - **Localized text (optional)** — `evaluator.UseLocalization(provider)` resolves objective/quest names &
   descriptions as keys via `com.faolline.graphlocalization` (CSV or Unity Localization); without a provider the
   text stays literal.
-- **Quantified objectives** — `.ProgressCollectionKey("items").ProgressTarget(10)` tracks a collection count
-  against a target; `ObjectiveView` exposes `Progress` / `ProgressTarget` (e.g. "3/10" in a journal UI).
+- **Quantified objectives** — set `ObjectiveNodeData.ProgressCollection` (a `CollectionDef`) and `.ProgressTarget`
+  directly on the built node (no fluent `ObjectiveBuilder` setter for this yet — see `QuestSampleBuilder.cs` for
+  the pattern) to track a collection count against a target; `ObjectiveView` exposes `Progress` / `ProgressTarget`
+  (e.g. "3/10" in a journal UI).
 - **Abandon** — `QuestEvaluator.Abandon()` drops the quest to `QuestState.Abandoned`, for player-initiated
   quest abandonment. Re-activatable via `Reset()` if the design allows replaying.
 
@@ -65,6 +74,11 @@ quest.Evaluate();   // find_clue -> Completed, pick_lock -> Active, ...
 
 See [the spec quickstart](../specs/029-graph-quest/quickstart.md) for the full walkthrough (gating, rewards-once,
 save/restore, host context).
+
+**Push mode**: instead of calling `Evaluate()` after every context write, `quest.EnableAutoEvaluate()` subscribes
+to the context's variable/collection/signal changes and re-evaluates automatically — including quests gated purely
+on a `SignalRaisedCondition`. Call `DisableAutoEvaluate()` to unsubscribe on teardown. Time-limited objectives are
+NOT auto-ticked either way — those still need `Evaluate(now)` with a game clock.
 
 ## The observe / derive contract (don't double-write "completed")
 
@@ -128,7 +142,8 @@ remove a prerequisite edge.
 
 ## Dependencies
 
-- `com.faolline.graphcore` 0.14.0
-- `com.faolline.graphstandard` 0.10.1
-- `com.faolline.graphlocalization` 0.4.0 (the neutral text-resolution abstraction; localization is opt-in at
+- `com.faolline.graphcore` 0.43.0
+- `com.faolline.graphstandard` 0.18.0
+- `com.faolline.graphlocalization` 0.9.0 (the neutral text-resolution abstraction; localization is opt-in at
   runtime via `UseLocalization`, the CSV provider needs no Unity Localization)
+- `com.faolline.graphlogging` 0.1.1

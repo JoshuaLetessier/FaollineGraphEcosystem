@@ -19,6 +19,13 @@
     "dialogue",
     "faolline"
   ],
+  "samples": [
+    {
+      "displayName": "Dialogue Example",
+      "description": "A worked two-dialogue interchange JSON (a choice, a sub-dialogue link, both end reasons) to try the import pipeline against your own project.",
+      "path": "Samples~/DialogueExample"
+    }
+  ],
   "author": {
     "name": "JoshuaLetessier",
     "email": "faolline@gmail.com"

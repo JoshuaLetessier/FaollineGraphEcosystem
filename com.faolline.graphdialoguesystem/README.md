@@ -1,6 +1,6 @@
 # com.faolline.graphdialoguesystem
 
-**Version**: 0.17.1 — **Unity**: 6000.x — depends on `com.faolline.graphcore` ≥ 0.38.0, `com.faolline.graphlocalization` ≥ 0.7.0
+**Version**: 0.19.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore` ≥ 0.43.0, `com.faolline.graphlocalization` ≥ 0.9.0, `com.faolline.graphlogging` ≥ 0.1.1
 
 A graph-based dialogue library built **entirely on top of** `com.faolline.graphcore` (zero core
 changes), following the `com.faolline.starterGraph` package shape. Author branching, multi-speaker,
@@ -21,9 +21,9 @@ Direct git URL (**Package Manager ▸ + ▸ Add package from git URL**) — add 
 not auto-resolve git dependencies:
 
 ```
-…?path=Assets/FaollineGraphEcosystem/com.faolline.graphcore#master
-…?path=Assets/FaollineGraphEcosystem/com.faolline.graphlocalization#master
-https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=Assets/FaollineGraphEcosystem/com.faolline.graphdialoguesystem#master
+https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=com.faolline.graphcore#master
+https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=com.faolline.graphlocalization#master
+https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=com.faolline.graphdialoguesystem#master
 ```
 
 Depends on: `com.faolline.graphcore`, `com.faolline.graphlocalization`. See
@@ -75,6 +75,37 @@ Or generate a ready-made example: **Faolline ▸ GraphDialogue ▸ Generate Samp
 
 ---
 
+## Code-first authoring
+
+Besides the visual editor, `DialogueGraphBuilder` builds a `DialogueGraph` fluently from code — the
+same API `com.faolline.graphimport`'s `DialogueAssetGenerator` uses to turn imported data into real
+graphs. Node types (`DialogueLineNodeData`, `ChoiceNodeData` + `DialogueChoice`) and their `NodeType`
+ids are set for you:
+
+```csharp
+var b = new DialogueGraphBuilder();
+var hi  = b.AddLine("guardian", "Bonjour, aventurier").AsEntry();
+var hub = b.AddChoice();
+var ask = b.AddLine("guardian").Say("La ville est ancienne.");
+var end = b.AddEnd();
+
+hi.To(hub);
+hub.Option("Demander").To(ask);
+hub.Option("Partir").To(end);
+ask.To(end);
+
+DialogueGraph graph = b.Build();
+```
+
+Each handle exposes the shared wiring surface — `.To(target)`, `.AsEntry()`, `.Id(...)`, `.When(...)`
+(entry conditions), `.OnEnter(...)`/`.OnExit(...)`, `.Checkpoint()`, plus `.Await(signalName)` /
+`.Wait(seconds)` / `.ResumeWhen(...)` for signal/time-gated lines (see *Waiting on a signal or timer*
+below) — and `AddSubGraph(...)` wires a jump into another, separately-authored graph. A line adds
+`.Say(text)` / `.Expression(key)`; a choice adds `.Option(label, condition?)`, whose own handle routes
+with `.To(target)` / `.When(condition)`.
+
+---
+
 ## Playback (headless)
 
 ```csharp
@@ -98,6 +129,22 @@ player.Start();
 
 `DialoguePlayer` wraps graphcore's `BaseRunner` — sub-dialogue nesting, cycle detection, and history
 come from the foundation.
+
+### Waiting on a signal or timer
+
+A line node can carry graphcore's `AwaitSignalName` / `WaitDuration` (set via the builder's
+`.Await(signalName)` / `.Wait(seconds)`, or on the node in the visual editor). The player still emits
+its `LineStep` via `OnLine` as usual — so the UI can show the line — but then parks instead of waiting
+for `Advance()`:
+
+```csharp
+player.OnWaitingForSignal += (line, signalName) => Debug.Log($"waiting on '{signalName}'...");
+player.OnWaitingForTime   += (line, seconds)    => Debug.Log($"waiting {seconds}s...");
+
+player.RaiseSignal("door_opened");   // resumes a signal-gated line
+player.Tick(Time.deltaTime);         // feed elapsed time each frame for a timer-gated line
+// player.IsWaitingForSignal / player.IsWaitingForTime  — query the parked state
+```
 
 ### Rendering a dialogue owned by another runner (`DialoguePresenter`)
 
@@ -191,6 +238,14 @@ There are **no** condition/effect node types. Reactivity is attached inline (gra
   `DialogueContext` blackboard by key.
 
 Context keys live only in `DialogueContextKeys` (Principle VI — no raw literals at call sites).
+
+**Choice nodes as routers, not prompts.** A `ChoiceNodeData` whose options are real `DialogueChoice`s
+(authored via the editor or `.Option(label)`) pauses playback and surfaces `OnChoices` — the player
+picks one. A choice node whose options are all plain (non-`DialogueChoice`) condition branches is
+instead a **router**: `DialoguePlayer` auto-resolves it during `Drain()` by taking the first branch
+whose condition passes, and it is never shown as buttons. Use this to branch a graph internally on
+context state (e.g. skip a line if a flag is set) without a fake choice prompt. A router with no
+passing branch is a stuck dialogue (add a default/unconditional branch to avoid it).
 
 ---
 

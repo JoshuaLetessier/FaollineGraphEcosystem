@@ -1,6 +1,6 @@
 # com.faolline.graphstandard
 
-**Version**: 0.17.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.38.0
+**Version**: 0.18.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.0, `com.faolline.graphlogging` ≥ 0.1.1
 
 Buffer library **above** `com.faolline.graphcore`. graphcore is the universal **data substrate** (graph,
 nodes, edges, conditions, actions, context) plus the **Linear** reference runner (`BaseRunner`, single
@@ -88,8 +88,10 @@ com.faolline.graphstandard
 │   ├── Reactive/
 │   │   ├── ReactiveNodeState     Locked | Available | Completed
 │   │   └── ReactiveEvaluator     Cursor-less prerequisite/progression DAG (k-of-N threshold join)
-│   └── Flow/
-│       └── FlowRunner            Multi-active token-propagation engine (fork / join / re-pass / one-shot)
+│   ├── Flow/
+│   │   └── FlowRunner            Multi-active token-propagation engine (fork / join / re-pass / one-shot)
+│   └── Triggers/
+│       └── TimedTrigger          Fires an action once a condition holds continuously for a delay
 │
 └── Tests/EditMode/
     ├── Reactive/                 Threshold join, cascade, events, Start/Reevaluate
@@ -155,6 +157,11 @@ state depends only on the current set, never on history. A node dropping back to
 > `OnNodeAvailable`/`OnNodeLocked`) so a `CollectionContainsCondition` can read it — not built in, by design
 > (no real case yet).
 
+> **Teardown — call `DetachEditorProbe()`.** A host that discards its `ReactiveEvaluator` (teardown, replacing
+> it with a new one over the same graph) **must** call `eval.DetachEditorProbe()` first — the graph editor takes
+> the first probe answering for a graph, so a dead evaluator's probe would shadow the live one. No-op outside
+> the editor and before `Start()`; compiled empty in player builds.
+
 ---
 
 ## Standard collection primitives
@@ -163,11 +170,12 @@ Authorable standard nodes/edges over graphcore's string-set collections — atta
 
 | Primitive | Kind | Effect |
 |-----------|------|--------|
-| `AddToCollectionAction` | action (on-enter/on-exit) | adds a configured value to a configured collection key (idempotent; no-op on empty key/value) |
-| `RemoveFromCollectionAction` | action (on-enter/on-exit) | removes a configured value from a configured collection key (no-op if absent) |
-| `ClearCollectionAction` | action (on-enter/on-exit) | removes all values from a configured collection key |
+| `AddToCollectionAction` | action (on-enter/on-exit) | **Deprecated shim** — back-compat subclass of `Faolline.GraphCore.AddToCollectionAction`, which is now the canonical implementation; existing assets keep working, new graphs should reference the GraphCore type directly |
+| `RemoveFromCollectionAction` | action (on-enter/on-exit) | **Deprecated shim** — back-compat subclass of `Faolline.GraphCore.RemoveFromCollectionAction`; new graphs should reference the GraphCore type directly |
+| `ClearCollectionAction` | action (on-enter/on-exit) | **Deprecated shim** — back-compat subclass of `Faolline.GraphCore.ClearCollectionAction`; new graphs should reference the GraphCore type directly |
 | `CollectionContainsCondition` | condition | satisfied when the collection contains a configured value (absent key ⇒ false) |
-| `CollectionCountAtLeastCondition` | condition | satisfied when the collection's count ≥ a threshold (threshold 0 ⇒ always true; absent key ⇒ 0) |
+| `CollectionCountAtLeastCondition` | condition | satisfied when the collection's **distinct entry count** ≥ a threshold (threshold 0 ⇒ always true; absent key ⇒ 0) |
+| `CollectionItemCountAtLeastCondition` | condition | satisfied when a **specific entry's stacked quantity** ≥ a threshold — the stacking counterpart of `CollectionCountAtLeastCondition` (threshold 0 ⇒ always true; absent entry ⇒ 0) |
 
 These are the universal write/read half of progression: a node *records* into a collection; an edge *gates* on it.
 
@@ -254,6 +262,34 @@ new FlowRunner(graph, context,
 
 `Fire(nodeId)` triggers a node directly (bypassing its join threshold). `HasFired(id)` / `FiredNodeIds`
 report what fired since the last `Reset`.
+
+> **Teardown — call `DetachEditorProbe()`.** A host that discards its `FlowRunner` (teardown, replacing it with
+> a new one over the same graph) **must** call `flow.DetachEditorProbe()` first — the graph editor takes the
+> first probe answering for a graph, so a dead runner's probe would shadow the live one. No-op outside the
+> editor; compiled empty in player builds.
+
+---
+
+## Triggers — `TimedTrigger`
+
+Headless, no `MonoBehaviour` — host code calls `Tick` each frame with elapsed time. Fires an action once a
+condition holds continuously for a configured delay: progressive hints, delayed events, timed reveals, bonus
+timers. Each entry is one-shot until `Reset`; if the condition drops before the delay elapses, its timer
+resets and starts over the next time the condition holds.
+
+```csharp
+var trigger = new TimedTrigger(context);
+trigger.Add("hint1", stuckOnPuzzle, delaySeconds: 15f, showHintAction);   // null condition = unconditional
+trigger.OnTriggered += id => Debug.Log($"triggered: {id}");
+
+// each frame
+trigger.Tick(Time.deltaTime);
+
+trigger.HasFired("hint1");     // true once the delay elapsed with the condition held throughout
+trigger.GetElapsed("hint1");   // seconds armed so far (0 when not armed / already fired)
+trigger.Reset("hint1");        // re-arms it to fire again
+trigger.Remove("hint1");       // unregisters the trigger entirely
+```
 
 ---
 

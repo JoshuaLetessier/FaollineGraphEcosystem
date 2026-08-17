@@ -1,6 +1,6 @@
 # Faolline GraphGameFlow — Addressables Bridge
 
-**Version**: 0.4.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.16.0, `com.unity.addressables` ≥ 2.2.2
+**Version**: 0.6.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.18.0, `com.unity.addressables` ≥ 2.2.2, `com.faolline.graphlogging` ≥ 0.1.1
 
 Optional T3 adapter: an `ISceneLoader`/`ISceneUnloader` (from `com.faolline.graphgameflow`) backed by
 `com.unity.addressables`, so `LoadSceneAction`/`UnloadSceneAction` can load a scene by **Addressable key**
@@ -104,16 +104,26 @@ current chapter's group must not pull in the next chapter's content (see `specs/
 ## Testing
 
 - **EditMode**: argument guards and interface compliance — no Addressables initialisation needed.
-- **PlayMode**: real `Addressables.LoadSceneAsync`/`UnloadSceneAsync` calls against the graphgameflow
-  package's own committed cross-scene test scenes, registered as Addressable entries for the fixture's
-  lifetime under the "Use Asset Database (fastest)" Play Mode script (no content build required). This is
-  the standard way to exercise Addressables from the Editor; see `AddressablesSceneLoaderPlayModeTests` for
-  the registration/cleanup fixture.
+- **PlayMode**: real `Addressables.LoadSceneAsync`/`UnloadSceneAsync` calls against this package's own
+  dedicated test scenes (`AddressablesSceneA`/`AddressablesSceneB`) — deliberately never the graphgameflow
+  core package's `GameFlowCrossSceneA`/`GameFlowCrossSceneB`, which several of core's own fixtures already
+  share, so a `Single`-mode load here can never collide with an unrelated fixture in another package's test
+  assembly. Registered as Addressable entries for the fixture's lifetime under the "Use Asset Database
+  (fastest)" Play Mode script (no content build required). This is the standard way to exercise Addressables
+  from the Editor; see `AddressablesSceneLoaderPlayModeTests` for the registration/cleanup fixture.
 
 ## Constraints
 
 Same conventions as the rest of the ecosystem: `[GraphGameFlow]` log prefix on misuse, C# `Action<T>` events
 (no `UnityEvent`), one class per file, XML docs.
+
+## Diagnostics
+
+Every class in this package (`AddressablesSceneLoader`, `AddressablesGraphCatalog`,
+`PreloadNextChapterAction`, and the Editor key-provider tools) logs through the shared
+`com.faolline.graphlogging` facade instead of raw `Debug.Log`, so its `"GraphGameFlow"`-category
+messages can be toggled off from **Faolline ▸ Diagnostics ▸ Log Settings** alongside the rest of the
+ecosystem.
 
 ## Changelog
 

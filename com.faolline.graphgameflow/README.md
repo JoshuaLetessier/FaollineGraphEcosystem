@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.16.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.38.0, `com.faolline.graphsave` ≥ 0.8.0
+**Version**: 0.18.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.0, `com.faolline.graphsave` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.1.1
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -28,7 +28,14 @@ com.faolline.graphgameflow
 │   │   ├── UnitySceneLoader      default impl → blocking SceneManager.LoadScene (+ async unload)
 │   │   ├── AsyncSceneLoader      optional impl → queued LoadSceneAsync/UnloadSceneAsync + events + completion signals
 │   │   ├── LoadSceneAction       a graphcore BaseAction (NOT a node type)
-│   │   └── UnloadSceneAction     its additive counterpart — unload a stacked scene
+│   │   ├── UnloadSceneAction     its additive counterpart — unload a stacked scene
+│   │   └── SceneAwaitSetup       one-call await-signal setup (completed OR failed) for a load/unload gate node
+│   ├── Graph/
+│   │   ├── IGraphCatalog         seam: GraphId → BaseGraph, independent of loading technology
+│   │   ├── DirectGraphCatalog    zero-dependency in-memory IGraphCatalog impl
+│   │   └── GameFlowGraph         the creatable gameflow graph asset (BaseGraph subclass)
+│   ├── Bridge/
+│   │   └── ContextTrigger        scene-to-graph bridge: fires actions/a signal against a driver's context
 │   └── Driver/
 │       └── GraphFlowDriver       the MonoBehaviour host bridge
 │
@@ -94,6 +101,18 @@ build the context, hand it to `Boot`, then wire a `ReactiveEvaluator` or `FlowRu
 > graph with **no End node** (the runner follows the single out-edge and loops; the flow stays running, no
 > `OnEnded`). Set a small `BaseGraph.HistoryDepth` for a forever-looping shell. Build it fluently with
 > graphstandard's `GraphBuilder`.
+
+> **Chaining flows — calling `Boot()` from your own `OnEnded` handler is safe (since 0.16.1)**: a natural
+> pattern for flow-to-flow / chapter-to-chapter transitions is to reboot the same driver into the next graph
+> the moment the current one ends:
+> ```csharp
+> _flow.OnEnded += reason => { _flow.Graph = nextChapterGraph; _flow.Boot(); };
+> ```
+> `BaseRunner` fires `OnEnded` synchronously from deep inside its own advance call, so this reentrant `Boot()`
+> runs on the same call stack as whatever triggered the ending. The driver tracks dispatch depth
+> (`BeginDispatch`/`EndDispatch`) around every top-level entry point and queues a reentrant `Boot()` call
+> instead of mutating `_runner`/`_context`/`_running` mid-unwind — it replays automatically once the outer
+> dispatch has fully returned. Earlier versions corrupted driver state here; this is now supported.
 
 ---
 
@@ -302,6 +321,21 @@ context.GraphCatalog.Resolve(snapshot.GraphId,
 swap in `AddressablesGraphCatalog` (from `com.faolline.graphgameflow.addressables`) instead — same seam,
 resolved via an Addressable key instead of an in-memory map.
 
+**Preloading the next chapter** — `GameFlowContext.PendingNextGraph`: an early-preload action (e.g. the
+Addressables adapter's `PreloadNextChapterAction`) sets this once its target graph resolves, ahead of the
+current chapter actually ending. The host reads it after `OnEnded` and reboots the driver straight onto the
+already-loaded graph, with no additional wait:
+
+```csharp
+_flow.OnEnded += reason =>
+{
+    var next = _flow.Context.PendingNextGraph;
+    if (next != null) { _flow.Graph = next; _flow.Boot(); }
+};
+```
+
+`null` until a preload completes; a project that never triggers one never touches it.
+
 ### Graph Key Registry — `Faolline ▸ Graph ▸ Graph Key Registry` (Editor, since 0.17.0)
 
 Mirrors the scene-name "Mark as …" tooling: lists every `BaseGraph` asset in the project with its
@@ -373,8 +407,37 @@ the flow resumes and loads B — all over one shared `GameFlowContext`.
   resuming execution at the persisted node and context state.
 - **`UseUnscaledTime`**: when enabled, the driver feeds `Time.unscaledDeltaTime` instead of
   `Time.deltaTime`, so timed waits run independently of `Time.timeScale` (useful during pause menus).
-- **`ContextTrigger` target driver**: a `ContextTrigger` component can reference a `GraphFlowDriver` to
-  raise signals or set context values on a specific driver from scene callbacks (colliders, buttons, etc.).
+
+---
+
+## ContextTrigger — scene-to-graph bridge
+
+A `ContextTrigger` component executes a list of graphcore `BaseAction`s (and optionally raises a signal)
+against a `GraphFlowDriver`'s context — the scene-side counterpart to `LoadSceneAction`, for driving the
+flow from colliders, buttons, or any other scene callback.
+
+```csharp
+// TriggerMode.OnTriggerEnter, tag-filtered, guarded by a BaseCondition, runs its actions once:
+var trigger = doorTrigger.GetComponent<ContextTrigger>();
+trigger.ResetTrigger();   // allow it to fire again
+```
+
+- **`TriggerMode`**: `Manual` (call `Fire()` yourself, e.g. from a UI button), `OnTriggerEnter`,
+  `OnTriggerExit`, or `OnCollisionEnter` — the matching Unity physics callback calls `Fire()` automatically.
+  An optional tag filter (`[TagSelector]`) restricts which collider/collision triggers it.
+- **Guard**: an optional `BaseCondition` evaluated against the target context before anything fires — a
+  `Fire()` call is a no-op while it returns false (e.g. "player has key").
+- **Actions**: `Fire()` runs every configured `BaseAction` against the context, same as a node's
+  On Enter/Exit list — it executes arbitrary actions, not a fixed "set context value" behaviour.
+- **GameObjects to activate/deactivate**: two lists toggled via `SetActive` when the trigger fires (e.g.
+  reveal a puzzle prefab, hide the interactable prompt).
+- **Signal**: an optional `SignalDef` raised on the context after the actions run — the same seam
+  `RaiseSignal` resumes an await-signal node through.
+- **Fire-once** (default on): after the first successful `Fire()`, further calls are ignored until
+  `ResetTrigger()` clears `HasFired`.
+- **Target driver**: an explicit `GraphFlowDriver` reference, or — when left unset — `GraphFlowDriver.Active`
+  (the persistent singleton). A missing driver (or one with no `Context`) logs a `[GraphGameFlow]` warning
+  and `Fire()` is a no-op.
 
 ---
 

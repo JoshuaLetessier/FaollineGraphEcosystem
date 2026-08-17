@@ -1,6 +1,6 @@
 # com.faolline.graphlocalization
 
-**Version**: 0.7.1 — **Unity**: 6000.x — no required dependencies
+**Version**: 0.9.0 — **Unity**: 6000.x — no required dependencies
 
 Provider-agnostic localization for the Faolline graph ecosystem. Resolves localized text at runtime
 through a pluggable `ILocalizationProvider`, and builds translation tables from your graphs at edit
@@ -17,7 +17,7 @@ Use the **module selector** (recommended): install `com.faolline.graphcore`, the
 Or add it directly — **Package Manager ▸ + ▸ Add package from git URL**:
 
 ```
-https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=Assets/FaollineGraphEcosystem/com.faolline.graphlocalization#master
+https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=com.faolline.graphlocalization#master
 ```
 
 Pin `#master` to a tag (e.g. `#graphlocalization-v0.1.0`) for reproducible installs.
@@ -56,6 +56,25 @@ Pin `#master` to a tag (e.g. `#graphlocalization-v0.1.0`) for reproducible insta
 - **Build validation** (`LocaleValidationMode`): `Permissive` / `Warn` (default) / `Strict`.
 - **Runtime strictness** (`LocalizationStrictMode`): `Permissive` / `Audit` (default) / `Strict`.
 
+### CLI batch import — unattended / CI (UnityLocalization backend, 0.9.0)
+
+`TranslationImportBatch.Run` via `-executeMethod` imports externally-authored translation CSVs (e.g. from
+a dialogue tool's export) into the String Table Collections the build already created — it never creates
+a collection itself, so importing into one that doesn't exist yet fails loudly instead of skipping silently:
+
+```
+Unity.exe -batchmode -quit -projectPath <path> \
+  -executeMethod Faolline.GraphLocalization.Unity.Editor.TranslationImportBatch.Run \
+  -dialogueTranslationsDir Assets/Data/Translations \
+  -speakersCsv Assets/Data/Translations/speakers.csv
+```
+
+`-dialogueTranslationsDir <path>` imports every `*.csv` in the folder into the
+`{Sanitize(fileName)}_Text` collection (the same naming convention the graph sync already used to create
+it); `-speakersCsv <path>` imports into the fixed `Global_Text` collection. At least one of the two is
+required. Exits `0` only if every requested import succeeded. Only compiled when **com.unity.localization**
+is installed (`Localization.Unity` sub-assembly).
+
 ---
 
 ## Runtime usage
@@ -82,16 +101,27 @@ string greeting = provider.Resolve("speaker_npc_mayor", "en");
   reconstructing the provider. Implementations update their resolution and notify subscribers.
 - **Auto-create settings + auto-rebuild on graph save**: the first build auto-creates a
   `LocalizationSettingsAsset` if none exists, and saving a graph in the editor triggers an automatic
-  table rebuild so translations stay in sync with authoring changes.
+  table rebuild (toggle: `LocalizationSettingsAsset.AutoBuild`, default **on** — disable it for large
+  projects where the rebuild is slow) so translations stay in sync with authoring changes.
 
 ---
 
-To extend the build, implement `IGraphLocalizationAdapter` (auto-discovered):
+To extend the build, subclass `BaseGraphLocalizationAdapter<TGraph>` (auto-discovered via `TypeCache`,
+parameterless ctor) — it handles the `AssetDatabase` scan for every `TGraph` asset, you only extract keys:
 
 ```csharp
-public sealed class MyAdapter : IGraphLocalizationAdapter
+public sealed class MyAdapter : BaseGraphLocalizationAdapter<MyGraph>
 {
-    public string LibName => "MyLib";
-    public void ScanAndIndex(LocalizationDatabase db) { /* add keys from your assets */ }
+    public override string LibName => "MyLib";
+
+    protected override int ExtractGraphKeys(MyGraph graph, LocalizationGraphEntry entry)
+    {
+        // walk graph.Nodes, entry.AddKey(...) per key, return the count added
+    }
 }
 ```
+
+For keys not tied to a specific graph (e.g. a shared speaker/name table), override
+`ExtractGlobalKeys(LocalizationDatabase)` too. Implementing the lower-level `IGraphLocalizationAdapter`
+directly is still possible if you need full control over `ScanAndIndex` — every real adapter in the
+ecosystem (dialogue, quest) uses the `BaseGraphLocalizationAdapter<TGraph>` path instead.

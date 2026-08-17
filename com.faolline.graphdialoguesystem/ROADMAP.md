@@ -12,7 +12,7 @@
 - **Sample builder CSV auto-load** (P2): After generating sample, auto-load the CSV into the active `CsvLocalizationProvider` so warnings disappear without manual setup.
 
 ### Persistence & Playback
-- **Playback state save/restore** (P3): Serialize the dialogue history (nodes visited, context state at each step) so users can resume from checkpoints across play sessions.
+- ~~**Playback state save/restore** (P3)~~ — **shipped**: `DialoguePlayer.SaveState()`/`RestoreFrom()` serialize/restore a `DialogueSessionState` (checkpoint-granularity) — see `Runtime/Playback/DialoguePlayer.cs`. Not yet covered in README.md's Playback section.
 - **Branching narrative UI** (P3): Higher-level authoring patterns for multi-branch stories (conditionally hide/show entire subtrees, show choice consequences upfront).
 
 ### Testing & Validation

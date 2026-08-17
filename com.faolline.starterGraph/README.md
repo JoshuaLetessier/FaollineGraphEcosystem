@@ -27,7 +27,7 @@ This package is designed to be forked and renamed. Follow these steps:
    - `version` → `0.1.0`
 
 3. **Rename the namespace** — replace `Faolline.StarterGraph` with your namespace in all `.cs` files
-   and in the `.asmdef` files (both Runtime and Editor).
+   and in the `.asmdef` files (Runtime, Editor, and Tests/EditMode).
 
 4. **Rename the asset types** — `StarterGraph.cs` is your graph ScriptableObject. Rename it and
    update its `[CreateAssetMenu]` path. Same for `StarterContext.cs` and `StarterContextKeys.cs`.
@@ -35,9 +35,15 @@ This package is designed to be forked and renamed. Follow these steps:
 5. **Rename the editor window** — `StarterGraphEditorWindow.cs` registers the graph editor. Change
    the `[MenuItem]` path and the window title.
 
-6. **Update assembly definitions** — rename both `.asmdef` files and update their references:
+6. **Update assembly definitions** — rename all three `.asmdef` files and update their references:
    - `com.faolline.starterGraph.Runtime.asmdef` → your runtime asmdef
    - `com.faolline.starterGraph.Editor.asmdef` → your editor asmdef
+   - `com.faolline.starterGraph.Tests.EditMode.asmdef` → your test asmdef
+
+   The `Tests/EditMode/` folder itself is a decision point: keep and rename it as regression
+   scaffold for your new package (it already covers the context/graph/editor surface you're about to
+   modify), or delete it and start your own test assembly from scratch. Either is reasonable — pick
+   based on how much of the starter behavior you're keeping.
 
 7. **Register in the module selector** *(optional)* — add an entry in
    `com.faolline.graphcore/Editor/GraphEcosystemModules.json` if you want your lib to appear in
@@ -50,11 +56,29 @@ This package is designed to be forked and renamed. Follow these steps:
 ```
 com.faolline.starterGraph/
   Runtime/
-    StarterGraph.cs           ← ScriptableObject graph asset (extends BaseGraph)
-    StarterContext.cs          ← Custom context (extends BaseContext)
-    StarterContextKeys.cs      ← Typed variable key constants (raw-string channel; see graphcore's VariableDef for the governed asset channel)
+    StarterGraph.cs             ← ScriptableObject graph asset (extends BaseGraph)
+    StarterContext.cs           ← Custom context (extends BaseContext)
+    StarterContextKeys.cs       ← Typed variable key constants (raw-string channel; see graphcore's VariableDef for the governed asset channel)
+    Choices/
+      StarterChoice.cs           ← Example choice implementation
+    Nodes/
+      StarterStatementNodeData.cs ← Example statement node data
   Editor/
-    StarterGraphEditorWindow.cs ← Graph editor window (extends BaseGraphEditorWindow)
+    Window/
+      StarterGraphEditorWindow.cs ← Graph editor window (extends BaseGraphEditorWindow)
+    Graph/
+      StarterGraphView.cs         ← GraphView surface for StarterGraph
+    Edges/
+      StarterEdgeView.cs          ← Edge view for the starter graph
+    Inspector/
+      StarterNodeInspectorView.cs ← Node inspector view for the starter graph
+    Nodes/                       ← Node-view implementations (5 files: Choice, End, Start, StarterStatement, SubGraph)
+    Samples/
+      StarterSampleBuilder.cs     ← Menu-driven sample graph generator
   Samples/
-    StarterSampleGraph.asset   ← Example graph asset for quick testing
+    StarterSampleGraph.asset    ← Example graph asset for quick testing
+  Tests/
+    EditMode/                   ← NUnit test assembly, own asmdef (com.faolline.starterGraph.Tests.EditMode)
+      Editor/                    ← Editor-surface tests (StarterEditorTests, StarterRobustnessTests, StarterWindowExecutionTests)
+      Runtime/                   ← Runtime coverage (StarterContextContractTests, StarterRuntimeTests)
 ```
