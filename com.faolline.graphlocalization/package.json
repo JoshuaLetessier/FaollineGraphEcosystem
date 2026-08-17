@@ -5,7 +5,7 @@
   "description": "Provider-agnostic localization layer for graph-based systems: CSV or Unity Localization backends, automatic key indexing per graph lib, per-locale validation, and a build dashboard. Each graph lib registers an IGraphLocalizationAdapter to be indexed in a single 'Build All Tables' pass.",
   "unity": "6000.0",
   "unityRelease": "0f1",
-  "documentationUrl": "",
+  "documentationUrl": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphlocalization/README.md",
   "changelogUrl": "",
   "licensesUrl": "",
   "dependencies": {

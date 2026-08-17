@@ -2,9 +2,8 @@
 
 The ecosystem ships as separate UPM packages. A consuming project only ever gets the packages it
 installs (plus their declared dependencies) — the sample/verification packages
-(`com.faolline.starterGraph`, `com.faolline.graphTest`), the reference package
-(`com.faolline.dialoguesystem~`), and the dev folders (`specs/`, `.specify/`, `memory/`, `.claude/`)
-are never pulled into a consumer project.
+(`com.faolline.starterGraph`, `com.faolline.graphTest`) and the dev folders (`specs/`, `.specify/`,
+`memory/`, `.claude/`) are never pulled into a consumer project.
 
 ## Recommended: the module selector
 

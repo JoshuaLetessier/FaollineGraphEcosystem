@@ -5,7 +5,7 @@
   "description": "Shared, category-based logging control for the Faolline graph ecosystem: any package routes its Debug.Log/LogWarning through GraphLogging, and a project-wide settings asset lets the user toggle Info/Warning noise per category without editing lib source. Errors are never gated. Zero dependencies — a T0 foundation utility any other package can adopt without pulling in graphcore.",
   "unity": "6000.0",
   "unityRelease": "0f1",
-  "documentationUrl": "",
+  "documentationUrl": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphlogging/README.md",
   "changelogUrl": "",
   "licensesUrl": "",
   "dependencies": {},

@@ -5,6 +5,7 @@
   "description": "Optional bridge: an IGraphSaveStore (from com.faolline.graphsave) backed by a com.faolline.savesystem.core (UnitySaveSystem) backend, so GraphRunSnapshots persist through your SaveManager backends. Add only if you use UnitySaveSystem; graphsave core stays dependency-free.",
   "unity": "6000.0",
   "unityRelease": "0f1",
+  "documentationUrl": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphsave.savesystem/README.md",
   "dependencies": {
     "com.faolline.graphsave": "0.10.0",
     "com.faolline.savesystem.core": "1.0.0",

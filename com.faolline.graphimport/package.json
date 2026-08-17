@@ -5,6 +5,7 @@
   "description": "Generates com.faolline.graphdialoguesystem dialogue and speaker assets from a dedicated dialogue interchange JSON format, through a pure plan-then-apply pipeline. No source shape or column naming is assumed; only the pivot's own domain model (dialogue/line/choice/end/sub-dialogue) is opinionated.",
   "unity": "6000.0",
   "unityRelease": "0f1",
+  "documentationUrl": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphimport/README.md",
   "dependencies": {
     "com.faolline.graphcore": "0.43.0",
     "com.faolline.graphstandard": "0.18.0",

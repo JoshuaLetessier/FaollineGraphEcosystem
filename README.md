@@ -4,15 +4,14 @@ A modular graph-based toolkit for Unity: a headless data layer + execution runti
 (`com.faolline.graphcore`), and a set of domain packages built on top — dialogue, quests, game-flow
 orchestration, save/restore, localization — all sharing the same three context primitives.
 
-**Status**: private, unpublished, actively developed. Not on OpenUPM; install via git URL (below).
+**Status**: public repo, actively developed. Not on OpenUPM; install via git URL (below).
 
 ---
 
 ## Install
 
 ```
-https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=com.faolline.graphcore#master
-```
+https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=com.faolline.graphcore#master```
 
 Then open **Window ▸ Faolline ▸ Graph Ecosystem Modules** to add the other packages with one click. See
 [`INSTALL.md`](INSTALL.md) for the full guide (module selector, manual URLs, dependency graph, "which

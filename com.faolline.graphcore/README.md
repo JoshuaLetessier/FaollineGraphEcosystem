@@ -469,6 +469,9 @@ History depth is controlled by `BaseGraph.HistoryDepth` (default 20, 0 = unlimit
 Snapshots are taken on each transition; `GoBack` calls `INodeExecutor.Undo` on the
 current node before restoring.
 
+Both are plain runtime API — no `#if UNITY_EDITOR` gating — so they're callable at gameplay time
+(a dialogue "back" button, a gameplay rewind), not just from editor tooling.
+
 ---
 
 ## Signals & timed waits
