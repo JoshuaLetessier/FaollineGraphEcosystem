@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.19.1]
+
+### Fixed
+- **`DialogueNodeInspectorView.BindEdge` now documents what the edge Condition field actually does.**
+  Dialogue nodes have a single outgoing edge, so a failing edge condition blocks the run (`OnStuck`) the
+  same way an `EntryCondition` on the target node would — it never redirects to an alternate node. The
+  inspector previously exposed the field with no indication of this, implying real branching. Added a
+  tooltip and an inline note; no behavior change.
+
 ## [0.19.0]
 
 ### Changed

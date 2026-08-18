@@ -176,7 +176,9 @@ they haven't been prioritized yet, not because they need consumer feedback.
 
 ### `GameFlowNodeInspectorView` never shows registered graph-inspector extensions
 
-**Status:** confirmed, not fixed.
+**Status:** resolved, 2026-08-18 (graphgameflow 0.18.1) — local `SetGraph`/`_graph`/`_serializedGraph`
+dropped entirely; the class now uses the inherited base `Graph`/`SerializedGraph` directly, confirmed in
+current source.
 **Origin:** manual doc review session, 2026-08-17 — noticed the "Category Groups" foldout
 (`GraphCategoryGroupInspectorExtension`, see `EXTENSIBILITY.md`) never appears on a gameflow graph's
 no-selection panel, traced to the real cause below.
@@ -201,7 +203,8 @@ override entirely if `_graph`/`_serializedGraph` can be derived from the base `G
 
 ### `graphcore/README.md` documents a `BaseGraph` creation menu that doesn't exist
 
-**Status:** confirmed, not fixed (doc-only).
+**Status:** resolved, 2026-08-18 (graphcore 0.43.1) — README's Data Layer section corrected, confirmed in
+current text: no more false menu-path claim.
 **Origin:** manual doc review session, 2026-08-17.
 
 README's Data Layer section says "Create via `Assets > Create > GraphCore > Base Graph`." Checked
@@ -228,30 +231,59 @@ no concrete gap identified at the time.
 Noted as a placeholder only — revisit and fill in what the upgrade should actually cover before treating
 this as actionable.
 
-### `BaseEdgeData.Condition` — revisit the per-edge condition design
+### `BaseEdgeData.Condition` — redondant/mort dans tous les éditeurs shippés
 
-**Status:** open, no specifics yet.
-**Origin:** doc review session, 2026-08-17 — flagged while reviewing `BaseEdgeData` in graphcore's
-README, no concrete direction given yet.
+**Statut :** résolu, 2026-08-18 — verdict inverse de la première passe (voir historique ci-dessous) ;
+`BaseEdgeData.Condition` n'apporte rien d'utilisable sur un graphe Linear aujourd'hui. Décision : pas de
+suppression du champ (romprait `graphstandard`/Flow, réel consommateur, + la sérialisation d'assets
+existants), pas de flag d'opt-in par lib non plus (sur-ingénierie pour un périmètre d'un seul champ / un
+seul vrai consommateur / un seul endroit d'UI concerné) — juste corriger le point de friction réel :
+l'UI de `graphdialoguesystem` induisait en erreur sur ce que fait le champ. Fixé la même session :
+`DialogueNodeInspectorView.BindEdge` (`Editor/Inspector/DialogueNodeInspectorView.cs:67-92`) porte
+maintenant un tooltip + une note explicite ("No alternate routing") clarifiant qu'une condition d'edge
+qui échoue sur un graphe dialogue bloque comme une `EntryCondition` sur le node cible, sans redirection.
+**Origine :** session de revue doc, 2026-08-17 — flag initial vague en lisant `BaseEdgeData` dans le
+README de graphcore. Creusé en session du 2026-08-18 suite à une question utilisateur sur la redondance
+avec les conditions de nœud/choix ; l'utilisateur a contesté à raison une première réponse trop rapide
+(voir ci-dessous), ce qui a mené à relire `BaseRunner.SelectEdge` et les ports des node views.
 
-Noted as a placeholder — revisit and write down what specifically needs reconsidering about a single
-optional `BaseCondition` per edge (`BaseEdgeData.Condition`, null = unconditional) before treating this
-as actionable.
+**Verdict, vérifié dans le code :**
 
-### `BaseRunner.Tick` — see if the Unity dependency can be reduced further
+1. **Tous les nodes réguliers ont un output `Port.Capacity.Single`.** Vérifié sur Start/Statement/
+   SubGraph dans graphgameflow, graphdialoguesystem, graphTest ET starterGraph — jamais plus d'une edge
+   sortante possible à l'auteurage. Donc la boucle de `BaseRunner.SelectEdge`
+   (`Runtime/Execution/BaseRunner.cs:844-859`, "parcourt les edges dans l'ordre, prend la première qui
+   passe") ne voit jamais qu'une seule edge candidate dans un graphe réellement dessiné dans un éditeur.
+   Sur cette edge unique, condition qui échoue → `OnStuck`, exactement le même effet qu'une
+   `EntryCondition` qui échoue sur le node cible (juste vérifié à un point différent du pipeline : sortie
+   du node source, après ses `OnExitActions`, plutôt qu'entrée du node cible). **Redondant, pas un
+   mécanisme distinct.**
+2. **Sur une edge de choix, `edge.Condition` n'est jamais lu.** `SelectEdge` a deux branches : avec
+   `forcedId` (le chemin de `ChooseById`, donc TOUT node Choice) elle matche sur `edge.Id`/`PortName` et
+   retourne l'edge sans jamais regarder `edge.Condition` (`BaseRunner.cs:846-850`). C'est
+   `BaseChoice.Condition` qui fait tout le travail de filtrage là — `BaseEdgeData.Condition` est du code
+   mort sur ces edges-là.
+3. **`BaseChoice.Condition` couvre déjà le "si X alors ici, sinon là"** — liste ordonnée de choix, chacun
+   sa condition ; rien n'oblige le code appelant à attendre un joueur, `ChooseById` peut être invoqué
+   automatiquement sur le premier choix disponible. La distinction "manuel (choix) vs automatique (edge)"
+   de la première passe était une convention d'usage, pas une contrainte imposée par le runtime.
+4. **La seule vraie utilisation distincte du champ dans tout le repo** est
+   `graphstandard/Runtime/Flow/FlowRunner.cs:219` (`if (edge.Condition != null &&
+   !edge.Condition.Evaluate(_context)) continue;`) — mais sémantique fork/join (livre un token sur
+   *toutes* les edges qui passent, pas premier-qui-passe exclusif), et ce package est code-first, sans
+   éditeur visuel du tout (cf. [[authoring-is-code-first]]).
 
-**Status:** open, worth a closer look.
-**Origin:** doc review session, 2026-08-17.
+**Historique de la clarification (pour ne pas relire tout le fil) :** une première réponse affirmait à
+tort (a) que `graphcore` n'avait aucun inspecteur d'edge du tout — faux, `graphdialoguesystem` en a un
+fonctionnel et testé (`DialogueNodeInspectorView.BindEdge`, `FR-021`) — puis (b) que edge-Condition et
+choix/entry-conditions étaient trois mécanismes non-redondants avec un tableau à l'appui — l'utilisateur
+a contesté ce tableau sur les deux points (choix = peut aussi faire du if/else automatique ; nodes
+réguliers = jamais plus d'une sortie de toute façon), ce qui a mené à la relecture de `SelectEdge` et des
+ports ci-dessus, confirmant que le tableau était faux.
 
-Checked `Runtime/Execution/BaseRunner.cs`: `Tick(float deltaSeconds)` itself takes a plain `float`, no
-Unity type in its signature, and the file has exactly **one** `UnityEngine` reference in the whole
-class — `UnityEngine.Application.isPlaying` (line ~112), gated to the live in-game run-cursor feature
-(`GraphRunMonitor` notifications), unrelated to `Tick`/timed-wait logic itself. So the timed-wait
-mechanism is already close to engine-agnostic; `BaseRunner` currently lives in `Runtime` (not the
-`noEngineReferences` `Runtime.Core`) specifically because of that one `Application.isPlaying` check
-elsewhere in the class, not because of `Tick`. Worth revisiting whether that one call could be isolated
-(e.g. behind a callback/flag the host sets) so `BaseRunner` — and `Tick` with it — could move into
-`Runtime.Core` entirely. Not scoped further than that yet.
+**Non-actionable** — pas de suppression du champ (romprait la sérialisation de graphes existants et le
+fork/join de graphstandard qui, lui, l'utilise réellement), mais aucun travail d'outillage éditeur à
+prévoir dessus : rien à généraliser puisqu'il n'apporte rien sur les nodes réguliers/choix.
 
 ### `graphgameflow` naming collides with the "Flow" engine — but has nothing to do with it
 
@@ -300,25 +332,3 @@ graphgameflow's) next to the looping-shell guidance; no code change needed.
 **Origin:** doc review session, 2026-08-17 — user wants a dedicated pass to get re-familiarized with how
 the three engines (`BaseRunner`/Linear in graphcore, `ReactiveEvaluator`/Reactive and `FlowRunner`/Flow in
 graphstandard) relate, likely folding in the two items directly above.
-
-### `graphsave/README.md` — two reader questions worth clarifying in the doc itself
-
-**Status:** both answered in conversation, not yet reflected in the README's wording.
-**Origin:** doc review session, 2026-08-17 — user's own questions while reading `graphsave/README.md`,
-kept as a doc-clarity reminder since a future reader would likely wonder the same two things.
-
-1. **"Steam" in `IGraphSaveStore`'s doc comment/README** ("implement it against a file, PlayerPrefs, a
-   cloud save, Steam, …") reads as if a Steam backend exists somewhere. Verified: it doesn't — grepped
-   the whole repo, zero Steam-specific code, purely an illustrative example in a list of *possible*
-   backends. Consider rewording so it can't be misread as "there's a Steam implementation" (e.g. "...a
-   cloud save, a platform SDK like Steam, …").
-2. **Why does `JsonFileGraphSaveStore` (in this package) exist alongside the separate
-   `com.faolline.graphsave.savesystem` → `com.faolline.savesystem.core` bridge — isn't that a
-   duplicate save system?** Verified not a duplicate: `com.faolline.savesystem.core` is confirmed to be
-   an external repo (per `graphsave/CHANGELOG.md`'s own `0.8.0` entry, "external repo, commit
-   `330c049`"), a separate, broader save library. `JsonFileGraphSaveStore` was added deliberately in
-   `0.4.0` as a batteries-included, zero-extra-dependency default (works with nothing but `graphcore`
-   installed); the CHANGELOG shows the two were kept in sync on purpose afterward (matching path-traversal
-   fix, matching `GetAllKeys()`/`DeleteAll()` addition) — a conscious parallel-paths design, not an
-   accidental redo. The README's "Backends" section already lists both but doesn't say *why* both exist;
-   worth a one-line addition there pointing at this rationale.

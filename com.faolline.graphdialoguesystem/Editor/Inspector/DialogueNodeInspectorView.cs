@@ -73,12 +73,24 @@ namespace Faolline.GraphDialogue.Editor
             if (edge == null) { ClearInspector(); return; }
 
             var foldout = new Foldout { text = "Edge", value = true };
+            const string tooltip = "Dialogue nodes have a single outgoing edge, so a failing condition here "
+                + "blocks the run the same way an EntryCondition on the target node would (OnStuck) — it does "
+                + "not redirect to an alternate node. Kept for parity with BaseEdgeData; prefer an EntryCondition "
+                + "on the target node unless you specifically want the check at exit-time instead of entry-time.";
             var conditionField = new ObjectField("Condition")
             {
-                objectType = typeof(BaseCondition), allowSceneObjects = false, value = edge.Condition
+                objectType = typeof(BaseCondition), allowSceneObjects = false, value = edge.Condition, tooltip = tooltip
             };
             conditionField.RegisterValueChangedCallback(e => { edge.Condition = e.newValue as BaseCondition; MarkGraphDirty(); });
             foldout.Add(conditionField);
+
+            var note = new Label("No alternate routing — see tooltip.")
+            {
+                tooltip = tooltip,
+                style = { opacity = 0.6f, fontSize = 10, marginTop = 2 }
+            };
+            foldout.Add(note);
+
             Add(foldout);
         }
 
