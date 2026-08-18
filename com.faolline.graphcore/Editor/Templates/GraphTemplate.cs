@@ -10,8 +10,9 @@ namespace Faolline.GraphCore.Editor
     /// "Templates" contextual menu. On insertion, all node/edge IDs are regenerated (fresh GUIDs)
     /// and positions are offset to the insertion point. Conditions and actions are referenced, not
     /// copied — the template points to the same SO assets as the original nodes.
+    /// No [CreateAssetMenu] — there is no inspector to populate a template by hand; the only
+    /// meaningful creation path is "Save Selection as Template" from the graph canvas.
     /// </summary>
-    [CreateAssetMenu(menuName = "GraphCore/Graph Template", fileName = "NewGraphTemplate")]
     public class GraphTemplate : ScriptableObject
     {
         [SerializeField] private string _description = string.Empty;

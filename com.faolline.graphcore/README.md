@@ -176,7 +176,10 @@ corrupting the stored value at runtime.
 
 ### BaseGraph
 
-`ScriptableObject` container asset. Create via `Assets > Create > GraphCore > Base Graph`.
+`ScriptableObject` container asset. No `[CreateAssetMenu]` — `BaseGraph` has no asset creation menu
+by design; consumers create typed graphs instead (`DialogueGraph`, `GameFlowGraph`, etc.), each with
+their own `Assets > Create` entry. Create a raw `BaseGraph` programmatically (see below) or via
+`ScriptableObject.CreateInstance<BaseGraph>()` from editor tooling.
 
 | Member | Description |
 |--------|-------------|

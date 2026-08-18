@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.43.1]
+
+### Fixed
+- **Removed the dead `[CreateAssetMenu]` on `GraphTemplate`.** `Assets > Create > GraphCore > Graph
+  Template` produced an empty asset with no inspector to populate it — the only meaningful way to
+  create a template is "Save Selection as Template" from the graph editor canvas, which already
+  creates the asset directly (`CreateInstance` + `AssetDatabase.CreateAsset`). Also fixed the
+  `graphcore/README.md` doc that claimed `BaseGraph` had a creation menu (`Assets > Create >
+  GraphCore > Base Graph`) — it never has one, by design (see `BaseGraph.cs`).
+
 ## [0.43.0]
 
 ### Changed
