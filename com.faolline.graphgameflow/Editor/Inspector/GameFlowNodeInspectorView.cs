@@ -17,17 +17,7 @@ namespace Faolline.GraphGameFlow.Editor
     /// </summary>
     public class GameFlowNodeInspectorView : BaseNodeInspectorView
     {
-        private SerializedObject _serializedGraph;
-        private BaseGraph _graph;
         private GameFlowGraphView _graphView;
-        private BaseNodeData _boundNode;
-
-        /// <summary>Provides the loaded graph asset for SerializedObject binding.</summary>
-        public void SetGraph(BaseGraph graph)
-        {
-            _graph = graph;
-            _serializedGraph = graph != null ? new SerializedObject(graph) : null;
-        }
 
         /// <summary>Provides the canvas view so choice-port rebuilds reach the canvas. May be null in tests.</summary>
         public void SetGraphView(GameFlowGraphView graphView) => _graphView = graphView;
@@ -39,19 +29,17 @@ namespace Faolline.GraphGameFlow.Editor
             ClearInspector();
             if (node == null) return;
 
-            _boundNode = node;
+            BoundNode = node;
 
             // A GraphLink is a non-executing documentary reference → dedicated minimal panel (target + note),
             // NOT the flow/execution fields. Render it and stop.
             if (node is GraphLinkNodeData link) { AddGraphLinkSection(link, MarkGraphDirty); return; }
 
-            if (_serializedGraph != null && _serializedGraph.targetObject == null)
-                _serializedGraph = _graph != null ? new SerializedObject(_graph) : null;
-            _serializedGraph?.Update();
+            RefreshSerializedGraph();
 
-            var nodeElement = FindNodeProperty(_serializedGraph, node.Id);
+            var nodeElement = FindNodeProperty(SerializedGraph, node.Id);
 
-            if (nodeElement != null && _serializedGraph != null)
+            if (nodeElement != null && SerializedGraph != null)
                 BuildFlowSection(nodeElement);
 
             if (node is EndNodeData endNode)
@@ -63,15 +51,15 @@ namespace Faolline.GraphGameFlow.Editor
             if (node is ChoiceNodeData choiceNode)
                 BuildChoiceSection(choiceNode);
 
-            if (nodeElement != null && _serializedGraph != null)
-                AddBaseNodeSection(nodeElement, _serializedGraph);
+            if (nodeElement != null && SerializedGraph != null)
+                AddBaseNodeSection(nodeElement, SerializedGraph);
         }
 
         public override void ClearInspector()
         {
             Clear();
-            _boundNode = null;
-            if (_graph != null) BuildNoSelectionContent();
+            BoundNode = null;
+            if (Graph != null) BuildNoSelectionContent();
         }
 
         // ── Flow section (gameflow-specific: the await-signal + wait fields) ──────
@@ -92,7 +80,7 @@ namespace Faolline.GraphGameFlow.Editor
             var waitProp = nodeElement.FindPropertyRelative("_waitDuration");
             if (waitProp != null) foldout.Add(new PropertyField(waitProp, "Wait Duration"));
 
-            foldout.Bind(_serializedGraph);
+            foldout.Bind(SerializedGraph);
             Add(foldout);
         }
 
@@ -135,9 +123,9 @@ namespace Faolline.GraphGameFlow.Editor
             targetField.RegisterValueChangedCallback(e =>
             {
                 var proposed = e.newValue as BaseGraph;
-                if (proposed != null && _graph != null && CycleDetector.Check(_graph, proposed).HasCycle)
+                if (proposed != null && Graph != null && CycleDetector.Check(Graph, proposed).HasCycle)
                 {
-                    var result = CycleDetector.Check(_graph, proposed);
+                    var result = CycleDetector.Check(Graph, proposed);
                     var path = result.CyclePath != null ? string.Join(" → ", result.CyclePath) : "?";
                     Logging.Warning("GraphGameFlow", $"[GraphGameFlow] Cycle refused: {path}");
                     targetField.SetValueWithoutNotify(node.TargetGraph);
@@ -223,18 +211,6 @@ namespace Faolline.GraphGameFlow.Editor
 
             foldout.Add(new Button(() => AddChoice(node)) { text = "Add Choice" });
             Add(foldout);
-        }
-
-        // ── Helpers ──────────────────────────────────────────────────────────────
-
-        private void MarkGraphDirty()
-        {
-            if (_graph != null) EditorUtility.SetDirty(_graph);
-        }
-
-        private void RefreshIfBound(BaseNodeData node)
-        {
-            if (_boundNode == node) BindNode(node);
         }
     }
 }

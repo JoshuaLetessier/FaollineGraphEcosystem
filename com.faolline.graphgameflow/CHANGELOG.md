@@ -4,6 +4,18 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.18.1]
+
+### Fixed
+- **`GameFlowNodeInspectorView` never showed registered inspector extensions.** It redeclared its own
+  `SetGraph`/`_graph`/`_serializedGraph`/`_boundNode` instead of overriding the base class's, so the
+  base's `Graph`/`SerializedGraph`/`BoundNode` (which lib-registered sections read, e.g. the
+  `GraphCategoryGroupInspectorExtension` "Category Groups" panel via `RegisterGraphSection`) stayed
+  null for the lifetime of the editor window even though the inspector otherwise worked. Removed the
+  duplicated fields/methods in favor of the inherited `BaseNodeInspectorView` state. Isolated to
+  graphgameflow — every other node inspector in the ecosystem already relied on the base class
+  directly and was unaffected.
+
 ## [0.18.0]
 
 ### Changed

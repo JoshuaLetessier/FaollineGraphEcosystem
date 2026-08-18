@@ -28,7 +28,7 @@ package do I need").
 | [`com.faolline.graphlogging`](com.faolline.graphlogging/) | 0.1.1 | Shared, category-based `Logging.Info/Warning/Error` facade — zero dependencies, adoptable by any package |
 | [`com.faolline.graphstandard`](com.faolline.graphstandard/) | 0.18.0 | Reactive (k-of-N) and Flow (fork/join) execution engines, domain-neutral standard nodes |
 | [`com.faolline.graphdialoguesystem`](com.faolline.graphdialoguesystem/) | 0.19.0 | Dialogue graphs — speakers, branching choices, localized text, headless playback |
-| [`com.faolline.graphgameflow`](com.faolline.graphgameflow/) | 0.18.0 | The `MonoBehaviour`/scene adapter — drives a graph live in a Unity scene |
+| [`com.faolline.graphgameflow`](com.faolline.graphgameflow/) | 0.18.1 | The `MonoBehaviour`/scene adapter — drives a graph live in a Unity scene |
 | [`com.faolline.graphgameflow.addressables`](com.faolline.graphgameflow.addressables/) | 0.6.0 | Bridges graphgameflow's scene loader to `com.unity.addressables` |
 | [`com.faolline.graphquest`](com.faolline.graphquest/) | 0.12.0 | Quests as objective DAGs, prerequisite gating, one-shot rewards |
 | [`com.faolline.graphsave`](com.faolline.graphsave/) | 0.10.0 | Neutral run-snapshot model + a pluggable save-store contract |
