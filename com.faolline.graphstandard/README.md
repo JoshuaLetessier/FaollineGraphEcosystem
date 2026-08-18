@@ -39,6 +39,11 @@ Flow ability — all sharing one `BaseContext`. Cross-library nesting still goes
 > editor probe, so the graph editor window paints their live state on the open graph — reactive nodes as
 > Locked/Available/Completed, flow nodes as the fired set. Editor-only, compiled out of player builds.
 
+> **Naming note**: `com.faolline.graphgameflow` ("GameFlow") and this package's **Flow** engine (`FlowRunner`)
+> share nothing but the word — graphgameflow doesn't depend on graphstandard at all and is built entirely on
+> graphcore's **Linear** `BaseRunner`. Its own driver type, `GraphFlowDriver`, reinforces the collision by name
+> alone but is unrelated too. If you're picking an engine from the table above, "gameflow" always means Linear.
+
 ---
 
 ## Building graphs in code (`GraphBuilder`)
@@ -76,6 +81,11 @@ A game shell (menu → play → win → back to menu → replay) never "ends" �
 with no End node**: the runner follows the single outgoing edge on each advance and loops forever. The flow
 stays running (no `OnEnded`); history is bounded by `BaseGraph.HistoryDepth`, so set a small depth for a
 forever-looping shell (`GoBack` across the loop isn't meaningful).
+
+> Once `GoBack`/`GoBackToCheckpoint` hits the `HistoryDepth` boundary, `BaseRunner` logs a `[GraphCore]`
+> warning **once per run**, then further out-of-range calls silently no-op. On a shell that loops far longer
+> than its history window this is expected — don't chase it as a bug if `GoBack` quietly stops responding
+> after that first warning.
 
 ---
 

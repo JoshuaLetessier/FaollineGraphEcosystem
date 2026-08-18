@@ -97,10 +97,16 @@ your seeds survive; its scene loader is filled only when absent); nulls fall bac
 `Boot(null, null)`). This is the seam for hosting a progression/ability system on the driver's shared context —
 build the context, hand it to `Boot`, then wire a `ReactiveEvaluator` or `FlowRunner` onto that same context.
 
+> **Naming note**: despite the name, neither this package nor its `GraphFlowDriver` use graphstandard's
+> **Flow** engine (`FlowRunner`) — graphgameflow doesn't even depend on graphstandard, and runs entirely on
+> graphcore's **Linear** `BaseRunner`. "GameFlow"/`GraphFlowDriver` and "Flow"/`FlowRunner` are an unrelated
+> name collision; see graphstandard's README for what its engine table actually means by "Flow".
+
 > **Looping game-shell**: a menu → play → win → back-to-menu shell never "ends" — model it as a cyclic Linear
 > graph with **no End node** (the runner follows the single out-edge and loops; the flow stays running, no
 > `OnEnded`). Set a small `BaseGraph.HistoryDepth` for a forever-looping shell. Build it fluently with
-> graphstandard's `GraphBuilder`.
+> graphstandard's `GraphBuilder`. Once `GoBack` hits the `HistoryDepth` boundary it warns once per run then
+> silently no-ops on further out-of-range calls — expected on a long-running loop, not a bug.
 
 > **Chaining flows — calling `Boot()` from your own `OnEnded` handler is safe (since 0.16.1)**: a natural
 > pattern for flow-to-flow / chapter-to-chapter transitions is to reboot the same driver into the next graph

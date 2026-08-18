@@ -166,3 +166,159 @@ Version Define so the core package adds no hard dependency when Addressables isn
 
 - No per-action or hybrid-fallback loader resolution — closed as a non-problem, not deferred.
 - No change to `GameFlowContext.SceneLoader` single-field model.
+
+---
+
+## Known bugs (confirmed, not design questions — just not yet fixed)
+
+Unlike the sections above, these are plain bugs with an obvious fix; they're parked here only because
+they haven't been prioritized yet, not because they need consumer feedback.
+
+### `GameFlowNodeInspectorView` never shows registered graph-inspector extensions
+
+**Status:** confirmed, not fixed.
+**Origin:** manual doc review session, 2026-08-17 — noticed the "Category Groups" foldout
+(`GraphCategoryGroupInspectorExtension`, see `EXTENSIBILITY.md`) never appears on a gameflow graph's
+no-selection panel, traced to the real cause below.
+
+`com.faolline.graphgameflow/Editor/Inspector/GameFlowNodeInspectorView.cs` declares its own
+`public void SetGraph(BaseGraph graph)` (sets a private `_graph` field) that **hides** — does not
+override, never calls `base.SetGraph(graph)` — `BaseNodeInspectorView.SetGraph`. Since
+`GameFlowGraphEditorWindow` holds `_inspector` typed as the concrete `GameFlowNodeInspectorView` (not
+`BaseNodeInspectorView`) and calls `_inspector?.SetGraph(graph)`, this always resolves to the hiding
+method — the base class's protected `Graph` property is never set, stays null forever for any gameflow
+graph. `BuildNoSelectionContent()`'s `if (Graph != null)` guard therefore always fails silently, so
+**no `GraphSectionDelegate` registered via `InspectorExtensionRegistry.RegisterGraphSection` ever
+renders for a gameflow graph** — not just `GraphCategoryGroupInspectorExtension`, any such extension,
+present or future.
+
+Verified isolated to graphgameflow: `graphdialoguesystem`, `graphquest`, `graphTest`, and
+`starterGraph`'s node-inspector views all rely on the inherited base `SetGraph`/`Graph` correctly — no
+local shadowing — so their no-selection panels work as designed.
+
+**Fix**: have `GameFlowNodeInspectorView.SetGraph` call `base.SetGraph(graph)` too (or drop the local
+override entirely if `_graph`/`_serializedGraph` can be derived from the base `Graph` property instead).
+
+### `graphcore/README.md` documents a `BaseGraph` creation menu that doesn't exist
+
+**Status:** confirmed, not fixed (doc-only).
+**Origin:** manual doc review session, 2026-08-17.
+
+README's Data Layer section says "Create via `Assets > Create > GraphCore > Base Graph`." Checked
+`Runtime/Graph/BaseGraph.cs`: there is no `[CreateAssetMenu]` on the class at all — its own comment says
+why: `// No [CreateAssetMenu] — consumers create typed graphs (DialogueGraph, GameFlowGraph, etc.), not
+raw BaseGraph.` So the menu path the README describes doesn't exist and was presumably removed
+deliberately at some point without the README being updated. The user's instinct ("prevent creating a
+raw BaseGraph, no use for it") is already the actual shipped behavior — just the doc is stale.
+
+**Fix**: correct the README's Data Layer section — drop the false menu-path claim, note instead that
+`BaseGraph` is meant to be subclassed per domain (as every T2 vertical already does) and constructed via
+`ScriptableObject.CreateInstance<T>()` on that subclass, not created raw from a menu.
+
+---
+
+## Future ideas (unscoped — flesh out before acting)
+
+### `graphlogging` — due for a future upgrade
+
+**Status:** open, no specifics yet.
+**Origin:** doc review session, 2026-08-17 — flagged in passing while reviewing the package's README,
+no concrete gap identified at the time.
+
+Noted as a placeholder only — revisit and fill in what the upgrade should actually cover before treating
+this as actionable.
+
+### `BaseEdgeData.Condition` — revisit the per-edge condition design
+
+**Status:** open, no specifics yet.
+**Origin:** doc review session, 2026-08-17 — flagged while reviewing `BaseEdgeData` in graphcore's
+README, no concrete direction given yet.
+
+Noted as a placeholder — revisit and write down what specifically needs reconsidering about a single
+optional `BaseCondition` per edge (`BaseEdgeData.Condition`, null = unconditional) before treating this
+as actionable.
+
+### `BaseRunner.Tick` — see if the Unity dependency can be reduced further
+
+**Status:** open, worth a closer look.
+**Origin:** doc review session, 2026-08-17.
+
+Checked `Runtime/Execution/BaseRunner.cs`: `Tick(float deltaSeconds)` itself takes a plain `float`, no
+Unity type in its signature, and the file has exactly **one** `UnityEngine` reference in the whole
+class — `UnityEngine.Application.isPlaying` (line ~112), gated to the live in-game run-cursor feature
+(`GraphRunMonitor` notifications), unrelated to `Tick`/timed-wait logic itself. So the timed-wait
+mechanism is already close to engine-agnostic; `BaseRunner` currently lives in `Runtime` (not the
+`noEngineReferences` `Runtime.Core`) specifically because of that one `Application.isPlaying` check
+elsewhere in the class, not because of `Tick`. Worth revisiting whether that one call could be isolated
+(e.g. behind a callback/flag the host sets) so `BaseRunner` — and `Tick` with it — could move into
+`Runtime.Core` entirely. Not scoped further than that yet.
+
+### `graphgameflow` naming collides with the "Flow" engine — but has nothing to do with it
+
+**Status:** resolved, 2026-08-18.
+**Origin:** doc review session, 2026-08-17 — user question while reading graphstandard's README engine
+table ("if this table is right, isn't graphgameflow badly named?").
+
+Verified: `com.faolline.graphgameflow/package.json` does **not** depend on `com.faolline.graphstandard`
+at all (only `graphcore`, `graphsave`, `graphlogging`) — it structurally cannot use `FlowRunner`. Grepped
+the whole package: zero `.cs` references to `FlowRunner`/`ReactiveEvaluator`; the only two hits are prose
+mentions in `README.md`/`CHANGELOG.md` describing an *optional consumer-side integration pattern*
+(composing a `ReactiveEvaluator`/`FlowRunner` on the same `GameFlowContext` from your own game code), not
+graphgameflow using them itself. `GraphFlowDriver.cs` confirms it's built entirely on graphcore's
+**Linear** `BaseRunner`. This matches graphstandard's own README table, which lists "scene-flow" under
+the **Linear** row, not Flow.
+
+Net: "GameFlow" and the graphstandard "Flow" engine (`FlowRunner`) are an unrelated name collision — pure
+coincidence, not a design relationship. A full rename was assessed and rejected: `com.faolline.graphgameflow`
+is the actual UPM package id (renaming breaks every consumer's manifest/git-URL pin), a satellite package
+(`com.faolline.graphgameflow.addressables`) embeds the name in its own id, ~150 files reference the string
+across 8 asmdefs/namespace usage/docs, and the package's own central type is already called
+`GraphFlowDriver` — renaming the package alone wouldn't even remove the "Flow" word from its most visible
+API, so a real fix would also mean a breaking type rename. **Fix shipped instead:** an explicit
+disambiguation note added to both READMEs (graphgameflow's and graphstandard's) so a reader doesn't draw
+the same reasonable-but-wrong inference this session did — no rename, no breaking change.
+
+### Looping game-shell pattern (graphstandard README) — revisit
+
+**Status:** resolved, 2026-08-18 — held up under audit, one doc gap fixed.
+**Origin:** doc review session, 2026-08-17 — user flagged this section for a closer look, no specifics
+given yet on what needs reconsidering.
+
+The section describes modeling a menu→play→win→menu loop as a cyclic Linear graph with no End node
+(runner loops forever, no `OnEnded`, small `HistoryDepth` recommended since `GoBack` across the loop
+isn't meaningful). Audited against `graphcore`'s `BaseRunner.cs`: the "never ends, no `OnEnded`" claim is
+exact (`OnEnded` only fires on reaching an `EndNodeData`), and history is genuinely bounded (auto-trims
+oldest entry at `HistoryDepth`, default 20) — no memory-leak risk on an infinite loop. One undocumented
+nuance found: once `GoBack`/`GoBackToCheckpoint` hits the `HistoryDepth` boundary, `BaseRunner` warns
+**once per run** then silently no-ops on further out-of-range calls — a player spamming "back" past that
+point gets no further signal. Added a note about this to both READMEs (graphstandard's and
+graphgameflow's) next to the looping-shell guidance; no code change needed.
+
+### Revisit the three execution engines (Linear / Reactive / Flow) together
+
+**Status:** resolved, 2026-08-18 — refresher happened in conversation, folded in the two items above.
+**Origin:** doc review session, 2026-08-17 — user wants a dedicated pass to get re-familiarized with how
+the three engines (`BaseRunner`/Linear in graphcore, `ReactiveEvaluator`/Reactive and `FlowRunner`/Flow in
+graphstandard) relate, likely folding in the two items directly above.
+
+### `graphsave/README.md` — two reader questions worth clarifying in the doc itself
+
+**Status:** both answered in conversation, not yet reflected in the README's wording.
+**Origin:** doc review session, 2026-08-17 — user's own questions while reading `graphsave/README.md`,
+kept as a doc-clarity reminder since a future reader would likely wonder the same two things.
+
+1. **"Steam" in `IGraphSaveStore`'s doc comment/README** ("implement it against a file, PlayerPrefs, a
+   cloud save, Steam, …") reads as if a Steam backend exists somewhere. Verified: it doesn't — grepped
+   the whole repo, zero Steam-specific code, purely an illustrative example in a list of *possible*
+   backends. Consider rewording so it can't be misread as "there's a Steam implementation" (e.g. "...a
+   cloud save, a platform SDK like Steam, …").
+2. **Why does `JsonFileGraphSaveStore` (in this package) exist alongside the separate
+   `com.faolline.graphsave.savesystem` → `com.faolline.savesystem.core` bridge — isn't that a
+   duplicate save system?** Verified not a duplicate: `com.faolline.savesystem.core` is confirmed to be
+   an external repo (per `graphsave/CHANGELOG.md`'s own `0.8.0` entry, "external repo, commit
+   `330c049`"), a separate, broader save library. `JsonFileGraphSaveStore` was added deliberately in
+   `0.4.0` as a batteries-included, zero-extra-dependency default (works with nothing but `graphcore`
+   installed); the CHANGELOG shows the two were kept in sync on purpose afterward (matching path-traversal
+   fix, matching `GetAllKeys()`/`DeleteAll()` addition) — a conscious parallel-paths design, not an
+   accidental redo. The README's "Backends" section already lists both but doesn't say *why* both exist;
+   worth a one-line addition there pointing at this rationale.
