@@ -34,8 +34,9 @@ https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=com.faolline.
   snapshot.Restore(runner, graph, context);   // rehydrates the context + re-enters the saved node
   ```
 - **`IGraphSaveStore`** — a neutral slot-based store contract (`Save`/`Load`/`Exists`/`Delete`/`GetAllKeys`/
-  `DeleteAll`). Implement it against a file, PlayerPrefs, a cloud save, Steam, … — or skip it and (de)serialize
-  the snapshot yourself.
+  `DeleteAll`). Implement it against a file, PlayerPrefs, a cloud save, Steam Cloud, … — these are examples of
+  what the contract allows, not backends this package ships (see **Backends** below for what's actually
+  provided) — or skip it and (de)serialize the snapshot yourself.
 
 ## Backends
 
@@ -46,8 +47,13 @@ Three ways to store, from batteries-included to fully custom:
    slot names bounded to stay under Windows' `MAX_PATH`. `new JsonFileGraphSaveStore()` (or pass a custom
    sub-folder) is a complete `IGraphSaveStore`.
 2. **`com.faolline.graphsave.savesystem`** (optional package) — bridges `com.faolline.savesystem.core`
-   (UnitySaveSystem), whose `JsonSaveSystem`/`PlayerPrefsSaveSystem` backends do the actual writing. Add it only
-   if you want that path; the core stays dependency-free.
+   (UnitySaveSystem) rather than storing anything itself: it wraps whichever `ISaveSystem<T>` backend you've
+   already set up there (`JsonSaveSystem`/`PlayerPrefsSaveSystem` today). Not a duplicate of
+   `JsonFileGraphSaveStore` — reach for it when a project already standardizes on `savesystem.core` for its
+   other save data and wants graph snapshots on the same pipeline (one backend to swap for encryption/cloud
+   sync later) instead of running two separate save stacks. Its value scales with `savesystem.core`'s own
+   backend catalog: limited to Json/PlayerPrefs today, but any cloud or encrypted backend that library gains,
+   this bridge inherits for free. Add it only if you want that path; the core stays dependency-free.
 3. **Your own** — implement `IGraphSaveStore` against encryption, cloud sync, a platform-specific backend, … or
    skip the interface entirely and (de)serialize `GraphRunSnapshot` yourself.
 

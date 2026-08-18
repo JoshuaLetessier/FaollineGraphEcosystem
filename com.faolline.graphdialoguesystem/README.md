@@ -6,9 +6,6 @@ A graph-based dialogue library built **entirely on top of** `com.faolline.graphc
 changes), following the `com.faolline.starterGraph` package shape. Author branching, multi-speaker,
 localized dialogues as a visual graph and play them back headlessly.
 
-> MVP scope (this iteration): authoring + playable runtime, inline conditions/effects, localization
-> across providers. See `specs/010-graphdialoguesystem-mvp/`.
-
 ---
 
 ## Installation
