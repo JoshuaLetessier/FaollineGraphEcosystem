@@ -224,12 +224,48 @@ raw BaseGraph, no use for it") is already the actual shipped behavior — just t
 
 ### `graphlogging` — due for a future upgrade
 
-**Status:** open, no specifics yet.
-**Origin:** doc review session, 2026-08-17 — flagged in passing while reviewing the package's README,
-no concrete gap identified at the time.
+**Status:** resolved, 2026-08-18 (graphlogging 0.2.0) — shipped as per-group defaults, not the dashboard
+shape originally floated (see decision trail below).
+**Origin:** doc review session, 2026-08-17 — flagged in passing while reviewing the package's README, no
+concrete gap identified at the time. Fleshed out 2026-08-18 (user).
 
-Noted as a placeholder only — revisit and fill in what the upgrade should actually cover before treating
-this as actionable.
+### The observation
+
+Today's discovery model is fully organic: `Logging.Info/Warning/Error` calls
+`GraphLoggingSettings.EnsureCategoryKnown` (`Runtime/GraphLoggingSettings.cs:46`) on **every single log
+call** (Editor-only) — a linear `Find` scan, plus `EditorUtility.SetDirty` the first time a category is
+seen. The only place to see or configure any of it is the `GraphLoggingSettings` asset's own Inspector
+(`GraphLoggingSettingsEditor`, opened via `Faolline ▸ Diagnostics ▸ Log Settings`), which grows a new
+foldout group every time a package logs a category it hasn't logged before. There is no upfront registry,
+no "list of libs currently wired into graphlogging," and no way to configure a whole lib's verbosity
+before it has actually logged something at least once.
+
+### The idea (user, 2026-08-18)
+
+The current facade + per-category toggle grid works but risks getting heavy long-term: the settings list
+keeps growing as more libs adopt `Logging` and more categories get logged over a project's lifetime, with
+no curated view of "which libs are wired in" — just a flat/grouped list that self-assembles reactively as
+code happens to run. Proposed direction: something closer to a dashboard for **adding a lib** explicitly
+(register the package up front, not wait for it to log something) and tagging, at the whole-lib level,
+what you want to see from it — rather than discovering categories one log call at a time.
+
+### What actually shipped
+
+Talked through alternatives before committing (2026-08-18): a single project-wide default was considered
+and rejected — it would not have fixed the "new category under an already-silenced lib" gap above, since
+only per-category exceptions would exist, and a newly added category wouldn't inherit an already-silenced
+lib's intent either. Landed instead on **per-group defaults + self-pruning per-category exceptions**:
+`GraphLoggingSettings` now stores one `GroupEntry` per prefix (`DefaultInfoEnabled`/`DefaultWarningEnabled`
++ `KnownCategories`), and a category only gets its own `CategoryOverride` entry when it deliberately
+diverges from its group — removed automatically once it stops diverging. This is a narrower fix than the
+"dashboard for adding a lib" idea floated above (still fully auto-discovering, no explicit
+add-a-package-upfront step), but it closes the concrete gap that motivated the idea: silencing a lib now
+stays silenced for every category added to it later, with nothing to revisit. See
+`com.faolline.graphlogging/CHANGELOG.md` [0.2.0] for the full breaking-change detail (`Categories`/
+`CategoryEntry` API removed, replaced by `Groups`/`Overrides`).
+
+The original "explicit dashboard to add a lib and see what's wired in before it ever logs" idea is **not**
+covered by this fix and remains a possible future direction if it's ever actually needed.
 
 ### `BaseEdgeData.Condition` — redondant/mort dans tous les éditeurs shippés
 

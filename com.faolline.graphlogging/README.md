@@ -1,6 +1,6 @@
 # Faolline GraphLogging
 
-**Version**: 0.1.1 — **Unity**: 6000.x — **Depends on**: nothing
+**Version**: 0.2.0 — **Unity**: 6000.x — **Depends on**: nothing
 
 Shared, category-based logging control for the Faolline graph ecosystem. Any package routes its
 `Debug.Log`/`Debug.LogWarning` through `Logging` instead of calling Unity's console API directly, and the
@@ -30,21 +30,26 @@ https://github.com/JoshuaLetessier/FaollineGraphEcosystem.git?path=com.faolline.
   The trailing `UnityEngine.Object context` parameter is optional (default `null`) and mirrors
   `Debug.Log(message, context)` — pass `this` from a `MonoBehaviour` to keep click-to-ping working in the
   console.
-- **`GraphLoggingSettings`** — a project-wide `ScriptableObject`, loaded from `Resources`, with a per-category
-  Info/Warning toggle. **`Error` is never gated** — a real problem must always be visible, matching every
-  other "fail loud" precedent in this ecosystem. No settings asset, or an unknown category within it, means
-  "log everything": adopting this facade never silently loses a message that used to show.
-- **Self-registering categories** — a category appears in the settings inspector the first time it logs
-  (`EnsureCategoryKnown`, Editor-only). No upfront registry to maintain: as packages adopt `Logging`, their
-  categories just show up.
+- **`GraphLoggingSettings`** — a project-wide `ScriptableObject`, loaded from `Resources`, with a
+  per-GROUP Info/Warning toggle (see below). **`Error` is never gated** — a real problem must always be
+  visible, matching every other "fail loud" precedent in this ecosystem. No settings asset, or an unknown
+  category/group within it, means "log everything": adopting this facade never silently loses a message
+  that used to show.
+- **Self-registering categories** — a category (and its group, the first time one of its members logs)
+  appears in the settings inspector the first time it logs (`EnsureCategoryKnown`, Editor-only). No
+  upfront registry to maintain: as packages adopt `Logging`, their categories just show up.
 
 ## Settings UI
 
 **Faolline ▸ Diagnostics ▸ Log Settings** creates (if missing) and selects the settings asset at
-`Assets/Resources/GraphLoggingSettings.asset`. Categories are grouped by their prefix before the first `.`
-(e.g. every `"GraphCore.*"` category groups under **GraphCore**), each group foldable with its own
-tri-state master toggle (on/off when every entry in the group agrees, mixed otherwise) — flip a whole
-package's logging on or off in one click, or drill into a single category.
+`Assets/Resources/GraphLoggingSettings.asset`. Verbosity is set **per group** — the prefix before the
+first `.` in a category (e.g. every `"GraphCore.*"` category groups under **GraphCore**) — each group
+foldable with its own persistent Info/Warning default: flip a whole package's logging on or off in one
+click, and any category discovered later under that group inherits the same default automatically (a lib
+silenced today stays silenced as it grows new log call sites, with nothing to revisit). A category row
+under an expanded group only needs its own toggle when it must diverge from its group — set one, and it
+clears itself automatically the moment it stops diverging, so the exception list never accumulates stale
+entries.
 
 ## Category naming convention
 
@@ -65,11 +70,11 @@ what makes the per-package master toggle useful. A category with no `.` groups u
 com.faolline.graphlogging/
   Runtime/
     Logging.cs                    ← the Info/Warning/Error facade
-    GraphLoggingSettings.cs       ← project-wide settings asset (per-category Info/Warning toggles)
+    GraphLoggingSettings.cs       ← project-wide settings asset (per-group defaults, per-category overrides)
     GraphLoggingSettingsLoader.cs ← Resources.Load wrapper + default asset path
   Editor/
     GraphLoggingMenu.cs           ← Faolline ▸ Diagnostics ▸ Log Settings (create-or-select)
-    GraphLoggingSettingsEditor.cs ← grouped, foldable inspector with tri-state master toggles
+    GraphLoggingSettingsEditor.cs ← grouped, foldable inspector with per-group default toggles
 ```
 
 ## Layering
