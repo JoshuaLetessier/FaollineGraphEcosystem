@@ -7,11 +7,11 @@
   "unityRelease": "0f1",
   "documentationUrl": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphimport/README.md",
   "dependencies": {
-    "com.faolline.graphcore": "0.43.0",
+    "com.faolline.graphcore": "0.43.1",
     "com.faolline.graphstandard": "0.18.0",
-    "com.faolline.graphdialoguesystem": "0.19.0",
+    "com.faolline.graphdialoguesystem": "0.19.1",
     "com.unity.nuget.newtonsoft-json": "3.2.2",
-    "com.faolline.graphlogging": "0.1.1"
+    "com.faolline.graphlogging": "0.2.0"
   },
   "keywords": [
     "graph",

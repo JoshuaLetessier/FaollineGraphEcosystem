@@ -5,7 +5,7 @@
     "description": "Minimal starter TEMPLATE to copy when building a new graphcore-based sub-library: a concrete graph type, a typed context + keys, and one example node, with the editor window and a small sample. Actions, conditions, and standard nodes live in graphcore — reference them directly instead of re-copying.",
     "unity": "6000.0",
     "dependencies": {
-        "com.faolline.graphcore": "0.41.0",
-        "com.faolline.graphlogging": "0.1.1"
+        "com.faolline.graphcore": "0.43.1",
+        "com.faolline.graphlogging": "0.2.0"
     }
 }

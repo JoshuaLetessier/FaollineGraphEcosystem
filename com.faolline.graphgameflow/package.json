@@ -7,9 +7,9 @@
   "unityRelease": "0f1",
   "documentationUrl": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphgameflow/README.md",
   "dependencies": {
-    "com.faolline.graphcore": "0.43.0",
+    "com.faolline.graphcore": "0.43.1",
     "com.faolline.graphsave": "0.10.0",
-    "com.faolline.graphlogging": "0.1.1"
+    "com.faolline.graphlogging": "0.2.0"
   },
   "keywords": [
     "graph",

@@ -6,9 +6,9 @@
     "unity": "6000.0",
     "documentationUrl": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphdialoguesystem/README.md",
     "dependencies": {
-        "com.faolline.graphcore": "0.43.0",
+        "com.faolline.graphcore": "0.43.1",
         "com.faolline.graphlocalization": "0.9.0",
-        "com.faolline.graphlogging": "0.1.1"
+        "com.faolline.graphlogging": "0.2.0"
     },
     "keywords": [
         "graph",

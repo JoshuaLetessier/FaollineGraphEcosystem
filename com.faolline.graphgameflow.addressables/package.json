@@ -7,9 +7,9 @@
   "unityRelease": "0f1",
   "documentationUrl": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphgameflow.addressables/README.md",
   "dependencies": {
-    "com.faolline.graphgameflow": "0.18.0",
+    "com.faolline.graphgameflow": "0.18.1",
     "com.unity.addressables": "2.2.2",
-    "com.faolline.graphlogging": "0.1.1"
+    "com.faolline.graphlogging": "0.2.0"
   },
   "keywords": [
     "graph",
