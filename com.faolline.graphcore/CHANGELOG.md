@@ -4,6 +4,18 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.43.4]
+
+### Fixed
+- **`StableIdDuplicateDetector`'s project-wide scan (0.43.3) only covered node ids — edge ids
+  (`BaseEdgeData.Id`) and group ids (`GraphGroupData.Id`) were still left untouched by a duplicated
+  graph asset.** Both are used the same way node ids are (a forced-edge traversal by id at runtime;
+  a group-id-keyed view lookup in the editor), so both can silently collide the same way. The scan now
+  covers all three embedded id kinds — node, edge, group — each checked independently (a node id and an
+  edge id coincidentally matching is not a collision, same "scoped per kind" rule as the per-asset-type
+  scan). Only node ids need an internal-reference remap on regeneration (`EntryNodeId`, edge endpoints,
+  group node lists) — edge and group ids aren't referenced elsewhere in the graph's own data.
+
 ## [0.43.3]
 
 ### Fixed

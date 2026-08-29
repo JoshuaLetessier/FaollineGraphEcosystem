@@ -141,6 +141,69 @@ namespace Faolline.GraphCore.Tests
             LogAssert.NoUnexpectedReceived();
         }
 
+        // ── BaseEdgeData ──────────────────────────────────────────────────
+
+        [Test]
+        public void EdgeIds_ScanAndFix_RegeneratesDuplicateEdgeIds_EvenWhenGraphIdsAlreadyDiffer()
+        {
+            var a = CreateAt<BaseGraph>("GraphA");
+            var b = CreateAt<BaseGraph>("GraphB");
+
+            var edgeId = System.Guid.NewGuid().ToString("D");
+            foreach (var g in new[] { a, b })
+                g.AddEdge(new BaseEdgeData { Id = edgeId, FromNodeId = "from", ToNodeId = "to" });
+
+            LogAssert.Expect(LogType.Warning, new Regex("Duplicate edge id"));
+            int fixedCount = StableIdDuplicateDetector.ScanAndFix(null);
+            Assert.AreEqual(1, fixedCount);
+
+            var regenerated = a.Edges[0].Id != edgeId ? a : b;
+            var keeper = regenerated == a ? b : a;
+
+            Assert.AreEqual(edgeId, keeper.Edges[0].Id, "the keeper's edge id is untouched");
+            Assert.AreNotEqual(edgeId, regenerated.Edges[0].Id, "the duplicate's edge id was regenerated");
+        }
+
+        // ── GraphGroupData ────────────────────────────────────────────────
+
+        [Test]
+        public void GroupIds_ScanAndFix_RegeneratesDuplicateGroupIds_EvenWhenGraphIdsAlreadyDiffer()
+        {
+            var a = CreateAt<BaseGraph>("GraphA");
+            var b = CreateAt<BaseGraph>("GraphB");
+
+            var groupId = System.Guid.NewGuid().ToString("D");
+            foreach (var g in new[] { a, b })
+                g.AddGroup(new GraphGroupData { Id = groupId });
+
+            LogAssert.Expect(LogType.Warning, new Regex("Duplicate group id"));
+            int fixedCount = StableIdDuplicateDetector.ScanAndFix(null);
+            Assert.AreEqual(1, fixedCount);
+
+            var regenerated = a.Groups[0].Id != groupId ? a : b;
+            var keeper = regenerated == a ? b : a;
+
+            Assert.AreEqual(groupId, keeper.Groups[0].Id, "the keeper's group id is untouched");
+            Assert.AreNotEqual(groupId, regenerated.Groups[0].Id, "the duplicate's group id was regenerated");
+        }
+
+        // ── Cross-kind scoping ────────────────────────────────────────────
+
+        [Test]
+        public void NodeIdAndEdgeId_SharingTheSameIdString_AreNotFlaggedAgainstEachOther()
+        {
+            // A node and an edge that happen to carry the exact same GUID string, in the same graph, are
+            // never compared to each other — ids are scoped per kind (node/edge/group), same rule as the
+            // per-asset-type scan above.
+            var a = CreateAt<BaseGraph>("GraphA");
+            var sharedId = System.Guid.NewGuid().ToString("D");
+            a.AddNode(new StubNodeData { Id = sharedId, NodeType = "test" });
+            a.AddEdge(new BaseEdgeData { Id = sharedId, FromNodeId = "x", ToNodeId = "y" });
+
+            Assert.AreEqual(0, StableIdDuplicateDetector.ScanAndFix(null));
+            LogAssert.NoUnexpectedReceived();
+        }
+
         // ── CollectionEntry ───────────────────────────────────────────────
 
         [Test]

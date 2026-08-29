@@ -28,14 +28,18 @@ namespace Faolline.GraphCore.Editor
     /// ids, so a rename-style workflow that WANTED to keep an id can be spotted and reverted.
     /// </para>
     /// <para>
-    /// <see cref="BaseNodeData"/> isn't its own asset — it's embedded (<c>[SerializeReference]</c>) inside its
-    /// owning <see cref="BaseGraph"/> — so duplicating a graph asset (Ctrl+D, or a file copy) copies every
-    /// node's id too, but that's invisible to the per-type asset scan above: the graph's OWN id can get fixed
-    /// (if it happened to collide) while its nodes still silently share ids with the original graph's nodes.
-    /// A separate pass (<see cref="ScanAndFixNodeIds"/>) scans node ids across EVERY <see cref="BaseGraph"/>
-    /// in the project directly — independent of whether the containing graphs' own ids collide — and remaps
-    /// each duplicate node's owning graph's internal references (<see cref="BaseGraph.EntryNodeId"/>, each
-    /// <see cref="BaseEdgeData"/>'s endpoints, each <see cref="GraphGroupData"/>'s node list) to match.
+    /// <see cref="BaseNodeData"/>, <see cref="BaseEdgeData"/>, and <see cref="GraphGroupData"/> aren't their
+    /// own assets — they're embedded (<c>[SerializeReference]</c> for nodes/edges, plain serialized for
+    /// groups) inside their owning <see cref="BaseGraph"/> — so duplicating a graph asset (Ctrl+D, or a file
+    /// copy) copies every one of their ids too, but that's invisible to the per-type asset scan above: the
+    /// graph's OWN id can get fixed (if it happened to collide) while its nodes/edges/groups still silently
+    /// share ids with the original graph's. A separate pass (<see cref="ScanAndFixEmbeddedIds"/>) scans each
+    /// of the three id kinds across EVERY <see cref="BaseGraph"/> in the project directly — independent of
+    /// whether the containing graphs' own ids collide, and independent of each other (a node id and an edge
+    /// id coincidentally matching is not a collision) — and, for nodes, remaps the owning graph's internal
+    /// references (<see cref="BaseGraph.EntryNodeId"/>, each edge's endpoints, each group's node list) to
+    /// match. Edge and group ids aren't referenced elsewhere in the graph's own data, so no remap is needed
+    /// for those two.
     /// </para>
     /// </summary>
     public sealed class StableIdDuplicateDetector : AssetPostprocessor
@@ -77,7 +81,7 @@ namespace Faolline.GraphCore.Editor
                 if (type.IsAbstract || !typeof(IStableGuidIdentity).IsAssignableFrom(type)) continue;
                 fixedCount += ScanAndFixType(type, preferRegenerate);
             }
-            fixedCount += ScanAndFixNodeIds(preferRegenerate);
+            fixedCount += ScanAndFixEmbeddedIds(preferRegenerate);
             if (fixedCount > 0) AssetDatabase.SaveAssets();
             return fixedCount;
         }
@@ -136,34 +140,62 @@ namespace Faolline.GraphCore.Editor
         }
 
         /// <summary>
-        /// Scans every <see cref="BaseNodeData"/> across every <see cref="BaseGraph"/> asset in the project
-        /// (any concrete graph type — <c>t:BaseGraph</c> includes subclasses) for a shared node id, and
-        /// regenerates the duplicates', remapping their owning graph's internal references to match. Unlike
-        /// <see cref="ScanAndFixType"/>, this does NOT depend on the containing graphs' own ids colliding —
-        /// a graph's <see cref="IStableGuidIdentity.StableId"/> can already be unique (e.g. auto-fixed on an
-        /// earlier import, before this pass existed) while its nodes still carry ids copied from another
-        /// graph entirely.
+        /// Scans every <see cref="BaseNodeData"/>, <see cref="BaseEdgeData"/>, and <see cref="GraphGroupData"/>
+        /// across every <see cref="BaseGraph"/> asset in the project (any concrete graph type — <c>t:BaseGraph</c>
+        /// includes subclasses) for a shared id WITHIN each of the three kinds (a node id and an edge id
+        /// coincidentally matching is not a collision — same "scoped per kind" rule as <see cref="ScanAndFixType"/>),
+        /// and regenerates the duplicates. For nodes, also remaps the owning graph's internal references
+        /// (<see cref="BaseGraph.EntryNodeId"/>, edge endpoints, group node lists) to match — edges and
+        /// groups aren't referenced elsewhere in the graph's own data, so no remap is needed for those two.
+        /// Unlike <see cref="ScanAndFixType"/>, none of this depends on the containing graphs' own ids
+        /// colliding — a graph's <see cref="IStableGuidIdentity.StableId"/> can already be unique (e.g.
+        /// auto-fixed on an earlier import, before this pass existed) while its nodes/edges/groups still
+        /// carry ids copied from another graph entirely.
         /// </summary>
-        private static int ScanAndFixNodeIds(HashSet<string> preferRegenerate)
+        private static int ScanAndFixEmbeddedIds(HashSet<string> preferRegenerate)
         {
-            var byNodeId = new Dictionary<string, List<(string path, BaseGraph graph, BaseNodeData node)>>();
+            var nodesById = new Dictionary<string, List<(string path, BaseGraph graph, BaseNodeData item)>>();
+            var edgesById = new Dictionary<string, List<(string path, BaseGraph graph, BaseEdgeData item)>>();
+            var groupsById = new Dictionary<string, List<(string path, BaseGraph graph, GraphGroupData item)>>();
+
             foreach (var guid in AssetDatabase.FindAssets("t:BaseGraph"))
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
                 var graph = AssetDatabase.LoadAssetAtPath<BaseGraph>(path);
                 if (graph == null) continue;
-                foreach (var node in graph.Nodes)
-                {
-                    if (node == null || string.IsNullOrEmpty(node.Id)) continue;
-                    if (!byNodeId.TryGetValue(node.Id, out var list))
-                        byNodeId[node.Id] = list = new List<(string, BaseGraph, BaseNodeData)>();
-                    list.Add((path, graph, node));
-                }
+                foreach (var node in graph.Nodes) AddEntry(nodesById, path, graph, node, node?.Id);
+                foreach (var edge in graph.Edges) AddEntry(edgesById, path, graph, edge, edge?.Id);
+                foreach (var group in graph.Groups) AddEntry(groupsById, path, graph, group, group?.Id);
             }
 
             int fixedCount = 0;
-            var dirtyGraphs = new HashSet<BaseGraph>();
-            foreach (var kv in byNodeId)
+            fixedCount += FixDuplicates(nodesById, preferRegenerate, "node id",
+                (item, newId) => item.Id = newId, RemapNodeReference);
+            fixedCount += FixDuplicates(edgesById, preferRegenerate, "edge id",
+                (item, newId) => item.Id = newId, null);
+            fixedCount += FixDuplicates(groupsById, preferRegenerate, "group id",
+                (item, newId) => item.Id = newId, null);
+            return fixedCount;
+        }
+
+        private static void AddEntry<T>(
+            Dictionary<string, List<(string path, BaseGraph graph, T item)>> byId,
+            string path, BaseGraph graph, T item, string id)
+        {
+            if (item == null || string.IsNullOrEmpty(id)) return;
+            if (!byId.TryGetValue(id, out var list))
+                byId[id] = list = new List<(string, BaseGraph, T)>();
+            list.Add((path, graph, item));
+        }
+
+        // Node/edge/group ids have public setters (unlike the graph's own id) — no SerializedObject needed.
+        private static int FixDuplicates<T>(
+            Dictionary<string, List<(string path, BaseGraph graph, T item)>> byId,
+            HashSet<string> preferRegenerate, string label,
+            Action<T, string> setId, Action<BaseGraph, string, string> onRemap)
+        {
+            int fixedCount = 0;
+            foreach (var kv in byId)
             {
                 var entries = kv.Value;
                 if (entries.Count < 2) continue;
@@ -175,28 +207,25 @@ namespace Faolline.GraphCore.Editor
                     for (int i = 0; i < entries.Count; i++)
                         if (!preferRegenerate.Contains(entries[i].path)) { keeperIndex = i; break; }
                 var keeper = entries[keeperIndex];
+                var oldId = kv.Key;
 
                 for (int i = 0; i < entries.Count; i++)
                 {
                     if (i == keeperIndex) continue;
-                    var (path, graph, node) = entries[i];
-                    var oldId = node.Id;
+                    var (path, graph, item) = entries[i];
                     var newId = Guid.NewGuid().ToString("D");
-                    node.Id = newId;
-                    RemapNodeReference(graph, oldId, newId);
-                    dirtyGraphs.Add(graph);
+                    setId(item, newId);
+                    onRemap?.Invoke(graph, oldId, newId);
+                    EditorUtility.SetDirty(graph);
                     fixedCount++;
-                    Logging.Warning("GraphCore", $"[GraphCore] Duplicate node id '{oldId}' in '{path}' shared it with '{keeper.path}' — " +
-                        $"regenerated to '{newId}'. Node ids must be unique across the project (save-restore " +
-                        $"cursors and editor node lookups rely on them).");
+                    Logging.Warning("GraphCore", $"[GraphCore] Duplicate {label} '{oldId}' in '{path}' shared it with '{keeper.path}' — " +
+                        $"regenerated to '{newId}'. Ids must be unique across the project within their kind " +
+                        $"(save-restore cursors, forced-edge traversal, and editor lookups rely on them).");
                 }
             }
-
-            foreach (var g in dirtyGraphs) EditorUtility.SetDirty(g);
             return fixedCount;
         }
 
-        // Node/edge/group ids have public setters (unlike the graph's own id) — no SerializedObject needed.
         private static void RemapNodeReference(BaseGraph graph, string oldId, string newId)
         {
             if (graph.EntryNodeId == oldId) graph.EntryNodeId = newId;
