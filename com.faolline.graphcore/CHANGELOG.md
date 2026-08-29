@@ -4,6 +4,16 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.43.2]
+
+### Fixed
+- **`StableIdDuplicateDetector` now regenerates duplicated `BaseGraph` assets' embedded node ids, not just
+  the graph's own id.** Duplicating a graph asset (Ctrl+D, or a file copy) already got a fresh `GraphId`,
+  but every `BaseNodeData` inside — not a separate asset, so invisible to the per-type asset scan — kept
+  its original id, so two graphs silently shared node ids. Whenever a duplicate graph's id is regenerated,
+  its nodes' ids are now regenerated too, with the graph's internal references (`EntryNodeId`, each edge's
+  `FromNodeId`/`ToNodeId`, each group's node list) remapped to match.
+
 ## [0.43.1]
 
 ### Fixed

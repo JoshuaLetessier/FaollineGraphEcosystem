@@ -17,6 +17,8 @@ namespace Faolline.GraphCore.Tests
     /// </summary>
     public class StableIdDuplicateDetectorTests
     {
+        private class StubNodeData : BaseNodeData { }
+
         private const string TempFolder = "Assets/Temp_StableIdDetectorTest";
 
         [SetUp]
@@ -81,6 +83,51 @@ namespace Faolline.GraphCore.Tests
 
             Assert.AreEqual(originalId, a.GraphId, "the pre-existing asset keeps its id");
             Assert.AreNotEqual(originalId, b.GraphId, "the imported copy gets a fresh id");
+        }
+
+        [Test]
+        public void BaseGraph_ScanAndFix_RegeneratesDuplicateNodeIds_AndRemapsInternalReferences()
+        {
+            // Simulates a Ctrl+D of a graph asset: both the graph id AND every embedded node id (plus the
+            // edges/entry/group that reference them) are copied verbatim into the duplicate.
+            var a = CreateAt<BaseGraph>("GraphA");
+            var b = CreateAt<BaseGraph>("GraphB");
+
+            var nodeAId = System.Guid.NewGuid().ToString("D");
+            var nodeBId = System.Guid.NewGuid().ToString("D");
+            foreach (var g in new[] { a, b })
+            {
+                g.AddNode(new StubNodeData { Id = nodeAId, NodeType = "test" });
+                g.AddNode(new StubNodeData { Id = nodeBId, NodeType = "test" });
+                g.AddEdge(new BaseEdgeData { FromNodeId = nodeAId, ToNodeId = nodeBId });
+                g.AddGroup(new GraphGroupData { NodeIds = { nodeAId, nodeBId } });
+                g.EntryNodeId = nodeAId;
+            }
+
+            ForceSameId(a, b, "_graphId");
+
+            LogAssert.Expect(LogType.Warning, new Regex("Duplicate BaseGraph id"));
+            int fixedCount = StableIdDuplicateDetector.ScanAndFix(null);
+            Assert.AreEqual(1, fixedCount);
+
+            // Whichever of the two got its graph id regenerated is the one whose node ids must also have
+            // changed and must no longer collide with the keeper's.
+            var regenerated = a.GraphId != b.GraphId && a.Nodes[0].Id != nodeAId ? a : b;
+            var keeper = regenerated == a ? b : a;
+
+            Assert.AreEqual(nodeAId, keeper.Nodes[0].Id, "the keeper's node ids are untouched");
+            Assert.AreEqual(nodeBId, keeper.Nodes[1].Id, "the keeper's node ids are untouched");
+
+            var newNodeAId = regenerated.Nodes[0].Id;
+            var newNodeBId = regenerated.Nodes[1].Id;
+            Assert.AreNotEqual(nodeAId, newNodeAId);
+            Assert.AreNotEqual(nodeBId, newNodeBId);
+            Assert.AreNotEqual(newNodeAId, newNodeBId, "the two regenerated node ids must not collide with each other either");
+
+            Assert.AreEqual(newNodeAId, regenerated.EntryNodeId, "entry node reference remapped");
+            Assert.AreEqual(newNodeAId, regenerated.Edges[0].FromNodeId, "edge source remapped");
+            Assert.AreEqual(newNodeBId, regenerated.Edges[0].ToNodeId, "edge target remapped");
+            CollectionAssert.AreEquivalent(new[] { newNodeAId, newNodeBId }, regenerated.Groups[0].NodeIds, "group node list remapped");
         }
 
         // ── CollectionEntry ───────────────────────────────────────────────

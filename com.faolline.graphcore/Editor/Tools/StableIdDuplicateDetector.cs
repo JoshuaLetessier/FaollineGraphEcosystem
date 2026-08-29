@@ -27,6 +27,13 @@ namespace Faolline.GraphCore.Editor
     /// among several imported ones, the first found keeps it. Every regeneration logs the asset path and both
     /// ids, so a rename-style workflow that WANTED to keep an id can be spotted and reverted.
     /// </para>
+    /// <para>
+    /// For a <see cref="BaseGraph"/> specifically, duplicating the asset also copies every embedded node's
+    /// id (<see cref="BaseNodeData"/> isn't its own asset, so it's invisible to the per-type scan above).
+    /// Whenever a duplicate graph's own id is regenerated, its nodes' ids are regenerated too, with the
+    /// graph's internal references (<see cref="BaseGraph.EntryNodeId"/>, each <see cref="BaseEdgeData"/>'s
+    /// endpoints, each <see cref="GraphGroupData"/>'s node list) remapped to match.
+    /// </para>
     /// </summary>
     public sealed class StableIdDuplicateDetector : AssetPostprocessor
     {
@@ -102,6 +109,11 @@ namespace Faolline.GraphCore.Editor
                     if (path == keeper) continue;
                     var asset = AssetDatabase.LoadAssetAtPath(path, type) as ScriptableObject;
                     var newId = RegenerateId(asset, ((IStableGuidIdentity)asset).StableIdFieldName);
+                    // A duplicated BaseGraph asset (Ctrl+D, or a file copy) copies every embedded node's id
+                    // too — those aren't separate assets, so they're invisible to the per-type scan above.
+                    // Regenerate them here, remapping the graph's own internal references so the duplicate
+                    // stays internally consistent (entry point, edges, groups).
+                    if (asset is BaseGraph graph) RemapDuplicateGraphNodeIds(graph);
                     fixedCount++;
                     Logging.Warning("GraphCore", $"[GraphCore] Duplicate {type.Name} id '{kv.Key}': '{path}' shared it with '{keeper}' — " +
                         $"regenerated to '{newId}'. Stable ids must be unique within a type (cycle detection, " +
@@ -122,6 +134,40 @@ namespace Faolline.GraphCore.Editor
             so.ApplyModifiedPropertiesWithoutUndo();
             EditorUtility.SetDirty(asset);
             return newId;
+        }
+
+        // Node/edge/group ids have public setters (unlike the graph's own id) — no SerializedObject needed.
+        // The caller already marked the graph dirty via RegenerateId.
+        private static void RemapDuplicateGraphNodeIds(BaseGraph graph)
+        {
+            var idMap = new Dictionary<string, string>();
+            foreach (var node in graph.Nodes)
+            {
+                if (string.IsNullOrEmpty(node.Id)) continue;
+                var newNodeId = Guid.NewGuid().ToString("D");
+                idMap[node.Id] = newNodeId;
+                node.Id = newNodeId;
+            }
+            if (idMap.Count == 0) return;
+
+            if (!string.IsNullOrEmpty(graph.EntryNodeId) && idMap.TryGetValue(graph.EntryNodeId, out var newEntry))
+                graph.EntryNodeId = newEntry;
+
+            foreach (var edge in graph.Edges)
+            {
+                if (!string.IsNullOrEmpty(edge.FromNodeId) && idMap.TryGetValue(edge.FromNodeId, out var newFrom))
+                    edge.FromNodeId = newFrom;
+                if (!string.IsNullOrEmpty(edge.ToNodeId) && idMap.TryGetValue(edge.ToNodeId, out var newTo))
+                    edge.ToNodeId = newTo;
+            }
+
+            foreach (var group in graph.Groups)
+            {
+                var nodeIds = group.NodeIds;
+                for (int i = 0; i < nodeIds.Count; i++)
+                    if (idMap.TryGetValue(nodeIds[i], out var remapped))
+                        nodeIds[i] = remapped;
+            }
         }
     }
 }
