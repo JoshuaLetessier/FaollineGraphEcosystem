@@ -4,6 +4,18 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.43.3]
+
+### Fixed
+- **`StableIdDuplicateDetector`'s node-id fix (0.43.2) only fired as a side effect of the containing
+  `BaseGraph`'s own id colliding — it missed the common real-world case.** A graph's `GraphId` is often
+  already unique (auto-fixed on an earlier import, before 0.43.2 existed) while its nodes still carry ids
+  copied from another graph's Ctrl+D/file-copy duplication; since no graph-id collision was found, the
+  0.43.2 node remap never ran and `Faolline ▸ Graph ▸ Fix Duplicate Stable Ids` reported nothing to fix.
+  Node ids are now scanned directly across every `BaseGraph` asset in the project (any concrete graph
+  type), independent of whether the containing graphs' own ids collide, with the same internal-reference
+  remap (`EntryNodeId`, edge endpoints, group node lists) applied to each duplicate found.
+
 ## [0.43.2]
 
 ### Fixed

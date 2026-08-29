@@ -86,12 +86,15 @@ namespace Faolline.GraphCore.Tests
         }
 
         [Test]
-        public void BaseGraph_ScanAndFix_RegeneratesDuplicateNodeIds_AndRemapsInternalReferences()
+        public void NodeIds_ScanAndFix_RegeneratesDuplicateNodeIds_EvenWhenGraphIdsAlreadyDiffer()
         {
-            // Simulates a Ctrl+D of a graph asset: both the graph id AND every embedded node id (plus the
-            // edges/entry/group that reference them) are copied verbatim into the duplicate.
+            // The real-world case: two graphs whose OWN ids are already distinct (e.g. auto-fixed on an
+            // earlier import, long before their nodes ever got the same treatment), but whose embedded
+            // nodes still carry duplicated ids. A graph-id-only scan finds nothing here — node ids must be
+            // checked directly, independent of whether the containing graphs collide.
             var a = CreateAt<BaseGraph>("GraphA");
             var b = CreateAt<BaseGraph>("GraphB");
+            Assert.AreNotEqual(a.GraphId, b.GraphId, "setup: the graphs' own ids are already distinct");
 
             var nodeAId = System.Guid.NewGuid().ToString("D");
             var nodeBId = System.Guid.NewGuid().ToString("D");
@@ -104,15 +107,13 @@ namespace Faolline.GraphCore.Tests
                 g.EntryNodeId = nodeAId;
             }
 
-            ForceSameId(a, b, "_graphId");
-
-            LogAssert.Expect(LogType.Warning, new Regex("Duplicate BaseGraph id"));
+            LogAssert.Expect(LogType.Warning, new Regex("Duplicate node id"));
+            LogAssert.Expect(LogType.Warning, new Regex("Duplicate node id"));
             int fixedCount = StableIdDuplicateDetector.ScanAndFix(null);
-            Assert.AreEqual(1, fixedCount);
+            Assert.AreEqual(2, fixedCount, "both duplicated node ids (nodeA and nodeB) get regenerated");
 
-            // Whichever of the two got its graph id regenerated is the one whose node ids must also have
-            // changed and must no longer collide with the keeper's.
-            var regenerated = a.GraphId != b.GraphId && a.Nodes[0].Id != nodeAId ? a : b;
+            // The keeper (first found) keeps its original node ids; the other graph's nodes are regenerated.
+            var regenerated = a.Nodes[0].Id != nodeAId ? a : b;
             var keeper = regenerated == a ? b : a;
 
             Assert.AreEqual(nodeAId, keeper.Nodes[0].Id, "the keeper's node ids are untouched");
@@ -128,6 +129,16 @@ namespace Faolline.GraphCore.Tests
             Assert.AreEqual(newNodeAId, regenerated.Edges[0].FromNodeId, "edge source remapped");
             Assert.AreEqual(newNodeBId, regenerated.Edges[0].ToNodeId, "edge target remapped");
             CollectionAssert.AreEquivalent(new[] { newNodeAId, newNodeBId }, regenerated.Groups[0].NodeIds, "group node list remapped");
+        }
+
+        [Test]
+        public void NodeIds_ScanAndFix_NoDuplicateNodeIds_IsANoOp()
+        {
+            var a = CreateAt<BaseGraph>("GraphA");
+            a.AddNode(new StubNodeData { Id = System.Guid.NewGuid().ToString("D"), NodeType = "test" });
+
+            Assert.AreEqual(0, StableIdDuplicateDetector.ScanAndFix(null));
+            LogAssert.NoUnexpectedReceived();
         }
 
         // ── CollectionEntry ───────────────────────────────────────────────
