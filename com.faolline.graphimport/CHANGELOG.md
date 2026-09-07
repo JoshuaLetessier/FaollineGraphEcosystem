@@ -7,6 +7,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
 Reconstructed retroactively from git history (this file did not exist before 0.5.0) — entries before 0.5.0
 describe what actually shipped in each tagged version, including the quest/flow pipeline later removed.
 
+## [0.5.1]
+
+### Fixed
+- `DialogueExampleTests` hardcoded `Samples/DialogueExample` — broken since 0.5.0-era commit `3050cce`
+  renamed the on-disk folder to `Samples~/DialogueExample` (proper UPM sample convention), leaving the
+  test looking for a path that no longer existed. Both sample-driven tests threw
+  `DirectoryNotFoundException` on any EditMode run since; nothing else in the package was affected.
+
 ## [0.5.0]
 
 ### Removed

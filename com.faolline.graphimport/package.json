@@ -1,6 +1,6 @@
 {
   "name": "com.faolline.graphimport",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "displayName": "Faolline GraphImport",
   "description": "Generates com.faolline.graphdialoguesystem dialogue and speaker assets from a dedicated dialogue interchange JSON format, through a pure plan-then-apply pipeline. No source shape or column naming is assumed; only the pivot's own domain model (dialogue/line/choice/end/sub-dialogue) is opinionated.",
   "unity": "6000.0",

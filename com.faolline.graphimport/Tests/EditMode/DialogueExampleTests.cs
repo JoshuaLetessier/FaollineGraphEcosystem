@@ -8,14 +8,14 @@ using UnityEditor;
 namespace Faolline.GraphImport.Editor.Tests
 {
     /// <summary>
-    /// Runs the shipped sample (Samples/DialogueExample/dialogues.json) end to end through
+    /// Runs the shipped sample (Samples~/DialogueExample/dialogues.json) end to end through
     /// interchange -> pivot -> plan -> apply, mirroring 048's CryptiqueExampleTests — a regression
     /// guard against the sample drifting from the generator, and quickstart.md's executable form (T023).
     /// </summary>
     public class DialogueExampleTests
     {
         const string ScratchFolder = "Assets/GraphImportTestScratch";
-        static string SampleRoot => PackageRoot.Combine("Samples", "DialogueExample");
+        static string SampleRoot => PackageRoot.Combine("Samples~", "DialogueExample");
 
         [SetUp]
         public void SetUp()
