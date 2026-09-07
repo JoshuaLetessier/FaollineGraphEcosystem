@@ -4,6 +4,17 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.9.1]
+
+### Fixed
+- `LocalizationBuilderCore` rewrote the (committed) `GraphLocalizationManifest` asset — bumping
+  `LastBuildTime` and calling `SetDirty`/`SaveAssets` — on every auto-build, even when the exported
+  collections/CSV files/counts hadn't actually changed. Since `LocalizationAutoBuilder` reruns the build
+  on every graph asset save, this forced a commit-worthy diff on nearly every save. `BuildForAdapter` now
+  diffs the newly-computed artifacts against what the manifest already holds and only writes (and bumps
+  `LastBuildTime`) when something actually changed; `BuildAll` skips `SetDirty`/`SaveAssets` entirely when
+  no lib's entry changed.
+
 ## [0.9.0]
 
 ### Added

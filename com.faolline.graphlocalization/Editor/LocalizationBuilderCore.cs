@@ -38,11 +38,12 @@ namespace Faolline.GraphLocalization.Editor
 
             var manifest = GetOrCreateManifest();
 
+            bool manifestChanged = false;
             foreach (var adapter in adapters)
             {
                 try
                 {
-                    BuildForAdapter(adapter, validation, manifest);
+                    if (BuildForAdapter(adapter, validation, manifest)) manifestChanged = true;
                 }
                 catch (Exception ex)
                 {
@@ -50,8 +51,14 @@ namespace Faolline.GraphLocalization.Editor
                 }
             }
 
-            EditorUtility.SetDirty(manifest);
-            AssetDatabase.SaveAssets();
+            // Only touch the asset (and its LastBuildTime) when the exported artifacts actually changed —
+            // this file is committed, and rewriting it on every no-op auto-build (e.g. saving an unrelated
+            // graph) would force a commit each time nothing about the localization output moved.
+            if (manifestChanged)
+            {
+                EditorUtility.SetDirty(manifest);
+                AssetDatabase.SaveAssets();
+            }
 
             Logging.Info("GraphLocalization.AutoBuild", $"[LocalizationBuilderCore] Done. {adapters.Count} lib(s) processed.");
 
@@ -60,7 +67,11 @@ namespace Faolline.GraphLocalization.Editor
                 EditorWindow.GetWindow<LocalizationDashboardWindow>().Refresh();
         }
 
-        private static void BuildForAdapter(IGraphLocalizationAdapter adapter, LocaleValidationMode validation,
+        /// <summary>Builds one adapter's tables and, only if the recorded artifacts actually differ from
+        /// what the manifest already holds, writes them back (bumping LastBuildTime). Returns whether the
+        /// manifest entry changed, so callers can skip dirtying/saving the (committed) manifest asset on a
+        /// no-op rebuild.</summary>
+        private static bool BuildForAdapter(IGraphLocalizationAdapter adapter, LocaleValidationMode validation,
             GraphLocalizationManifest manifest)
         {
             // Phase 1: scan + index (transient — not persisted)
@@ -72,9 +83,10 @@ namespace Faolline.GraphLocalization.Editor
             var settingsAsset = LocalizationSettingsLoader.Load();
             var mode = settingsAsset?.Mode ?? LocalizationMode.Csv;
             var libEntry = manifest.GetOrCreateLib(adapter.LibName);
-            libEntry.UnityCollections.Clear();
-            libEntry.UnityAssetCollections.Clear();
-            libEntry.CsvFiles.Clear();
+
+            var newUnityCollections = new List<string>();
+            var newUnityAssetCollections = new List<string>();
+            var newCsvFiles = new List<TextAsset>();
 
             if (mode == LocalizationMode.UnityLocalization)
             {
@@ -89,8 +101,8 @@ namespace Faolline.GraphLocalization.Editor
                     foreach (var c in collections)
                     {
                         if (c == "|") { inAssets = true; continue; }
-                        if (inAssets) libEntry.UnityAssetCollections.Add(c);
-                        else libEntry.UnityCollections.Add(c);
+                        if (inAssets) newUnityAssetCollections.Add(c);
+                        else newUnityCollections.Add(c);
                     }
                 }
             }
@@ -105,13 +117,32 @@ namespace Faolline.GraphLocalization.Editor
                 {
                     if (string.IsNullOrEmpty(path)) continue;
                     var asset = AssetDatabase.LoadAssetAtPath<TextAsset>(path);
-                    if (asset != null) libEntry.CsvFiles.Add(asset);
+                    if (asset != null) newCsvFiles.Add(asset);
                 }
             }
 
+            bool changed = !ListsEqual(libEntry.UnityCollections, newUnityCollections)
+                || !ListsEqual(libEntry.UnityAssetCollections, newUnityAssetCollections)
+                || !ListsEqual(libEntry.CsvFiles, newCsvFiles)
+                || libEntry.TotalGraphsScanned != db.TotalGraphsScanned
+                || libEntry.TotalKeysFound != db.TotalKeysFound;
+            if (!changed) return false;
+
+            libEntry.UnityCollections = newUnityCollections;
+            libEntry.UnityAssetCollections = newUnityAssetCollections;
+            libEntry.CsvFiles = newCsvFiles;
             libEntry.LastBuildTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss");
             libEntry.TotalGraphsScanned = db.TotalGraphsScanned;
             libEntry.TotalKeysFound = db.TotalKeysFound;
+            return true;
+        }
+
+        private static bool ListsEqual<T>(List<T> a, List<T> b)
+        {
+            if (a.Count != b.Count) return false;
+            for (int i = 0; i < a.Count; i++)
+                if (!Equals(a[i], b[i])) return false;
+            return true;
         }
 
         /// <summary>
