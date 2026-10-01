@@ -168,10 +168,11 @@ namespace Faolline.GraphGameFlow.Addressables.Tests.PlayMode
         }
 
         // NOTE on scene reuse across this fixture: AutoActivate_LoadsSceneToCompletion_RaisingAllEventsInOrder
-        // Single-loads KeyA — which, by Single-mode's own contract, keeps AddressablesSceneA loaded for the
-        // rest of the play session (there is no "restore" from a Single load; PlayMode tests share one
-        // session). Every OTHER test below therefore uses KeyB exclusively, load-then-unload within itself,
-        // so none of them depend on execution order — NUnit does not guarantee one.
+        // and SingleLoad_ForgetsTheScenesItReplaced_SoALaterUnloadFailsInsteadOfFakingSuccess Single-load KeyA
+        // — which, by Single-mode's own contract, keeps AddressablesSceneA loaded for the rest of the play
+        // session (there is no "restore" from a Single load; PlayMode tests share one session). Every OTHER
+        // test below therefore uses KeyB exclusively, load-then-unload within itself, so none of them depend
+        // on execution order — NUnit does not guarantee one.
 
         [UnityTest]
         public IEnumerator BackToBackLoads_AreQueued_NotDropped()
@@ -216,6 +217,71 @@ namespace Faolline.GraphGameFlow.Addressables.Tests.PlayMode
 
             Assert.AreEqual(KeyB, failedKey, "the failure event names which key failed — not just a log line easy to miss.");
             StringAssert.Contains("was not loaded", failedReason, "the failure event explains why.");
+        }
+
+        [UnityTest]
+        public IEnumerator SingleLoad_ForgetsTheScenesItReplaced_SoALaterUnloadFailsInsteadOfFakingSuccess()
+        {
+            // A Single load unloads every other scene, including the ones this loader loaded additively, and
+            // Addressables releases those loads' handles on its own. The loader used to keep them on record, so
+            // a later UnloadScene on that key "completed" (event + signal) without unloading anything — here,
+            // while a second instance of the scene, loaded by another loader, stayed loaded.
+            var loader = Track(new GameObject("addr-loader-single-owner")).AddComponent<AddressablesSceneLoader>();
+            loader.LoadScene(KeyB, LoadSceneMode.Additive);
+            yield return WaitForQueue(loader);
+            loader.LoadScene(KeyA, LoadSceneMode.Single);
+            yield return WaitForQueue(loader);
+            Assert.IsFalse(SceneManager.GetSceneByName(SceneBName).isLoaded, "the Single load unloaded B.");
+
+            var other = Track(new GameObject("addr-loader-single-other")).AddComponent<AddressablesSceneLoader>();
+            other.LoadScene(KeyB, LoadSceneMode.Additive);
+            yield return WaitForQueue(other);
+
+            bool completed = false;
+            string failedKey = null;
+            loader.SceneUnloadCompleted += _ => completed = true;
+            loader.SceneUnloadFailed += (k, _) => failedKey = k;
+
+            LogAssert.Expect(LogType.Error, $"[GraphGameFlow] Scene '{KeyB}' was not loaded by this AddressablesSceneLoader; unload ignored.");
+            loader.UnloadScene(KeyB);
+            yield return WaitForQueue(loader);
+
+            Assert.IsFalse(completed, "nothing was unloaded, so no completion may be reported.");
+            Assert.AreEqual(KeyB, failedKey, "the refusal is reported as a failure.");
+            Assert.IsTrue(SceneManager.GetSceneByName(SceneBName).isLoaded, "the other loader's B is untouched.");
+
+            other.UnloadScene(KeyB);
+            yield return WaitForQueue(other);
+        }
+
+        [UnityTest]
+        public IEnumerator UnloadScene_OfASceneUnloadedElsewhere_FailsInsteadOfFakingSuccess()
+        {
+            var loader = Track(new GameObject("addr-loader-external-unload")).AddComponent<AddressablesSceneLoader>();
+            loader.LoadScene(KeyB, LoadSceneMode.Additive);
+            yield return WaitForQueue(loader);
+
+            var sceneB = SceneManager.GetSceneByName(SceneBName);
+            yield return SceneManager.UnloadSceneAsync(sceneB);   // straight through SceneManager, not the loader
+            Assert.IsFalse(sceneB.isLoaded);
+
+            bool completed = false;
+            string failedKey = null, failedReason = null;
+            loader.SceneUnloadCompleted += _ => completed = true;
+            loader.SceneUnloadFailed += (k, r) => { failedKey = k; failedReason = r; };
+
+            LogAssert.Expect(LogType.Error, $"[GraphGameFlow] Scene '{KeyB}' is no longer loaded: something other than this AddressablesSceneLoader unloaded it (a Single-mode load, or SceneManager directly); unload ignored.");
+            loader.UnloadScene(KeyB);
+            yield return WaitForQueue(loader);
+
+            Assert.IsFalse(completed, "nothing was unloaded, so no completion may be reported.");
+            Assert.AreEqual(KeyB, failedKey);
+            StringAssert.Contains("no longer loaded", failedReason, "the failure says why, not the generic 'last scene' refusal.");
+
+            // The stale entry is dropped on the way: a second attempt is just an unknown key.
+            LogAssert.Expect(LogType.Error, $"[GraphGameFlow] Scene '{KeyB}' was not loaded by this AddressablesSceneLoader; unload ignored.");
+            loader.UnloadScene(KeyB);
+            yield return WaitForQueue(loader);
         }
 
         [UnityTest]

@@ -1,6 +1,6 @@
 # Faolline GraphGameFlow — Addressables Bridge
 
-**Version**: 0.6.2 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.18.1, `com.unity.addressables` ≥ 2.2.2, `com.faolline.graphlogging` ≥ 0.2.0
+**Version**: 0.6.3 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.18.1, `com.unity.addressables` ≥ 2.2.2, `com.faolline.graphlogging` ≥ 0.2.0
 
 Optional T3 adapter: an `ISceneLoader`/`ISceneUnloader` (from `com.faolline.graphgameflow`) backed by
 `com.unity.addressables`, so `LoadSceneAction`/`UnloadSceneAction` can load a scene by **Addressable key**
@@ -62,7 +62,9 @@ async loader is wanted:
 The one difference from `SceneManager`-based unloading: Addressables needs the load's own operation handle
 to unload, not just a name, so `UnloadScene` only works on a scene **this loader instance** loaded — an
 unrecognised key logs a graceful `[GraphGameFlow]` error instead of throwing, exactly like every other
-misuse in this ecosystem.
+misuse in this ecosystem. A scene unloaded some other way in the meantime (by a `Single`-mode load, or
+through `SceneManager` directly) is forgotten, and unloading it fails the same way (`SceneUnloadFailed`,
+`UnloadFailedSignal`) rather than reporting a success.
 
 ---
 

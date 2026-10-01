@@ -4,6 +4,25 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.3]
+
+### Fixed — unloading a scene that was already gone reported a success
+
+`AddressablesSceneLoader` keeps a key → handle map of the scenes it loaded, and only `UnloadScene` removed
+entries from it. A scene can be unloaded without it, though: a `Single`-mode load unloads every other scene,
+and so does a direct `SceneManager.UnloadSceneAsync`. Addressables then releases that load's handle itself,
+the entry stays behind, and a later `UnloadScene` on that key ran `Addressables.UnloadSceneAsync` on a dead
+handle. That call doesn't throw: it completes immediately, so the loader raised `SceneUnloadCompleted` and
+`UnloadCompletedSignal` without unloading anything. If another loader had loaded the same scene again in the
+meantime, that instance stayed loaded while the flow was told it was gone.
+
+- After a `Single`-mode load, the loader forgets every scene that is no longer loaded.
+- `UnloadScene` on a scene that has since been unloaded some other way fails like any other refused unload
+  (`[GraphGameFlow]` error, `SceneUnloadFailed`, `UnloadFailedSignal`) and drops the entry.
+
+Found while auditing Cryptique's Addressables use (reported as a hypothesis; confirmed by two new PlayMode
+tests in `AddressablesSceneLoaderPlayModeTests`, both red before the fix).
+
 ## [0.6.2]
 
 ### Fixed — a failed Addressables load was never released

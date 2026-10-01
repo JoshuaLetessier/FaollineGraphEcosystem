@@ -32,7 +32,9 @@ namespace Faolline.GraphGameFlow.Addressables
     /// Unloading an Addressables scene needs the load's own <see cref="AsyncOperationHandle{TObject}"/>
     /// (not just its name) — internally this loader keeps a key→handle map for every scene it loaded, so
     /// <see cref="UnloadScene"/> only works on a scene THIS loader instance loaded (an unrecognised key logs
-    /// a graceful <c>[GraphGameFlow]</c> error, exactly like the other loaders on a bad request).
+    /// a graceful <c>[GraphGameFlow]</c> error, exactly like the other loaders on a bad request). A scene
+    /// that was unloaded some other way since (a Single-mode load, or <c>SceneManager</c> directly) is
+    /// dropped from that map and its unload fails the same way, instead of reporting a success.
     /// </para>
     /// <para>
     /// A load/unload that fails (bad key, a content build gap, unloading the last scene…) does NOT raise its
@@ -325,6 +327,9 @@ namespace Faolline.GraphGameFlow.Addressables
             }
 
             _pendingHandle = null;
+            // A Single load has just unloaded every other scene, including the ones this loader loaded.
+            if (mode == LoadSceneMode.Single)
+                ForgetUnloadedScenes();
             _loaded[key] = handle;
             SceneLoadCompleted?.Invoke(key);
             RaiseCompletionSignal(_loadCompletedSignal, key);
@@ -336,6 +341,18 @@ namespace Faolline.GraphGameFlow.Addressables
             {
                 yield return null;   // see the matching comment in LoadRoutine
                 var reason = $"Scene '{key}' was not loaded by this AddressablesSceneLoader; unload ignored.";
+                Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason}");
+                SceneUnloadFailed?.Invoke(key, reason);
+                RaiseFailureSignal(_unloadFailedSignal, key, reason);
+                yield break;
+            }
+
+            // Checked before the last-scene guard: once the scene is gone, that guard's reason would be wrong.
+            if (!IsStillLoaded(handle))
+            {
+                Forget(key);
+                yield return null;   // see the matching comment in LoadRoutine
+                var reason = $"Scene '{key}' is no longer loaded: something other than this AddressablesSceneLoader unloaded it (a Single-mode load, or SceneManager directly); unload ignored.";
                 Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason}");
                 SceneUnloadFailed?.Invoke(key, reason);
                 RaiseFailureSignal(_unloadFailedSignal, key, reason);
@@ -366,6 +383,33 @@ namespace Faolline.GraphGameFlow.Addressables
             _loaded.Remove(key);
             SceneUnloadCompleted?.Invoke(key);
             RaiseCompletionSignal(_unloadCompletedSignal, key);
+        }
+
+        // A scene can be unloaded without going through this loader: by a Single-mode load (this loader's or
+        // anyone's), or by SceneManager directly. Addressables then releases that load's handle on its own
+        // (default ReleaseSceneWhenSceneUnloaded), and unloading it again "completes" without unloading
+        // anything. The scene check also covers a handle Addressables did not get to release.
+        private static bool IsStillLoaded(AsyncOperationHandle<SceneInstance> handle) =>
+            handle.IsValid() && handle.Result.Scene.isLoaded;
+
+        private void ForgetUnloadedScenes()
+        {
+            List<string> gone = null;
+            foreach (var entry in _loaded)
+                if (!IsStillLoaded(entry.Value))
+                    (gone ??= new List<string>()).Add(entry.Key);
+
+            if (gone == null) return;
+            foreach (var key in gone)
+                Forget(key);
+        }
+
+        private void Forget(string key)
+        {
+            var handle = _loaded[key];
+            if (handle.IsValid())   // only when Addressables did not release it already
+                global::UnityEngine.AddressableAssets.Addressables.Release(handle);
+            _loaded.Remove(key);
         }
 
         // Purely diagnostic: never changes flow behavior, only makes an abnormally slow/hung operation loud
