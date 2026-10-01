@@ -1,6 +1,6 @@
 # Faolline GraphGameFlow — Addressables Bridge
 
-**Version**: 0.6.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.18.1, `com.unity.addressables` ≥ 2.2.2, `com.faolline.graphlogging` ≥ 0.2.0
+**Version**: 0.6.2 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.18.1, `com.unity.addressables` ≥ 2.2.2, `com.faolline.graphlogging` ≥ 0.2.0
 
 Optional T3 adapter: an `ISceneLoader`/`ISceneUnloader` (from `com.faolline.graphgameflow`) backed by
 `com.unity.addressables`, so `LoadSceneAction`/`UnloadSceneAction` can load a scene by **Addressable key**
@@ -118,6 +118,8 @@ current chapter's group must not pull in the next chapter's content (see `specs/
   assembly. Registered as Addressable entries for the fixture's lifetime under the "Use Asset Database
   (fastest)" Play Mode script (no content build required). This is the standard way to exercise Addressables
   from the Editor; see `AddressablesSceneLoaderPlayModeTests` for the registration/cleanup fixture.
+  `FailedLoadReleasePlayModeTests` checks that a failed load is released, by routing a key to a test-only
+  provider that fails on demand (registered through a test-only locator, no seam in the production classes).
 
 ## Constraints
 

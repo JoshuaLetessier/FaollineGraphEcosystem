@@ -78,6 +78,12 @@ namespace Faolline.GraphGameFlow.Addressables
             if (op.Status != AsyncOperationStatus.Succeeded || op.Result == null)
             {
                 var reason = $"PreloadNextChapterAction: next chapter failed to preload: {op.OperationException}";
+                // The AssetReference keeps holding the failed handle until released, and refuses to load
+                // again while it does ("already been loaded") — so without this a failed preload could
+                // never be retried. Only release if it is still THIS load's handle.
+                if (_nextChapter != null && _nextChapter.OperationHandle.IsValid()
+                    && _nextChapter.OperationHandle.Equals((AsyncOperationHandle)op))
+                    _nextChapter.ReleaseAsset();
                 Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason}");
                 RaiseSignal(_failedSignal, driver, reason);
                 return;

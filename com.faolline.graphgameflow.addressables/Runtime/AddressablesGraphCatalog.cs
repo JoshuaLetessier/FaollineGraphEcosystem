@@ -80,6 +80,10 @@ namespace Faolline.GraphGameFlow.Addressables
             }
 
             var reason = $"Addressables graph '{graphId}' failed to resolve: {op.OperationException}";
+            // A failed handle still holds the caller's reference: the operation is never destroyed until it is
+            // released, and nobody else ever will — it isn't stored in _handles, so Release(graphId) can't reach it.
+            if (op.IsValid())
+                global::UnityEngine.AddressableAssets.Addressables.Release(op);
             Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason}");
             onFailed?.Invoke(reason);
         }

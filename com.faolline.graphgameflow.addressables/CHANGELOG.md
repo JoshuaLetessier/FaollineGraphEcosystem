@@ -4,6 +4,26 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.2]
+
+### Fixed — a failed Addressables load was never released
+
+A failed `AsyncOperationHandle` still holds the caller's reference: Addressables never destroys the operation
+until it is released. Three places dropped that handle on the failure path without releasing it:
+
+- **`AddressablesGraphCatalog.Resolve`** — a failed (or null-result) resolve was never stored in the handle
+  map, so `Release(graphId)` could not reach it either. Each failed resolve leaked one operation.
+- **`AddressablesSceneLoader.LoadScene`** — same for a failed scene load: it never reaches the loaded-scenes
+  map, so no later `UnloadScene` could release it.
+- **`PreloadNextChapterAction`** — worse than a leak: the `AssetReference` kept holding the failed handle and
+  refuses to load again while it does ("Attempting to load AssetReference that has already been loaded"),
+  so a failed preload could never be retried — executing the action again also threw on the invalid handle
+  it got back.
+
+All three now release the handle as soon as the failure is known, before logging it and raising the failure
+callback/event/signal. Covered by new PlayMode tests (`FailedLoadReleasePlayModeTests`) that route a key to
+a test-only provider failing on demand, and check that the failed operation is actually destroyed.
+
 ## [0.6.1]
 
 ### Fixed — "Mark as Addressable" moved already-grouped assets into the default group

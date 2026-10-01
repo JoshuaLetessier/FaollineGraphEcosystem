@@ -283,13 +283,18 @@ namespace Faolline.GraphGameFlow.Addressables
 
             if (handle.Status != AsyncOperationStatus.Succeeded)
             {
+                var reason = $"Addressables scene '{key}' failed to load: {handle.OperationException}";
+                // A failed handle still holds a reference: the operation is never destroyed until it is
+                // released, and it never reaches _loaded, so no later UnloadScene can release it either.
+                if (handle.IsValid())
+                    global::UnityEngine.AddressableAssets.Addressables.Release(handle);
+
                 // An invalid key can resolve (and fail) synchronously, within the same call stack as
                 // LoadSceneAction.Execute() — before the runner's own (equally synchronous) auto-advance
                 // chain has had a chance to reach and park on an awaiting node placed right after it. One
                 // frame of delay lets that chain finish first, so the failure signal is delivered live
                 // instead of needing ResumeIfSignalAlreadyRaised to recover it from history.
                 yield return null;
-                var reason = $"Addressables scene '{key}' failed to load: {handle.OperationException}";
                 Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason}");
                 SceneLoadFailed?.Invoke(key, reason);
                 RaiseFailureSignal(_loadFailedSignal, key, reason);
