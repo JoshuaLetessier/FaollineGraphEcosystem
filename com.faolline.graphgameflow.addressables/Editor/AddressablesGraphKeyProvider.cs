@@ -6,7 +6,6 @@ using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphGameFlow.Editor;
-using Faolline.GraphLogging;
 
 
 namespace Faolline.GraphGameFlow.Addressables.Editor
@@ -38,21 +37,9 @@ namespace Faolline.GraphGameFlow.Addressables.Editor
 
         public bool CanPromote(string graphAssetPath, string graphId) => true;
 
-        public void Promote(string graphAssetPath, string graphId)
-        {
-            var settings = AddressableAssetSettingsDefaultObject.Settings;
-            if (settings == null)
-            {
-                Logging.Warning("GraphGameFlow", "[GraphGameFlow] No AddressableAssetSettings found in the project; open Window > Asset " +
-                    "Management > Addressables > Groups once to create it, then try again.");
-                return;
-            }
-
-            var guid  = AssetDatabase.AssetPathToGUID(graphAssetPath);
-            var entry = settings.CreateOrMoveEntry(guid, settings.DefaultGroup);
-            entry.address = graphId;
-            Logging.Info("GraphGameFlow", $"[GraphGameFlow] Marked '{graphAssetPath}' as Addressable with key '{graphId}'.");
-        }
+        /// <summary>See <see cref="AddressableEntryPromotion"/> for which group the entry lands in.</summary>
+        public void Promote(string graphAssetPath, string graphId) =>
+            AddressableEntryPromotion.Promote(AddressableAssetSettingsDefaultObject.Settings, graphAssetPath, graphId);
 
         public bool TryResolveGuid(string assetGuid, out string key)
         {

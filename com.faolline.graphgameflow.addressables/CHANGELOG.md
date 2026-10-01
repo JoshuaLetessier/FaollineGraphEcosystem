@@ -4,6 +4,23 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.6.1]
+
+### Fixed — "Mark as Addressable" moved already-grouped assets into the default group
+
+Found in Cryptique: zone graphs split into per-chapter groups ended up in `Default Local Group`.
+`AddressablesGraphKeyProvider.Promote` and `AddressablesSceneKeyProvider.Promote` both called
+`CreateOrMoveEntry(guid, DefaultGroup)`, which MOVES an existing entry, so promoting an asset that was
+already Addressable silently pulled it out of its group. Both now go through a shared
+`AddressableEntryPromotion` rule:
+
+- an asset that already has an explicit entry keeps its group; only its address changes;
+- a new entry goes into the group of its nearest Addressable ancestor folder;
+- only when no ancestor folder is Addressable does it fall back to the default group.
+
+The log line now names the group the entry ended up in. Promoting a path with no asset behind it logs a
+warning instead of throwing a `NullReferenceException`.
+
 ## [0.6.0]
 
 ### Changed

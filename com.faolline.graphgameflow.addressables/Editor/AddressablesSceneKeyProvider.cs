@@ -5,7 +5,6 @@ using UnityEditor.AddressableAssets;
 using UnityEditor.AddressableAssets.Settings;
 using UnityEngine;
 using Faolline.GraphGameFlow.Editor;
-using Faolline.GraphLogging;
 
 
 namespace Faolline.GraphGameFlow.Addressables.Editor
@@ -38,21 +37,9 @@ namespace Faolline.GraphGameFlow.Addressables.Editor
 
         public bool CanPromote(string projectScenePath, string sceneName) => true;
 
-        public void Promote(string projectScenePath, string sceneName)
-        {
-            var settings = AddressableAssetSettingsDefaultObject.Settings;
-            if (settings == null)
-            {
-                Logging.Warning("GraphGameFlow", "[GraphGameFlow] No AddressableAssetSettings found in the project; open Window > Asset " +
-                    "Management > Addressables > Groups once to create it, then try again.");
-                return;
-            }
-
-            var guid  = AssetDatabase.AssetPathToGUID(projectScenePath);
-            var entry = settings.CreateOrMoveEntry(guid, settings.DefaultGroup);
-            entry.address = sceneName;
-            Logging.Info("GraphGameFlow", $"[GraphGameFlow] Marked '{projectScenePath}' as Addressable with key '{sceneName}'.");
-        }
+        /// <summary>See <see cref="AddressableEntryPromotion"/> for which group the entry lands in.</summary>
+        public void Promote(string projectScenePath, string sceneName) =>
+            AddressableEntryPromotion.Promote(AddressableAssetSettingsDefaultObject.Settings, projectScenePath, sceneName);
 
         [InitializeOnLoadMethod]
         private static void Register() => SceneKeySourceRegistry.Register(new AddressablesSceneKeyProvider());

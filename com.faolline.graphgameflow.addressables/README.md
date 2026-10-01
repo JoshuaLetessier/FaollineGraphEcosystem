@@ -1,6 +1,6 @@
 # Faolline GraphGameFlow — Addressables Bridge
 
-**Version**: 0.6.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.18.0, `com.unity.addressables` ≥ 2.2.2, `com.faolline.graphlogging` ≥ 0.1.1
+**Version**: 0.6.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.18.1, `com.unity.addressables` ≥ 2.2.2, `com.faolline.graphlogging` ≥ 0.2.0
 
 Optional T3 adapter: an `ISceneLoader`/`ISceneUnloader` (from `com.faolline.graphgameflow`) backed by
 `com.unity.addressables`, so `LoadSceneAction`/`UnloadSceneAction` can load a scene by **Addressable key**
@@ -24,6 +24,10 @@ Then on a `LoadSceneAction`/`UnloadSceneAction`, set **Scene Name** to the scene
 this package installed, the inspector shows a "Build Settings / Addressable" toolbar: switch to
 **Addressable** to pick from registered scene addresses via a dropdown instead of typing the key by hand, and
 use **Mark as Addressable** to promote a plain project scene into an Addressable entry in one click.
+
+**Mark as Addressable** (scenes here, graphs in `GraphKeyRegistryWindow`) never reorganises your groups: an
+asset that is already an entry keeps its group and only gets the new address; a new entry goes into the group
+of its nearest Addressable ancestor folder, and only falls back to the default group when there is none.
 
 `AddressablesSceneLoader` mirrors `AsyncSceneLoader`'s whole contract, so it is a drop-in swap wherever an
 async loader is wanted:
@@ -73,7 +77,8 @@ com.faolline.graphgameflow.addressables
 │   └── PreloadNextChapterAction.cs       BaseAction, soft AssetReferenceT<BaseGraph>, early chapter preload
 └── Editor/
     ├── AddressablesSceneKeyProvider.cs   registers with graphgameflow's SceneKeySourceRegistry seam
-    └── AddressablesGraphKeyProvider.cs   registers with graphgameflow's GraphKeySourceRegistry seam
+    ├── AddressablesGraphKeyProvider.cs   registers with graphgameflow's GraphKeySourceRegistry seam
+    └── AddressableEntryPromotion.cs      shared "Mark as Addressable" group-placement rule
 ```
 
 The `Runtime` half is the actual transport swap — all the heavy lifting (the action model, the driver, the
@@ -103,7 +108,9 @@ current chapter's group must not pull in the next chapter's content (see `specs/
 
 ## Testing
 
-- **EditMode**: argument guards and interface compliance — no Addressables initialisation needed.
+- **EditMode**: argument guards and interface compliance — no Addressables initialisation needed — plus the
+  "Mark as Addressable" group placement (`AddressableEntryPromotionTests`), run against a temporary,
+  never-persisted `AddressableAssetSettings` so the project's own Addressables configuration is untouched.
 - **PlayMode**: real `Addressables.LoadSceneAsync`/`UnloadSceneAsync` calls against this package's own
   dedicated test scenes (`AddressablesSceneA`/`AddressablesSceneB`) — deliberately never the graphgameflow
   core package's `GameFlowCrossSceneA`/`GameFlowCrossSceneB`, which several of core's own fixtures already
