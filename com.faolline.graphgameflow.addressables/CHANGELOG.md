@@ -4,6 +4,18 @@ All notable changes to **com.faolline.graphgameflow.addressables** are documente
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.7.0]
+
+### Changed — `AddressablesGraphCatalog.Release` implements `IGraphCatalog.Release`
+
+graphgameflow 0.19.0 adds `Release(string graphId)` to `IGraphCatalog`, so a host can release a resolved
+graph without knowing which catalog it uses. `AddressablesGraphCatalog.Release` already did what the
+interface now asks (release every handle held for the key, warn when there is none); its behaviour is
+unchanged. New PlayMode test `GraphCatalogReleasePlayModeTests`: two resolves of the same key, one release
+through the interface, and the Addressables operation is actually destroyed.
+
+Dependency floor: `com.faolline.graphgameflow` raised to `0.19.0`.
+
 ## [0.6.3]
 
 ### Fixed — unloading a scene that was already gone reported a success

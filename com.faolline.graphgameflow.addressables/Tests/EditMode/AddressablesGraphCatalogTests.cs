@@ -36,7 +36,7 @@ namespace Faolline.GraphGameFlow.Addressables.Tests
         [Test]
         public void Release_NothingHeldForGraphId_WarnsNoThrow()
         {
-            var catalog = new AddressablesGraphCatalog();
+            IGraphCatalog catalog = new AddressablesGraphCatalog();   // through the interface, as a host calls it
             LogAssert.Expect(LogType.Warning, "[GraphGameFlow] AddressablesGraphCatalog.Release: no handle held for graphId 'never-resolved'; ignored.");
             Assert.DoesNotThrow(() => catalog.Release("never-resolved"));
         }

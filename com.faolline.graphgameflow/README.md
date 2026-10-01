@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.18.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.0, `com.faolline.graphsave` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.1.1
+**Version**: 0.19.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.1, `com.faolline.graphsave` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.2.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -326,6 +326,19 @@ context.GraphCatalog.Resolve(snapshot.GraphId,
 `DirectGraphCatalog` works with zero asynchronous asset-loading technology installed. With Addressables,
 swap in `AddressablesGraphCatalog` (from `com.faolline.graphgameflow.addressables`) instead — same seam,
 resolved via an Addressable key instead of an in-memory map.
+
+**Releasing** (since 0.19.0) — once a resolved graph is no longer used, release it through the same seam,
+whatever the catalog behind it:
+
+```csharp
+context.GraphCatalog.Release(snapshot.GraphId);
+```
+
+`Release` frees everything the catalog holds for that key — every successful `Resolve` made with it, so
+resolving the same key twice still takes a single release. It is scoped to the key, not to the caller: if two
+places resolve the same key through the shared `GameFlowContext.GraphCatalog`, one release frees it for both,
+so keep each key's lifetime in one place. It is a no-op for `DirectGraphCatalog` (nothing is loaded; the
+registration stays), and never stops the key from resolving again later.
 
 **Preloading the next chapter** — `GameFlowContext.PendingNextGraph`: an early-preload action (e.g. the
 Addressables adapter's `PreloadNextChapterAction`) sets this once its target graph resolves, ahead of the

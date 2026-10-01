@@ -93,5 +93,27 @@ namespace Faolline.GraphGameFlow.Tests
             }
             finally { Object.DestroyImmediate(first); Object.DestroyImmediate(second); }
         }
+
+        [Test]
+        public void Release_IsANoOp_ThatKeepsTheRegistration()
+        {
+            var graph = ScriptableObject.CreateInstance<BaseGraph>();
+            try
+            {
+                IGraphCatalog catalog = new DirectGraphCatalog();
+                ((DirectGraphCatalog)catalog).Register("chapter-1", graph);
+
+                // Nothing loaded, nothing to release, nothing to warn about — for any key, held or not.
+                Assert.DoesNotThrow(() => catalog.Release("chapter-1"));
+                Assert.DoesNotThrow(() => catalog.Release("never-registered"));
+                Assert.DoesNotThrow(() => catalog.Release(null));
+                LogAssert.NoUnexpectedReceived();
+
+                BaseGraph resolved = null;
+                catalog.Resolve("chapter-1", g => resolved = g, _ => Assert.Fail("Release is not Unregister."));
+                Assert.AreSame(graph, resolved);
+            }
+            finally { Object.DestroyImmediate(graph); }
+        }
     }
 }

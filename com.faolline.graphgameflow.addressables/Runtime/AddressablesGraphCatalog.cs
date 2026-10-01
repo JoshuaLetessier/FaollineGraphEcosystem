@@ -52,7 +52,8 @@ namespace Faolline.GraphGameFlow.Addressables
         /// Releases every Addressables handle held for a previously-resolved <paramref name="graphId"/>
         /// (no-op, with a warning, if nothing was resolved for it by this instance) — call once the graph is
         /// no longer needed so its content can be unloaded. If <paramref name="graphId"/> was resolved more
-        /// than once concurrently, ALL of those handles are released, not just the most recent.
+        /// than once, ALL of those handles are released, not just the most recent. See
+        /// <see cref="IGraphCatalog.Release"/> for the contract.
         /// </summary>
         public void Release(string graphId)
         {

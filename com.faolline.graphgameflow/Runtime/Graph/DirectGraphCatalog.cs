@@ -48,5 +48,11 @@ namespace Faolline.GraphGameFlow
             Logging.Error("GraphGameFlow", $"[GraphGameFlow] {reason}");
             onFailed?.Invoke(reason);
         }
+
+        /// <summary>
+        /// No-op: this catalog loads nothing, the registered graphs are already in memory. The registration
+        /// itself is untouched (that is <see cref="Unregister"/>), so the key still resolves afterwards.
+        /// </summary>
+        public void Release(string graphId) { }
     }
 }

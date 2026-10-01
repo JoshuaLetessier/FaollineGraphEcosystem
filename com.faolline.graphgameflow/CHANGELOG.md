@@ -4,6 +4,28 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.19.0]
+
+### Changed (breaking) — `IGraphCatalog.Release(string graphId)`
+
+`IGraphCatalog` only had `Resolve`, but resolving can load content (Addressables) that stays in memory until
+it is released. Releasing therefore needed the concrete catalog type, which defeated the seam: code written
+against the interface could resolve a graph but never let it go, and a fake catalog in tests could not
+record releases. Found in Cryptique, where it forced the class that resolves graphs to hand the held key to
+another class through an event just to release it.
+
+`Release(graphId)` releases everything the catalog holds for that key: every successful `Resolve` made with
+it, not just the latest one. It is scoped to the key, not to the caller: two callers resolving the same key
+through the same catalog share one release. It never forgets how to resolve the key.
+
+- `DirectGraphCatalog.Release`: no-op (nothing is loaded). The registration is kept; `Unregister` still
+  removes it.
+- `AddressablesGraphCatalog.Release` (graphgameflow.addressables 0.7.0) already had this behaviour and now
+  implements the interface method.
+
+**Migration**: any class implementing `IGraphCatalog` must add `public void Release(string graphId)`. If the
+catalog loads nothing, leave it empty.
+
 ## [0.18.1]
 
 ### Fixed
