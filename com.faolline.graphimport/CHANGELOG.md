@@ -7,6 +7,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
 Reconstructed retroactively from git history (this file did not exist before 0.5.0) — entries before 0.5.0
 describe what actually shipped in each tagged version, including the quest/flow pipeline later removed.
 
+## [0.6.0]
+
+### Added
+- **Speaker tables mapping (`-speakerTablesCsv` / window field "Speaker tables CSV")** — a project-produced CSV
+  (`SpeakerKey,Table`) giving each speaker its localization group (`Speaker.LocalizationGroup`, graphdialoguesystem
+  0.20.0). Speakers created by the import take their mapped group (none when unlisted). After the plan is applied,
+  every **existing** speaker referenced by the export is realigned with the mapping (`SpeakerGroupApplier`) — also
+  for dialogues whose asset collided, which is every dialogue on a re-import — and each change is printed. Unlisted
+  speakers keep their group. The mapping is validated before anything is written (missing column, empty key, a key
+  listed with two groups). No change to dialogue-studio or the interchange JSON.
+- `SpeakerGroupMapping`, `SpeakerGroupMappingException` (Runtime); `SpeakerGroupApplier`, `SpeakerGroupChange`
+  (Editor); optional `SpeakerGroupMapping` parameter on `ProjectAssetResolver`.
+
+### Changed
+- `DialogueImportBatch` delegates to an internal `Execute(args, output, error)` returning the exit code (tested
+  end to end); behavior without `-speakerTablesCsv` is unchanged.
+- Floor: `com.faolline.graphdialoguesystem` → `0.20.0`.
+
 ## [0.5.1]
 
 ### Fixed
