@@ -4,6 +4,15 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.12.1]
+
+### Changed
+- **`QuestEvaluator` looks journal texts up in the quest's own table** (quest name/description, objective names and
+  descriptions). With a table-aware backend (Unity Localization) displaying a quest no longer loads other tables —
+  previously, in a project with dialogues too, it could load every dialogue table first. With the CSV backend or a
+  custom provider nothing changes. No API change.
+- Floor: `com.faolline.graphlocalization` → `0.10.0`.
+
 ## [0.12.0]
 
 ### Changed

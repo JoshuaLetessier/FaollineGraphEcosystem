@@ -68,6 +68,44 @@ namespace Faolline.GraphQuest.Tests
             Assert.AreEqual("raw_id", ev.GetObjectives()[0].DisplayName, "no matching key → falls back to authored text (the id)");
         }
 
+        /// <summary>Table-aware backend double recording the table every lookup targeted.</summary>
+        private sealed class ScopedProvider : ILocalizationProvider, ITableScopedLocalizationProvider
+        {
+            public readonly System.Collections.Generic.List<(string table, string key)> ScopedCalls = new();
+            public readonly System.Collections.Generic.List<string> ClassicCalls = new();
+            public string CurrentLocale => "fr";
+            public void SetLocale(string locale) { }
+            public string Resolve(string key, string locale) { ClassicCalls.Add(key); return "#" + key; }
+            public string ResolveInTable(string table, string key, string locale)
+            {
+                ScopedCalls.Add((table, key));
+                return table == "Q_Test" && key == "quest_rescue" ? "Sauver Aldric" : "#" + key;
+            }
+        }
+
+        [Test]
+        public void JournalTexts_AreLookedUpInTheQuestsOwnTable()
+        {
+            var provider = new ScopedProvider();
+            var quest = TrackGraph(QuestBuilder.Create("rescue")
+                .Named("Rescue Aldric")
+                .AddObjective("find").Named("Find the clue").Describe("Search the desk.").CompleteWhen(Flag("found"))
+                .Build());
+            quest.name = "Q_Test";
+            var ev = new QuestEvaluator(quest, new QuestContext()).UseLocalization(provider);
+            ev.Evaluate();
+
+            Assert.AreEqual("Sauver Aldric", ev.DisplayName);
+            var view = ev.GetObjectives()[0];
+            Assert.AreEqual("Find the clue", view.DisplayName, "targeted miss → authored text");
+            _ = ev.Description;
+
+            Assert.IsNotEmpty(provider.ScopedCalls);
+            foreach (var (table, _) in provider.ScopedCalls)
+                Assert.AreEqual("Q_Test", table, "every journal text is looked up in the quest's own table");
+            Assert.IsEmpty(provider.ClassicCalls, "no untargeted lookup");
+        }
+
         [Test]
         public void TranslationStartingWithHash_IsNotMistakenForAMissingKey()
         {
