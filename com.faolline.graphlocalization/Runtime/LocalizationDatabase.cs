@@ -37,13 +37,63 @@ namespace Faolline.GraphLocalization
         /// <summary>Finds a graph entry by GUID, or null.</summary>
         public LocalizationGraphEntry FindGraphEntry(string graphGuid) => _graphs.Find(e => e.GraphGuid == graphGuid);
 
-        /// <summary>Adds a global key (deduplicated by key string).</summary>
-        public void AddGlobalKey(string key, LocalizationKeyType type, string defaultHint = "")
+        /// <summary>
+        /// Adds a global key (deduplicated by key string — the first add wins). <paramref name="group"/> picks the
+        /// table it is built into (one table per group, see <see cref="LocalizationTableNames.ForGroup"/>); null or
+        /// blank means the lib's default group. Group spellings are canonicalized: one that differs from an earlier
+        /// group only by letter case, or by characters invalid in table names, reuses the earlier spelling (and is
+        /// reported once) — otherwise the two would produce colliding tables on a case-insensitive file system.
+        /// </summary>
+        public void AddGlobalKey(string key, LocalizationKeyType type, string defaultHint = "", string group = null)
         {
             if (string.IsNullOrWhiteSpace(key)) return;
             var trimmed = key.Trim();
             if (_globalKeys.Exists(k => k.Key == trimmed)) return;
-            _globalKeys.Add(new LocalizationKeyEntry { Key = trimmed, Type = type, DefaultHint = defaultHint });
+            _globalKeys.Add(new LocalizationKeyEntry { Key = trimmed, Type = type, DefaultHint = defaultHint, Group = CanonicalGroup(group) });
+        }
+
+        /// <summary>Global keys partitioned by group (null = default group), groups in first-appearance order.</summary>
+        public IReadOnlyList<(string group, IReadOnlyList<LocalizationKeyEntry> keys)> GlobalKeysByGroup()
+        {
+            var order = new List<string>();
+            var byGroup = new Dictionary<string, List<LocalizationKeyEntry>>();
+            foreach (var entry in _globalKeys)
+            {
+                var id = entry.Group ?? string.Empty;
+                if (!byGroup.TryGetValue(id, out var list))
+                {
+                    list = new List<LocalizationKeyEntry>();
+                    byGroup[id] = list;
+                    order.Add(id);
+                }
+                list.Add(entry);
+            }
+
+            var result = new List<(string, IReadOnlyList<LocalizationKeyEntry>)>(order.Count);
+            foreach (var id in order) result.Add((id.Length == 0 ? null : id, byGroup[id]));
+            return result;
+        }
+
+        private readonly Dictionary<string, string> _groupSpellings = new();
+        private readonly HashSet<string> _reportedGroupVariants = new();
+
+        private string CanonicalGroup(string group)
+        {
+            var normalized = LocalizationTableNames.NormalizeGroup(group);
+            if (normalized == null) return null;
+
+            var identity = LocalizationTableNames.GroupComparisonKey(normalized);
+            if (!_groupSpellings.TryGetValue(identity, out var first))
+            {
+                _groupSpellings[identity] = normalized;
+                return normalized;
+            }
+
+            if (first != normalized && _reportedGroupVariants.Add(normalized))
+                Faolline.GraphLogging.Logging.Warning("GraphLocalization.Validation",
+                    $"[LocalizationDatabase] Group '{normalized}' differs from group '{first}' only by letter case or by " +
+                    $"characters invalid in table names, so both share the table of '{first}'. Use one spelling.");
+            return first;
         }
 
         /// <summary>Gets all unique keys across graphs and global keys.</summary>
@@ -86,6 +136,11 @@ namespace Faolline.GraphLocalization
         public string NodeId;
         public string DefaultHint;
         public int AssetFlags;
+
+        /// <summary>
+        /// Global keys only: the table group the key is built into (normalized; null = the lib's default group).
+        /// </summary>
+        public string Group;
 
         public bool HasLocalizedAsset => (AssetFlags & ~1) != 0;
     }

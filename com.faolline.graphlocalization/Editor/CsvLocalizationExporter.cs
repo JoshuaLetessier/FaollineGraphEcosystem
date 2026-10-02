@@ -7,7 +7,8 @@ using UnityEngine;
 namespace Faolline.GraphLocalization.Editor
 {
     /// <summary>
-    /// Generates one CSV file per graph lib from its <see cref="LocalizationDatabase"/> (Csv mode).
+    /// Generates a graph lib's CSV files (one per graph, one per global-key group) from its
+    /// <see cref="LocalizationDatabase"/> (Csv mode).
     /// Format: <c>Key,&lt;locale1&gt;,&lt;locale2&gt;,…</c> — directly consumable by
     /// <see cref="CsvLocalizationProvider"/>. The source locale column is pre-filled with each key's
     /// default text; existing translations are preserved across rebuilds and orphan keys are dropped.
@@ -19,10 +20,14 @@ namespace Faolline.GraphLocalization.Editor
     public static class CsvLocalizationExporter
     {
         /// <summary>
-        /// Writes one CSV per graph plus a global CSV under <c>{outputFolder}/{libName}/</c>, merging with any
-        /// existing files (translations preserved, orphan keys dropped). Returns the asset paths written, so
-        /// the builder can record them in the runtime manifest. The previous flat
-        /// <c>{outputFolder}/{libName}.csv</c> is removed if present.
+        /// Writes one CSV per graph (<c>{graph}.csv</c>) plus one per global-key group (<c>{lib}_{group}.csv</c>,
+        /// see <see cref="LocalizationTableNames"/>) under <c>{outputFolder}/{libName}/</c>, merging with any
+        /// existing files (translations preserved, orphan keys dropped). A key that moved to another file of the
+        /// same lib (group change, graph rename, the pre-0.10 single <c>{lib}_Global.csv</c>) keeps its
+        /// translations: missing cells are filled from the file it sat in before. Files in the lib folder this
+        /// build no longer writes are reported, not deleted. Returns the asset paths written, so the builder can
+        /// record them in the runtime manifest. The previous flat <c>{outputFolder}/{libName}.csv</c> is removed
+        /// if present.
         /// </summary>
         public static List<string> Export(string libName, LocalizationDatabase db, IReadOnlyList<string> locales,
             string sourceLocale, string outputFolder, LocaleValidationMode validation)
@@ -42,34 +47,95 @@ namespace Faolline.GraphLocalization.Editor
             var oldFlat = $"{outputFolder}/{Sanitize(libName)}.csv";
             if (System.IO.File.Exists(oldFlat)) AssetDatabase.DeleteAsset(oldFlat);
 
-            // One file per graph: Csv/{lib}/{graph}.csv
+            // Every file this build writes, with its keys: Csv/{lib}/{graph}.csv and Csv/{lib}/{lib}_{group}.csv.
+            var files = new List<(string path, string label, List<(string key, string hint)> keys)>();
             foreach (var graph in db.Graphs)
+                files.Add(($"{libFolder}/{LocalizationTableNames.ForGraph(graph.GraphName)}.csv",
+                    $"{libName}/{graph.GraphName}", CollectKeys(graph.Keys)));
+            foreach (var (group, keys) in db.GlobalKeysByGroup())
             {
-                var path = $"{libFolder}/{Sanitize(graph.GraphName)}.csv";
-                WriteCsv(path, $"{libName}/{graph.GraphName}", CollectKeys(graph.Keys), locales, sourceLocale, validation);
+                var table = LocalizationTableNames.ForGroup(libName, group);
+                files.Add(($"{libFolder}/{table}.csv", $"{libName}/{table}", CollectKeys(keys)));
+            }
+
+            var carry = CollectCarry(libFolder, files);
+            foreach (var (path, label, keys) in files)
+            {
+                WriteCsv(path, label, keys, locales, sourceLocale, carry, validation);
                 written.Add(path);
             }
 
-            // Global keys (speakers, etc.): Csv/{lib}/{lib}_Global.csv
-            if (db.GlobalKeys.Count > 0)
-            {
-                var path = $"{libFolder}/{Sanitize(libName)}_Global.csv";
-                WriteCsv(path, $"{libName}/_Global", CollectKeys(db.GlobalKeys), locales, sourceLocale, validation);
-                written.Add(path);
-            }
-
+            ReportUnusedFiles(libName, libFolder, written);
             return written;
         }
 
         private static void WriteCsv(string path, string label, IReadOnlyList<(string key, string hint)> desired,
-            IReadOnlyList<string> locales, string sourceLocale, LocaleValidationMode validation)
+            IReadOnlyList<string> locales, string sourceLocale,
+            IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> carry, LocaleValidationMode validation)
         {
             var existing = System.IO.File.Exists(path) ? System.IO.File.ReadAllText(path) : null;
-            var csv = BuildCsv(existing, desired, locales, sourceLocale, out var coverage, out _);
+            var csv = BuildCsv(existing, desired, locales, sourceLocale, carry, out var coverage, out _);
             System.IO.File.WriteAllText(path, csv);
             AssetDatabase.ImportAsset(path);
             ReportCoverage(label, coverage, validation);
         }
+
+        /// <summary>
+        /// Non-empty cells (key → locale → value) of every key currently in a CSV of this lib folder OTHER than the
+        /// file it is now desired in — including files this build no longer writes. Files are read in ordinal
+        /// name order; the first non-empty value per (key, locale) wins.
+        /// </summary>
+        private static IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> CollectCarry(string libFolder,
+            List<(string path, string label, List<(string key, string hint)> keys)> files)
+        {
+            var carry = new Dictionary<string, IReadOnlyDictionary<string, string>>();
+            if (!System.IO.Directory.Exists(libFolder)) return carry;
+
+            var targetByKey = new Dictionary<string, string>();
+            foreach (var (path, _, keys) in files)
+                foreach (var (key, _) in keys)
+                    if (!targetByKey.ContainsKey(key)) targetByKey[key] = Normalize(path);
+
+            var existingFiles = System.IO.Directory.GetFiles(libFolder, "*.csv");
+            System.Array.Sort(existingFiles, System.StringComparer.Ordinal);
+            foreach (var file in existingFiles)
+            {
+                var filePath = Normalize(file);
+                var rows = ParseCsv(System.IO.File.ReadAllText(file), out _);
+                foreach (var row in rows)
+                {
+                    if (!targetByKey.TryGetValue(row.Key, out var target) || target == filePath) continue;
+                    if (!carry.TryGetValue(row.Key, out var existing))
+                        carry[row.Key] = existing = new Dictionary<string, string>();
+                    var byLocale = (Dictionary<string, string>)existing;
+                    foreach (var cell in row.Value)
+                        if (!string.IsNullOrEmpty(cell.Value) && !byLocale.ContainsKey(cell.Key)) byLocale[cell.Key] = cell.Value;
+                }
+            }
+            return carry;
+        }
+
+        private static void ReportUnusedFiles(string libName, string libFolder, List<string> written)
+        {
+            if (!System.IO.Directory.Exists(libFolder)) return;
+            var writtenSet = new HashSet<string>();
+            foreach (var w in written) writtenSet.Add(Normalize(w));
+
+            var unused = new List<string>();
+            foreach (var file in System.IO.Directory.GetFiles(libFolder, "*.csv"))
+                if (!writtenSet.Contains(Normalize(file))) unused.Add(System.IO.Path.GetFileName(file));
+
+            if (unused.Count > 0)
+            {
+                unused.Sort(System.StringComparer.Ordinal);
+                Logging.Warning("GraphLocalization.Validation", $"[CsvLocalizationExporter] [{libName}] CSV file(s) under '{libFolder}' " +
+                    $"no longer produced by the build (not deleted automatically, not loaded at runtime): {string.Join(", ", unused)}. " +
+                    "Translations of any key that moved to another file were carried over; once you have checked nothing " +
+                    "else uses them, these files can be deleted.");
+            }
+        }
+
+        private static string Normalize(string path) => path.Replace('\\', '/');
 
         // ── Desired keys ────────────────────────────────────────────────────────────
 
@@ -106,6 +172,18 @@ namespace Faolline.GraphLocalization.Editor
         public static string BuildCsv(string existingCsv, IReadOnlyList<(string key, string hint)> desired,
             IReadOnlyList<string> locales, string sourceLocale,
             out List<(string locale, int filled, int total)> coverage, out int orphansRemoved)
+            => BuildCsv(existingCsv, desired, locales, sourceLocale, null, out coverage, out orphansRemoved);
+
+        /// <summary>
+        /// As the overload without <paramref name="carry"/>, plus: an EMPTY cell (key absent from
+        /// <paramref name="existingCsv"/>, or present with an empty value) is filled from <paramref name="carry"/>
+        /// (key → locale → value, the translations the key had in the file it moved from) before the source-locale
+        /// hint applies. A non-empty existing cell is never overwritten. Null <paramref name="carry"/> = no carry-over.
+        /// </summary>
+        public static string BuildCsv(string existingCsv, IReadOnlyList<(string key, string hint)> desired,
+            IReadOnlyList<string> locales, string sourceLocale,
+            IReadOnlyDictionary<string, IReadOnlyDictionary<string, string>> carry,
+            out List<(string locale, int filled, int total)> coverage, out int orphansRemoved)
         {
             var existing = ParseCsv(existingCsv, out _);
             int existingCount = existing.Count;
@@ -128,10 +206,15 @@ namespace Faolline.GraphLocalization.Editor
             foreach (var (key, hint) in desired)
             {
                 existing.TryGetValue(key, out var row);
+                IReadOnlyDictionary<string, string> carried = null;
+                if (carry != null) carry.TryGetValue(key, out carried);
                 sb.Append(Escape(key));
                 foreach (var loc in locales)
                 {
                     string value = row != null && row.TryGetValue(loc, out var v) ? v : string.Empty;
+                    // Then the value carried over from the file the key moved from.
+                    if (string.IsNullOrEmpty(value) && carried != null && carried.TryGetValue(loc, out var c))
+                        value = c ?? string.Empty;
                     // Pre-fill the source locale from the hint when no existing value.
                     if (string.IsNullOrEmpty(value) && loc == sourceLocale && !string.IsNullOrEmpty(hint))
                         value = hint;
@@ -170,7 +253,7 @@ namespace Faolline.GraphLocalization.Editor
         {
             locales = new List<string>();
             var table = new Dictionary<string, Dictionary<string, string>>();
-            var records = ParseRecords(csv);
+            var records = LocalizationCsv.ParseRecords(csv);
             if (records.Count == 0) return table;
 
             var header = records[0];
@@ -192,54 +275,7 @@ namespace Faolline.GraphLocalization.Editor
             return table;
         }
 
-        // Full-text RFC4180 tokenizer. Unlike a Split('\n')-then-parse approach, a quoted field may contain
-        // commas, doubled quotes AND newlines — required so a multi-line value written by Escape survives the
-        // merge-preserve pass of the next rebuild instead of corrupting the row.
-        // Kept in sync with the identical copy in CsvLocalizationProvider (runtime assembly).
-        private static List<List<string>> ParseRecords(string csvText)
-        {
-            var records = new List<List<string>>();
-            if (string.IsNullOrEmpty(csvText)) return records;
-
-            var row = new List<string>();
-            var sb = new StringBuilder();
-            bool inQuotes = false;
-
-            void EndCell() { row.Add(sb.ToString()); sb.Clear(); }
-            void EndRecord()
-            {
-                EndCell();
-                // A blank/whitespace-only line parses as a single blank cell — skip it.
-                if (row.Count > 1 || row[0].Trim().Length > 0)
-                    records.Add(new List<string>(row));
-                row.Clear();
-            }
-
-            for (int i = 0; i < csvText.Length; i++)
-            {
-                char ch = csvText[i];
-                if (inQuotes)
-                {
-                    if (ch == '"') { if (i + 1 < csvText.Length && csvText[i + 1] == '"') { sb.Append('"'); i++; } else inQuotes = false; }
-                    else sb.Append(ch);
-                }
-                else if (ch == '"') inQuotes = true;
-                else if (ch == ',') EndCell();
-                else if (ch == '\r') { if (i + 1 >= csvText.Length || csvText[i + 1] != '\n') EndRecord(); }   // lone \r ends the record; \r\n defers to the \n
-                else if (ch == '\n') EndRecord();
-                else sb.Append(ch);
-            }
-            if (sb.Length > 0 || row.Count > 0) EndRecord();
-            return records;
-        }
-
-        private static string Escape(string field)
-        {
-            field ??= string.Empty;
-            if (field.IndexOf(',') >= 0 || field.IndexOf('"') >= 0 || field.IndexOf('\n') >= 0 || field.IndexOf('\r') >= 0)
-                return "\"" + field.Replace("\"", "\"\"") + "\"";
-            return field;
-        }
+        private static string Escape(string field) => LocalizationCsv.Escape(field);
 
         // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -258,12 +294,6 @@ namespace Faolline.GraphLocalization.Editor
 
         private static int Pct(int n, int d) => d <= 0 ? 100 : Mathf.RoundToInt(100f * n / d);
 
-        private static string Sanitize(string name)
-        {
-            if (string.IsNullOrEmpty(name)) return "Unnamed";
-            var invalid = System.IO.Path.GetInvalidFileNameChars();
-            var chars = System.Array.ConvertAll(name.ToCharArray(), c => System.Array.IndexOf(invalid, c) >= 0 ? '_' : c);
-            return new string(chars);
-        }
+        private static string Sanitize(string name) => LocalizationTableNames.Sanitize(name);
     }
 }

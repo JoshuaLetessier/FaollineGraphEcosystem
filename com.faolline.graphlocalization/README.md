@@ -1,6 +1,6 @@
 # com.faolline.graphlocalization
 
-**Version**: 0.9.0 — **Unity**: 6000.x — no required dependencies
+**Version**: 0.10.0 — **Unity**: 6000.x — no required dependencies
 
 Provider-agnostic localization for the Faolline graph ecosystem. Resolves localized text at runtime
 through a pluggable `ILocalizationProvider`, and builds translation tables from your graphs at edit
@@ -69,11 +69,15 @@ Unity.exe -batchmode -quit -projectPath <path> \
   -speakersCsv Assets/Data/Translations/speakers.csv
 ```
 
-`-dialogueTranslationsDir <path>` imports every `*.csv` in the folder into the
-`{Sanitize(fileName)}_Text` collection (the same naming convention the graph sync already used to create
-it); `-speakersCsv <path>` imports into the fixed `Global_Text` collection. At least one of the two is
-required. Exits `0` only if every requested import succeeded. Only compiled when **com.unity.localization**
-is installed (`Localization.Unity` sub-assembly).
+`-dialogueTranslationsDir <path>` imports every `*.csv` in the folder into the collection of the graph the
+file is named after (`LocalizationTableNames.ForGraph`, the same rule the graph sync used to create it);
+`-speakersCsv <path>` takes a single CSV of global keys (e.g. a dialogue tool's `speakers.csv`) and routes
+each row to the collection holding its key — speaker names live in one collection per group (see *Global keys
+& groups* below). A key held by no collection, or by several, is reported and skipped; the other rows are still
+imported. Locale columns are matched by locale code (`fr`, or Unity's own `French(fr)` header); a column
+matching no project locale is reported. At least one of the two flags is required. Exits `0` only if every
+requested import succeeded. Only compiled when **com.unity.localization** is installed (`Localization.Unity`
+sub-assembly).
 
 ---
 
@@ -87,6 +91,27 @@ string text = LocalizationContext.Resolve("line_intro");
 var provider = new CsvLocalizationProvider(csvText, "en");
 string greeting = provider.Resolve("speaker_npc_mayor", "en");
 ```
+
+### Table-targeted lookups (separately-packaged tables, e.g. Addressables)
+
+Keys live in many tables: one per graph (`{graph}_Text`) and one per global-key group (`{Lib}_{Group}_Text`).
+A caller that knows a key's table should ask that table only, so tables packaged separately (say, one Addressables
+group per chapter) are never loaded for nothing:
+
+```csharp
+// Opens only DLG_001_Text with a table-aware backend; any other provider gets the classic Resolve(key, locale).
+string text = TableScopedLookup.Resolve(provider, LocalizationTableNames.ForGraph("DLG_001"), "line_abc", locale);
+```
+
+- `ITableScopedLocalizationProvider` / `ITableScopedLocalizedAssetProvider` are **optional** companions of the
+  provider interfaces — existing custom providers keep working unchanged. The Unity Localization providers
+  implement them; the CSV provider (which loads everything up front anyway) does not need to.
+- A key missing from its designated table is a missing text (the `#key` marker) — no other table is searched. A
+  table the build manifest doesn't know (e.g. a graph renamed `X(Clone)` by `Instantiate`) falls back to the
+  classic search, warned once per table.
+- The dialogue and quest libs already pass their tables (owning graph, speaker group, quest graph).
+- Assigning tables to Addressables groups stays your project's configuration (Unity Localization's Addressables
+  group rules); this lib only produces separable tables and stops loading them all.
 
 ### Asset Tables & per-node filtering
 
@@ -121,7 +146,15 @@ public sealed class MyAdapter : BaseGraphLocalizationAdapter<MyGraph>
 }
 ```
 
-For keys not tied to a specific graph (e.g. a shared speaker/name table), override
-`ExtractGlobalKeys(LocalizationDatabase)` too. Implementing the lower-level `IGraphLocalizationAdapter`
+### Global keys & groups
+
+For keys not tied to a specific graph (e.g. speaker names), override
+`ExtractGlobalKeys(LocalizationDatabase)` too, calling `database.AddGlobalKey(key, type, hint, group)`. Each
+group becomes its own table — `{Lib}_{Group}_Text` (Unity) / `{Lib}_{Group}.csv` (CSV), default group `Global` —
+so global keys can be split and packaged like per-graph ones. When a key moves to another table of the same lib
+(group change, graph rename, or the pre-0.10 single `Global_Text`), the build carries its existing translations
+into the new table; the table it left is reported, never deleted for you.
+
+Implementing the lower-level `IGraphLocalizationAdapter`
 directly is still possible if you need full control over `ScanAndIndex` — every real adapter in the
 ecosystem (dialogue, quest) uses the `BaseGraphLocalizationAdapter<TGraph>` path instead.

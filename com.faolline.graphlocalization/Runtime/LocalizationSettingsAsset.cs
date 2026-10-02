@@ -119,6 +119,12 @@ namespace Faolline.GraphLocalization
                 "com.faolline.graphlocalization.Localization.Unity");
             if (type == null || !typeof(ILocalizedAssetProvider).IsAssignableFrom(type)) return null;
 
+            // Prefer the overload that also knows the text collections (lets a table-targeted asset lookup tell a
+            // known table without asset tables from a table the build never produced).
+            var withText = type.GetConstructor(new[] { typeof(IEnumerable<string>), typeof(IEnumerable<string>) });
+            if (withText != null)
+                return withText.Invoke(new object[] { collections, manifest.AllUnityCollections() }) as ILocalizedAssetProvider;
+
             var ctor = type.GetConstructor(new[] { typeof(IEnumerable<string>) });
             if (ctor == null) return null;
 

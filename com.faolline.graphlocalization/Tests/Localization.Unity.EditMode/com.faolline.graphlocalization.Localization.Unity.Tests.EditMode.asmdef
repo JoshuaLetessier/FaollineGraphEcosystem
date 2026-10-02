@@ -1,0 +1,36 @@
+{
+    "name": "com.faolline.graphlocalization.Localization.Unity.Tests.EditMode",
+    "rootNamespace": "Faolline.GraphLocalization.Unity.Tests",
+    "references": [
+        "com.faolline.graphlocalization.Runtime",
+        "com.faolline.graphlocalization.Editor",
+        "com.faolline.graphlocalization.Localization.Unity",
+        "com.faolline.graphlocalization.Localization.Unity.Editor",
+        "com.faolline.graphlogging.Runtime",
+        "Unity.Localization",
+        "Unity.Localization.Editor",
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "GRAPHLOCALIZATION_UNITY_LOCALIZATION"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.localization",
+            "expression": "1.0.0",
+            "define": "GRAPHLOCALIZATION_UNITY_LOCALIZATION"
+        }
+    ],
+    "noEngineReferences": false
+}
