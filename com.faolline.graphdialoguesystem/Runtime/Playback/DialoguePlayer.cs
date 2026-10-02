@@ -419,10 +419,11 @@ namespace Faolline.GraphDialogue
             }
         }
 
-        // Resolution is delegated to the runner-agnostic DialoguePresenter (built in the ctor).
-        private LineStep BuildLineStep(DialogueLineNodeData line) => _presenter.ResolveLine(line, _context);
+        // Resolution is delegated to the runner-agnostic DialoguePresenter (built in the ctor). The runner's
+        // CurrentGraph owns the node (the sub-dialogue while one runs), so texts are looked up in that graph's table.
+        private LineStep BuildLineStep(DialogueLineNodeData line) => _presenter.ResolveLine(line, _context, _runner.CurrentGraph);
 
-        private ChoiceStep BuildChoiceStep(ChoiceNodeData choiceNode) => _presenter.ResolveChoice(choiceNode, _context);
+        private ChoiceStep BuildChoiceStep(ChoiceNodeData choiceNode) => _presenter.ResolveChoice(choiceNode, _context, _runner.CurrentGraph);
 
         private bool IsChoiceAvailable(ChoiceNodeData node, string choiceId)
         {

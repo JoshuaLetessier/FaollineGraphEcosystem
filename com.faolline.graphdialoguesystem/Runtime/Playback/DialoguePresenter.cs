@@ -62,25 +62,42 @@ namespace Faolline.GraphDialogue
         /// <summary>
         /// Resolves <paramref name="node"/> to a <see cref="LineStep"/> or <see cref="ChoiceStep"/>, or
         /// <c>null</c> when it is not a dialogue node (so a host can call this for every entered node).
+        /// Line/choice texts are looked up without a designated table; prefer the overload taking the owning graph.
         /// </summary>
-        public DialogueStep Resolve(BaseNodeData node, BaseContext context)
+        public DialogueStep Resolve(BaseNodeData node, BaseContext context) => Resolve(node, context, null);
+
+        /// <summary>
+        /// As <see cref="Resolve(BaseNodeData, BaseContext)"/>, looking the node's texts up in the table of
+        /// <paramref name="ownerGraph"/> — the graph the node belongs to (a runner's <c>CurrentGraph</c>, which is
+        /// the sub-dialogue while one runs). With a table-aware backend only that table is opened; null keeps the
+        /// untargeted lookup.
+        /// </summary>
+        public DialogueStep Resolve(BaseNodeData node, BaseContext context, BaseGraph ownerGraph)
         {
-            if (node is DialogueLineNodeData line) return ResolveLine(line, context);
-            if (node is ChoiceNodeData choice) return ResolveChoice(choice, context);
+            if (node is DialogueLineNodeData line) return ResolveLine(line, context, ownerGraph);
+            if (node is ChoiceNodeData choice) return ResolveChoice(choice, context, ownerGraph);
             return null;
         }
 
         /// <summary>Resolved speaker name + localized/interpolated text + expression key + voice for a line.</summary>
-        public LineStep ResolveLine(DialogueLineNodeData line, BaseContext context)
+        public LineStep ResolveLine(DialogueLineNodeData line, BaseContext context) => ResolveLine(line, context, null);
+
+        /// <summary>
+        /// As <see cref="ResolveLine(DialogueLineNodeData, BaseContext)"/>, looking the text and voice up in the table
+        /// of <paramref name="ownerGraph"/> (null: untargeted). The speaker name is always looked up in the speaker's
+        /// own table (<see cref="DialogueLocalizationKeys.ForSpeakerTable"/>).
+        /// </summary>
+        public LineStep ResolveLine(DialogueLineNodeData line, BaseContext context, BaseGraph ownerGraph)
         {
             if (line == null) return null;
-            string text = ResolveChecked(DialogueLocalizationKeys.ForLine(line), line.Title);
+            var table = DialogueLocalizationKeys.ForGraphTable(ownerGraph);
+            string text = ResolveChecked(DialogueLocalizationKeys.ForLine(line), line.Title, table);
             text = DialogueTextInterpolator.Interpolate(text, context);
             string speakerName = ResolveSpeakerName(line.SpeakerKey);
 
             // Voice is resolved by the line's key from the localized asset tables (no per-node clip).
             var voice = _assets != null
-                ? _assets.ResolveAsset<AudioClip>(DialogueLocalizationKeys.ForLine(line))
+                ? TableScopedLookup.ResolveAsset<AudioClip>(_assets, table, DialogueLocalizationKeys.ForLine(line))
                 : null;
 
             return new LineStep(line.Id, line.SpeakerKey, speakerName, text, line.ExpressionKey, voice);
@@ -139,9 +156,16 @@ namespace Faolline.GraphDialogue
         }
 
         /// <summary>Options with resolved label + availability (each option's condition against the context).</summary>
-        public ChoiceStep ResolveChoice(ChoiceNodeData choiceNode, BaseContext context)
+        public ChoiceStep ResolveChoice(ChoiceNodeData choiceNode, BaseContext context) => ResolveChoice(choiceNode, context, null);
+
+        /// <summary>
+        /// As <see cref="ResolveChoice(ChoiceNodeData, BaseContext)"/>, looking the labels up in the table of
+        /// <paramref name="ownerGraph"/> (null: untargeted).
+        /// </summary>
+        public ChoiceStep ResolveChoice(ChoiceNodeData choiceNode, BaseContext context, BaseGraph ownerGraph)
         {
             if (choiceNode == null) return null;
+            var table = DialogueLocalizationKeys.ForGraphTable(ownerGraph);
             var options = new List<ChoiceOption>();
             foreach (var baseChoice in choiceNode.Choices)
             {
@@ -149,7 +173,7 @@ namespace Faolline.GraphDialogue
                 string labelKey = DialogueLocalizationKeys.ForChoice(baseChoice);
                 string label = string.IsNullOrEmpty(labelKey)
                     ? baseChoice.Id
-                    : ResolveChecked(labelKey, baseChoice.Title);
+                    : ResolveChecked(labelKey, baseChoice.Title, table);
                 label = DialogueTextInterpolator.Interpolate(label, context);
                 bool available = baseChoice.Condition == null || baseChoice.Condition.Evaluate(context);
                 options.Add(new ChoiceOption(baseChoice.Id, label, available));
@@ -166,7 +190,8 @@ namespace Faolline.GraphDialogue
             var nameKey = DialogueLocalizationKeys.ForSpeaker(speaker);
             if (!string.IsNullOrEmpty(nameKey))
             {
-                var resolved = _localization.Resolve(nameKey, _localization.CurrentLocale);
+                var resolved = TableScopedLookup.Resolve(_localization, DialogueLocalizationKeys.ForSpeakerTable(speaker),
+                    nameKey, _localization.CurrentLocale);
                 if (!string.IsNullOrEmpty(resolved) && resolved != $"#{nameKey}")
                     return resolved;
             }
@@ -174,14 +199,14 @@ namespace Faolline.GraphDialogue
         }
 
         /// <summary>
-        /// Resolves a key through the provider, applying the configured <see cref="LocalizationStrictMode"/>
-        /// when the key is missing: Permissive returns the <c>#key</c> fallback silently; Audit warns + records
-        /// it (and raises <see cref="OnMissingKey"/>); Strict throws.
+        /// Resolves a key through the provider (in <paramref name="table"/> when given and supported), applying
+        /// the configured <see cref="LocalizationStrictMode"/> when the key is missing: Permissive returns the
+        /// <c>#key</c> fallback silently; Audit warns + records it (and raises <see cref="OnMissingKey"/>); Strict throws.
         /// </summary>
-        private string ResolveChecked(string key, string fallbackTitle = null)
+        private string ResolveChecked(string key, string fallbackTitle, string table)
         {
             var locale = _localization.CurrentLocale;
-            var value = _localization.Resolve(key, locale);
+            var value = TableScopedLookup.Resolve(_localization, table, key, locale);
 
             bool missing = string.IsNullOrEmpty(value) || value == $"#{key}";
             if (!missing) return value;

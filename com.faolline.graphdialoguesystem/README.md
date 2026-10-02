@@ -1,6 +1,6 @@
 # com.faolline.graphdialoguesystem
 
-**Version**: 0.19.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore` ≥ 0.43.0, `com.faolline.graphlocalization` ≥ 0.9.0, `com.faolline.graphlogging` ≥ 0.1.1
+**Version**: 0.20.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore` ≥ 0.43.4, `com.faolline.graphlocalization` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.2.0
 
 A graph-based dialogue library built **entirely on top of** `com.faolline.graphcore` (zero core
 changes), following the `com.faolline.starterGraph` package shape. Author branching, multi-speaker,
@@ -154,7 +154,9 @@ var presenter = new DialoguePresenter(localization, assets, speakerLookup);
 
 driver.OnNodeEntered += node =>
 {
-    switch (presenter.Resolve(node, driver.Context))   // null for non-dialogue nodes
+    // Pass the runner's CurrentGraph (the graph that owns the node) so its texts are looked up in that
+    // graph's own table only — see "Separate tables per chapter" below.
+    switch (presenter.Resolve(node, driver.Context, driver.Runner.CurrentGraph))   // null for non-dialogue nodes
     {
         case LineStep line:   driver.AutoAdvance = false; Show(line); break;   // "continue" → driver.Advance()
         case ChoiceStep step: Present(step.Options);              break;       // pick → driver.ChooseById(optionId)
@@ -257,6 +259,23 @@ resolves every line/choice/speaker through its `ILocalizationProvider`, returnin
 - Keys are **derived** from node/choice/speaker identity (`DialogueLocalizationKeys`); a node/choice
   **Title** and a speaker **Display Name Fallback** are the source texts pre-filled into the tables.
 - Build via **Faolline ▸ Localization ▸ Build All Tables**; review coverage in the dashboard.
+
+### Separate tables per chapter (Addressables)
+
+Each dialogue graph has its own table (`{graph}_Text`). Speaker names go into `GraphDialogue_Speakers`, or — when
+a speaker has a **Localization Group** (Speaker inspector ▸ *Localization*: pick a group already used in the
+project, or *New group…* to create one, e.g. `Chapitre1`; select several speakers to set it on all of them) — into
+`GraphDialogue_Speakers_{group}`. Assign those tables to your Addressables groups (Unity Localization's group
+rules) to ship each chapter's texts with that chapter.
+
+At runtime `DialoguePlayer` looks each line/choice/voice up in the table of the graph that owns it (the
+sub-dialogue's while one runs) and each speaker name in its group's table — with the Unity Localization backend
+only those tables are opened. A `DialoguePresenter` driven by a host does the same when given the owning graph
+(`Resolve(node, context, ownerGraph)`); the two-argument overloads keep the untargeted lookup.
+
+Changing a speaker's group (or renaming a dialogue) keeps its translations: the next table build carries them into
+the new table. Two speakers sharing a `SpeakerId` must share a group — otherwise the build reports an error naming
+both assets.
 
 See the `com.faolline.graphlocalization` README for the full workflow.
 

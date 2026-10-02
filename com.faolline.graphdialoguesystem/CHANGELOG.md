@@ -4,6 +4,34 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.20.0]
+
+### Added
+- **`Speaker.LocalizationGroup`**. Optional; a speaker's display name is built into
+  `GraphDialogue_Speakers_{group}` instead of the default `GraphDialogue_Speakers` table, so speaker names can be
+  packaged per chapter (e.g. one Addressables group each). Existing speakers need no change (empty = default table).
+  In the Speaker inspector (*Localization ▸ Localization Group*) it is a **dropdown** of the groups already used by
+  the project's speakers, plus *(None)* and *New group…* (typed once, inline) — no free-text field, so a typo cannot
+  create a stray table; the derived table is shown read-only. The inspector now supports **multi-object editing**
+  (select a whole cast, pick its group once); the expressions list still needs a single speaker.
+  `SpeakerGroupCatalog` (Editor) backs the dropdown.
+- **`DialogueLocalizationKeys`**: `LibName`, `SpeakerTableGroup`, `ForSpeakerTable`, `ForSpeakerGroupTable`,
+  `ForGraphTable` — the table
+  each key lives in, derived with the same rule as the build.
+- **`DialoguePresenter` owner-graph overloads** — `Resolve` / `ResolveLine` / `ResolveChoice(..., BaseGraph ownerGraph)`
+  look line texts, choice labels and voice clips up in the owning graph's table only (with a table-aware backend such
+  as Unity Localization). The existing two-argument overloads are unchanged. Hosts embedding a dialogue should pass
+  their runner's `CurrentGraph` (the `GameFlowDialogueBridge` sample now does).
+
+### Changed
+- **`DialoguePlayer` looks every text up in its own table** — the runner's `CurrentGraph`, i.e. the sub-dialogue's
+  table while one runs — and **speaker names in their group's table**. With the Unity Localization backend this stops
+  the first lookup from loading every table of the project; with the CSV backend (or a custom provider) nothing
+  changes.
+- **Speaker name keys are filed per group** by the localization adapter; two speakers sharing a `SpeakerId` with
+  different groups is now reported as an error naming both assets (the first, by asset path, keeps the key).
+- Floor: `com.faolline.graphlocalization` → `0.10.0`.
+
 ## [0.19.1]
 
 ### Fixed
