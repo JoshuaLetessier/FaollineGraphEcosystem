@@ -1,15 +1,15 @@
 {
   "name": "com.faolline.graphimport",
-  "version": "0.5.1",
+  "version": "0.6.0",
   "displayName": "Faolline GraphImport",
   "description": "Generates com.faolline.graphdialoguesystem dialogue and speaker assets from a dedicated dialogue interchange JSON format, through a pure plan-then-apply pipeline. No source shape or column naming is assumed; only the pivot's own domain model (dialogue/line/choice/end/sub-dialogue) is opinionated.",
   "unity": "6000.0",
   "unityRelease": "0f1",
   "documentationUrl": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphimport/README.md",
   "dependencies": {
-    "com.faolline.graphcore": "0.43.1",
+    "com.faolline.graphcore": "0.43.4",
     "com.faolline.graphstandard": "0.18.0",
-    "com.faolline.graphdialoguesystem": "0.19.1",
+    "com.faolline.graphdialoguesystem": "0.20.0",
     "com.unity.nuget.newtonsoft-json": "3.2.2",
     "com.faolline.graphlogging": "0.2.0"
   },

@@ -15,7 +15,7 @@ namespace Faolline.GraphDialogue.Editor
     /// </summary>
     public sealed class DialogueGraphLocalizationAdapter : BaseGraphLocalizationAdapter<DialogueGraph>
     {
-        public override string LibName => "GraphDialogue";
+        public override string LibName => DialogueLocalizationKeys.LibName;
 
         protected override int ExtractGraphKeys(DialogueGraph graph, LocalizationGraphEntry entry)
         {
@@ -52,22 +52,43 @@ namespace Faolline.GraphDialogue.Editor
             return count;
         }
 
+        /// <summary>
+        /// Files each speaker's display-name key under its table group (<see cref="DialogueLocalizationKeys.SpeakerTableGroup"/>),
+        /// visiting speakers in asset-path order so the outcome is deterministic. Two speakers sharing a
+        /// <see cref="Speaker.SpeakerId"/> but not a group is reported as an error naming both assets; the first
+        /// (path order) keeps the key, so its existing translations are not dropped.
+        /// </summary>
         protected override int ExtractGlobalKeys(LocalizationDatabase database)
         {
             int count = 0;
-            var speakerGuids = AssetDatabase.FindAssets("t:Speaker");
-            foreach (var guid in speakerGuids)
+            var paths = new List<string>();
+            foreach (var guid in AssetDatabase.FindAssets("t:Speaker"))
+                paths.Add(AssetDatabase.GUIDToAssetPath(guid));
+            paths.Sort(System.StringComparer.Ordinal);
+
+            var firstById = new Dictionary<string, (string group, string path)>();
+            foreach (var path in paths)
             {
-                var path = AssetDatabase.GUIDToAssetPath(guid);
                 var speaker = AssetDatabase.LoadAssetAtPath<Speaker>(path);
                 if (speaker == null) continue;
 
                 var key = DialogueLocalizationKeys.ForSpeaker(speaker);
-                if (!string.IsNullOrEmpty(key))
+                if (string.IsNullOrEmpty(key)) continue;
+
+                var group = DialogueLocalizationKeys.SpeakerTableGroup(speaker);
+                if (firstById.TryGetValue(speaker.SpeakerId, out var first))
                 {
-                    database.AddGlobalKey(key, LocalizationKeyType.SpeakerName, speaker.DisplayNameFallback);
-                    count++;
+                    if (LocalizationTableNames.GroupComparisonKey(first.group) != LocalizationTableNames.GroupComparisonKey(group))
+                        Faolline.GraphLogging.Logging.Error("GraphLocalization.Validation",
+                            $"[GraphDialogue] Speaker id '{speaker.SpeakerId}' is used by '{first.path}' (table group " +
+                            $"'{first.group}') and '{path}' (table group '{group}'). One name key cannot live in two " +
+                            $"tables: it stays in '{first.group}'. Give each speaker a unique id, or the same group.");
+                    continue;
                 }
+
+                firstById[speaker.SpeakerId] = (group, path);
+                database.AddGlobalKey(key, LocalizationKeyType.SpeakerName, speaker.DisplayNameFallback, group);
+                count++;
             }
             return count;
         }

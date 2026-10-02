@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using System.Text;
 
 namespace Faolline.GraphLocalization
 {
@@ -51,7 +50,7 @@ namespace Faolline.GraphLocalization
         private List<string> Parse(string csvText)
         {
             var locales = new List<string>();
-            var records = ParseRecords(csvText);
+            var records = LocalizationCsv.ParseRecords(csvText);
             if (records.Count == 0) return locales;
 
             var header = records[0];
@@ -68,47 +67,6 @@ namespace Faolline.GraphLocalization
                 for (int c = 1; c < header.Count && c < cols.Count; c++) byLocale[locales[c - 1]] = cols[c];
             }
             return locales;
-        }
-
-        // Full-text RFC4180 tokenizer. Unlike a Split('\n')-then-parse approach, a quoted field may contain
-        // commas, doubled quotes AND newlines — the newline case is what lets multi-line text written by
-        // CsvLocalizationExporter.Escape (or a translator's spreadsheet) round-trip intact.
-        // Kept in sync with the identical copy in CsvLocalizationExporter (editor assembly).
-        private static List<List<string>> ParseRecords(string csvText)
-        {
-            var records = new List<List<string>>();
-            if (string.IsNullOrEmpty(csvText)) return records;
-
-            var row = new List<string>();
-            var sb = new StringBuilder();
-            bool inQuotes = false;
-
-            void EndCell() { row.Add(sb.ToString()); sb.Clear(); }
-            void EndRecord()
-            {
-                EndCell();
-                // A blank/whitespace-only line parses as a single blank cell — skip it.
-                if (row.Count > 1 || row[0].Trim().Length > 0)
-                    records.Add(new List<string>(row));
-                row.Clear();
-            }
-
-            for (int i = 0; i < csvText.Length; i++)
-            {
-                char ch = csvText[i];
-                if (inQuotes)
-                {
-                    if (ch == '"') { if (i + 1 < csvText.Length && csvText[i + 1] == '"') { sb.Append('"'); i++; } else inQuotes = false; }
-                    else sb.Append(ch);
-                }
-                else if (ch == '"') inQuotes = true;
-                else if (ch == ',') EndCell();
-                else if (ch == '\r') { if (i + 1 >= csvText.Length || csvText[i + 1] != '\n') EndRecord(); }   // lone \r ends the record; \r\n defers to the \n
-                else if (ch == '\n') EndRecord();
-                else sb.Append(ch);
-            }
-            if (sb.Length > 0 || row.Count > 0) EndRecord();
-            return records;
         }
     }
 }

@@ -103,6 +103,38 @@ namespace Faolline.GraphImport.Editor.Tests
         }
 
         [Test]
+        public void ResolveSpeaker_WithMapping_CreatedSpeakerTakesTheMappedGroup()
+        {
+            var mapping = SpeakerGroupMapping.Parse("SpeakerKey,Table\nPNJ_052_Mapped,Chapitre1\n");
+            var resolver = new ProjectAssetResolver(new GenerationPlan(new List<PlanEntry>()), SpeakerFolder, mapping);
+
+            Assert.AreEqual("Chapitre1", resolver.ResolveSpeaker("PNJ_052_Mapped").LocalizationGroup);
+            Assert.AreEqual(string.Empty, resolver.ResolveSpeaker("PNJ_052_Unlisted").LocalizationGroup);
+        }
+
+        [Test]
+        public void ResolveSpeaker_WithoutMapping_CreatedSpeakerHasNoGroup()
+        {
+            var resolver = new ProjectAssetResolver(new GenerationPlan(new List<PlanEntry>()), SpeakerFolder);
+            Assert.AreEqual(string.Empty, resolver.ResolveSpeaker("PNJ_052_NoMap").LocalizationGroup);
+        }
+
+        [Test]
+        public void ResolveSpeaker_ExistingSpeaker_IsNotModifiedByTheResolver()
+        {
+            var existing = ScriptableObject.CreateInstance<Speaker>();
+            existing.SpeakerId = "PNJ_052_Existing";
+            existing.LocalizationGroup = "Old";
+            AssetDatabase.CreateAsset(existing, ScratchFolder + "/Existing052.asset");
+
+            var mapping = SpeakerGroupMapping.Parse("SpeakerKey,Table\nPNJ_052_Existing,New\n");
+            var resolver = new ProjectAssetResolver(new GenerationPlan(new List<PlanEntry>()), SpeakerFolder, mapping);
+
+            Assert.AreEqual("Old", resolver.ResolveSpeaker("PNJ_052_Existing").LocalizationGroup,
+                "realigning existing speakers is SpeakerGroupApplier's job, after the plan is applied");
+        }
+
+        [Test]
         public void ResolveSpeaker_CreatesUnderFlatSpeakerFolder()
         {
             var plan = new GenerationPlan(new List<PlanEntry>());

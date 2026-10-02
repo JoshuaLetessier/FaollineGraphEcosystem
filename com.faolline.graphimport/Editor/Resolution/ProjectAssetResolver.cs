@@ -27,12 +27,19 @@ namespace Faolline.GraphImport.Editor
     {
         readonly IReadOnlyDictionary<string, string> _pathsByPivotId;
         readonly string _speakerFolder;
+        readonly SpeakerGroupMapping _speakerGroups;
         readonly Dictionary<string, Speaker> _speakerCache = new Dictionary<string, Speaker>();
 
-        public ProjectAssetResolver(GenerationPlan plan, string speakerFolder)
+        /// <param name="speakerGroups">
+        /// Optional speaker → localization table group mapping: a speaker this resolver CREATES takes its mapped
+        /// group (none when unlisted). Existing speakers are returned untouched — realigning them is
+        /// <see cref="SpeakerGroupApplier"/>'s job, once the plan is applied.
+        /// </param>
+        public ProjectAssetResolver(GenerationPlan plan, string speakerFolder, SpeakerGroupMapping speakerGroups = null)
         {
             _pathsByPivotId = BuildPathsByPivotId(plan);
             _speakerFolder = speakerFolder;
+            _speakerGroups = speakerGroups;
         }
 
         static Dictionary<string, string> BuildPathsByPivotId(GenerationPlan plan)
@@ -66,7 +73,7 @@ namespace Faolline.GraphImport.Editor
             return speaker;
         }
 
-        static Speaker FindExistingSpeaker(string speakerKey)
+        internal static Speaker FindExistingSpeaker(string speakerKey)
         {
             foreach (var guid in AssetDatabase.FindAssets("t:Speaker"))
             {
@@ -84,6 +91,8 @@ namespace Faolline.GraphImport.Editor
             var speaker = ScriptableObject.CreateInstance<Speaker>();
             speaker.SpeakerId = speakerKey;
             speaker.DisplayNameFallback = speakerKey;
+            if (_speakerGroups != null && _speakerGroups.TryGetGroup(speakerKey, out var group))
+                speaker.LocalizationGroup = group;
 
             var path = AssetDatabase.GenerateUniqueAssetPath($"{_speakerFolder}/{SanitizeFileName(speakerKey)}.asset");
             AssetDatabase.CreateAsset(speaker, path);

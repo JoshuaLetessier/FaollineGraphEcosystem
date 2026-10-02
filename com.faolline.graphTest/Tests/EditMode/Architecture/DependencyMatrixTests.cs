@@ -29,6 +29,7 @@ namespace Faolline.GraphTest.Tests
         private const string LocUnity            = "com.faolline.graphlocalization.Localization.Unity";
         private const string LocUnityEditor      = "com.faolline.graphlocalization.Localization.Unity.Editor";
         private const string LocTests            = "com.faolline.graphlocalization.Tests.EditMode";
+        private const string LocUnityTests       = "com.faolline.graphlocalization.Localization.Unity.Tests.EditMode";
         private const string LogRuntime          = "com.faolline.graphlogging.Runtime";
         private const string LogEditor           = "com.faolline.graphlogging.Editor";
         private const string LogTests            = "com.faolline.graphlogging.Tests.EditMode";
@@ -145,6 +146,7 @@ namespace Faolline.GraphTest.Tests
             // ── Test assemblies ─────────────────────────────────────────────────
             [CoreTests]           = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, TestRunner, TestRunnerEditor },
             [LocTests]            = new[] { LocRuntime, LocEditor, TestRunner, TestRunnerEditor },
+            [LocUnityTests]       = new[] { LocRuntime, LocEditor, LocUnity, LocUnityEditor, LogRuntime, UnityLoc, UnityLocEditor, TestRunner, TestRunnerEditor },
             [LogTests]            = new[] { LogRuntime, LogEditor, TestRunner, TestRunnerEditor },
             [StdTests]            = new[] { StdRuntime, StdEditor, CoreRuntime, CoreRuntimeCore, TestRunner, TestRunnerEditor },
             [SaveTests]           = new[] { SaveRuntime, CoreRuntime, CoreRuntimeCore, TestRunner, TestRunnerEditor },

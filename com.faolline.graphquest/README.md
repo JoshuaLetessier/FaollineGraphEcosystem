@@ -1,6 +1,6 @@
 # Faolline GraphQuest
 
-**Version**: 0.12.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.0, `com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphlocalization` ≥ 0.9.0, `com.faolline.graphlogging` ≥ 0.1.1
+**Version**: 0.12.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.4, `com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphlocalization` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.2.0
 
 `com.faolline.graphquest` — a **quest & objective** domain library above
 [`com.faolline.graphcore`](../com.faolline.graphcore) and [`com.faolline.graphstandard`](../com.faolline.graphstandard).
@@ -42,7 +42,8 @@ smaller completed-set), never an undo.
   objective Fails if it isn't completed in time. `GetRemainingSeconds(id)` drives a countdown.
 - **Localized text (optional)** — `evaluator.UseLocalization(provider)` resolves objective/quest names &
   descriptions as keys via `com.faolline.graphlocalization` (CSV or Unity Localization); without a provider the
-  text stays literal.
+  text stays literal. With Unity Localization, the texts are looked up in the quest's own table only (its graph's
+  `_Text` collection), so displaying a quest never loads other tables.
 - **Quantified objectives** — set `ObjectiveNodeData.ProgressCollection` (a `CollectionDef`) and `.ProgressTarget`
   directly on the built node (no fluent `ObjectiveBuilder` setter for this yet — see `QuestSampleBuilder.cs` for
   the pattern) to track a collection count against a target; `ObjectiveView` exposes `Progress` / `ProgressTarget`
@@ -142,8 +143,8 @@ remove a prerequisite edge.
 
 ## Dependencies
 
-- `com.faolline.graphcore` 0.43.0
+- `com.faolline.graphcore` 0.43.4
 - `com.faolline.graphstandard` 0.18.0
-- `com.faolline.graphlocalization` 0.9.0 (the neutral text-resolution abstraction; localization is opt-in at
+- `com.faolline.graphlocalization` 0.10.0 (the neutral text-resolution abstraction; localization is opt-in at
   runtime via `UseLocalization`, the CSV provider needs no Unity Localization)
-- `com.faolline.graphlogging` 0.1.1
+- `com.faolline.graphlogging` 0.2.0

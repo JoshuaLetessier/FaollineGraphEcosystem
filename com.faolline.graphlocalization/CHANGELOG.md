@@ -4,6 +4,54 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.10.0]
+
+### BREAKING
+- **Global keys get one lib-scoped table per group; `Global_Text` is gone.** Keys not tied to one graph (speaker
+  names) used to share a single, lib-agnostic `Global_Text` collection, so a project packaging its content per
+  chapter (e.g. one Addressables group per chapter) could not split them. `AddGlobalKey` now takes an optional
+  `group`; the Unity syncer builds one collection per group, `{Lib}_{Group}_Text` (default group `Global`), under
+  `Collections/{Lib}/_Global/`, and the CSV exporter one file per group, `{Lib}_{Group}.csv`.
+  **Migration is automatic**: on the first build, existing translations follow their key into the new table(s)
+  (see *carry-over* below); the old `Global_Text` / `{Lib}_Global.csv` is reported as no longer produced and is
+  never deleted for you — delete it once checked. Scripts referring to `Global_Text` by name must be updated.
+- **`TranslationImportBatch -speakersCsv` routes rows by key** instead of importing into `Global_Text`: each row
+  goes into the collection holding its key (keys held by no collection, or by several, are reported and skipped;
+  the other rows are still imported; exit code 1).
+
+### Added
+- **Table-targeted lookups** — `ITableScopedLocalizationProvider` / `ITableScopedLocalizedAssetProvider` (optional
+  companions of the existing provider interfaces) and the `TableScopedLookup` dispatch helper. A caller that knows
+  a key's table asks that table only; providers that don't implement the companion keep their classic behavior, so
+  existing custom providers are unaffected. `UnityLocalizationProvider` / `UnityLocalizedAssetProvider` implement
+  them: a targeted lookup opens **only** that table's collection(s) — previously the first lookup of a key could
+  load every collection of the project in turn. A table absent from the manifest (e.g. a graph renamed `X(Clone)`
+  by `Instantiate`) falls back to the classic search, warned once per table.
+- **`LocalizationTableNames`** — the single naming rule shared by the build, the translation import and the
+  runtime (`ForGraph`, `ForGroup`, `TextCollection`, `AssetCollection`, `Sanitize`…). Platform-stable: it no
+  longer uses `Path.GetInvalidFileNameChars()` (whose result differs per platform) but the fixed Windows set, so
+  existing Windows-built names are unchanged.
+- **Translation carry-over** — when a key moves to another table of the same lib (group change, graph rename,
+  the legacy shared table), the syncer and the CSV exporter fill its empty cells from the table it left; a value
+  already present in the target is never overwritten. (String tables / CSV only — asset-table entries are not
+  carried.)
+- **`LocalizationCsv`** — shared RFC4180 parse/escape (replaces the two "kept in sync" copies in the CSV provider
+  and the exporter); **`GlobalKeyCsvRouter`** — pure key → collection routing behind `-speakersCsv`.
+- `LocalizationDatabase.GlobalKeysByGroup()`; `LocalizationKeyEntry.Group`. Group spellings that differ only by
+  letter case (or sanitize alike) share one table, with a warning.
+- `UnityLocalizedAssetProvider(assetCollections, textCollections)` constructor (used by
+  `LocalizationSettingsAsset`), so a targeted asset lookup can tell a known table without asset tables from an
+  unknown one.
+- New test assembly `com.faolline.graphlocalization.Localization.Unity.Tests.EditMode` — the Unity Localization
+  adapter (syncer, providers, translation import) had no automated test before.
+
+### Fixed
+- **`TranslationImportBatch` imported no translation from a `Key,en,fr` CSV.** It used Unity's default CSV column
+  mapping, which only recognizes Unity's own `French(fr)` headers — dialogue-studio's (and this lib's) bare locale
+  codes matched nothing, so every imported entry was left empty, silently. Columns are now mapped from the file's
+  own header (bare code or `Name(code)`); a column matching no project locale is reported. The imported tables
+  are also saved before the batch exits.
+
 ## [0.9.1]
 
 ### Fixed

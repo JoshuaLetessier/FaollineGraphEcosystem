@@ -247,13 +247,5 @@ namespace Faolline.GraphLocalization.Editor
             AssetDatabase.SaveAssets();
             return asset;
         }
-
-        private static string SanitizeFileName(string name)
-        {
-            if (string.IsNullOrEmpty(name)) return "Unnamed";
-            var invalid = System.IO.Path.GetInvalidFileNameChars();
-            var chars = System.Array.ConvertAll(name.ToCharArray(), c => System.Array.IndexOf(invalid, c) >= 0 ? '_' : c);
-            return new string(chars);
-        }
     }
 }

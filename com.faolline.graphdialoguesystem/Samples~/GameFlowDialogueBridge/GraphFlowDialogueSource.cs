@@ -75,7 +75,8 @@ namespace Faolline.GraphDialogue.Samples.GameFlowBridge
             if (node is ChoiceNodeData choiceNode && DialoguePresenter.IsRouter(choiceNode))
                 return;
 
-            var step = _presenter.Resolve(node, _driver.Context);
+            // The runner's CurrentGraph owns the node, so its texts are looked up in that graph's own table.
+            var step = _presenter.Resolve(node, _driver.Context, _driver.Runner.CurrentGraph);
 
             if (step == null)
             {

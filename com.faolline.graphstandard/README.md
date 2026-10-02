@@ -1,6 +1,6 @@
 # com.faolline.graphstandard
 
-**Version**: 0.18.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.0, `com.faolline.graphlogging` ≥ 0.1.1
+**Version**: 0.18.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.4, `com.faolline.graphlogging` ≥ 0.2.0
 
 Buffer library **above** `com.faolline.graphcore`. graphcore is the universal **data substrate** (graph,
 nodes, edges, conditions, actions, context) plus the **Linear** reference runner (`BaseRunner`, single

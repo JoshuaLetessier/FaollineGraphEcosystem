@@ -1,8 +1,8 @@
 # Faolline GraphImport
 
-**Version**: 0.5.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.0,
-`com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphdialoguesystem` ≥ 0.19.0,
-`com.faolline.graphlogging` ≥ 0.1.1, `com.unity.nuget.newtonsoft-json` ≥ 3.2.2
+**Version**: 0.6.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.4,
+`com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphdialoguesystem` ≥ 0.20.0,
+`com.faolline.graphlogging` ≥ 0.2.0, `com.unity.nuget.newtonsoft-json` ≥ 3.2.2
 
 Editor-only tooling that generates real [`graphdialoguesystem`](../com.faolline.graphdialoguesystem/)
 `DialogueGraph`/`Speaker` assets from a dedicated dialogue interchange JSON format, through a pure
@@ -93,9 +93,10 @@ Any violation throws (`DialogueStructureException` / `DialogueReferenceException
 
 ### Editor window — interactive review
 
-**Window ▸ Faolline ▸ Graph Import**. Point it at your interchange JSON, a path template, and a speaker
-folder; **Build dialogue plan** shows every proposed asset (editable path per row, conflicts flagged
-inline); **Commit** applies only the non-conflicting entries.
+**Window ▸ Faolline ▸ Graph Import**. Point it at your interchange JSON, a path template, a speaker
+folder and, optionally, a speaker tables CSV (see *Speaker localization groups* below); **Build dialogue plan**
+shows every proposed asset (editable path per row, conflicts flagged inline); **Commit** applies only the
+non-conflicting entries.
 
 ### CLI batch — unattended / CI
 
@@ -106,12 +107,14 @@ Unity.exe -batchmode -quit -projectPath <path> \
   -executeMethod Faolline.GraphImport.Editor.DialogueImportBatch.Run \
   -dialoguesJson Assets/Data/dialogues.json \
   -dialoguePathTemplate "Assets/Graphs/Dialogues/{name}.asset" \
-  -speakerFolder "Assets/Generated/Speakers"
+  -speakerFolder "Assets/Generated/Speakers" \
+  -speakerTablesCsv Assets/Data/speaker-tables.csv
 ```
 
-`-speakerFolder` defaults to `Assets/Generated/Speakers` if omitted. Exits `0` only if the run is fully
-clean (no conflicts, no generator failures) — a conflict or a failure exits `1` and logs each one to
-stderr, so a CI step fails loudly instead of silently producing a partial import.
+`-speakerFolder` defaults to `Assets/Generated/Speakers` if omitted; `-speakerTablesCsv` is optional. Exits `0`
+only if the run is fully clean (no conflicts, no generator failures) — a conflict or a failure exits `1` and logs
+each one to stderr, so a CI step fails loudly instead of silently producing a partial import. An invalid speaker
+tables CSV aborts the run (exit `1`) before anything is written.
 
 ## Path templates
 
@@ -141,6 +144,33 @@ above) reproduces the *same* keys instead of orphaning every existing translatio
 folder if none exists. Never creates a duplicate for the same key, including across repeated calls within
 one run.
 
+## Speaker localization groups
+
+A speaker's display name is built into its own localization table per **group** (`Speaker.LocalizationGroup`,
+e.g. one per chapter, so each chapter's names can ship in its own Addressables group). The interchange format
+carries no group: give the import a CSV produced from your own spreadsheet instead.
+
+```csv
+SpeakerKey,Table
+PNJ_Aubergiste,Chapitre1
+PNJ_Forgeron,Chapitre2
+Narrateur,
+"PNJ_Garde, nuit",Chapitre1
+```
+
+- `SpeakerKey` matches the interchange `speakerKey`; `Table` is the group (empty = the default speakers table).
+  Column order is free, extra columns are ignored, values are trimmed.
+- Speakers **created** by the import take their mapped group (none when unlisted).
+- After the plan is applied, every **existing** speaker the export references is realigned with the mapping —
+  the mapping wins, and each change is printed. This also covers dialogues whose asset collided, i.e. every
+  dialogue on a re-import, so changing a chapter in the spreadsheet and re-running is enough. Speakers the mapping
+  doesn't list keep their group; listed speakers the export doesn't reference are ignored.
+- Rejected before anything is written: a missing `SpeakerKey`/`Table` column, an empty key, one key listed with
+  two different groups.
+
+Translations follow a speaker whose group changes on the next localization table build (graphlocalization carries
+them over).
+
 ## Architecture
 
 ```
@@ -157,6 +187,8 @@ com.faolline.graphimport/
       TemplatePathResolver.cs     ← {name}/{id} token substitution
     Resolution/
       PivotReference.cs           ← a resolved cross-table reference (table + canonical id)
+    SpeakerGroups/
+      SpeakerGroupMapping.cs      ← SpeakerKey,Table CSV → speaker localization group (validated, pure)
   Editor/
     Apply/
       PlanConflictDetector.cs     ← read-only: plan vs. current project state
@@ -167,6 +199,7 @@ com.faolline.graphimport/
       IAssetGenerator.cs
     Resolution/
       ProjectAssetResolver.cs     ← IProjectAssetResolver: resolves within the current plan; find-or-create Speakers
+      SpeakerGroupApplier.cs      ← realigns existing referenced speakers with the speaker tables mapping
     Batch/
       DialogueImportBatch.cs      ← -executeMethod CLI entry point
       BatchArgs.cs                ← shared `-flag value` parsing

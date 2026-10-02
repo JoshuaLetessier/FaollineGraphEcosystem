@@ -6,31 +6,51 @@ namespace Faolline.GraphLocalization.Unity
 {
     /// <summary>
     /// <see cref="ILocalizationProvider"/> backed by Unity's com.unity.localization String Tables.
-    /// Keys are spread across per-graph collections (good for translators), so this provider searches
-    /// the set of collections produced for the project (from the build manifest) and caches which
-    /// collection holds each key. Returns the #key fallback when no collection contains the key.
-    /// Lives in a gated assembly so projects without com.unity.localization take no dependency.
+    /// Keys are spread across per-graph and per-group collections (good for translators, and for packaging
+    /// tables separately, e.g. one Addressables group per chapter).
+    /// <para>
+    /// <b>Targeted lookup</b> (<see cref="ResolveInTable"/>): a caller that knows the key's table — a dialogue's
+    /// graph, a speaker's group, a quest's graph — reads ONLY that collection, so unrelated tables are never
+    /// loaded. A table absent from the build manifest (e.g. a graph renamed "X(Clone)" by Instantiate) falls back
+    /// to the classic lookup, reported once per table.
+    /// </para>
+    /// <para>
+    /// <b>Classic lookup</b> (<see cref="Resolve"/>): searches the manifest's collections in order and caches which
+    /// collection holds each key.
+    /// </para>
+    /// Both return the #key fallback when no collection contains the key. Lives in a gated assembly so projects
+    /// without com.unity.localization take no dependency.
     /// </summary>
-    public sealed class UnityLocalizationProvider : ILocalizationProvider
+    public sealed class UnityLocalizationProvider : ILocalizationProvider, ITableScopedLocalizationProvider
     {
         private readonly List<string> _collections = new List<string>();
+        private readonly HashSet<string> _collectionSet = new HashSet<string>();
         private readonly Dictionary<string, string> _keyToCollection = new Dictionary<string, string>();
+        private readonly HashSet<string> _unknownTablesReported = new HashSet<string>();
+        private readonly IStringTableReader _reader;
 
         /// <summary>
         /// Searches <paramref name="collectionNames"/> (typically every collection in the build manifest).
         /// <paramref name="fallbackCollectionName"/> is used only when the list is empty (back-compat).
         /// </summary>
         public UnityLocalizationProvider(IEnumerable<string> collectionNames, string fallbackCollectionName = null)
-        {
-            if (collectionNames != null)
-                foreach (var c in collectionNames)
-                    if (!string.IsNullOrEmpty(c) && !_collections.Contains(c)) _collections.Add(c);
-            if (_collections.Count == 0 && !string.IsNullOrEmpty(fallbackCollectionName))
-                _collections.Add(fallbackCollectionName);
-        }
+            : this(collectionNames, fallbackCollectionName, new UnityStringTableReader()) { }
 
         /// <summary>Back-compat single-collection constructor.</summary>
         public UnityLocalizationProvider(string tableCollectionName) : this(null, tableCollectionName) { }
+
+        internal UnityLocalizationProvider(IEnumerable<string> collectionNames, string fallbackCollectionName, IStringTableReader reader)
+        {
+            _reader = reader;
+            if (collectionNames != null)
+                foreach (var c in collectionNames)
+                    if (!string.IsNullOrEmpty(c) && _collectionSet.Add(c)) _collections.Add(c);
+            if (_collections.Count == 0 && !string.IsNullOrEmpty(fallbackCollectionName) && _collectionSet.Add(fallbackCollectionName))
+                _collections.Add(fallbackCollectionName);
+        }
+
+        /// <summary>How many distinct tables were looked up while absent from the manifest (each warned once).</summary>
+        internal int UnknownTablesReported => _unknownTablesReported.Count;
 
         // Unity Localization loads its locales asynchronously: before initialization completes,
         // AvailableLocales is empty and SelectedLocale null — an early SetLocale used to no-op SILENTLY
@@ -93,7 +113,6 @@ namespace Faolline.GraphLocalization.Unity
         public string Resolve(string key, string locale)
         {
             if (string.IsNullOrEmpty(key)) return string.Empty;
-            if (UnityLocalizationSettings.StringDatabase == null) return $"#{key}";
 
             if (_collections.Count == 0 && !_warnedNoCollections)
             {
@@ -103,12 +122,12 @@ namespace Faolline.GraphLocalization.Unity
             }
 
             // Fast path: a collection already known to hold this key.
-            if (_keyToCollection.TryGetValue(key, out var cached) && TryResolveIn(cached, key, out var cachedValue))
+            if (_keyToCollection.TryGetValue(key, out var cached) && _reader.TryRead(cached, key, out var cachedValue))
                 return string.IsNullOrEmpty(cachedValue) ? $"#{key}" : cachedValue;
 
             foreach (var collection in _collections)
             {
-                if (!TryResolveIn(collection, key, out var value)) continue;
+                if (!_reader.TryRead(collection, key, out var value)) continue;
                 _keyToCollection[key] = collection;
                 return string.IsNullOrEmpty(value) ? $"#{key}" : value;
             }
@@ -116,52 +135,28 @@ namespace Faolline.GraphLocalization.Unity
         }
 
         /// <summary>
-        /// True when <paramref name="collection"/> defines <paramref name="key"/> (regardless of whether the
-        /// current locale has a translation). <paramref name="value"/> is the selected-locale value, or — when
-        /// that is empty — the first non-empty value from any other locale (graceful fallback to the source
-        /// text), or empty when the key exists but is untranslated everywhere.
+        /// Resolves <paramref name="key"/> reading only the collection of <paramref name="table"/>
+        /// (<see cref="LocalizationTableNames.TextCollection"/>). A key missing from that table is the #key marker —
+        /// no other collection is opened. An empty table is the classic <see cref="Resolve"/>; a table absent from
+        /// the manifest falls back to it too, reported once per table.
         /// </summary>
-        private static bool TryResolveIn(string collection, string key, out string value)
+        public string ResolveInTable(string table, string key, string locale)
         {
-            value = null;
-            if (string.IsNullOrEmpty(collection)) return false;
-            try
+            if (string.IsNullOrEmpty(key)) return string.Empty;
+            if (string.IsNullOrEmpty(table)) return Resolve(key, locale);
+
+            var collection = LocalizationTableNames.TextCollection(table);
+            if (!_collectionSet.Contains(collection))
             {
-                var db = UnityLocalizationSettings.StringDatabase;
-                var table = db.GetTableAsync(collection).WaitForCompletion();
-                var shared = table != null ? table.SharedData : null;
-                if (shared == null) return false;
-
-                var sharedEntry = shared.GetEntry(key);
-                if (sharedEntry == null) return false; // key not defined in this collection
-
-                // Selected locale first.
-                var selected = table.GetEntry(sharedEntry.Id);
-                var selectedValue = selected != null ? selected.GetLocalizedString() : null;
-                if (!string.IsNullOrEmpty(selectedValue)) { value = selectedValue; return true; }
-
-                // Graceful fallback: any locale with a non-empty value (typically the source text).
-                var locales = UnityLocalizationSettings.AvailableLocales != null
-                    ? UnityLocalizationSettings.AvailableLocales.Locales : null;
-                if (locales != null)
-                {
-                    foreach (var loc in locales)
-                    {
-                        if (loc == null) continue;
-                        var localeTable = db.GetTableAsync(collection, loc).WaitForCompletion();
-                        var entry = localeTable != null ? localeTable.GetEntry(sharedEntry.Id) : null;
-                        var localeValue = entry != null ? entry.GetLocalizedString() : null;
-                        if (!string.IsNullOrEmpty(localeValue)) { value = localeValue; return true; }
-                    }
-                }
-
-                value = string.Empty; // key exists but untranslated everywhere
-                return true;
+                if (_unknownTablesReported.Add(table))
+                    Faolline.GraphLogging.Logging.Warning("GraphLocalization.Playback",
+                        $"[GraphLocalization] Table '{table}' is not in the localization manifest (renamed or cloned graph, " +
+                        "or tables not rebuilt). Searching every table instead — run Faolline ▸ Localization ▸ Build All " +
+                        "Tables, and look graphs up by their asset name.");
+                return Resolve(key, locale);
             }
-            catch
-            {
-                return false;
-            }
+
+            return _reader.TryRead(collection, key, out var value) && !string.IsNullOrEmpty(value) ? value : $"#{key}";
         }
     }
 }

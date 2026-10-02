@@ -23,6 +23,12 @@ namespace Faolline.GraphDialogue
         [SerializeField, Tooltip("Tint applied to this speaker's name in the built-in dialogue views.")]
         private Color _nameColor = Color.white;
 
+        [Header("Localization")]
+        [SerializeField, Tooltip("Optional localization table group (e.g. a chapter). The display name goes into its own " +
+            "table, GraphDialogue_Speakers_<group>, so it can be packaged/loaded separately (e.g. one Addressables " +
+            "group per chapter). Empty: the default speakers table, GraphDialogue_Speakers.")]
+        private string _localizationGroup = string.Empty;
+
         [Header("Expressions")]
         [SerializeField, Tooltip("Named expressions (key to presentation asset). The expression key on a dialogue line selects from this list.")]
         private List<SpeakerExpression> _expressions = new List<SpeakerExpression>();
@@ -40,6 +46,12 @@ namespace Faolline.GraphDialogue
 
         /// <summary>Tint applied to this speaker's name in the built-in views (defaults to white).</summary>
         public Color NameColor { get => _nameColor; set => _nameColor = value; }
+
+        /// <summary>
+        /// Optional localization table group (e.g. a chapter). Empty means the default speakers table. The table
+        /// name is derived, never stored: see <see cref="DialogueLocalizationKeys.ForSpeakerTable"/>.
+        /// </summary>
+        public string LocalizationGroup { get => _localizationGroup ?? string.Empty; set => _localizationGroup = value ?? string.Empty; }
 
         /// <summary>Read-only list of named expressions.</summary>
         public IReadOnlyList<SpeakerExpression> Expressions => _expressions;

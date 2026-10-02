@@ -386,14 +386,16 @@ namespace Faolline.GraphQuest
             return obj.TimeLimitSeconds;
         }
 
-        // Resolves a deterministic key through the provider; falls back to the authored text when no
+        // Resolves a deterministic key through the provider — in this quest's own table when the backend supports
+        // table-targeted lookups, so no other table is opened; falls back to the authored text when no
         // provider is set or the key resolves to ITS OWN "#key" missing-translation marker. Compares the
         // exact marker for THIS key rather than a bare StartsWith("#") — a genuine translation that happens
         // to start with '#' (a hashtag, "#1 Hunter", a room number) must not be mistaken for a missing key.
         private string ResolveWithFallback(string key, string authoredText)
         {
             if (_localization == null || string.IsNullOrEmpty(key)) return authoredText;
-            var resolved = _localization.Resolve(key, _localization.CurrentLocale);
+            var table = _quest != null ? LocalizationTableNames.ForGraph(_quest.name) : null;
+            var resolved = TableScopedLookup.Resolve(_localization, table, key, _localization.CurrentLocale);
             if (string.IsNullOrEmpty(resolved) || resolved == $"#{key}") return authoredText;
             return resolved;
         }
