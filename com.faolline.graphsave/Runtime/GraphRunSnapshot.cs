@@ -9,12 +9,13 @@ using Faolline.GraphLogging;
 namespace Faolline.GraphSave
 {
     /// <summary>
-    /// A neutral, serializable snapshot of a running graph: the execution context's parameters and collections
-    /// plus the current node id (and the graph id it belongs to). This is the whole save model — capture it with
-    /// <see cref="Capture(BaseContext, string, string)"/>, persist it however you like (it is a plain
-    /// JsonUtility-serializable object), and put a run back with <see cref="ApplyTo"/> + <c>BaseRunner.StartFrom</c>
-    /// (or the <see cref="Restore"/> convenience). graphcore exposes everything needed, so this layer adds no
-    /// engine dependency and is fully testable headlessly.
+    /// A neutral, serializable snapshot of a running graph: the execution context's parameters and collections,
+    /// the current node id (and the graph id it belongs to), and — when captured from a runner — the whole
+    /// execution stack (<see cref="Frames"/>). This is the whole save model — capture it with
+    /// <see cref="Capture(BaseRunner, BaseContext)"/>, persist it however you like (it is a plain
+    /// JsonUtility-serializable object), and put a run back with <see cref="Restore"/> from the ROOT graph
+    /// (<see cref="RootGraphId"/>). graphcore exposes everything needed, so this layer adds no engine dependency
+    /// and is fully testable headlessly.
     /// </summary>
     [Serializable]
     public class GraphRunSnapshot
@@ -33,6 +34,65 @@ namespace Faolline.GraphSave
 
         /// <summary>Every signal name that had been raised at least once in the context at capture time.</summary>
         public List<string> RaisedSignals = new List<string>();
+
+        /// <summary>
+        /// The run's execution stack when captured, root first and deepest last (graphcore's
+        /// <see cref="GraphRunFrame"/>, flattened for serialization). Filled by <see cref="Capture(BaseRunner, BaseContext)"/>;
+        /// empty for a snapshot captured from explicit ids, which then restores exactly as before (see <see cref="HasStack"/>).
+        /// </summary>
+        public List<Frame> Frames = new List<Frame>();
+
+        /// <summary>One saved level of the execution stack (see <see cref="Frames"/>).</summary>
+        [Serializable]
+        public class Frame
+        {
+            /// <summary>The <see cref="BaseGraph.GraphId"/> this level ran.</summary>
+            public string GraphId;
+
+            /// <summary>The node this level was on (for an enclosing level, the sub-graph node it was paused on).</summary>
+            public string NodeId;
+
+            /// <summary>How this level held values relative to the level above it (ignored for the root level).</summary>
+            public GraphRunContextMode ContextMode;
+        }
+
+        /// <summary><c>true</c> when the snapshot carries the run's execution stack (<see cref="Frames"/>).</summary>
+        public bool HasStack => Frames != null && Frames.Count > 0;
+
+        /// <summary>
+        /// The id of the graph to restore into: the root of the saved stack, or <see cref="GraphId"/> for a snapshot
+        /// without a stack. This is the only graph a game has to be able to load to restore the snapshot; every
+        /// sub-graph is reached through the root's own sub-graph nodes.
+        /// </summary>
+        public string RootGraphId => HasStack ? Frames[0]?.GraphId : GraphId;
+
+        /// <summary><see cref="Frames"/> as graphcore frames, root first; empty without a stack.</summary>
+        public IReadOnlyList<GraphRunFrame> GetExecutionPath()
+        {
+            var path = new List<GraphRunFrame>(Frames?.Count ?? 0);
+            if (Frames != null)
+                foreach (var f in Frames)
+                    path.Add(f == null ? null : new GraphRunFrame(f.GraphId, f.NodeId, f.ContextMode));   // a null level is reported by the check
+            return path;
+        }
+
+        /// <summary>
+        /// Checks, without modifying or logging anything, that this snapshot can be restored into
+        /// <paramref name="rootGraph"/>: for a snapshot with a stack, the root must be the saved root and every
+        /// saved level must still be reachable the same way (see graphcore's <see cref="GraphRunPath"/>). On
+        /// <c>false</c>, <paramref name="error"/> says what changed, at which level, and the deepest level still
+        /// valid — the game chooses its own fallback; <see cref="Restore"/> never guesses one.
+        /// A snapshot without a stack has nothing to check: any non-null graph passes, as before.
+        /// </summary>
+        public bool TryValidate(BaseGraph rootGraph, out GraphRunPathError error)
+        {
+            if (HasStack) return GraphRunPath.TryResolve(rootGraph, GetExecutionPath(), out error);
+
+            error = rootGraph == null
+                ? new GraphRunPathError(GraphRunPathErrorReason.NullRootGraph, 0, -1, "No root graph was supplied.")
+                : null;
+            return rootGraph != null;
+        }
 
         /// <summary>One context parameter, value flattened to a string with a type tag.</summary>
         [Serializable]
@@ -63,7 +123,12 @@ namespace Faolline.GraphSave
             public List<int> Counts = new List<int>();
         }
 
-        /// <summary>Captures <paramref name="context"/>'s parameters + collections (with quantities), tagged with the graph/node ids.</summary>
+        /// <summary>
+        /// Captures <paramref name="context"/>'s parameters + collections (with quantities), tagged with the graph/node
+        /// ids. No execution stack is recorded (<see cref="HasStack"/> is <c>false</c>): <see cref="Restore"/> re-enters
+        /// the given node in whatever graph it is handed. Prefer <see cref="Capture(BaseRunner, BaseContext)"/> for a
+        /// live run.
+        /// </summary>
         public static GraphRunSnapshot Capture(BaseContext context, string graphId = null, string currentNodeId = null)
         {
             var snapshot = new GraphRunSnapshot { GraphId = graphId, CurrentNodeId = currentNodeId };
@@ -91,12 +156,43 @@ namespace Faolline.GraphSave
         }
 
         /// <summary>
-        /// Convenience capture reading the live cursor (graph id + current node) off a runner. Note this records
-        /// the TOP frame's node only — capture at TOP-LEVEL checkpoints, not while the run has descended into a
-        /// sub-graph (see <see cref="Restore"/> for why a mid-sub-graph node cannot be restored).
+        /// Captures <paramref name="context"/> plus the runner's whole execution stack (<see cref="Frames"/>, root
+        /// first), so a snapshot taken inside sub-graphs restores inside them and then returns through every
+        /// enclosing graph. <see cref="GraphId"/>/<see cref="CurrentNodeId"/> stay the deepest level's.
+        /// <para>
+        /// Pass the run's root context (e.g. <c>GraphFlowDriver.Context</c>). Never throws, so it is safe to call
+        /// from inside a runner event such as <c>OnNodeEntered</c>.
+        /// </para>
         /// </summary>
         public static GraphRunSnapshot Capture(BaseRunner runner, BaseContext context)
-            => Capture(context, runner?.CurrentGraph?.GraphId, runner?.CurrentNode?.Id);
+        {
+            var snapshot = Capture(context, runner?.CurrentGraph?.GraphId, runner?.CurrentNode?.Id);
+            if (runner == null) return snapshot;
+
+            var path = runner.GetExecutionPath();
+            foreach (var frame in path)
+                snapshot.Frames.Add(new Frame { GraphId = frame.GraphId, NodeId = frame.NodeId, ContextMode = frame.ContextMode });
+            ReportUnsavedFreshLevels(runner, path);
+            return snapshot;
+        }
+
+        // A fresh-context level's values live in a context of its own, not in the one captured here, so a restore
+        // restarts it from its graph's defaults. That is exact only for the deepest level sitting on its graph's
+        // entry node (defaults + the replayed entry effects are all the state it had); anywhere else, say so loudly
+        // — but never throw: capture typically runs inside the runner's OnNodeEntered.
+        private static void ReportUnsavedFreshLevels(BaseRunner runner, IReadOnlyList<GraphRunFrame> path)
+        {
+            int last = path.Count - 1;
+            for (int i = 1; i <= last; i++)
+            {
+                var frame = path[i];
+                if (frame.ContextMode != GraphRunContextMode.Fresh) continue;
+                if (i == last && frame.NodeId == runner.CurrentGraph?.EntryNodeId) continue;
+                Logging.Error("GraphSave",
+                    $"[GraphSave] Capture: frame {i} (graph '{frame.GraphId}') runs on its own fresh context, whose values are not saved; " +
+                    "restoring this snapshot restarts that frame from its graph's defaults.");
+            }
+        }
 
         /// <summary>
         /// Writes this snapshot's parameters and collections back into <paramref name="context"/>. Variables
@@ -138,20 +234,38 @@ namespace Faolline.GraphSave
 
         /// <summary>
         /// Restores a run: applies this snapshot to <paramref name="context"/> (collections replaced, so the
-        /// snapshot is authoritative), then re-enters <paramref name="runner"/> at the saved node (or the graph
-        /// entry when none) via <c>StartFrom</c>.
+        /// snapshot is authoritative), then re-enters <paramref name="runner"/> at the saved node.
         /// <para>
-        /// <b>Top-level only.</b> <see cref="CurrentNodeId"/> is the TOP frame's node, and the snapshot does NOT
-        /// capture the execution stack. So restoring works for a node in <paramref name="graph"/> itself; a node
-        /// saved while the run had descended into a SUB-GRAPH (e.g. mid-dialogue) is not in <paramref name="graph"/>
-        /// and cannot be re-entered this way. Capture/restore at TOP-LEVEL checkpoints — pair this with
-        /// <c>BaseNodeData.IsCheckpoint</c> nodes (a checkpoint placed just before a long, non-replayable sequence
-        /// doubles as the save point: on load the run re-enters the checkpoint and the sequence simply replays).
+        /// <b>With a stack</b> (<see cref="HasStack"/>, any <see cref="Capture(BaseRunner, BaseContext)"/>):
+        /// <paramref name="graph"/> is the ROOT graph (<see cref="RootGraphId"/>). The whole stack is checked first
+        /// (<see cref="TryValidate"/>); on a mismatch a <c>[GraphSave]</c> error is logged and NOTHING is changed —
+        /// no value applied, runner untouched. Otherwise every level is rebuilt down the root's sub-graph nodes
+        /// (<c>BaseRunner.StartFromPath</c>) and only the deepest saved node is re-entered: when that sub-graph
+        /// ends, the run returns into its enclosing graphs as if it had never stopped. Limits: values written into
+        /// an Opens Scope sub-graph's local layer, and a fresh-context sub-graph's values, are not saved — those
+        /// levels restart from their graph's declared defaults (exact when saved on that sub-graph's entry node).
+        /// </para>
+        /// <para>
+        /// <b>Without a stack</b> (<see cref="Capture(BaseContext, string, string)"/>): re-enters
+        /// <paramref name="graph"/> at <see cref="CurrentNodeId"/> (or its entry when none) via <c>StartFrom</c>,
+        /// exactly as before.
         /// </para>
         /// </summary>
         public void Restore(BaseRunner runner, BaseGraph graph, BaseContext context, NodeExecutorRegistry registry = null)
         {
             if (runner == null || graph == null || context == null) return;
+            if (HasStack)
+            {
+                // Check the whole stack BEFORE applying anything: a refused restore leaves context and runner as they were.
+                if (!TryValidate(graph, out var error))
+                {
+                    Logging.Error("GraphSave", $"[GraphSave] Restore refused: {error.Message} Nothing was changed.");
+                    return;
+                }
+                ApplyTo(context, replaceCollections: true);
+                runner.StartFromPath(graph, GetExecutionPath(), context, registry ?? new NodeExecutorRegistry());
+                return;
+            }
             ApplyTo(context, replaceCollections: true);
             var nodeId = string.IsNullOrEmpty(CurrentNodeId) ? graph.EntryNodeId : CurrentNodeId;
             runner.StartFrom(graph, nodeId, context, registry ?? new NodeExecutorRegistry());

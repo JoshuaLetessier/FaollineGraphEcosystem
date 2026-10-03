@@ -1,13 +1,13 @@
 {
   "name": "com.faolline.graphsave",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "displayName": "Faolline GraphSave",
-  "description": "Optional persistence layer for the Faolline graph ecosystem: a neutral, serializable GraphRunSnapshot (capture/restore a run's context state + current node over com.faolline.graphcore) and an IGraphSaveStore seam. Bring your own backend, or add the com.faolline.graphsave.savesystem bridge to persist through com.faolline.savesystem.core.",
+  "description": "Optional persistence layer for the Faolline graph ecosystem: a neutral, serializable GraphRunSnapshot (capture/restore a run's context state + execution stack over com.faolline.graphcore) and an IGraphSaveStore seam. Bring your own backend, or add the com.faolline.graphsave.savesystem bridge to persist through com.faolline.savesystem.core.",
   "unity": "6000.0",
   "unityRelease": "0f1",
   "documentationUrl": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphsave/README.md",
   "dependencies": {
-    "com.faolline.graphcore": "0.43.4",
+    "com.faolline.graphcore": "0.44.0",
     "com.faolline.graphlogging": "0.2.0"
   },
   "keywords": [
