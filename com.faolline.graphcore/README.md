@@ -1,6 +1,6 @@
 # com.faolline.graphcore
 
-**Version**: 0.43.4 — **Unity**: 6000.x — **C#**: 9 / Roslyn
+**Version**: 0.44.0 — **Unity**: 6000.x — **C#**: 9 / Roslyn
 
 Shared foundation library for graph-based systems in the Faolline ecosystem. Provides the
 **data layer** (graph structure, nodes, edges) and the **execution runtime** (headless state
@@ -77,6 +77,9 @@ com.faolline.graphcore
 │       ├── RunnerState         Idle | NodeReady | Paused | Ended | WaitingForSignal | WaitingForTime
 │       ├── GraphExecutionState One stack frame (graph + current node + context)
 │       ├── HistoryEntry        Snapshot for GoBack / GoBackToCheckpoint
+│       ├── GraphRunFrame       Immutable description of one stack level (graph id + node id + context mode)
+│       ├── GraphRunPath        Pure check of a saved execution path against the graphs (TryResolve)
+│       ├── GraphRunPathError   Mismatch reason + failing level + deepest valid level
 │       └── GraphCycleException Thrown on SubGraph cycle detection
 │
 ├── Editor/Tools/
@@ -475,6 +478,36 @@ current node before restoring.
 Both are plain runtime API — no `#if UNITY_EDITOR` gating — so they're callable at gameplay time
 (a dialogue "back" button, a gameplay rewind), not just from editor tooling.
 
+**Execution path — save and restore the whole stack** (0.44.0):
+
+`GetExecutionPath()` reads every active level of a run, root first and deepest last, as immutable
+`GraphRunFrame`s (graph id, node id, `GraphRunContextMode` — `Shared`, `Scoped` or `Fresh`, read from what the
+run actually did). Every level but the deepest sits on the `SubGraphNodeData` that entered the next one.
+`StartFromPath(rootGraph, path, ctx, registry)` rebuilds such a path from the root graph the caller supplies —
+each deeper graph is reached only through the enclosing level's `SubGraphNodeData.TargetGraph`, never looked up by
+id — and re-enters **only the deepest node** (entry conditions, enter actions, executor, `OnNodeEntered`, as
+`StartFrom` does). The enclosing sub-graph nodes replay nothing, and when the deepest sub-graph ends the run
+returns into its parent exactly as an uninterrupted run would.
+
+```csharp
+var path = runner.GetExecutionPath();                 // e.g. [Chapter @ zoneSubGraph, Zone @ start]
+// … persist it (com.faolline.graphsave does this in GraphRunSnapshot) …
+
+if (!GraphRunPath.TryResolve(chapterGraph, path, out var error))   // pure check, nothing modified
+    Debug.LogError(error.Message);                    // error.Reason / FrameIndex / DeepestValidFrameIndex
+else
+    runner.StartFromPath(chapterGraph, path, ctx, registry);
+```
+
+`StartFromPath` re-checks the path and throws `GraphRunPathException` (carrying the same `GraphRunPathError`)
+**before** touching the runner or the context; a mismatch is never resumed partially. Reasons: wrong root, a
+graph repeated in the path (a corrupted save — a live run would have thrown `GraphCycleException`), a node gone,
+an enclosing node that is no longer a sub-graph node, has no target, targets another graph, or enters it with
+another context mode. `DeepestValidFrameIndex` leaves the fallback to the caller. A restored run uses the root's
+`HistoryDepth` and starts with an empty history. A `Scoped` level reopens its local layer and a `Fresh` level
+gets a new context, both seeded from the sub-graph's declared defaults: their own values are not part of the
+root context, so they restart from those defaults (exact when the save was taken on that sub-graph's entry node).
+
 ---
 
 ## Signals & timed waits
@@ -521,7 +554,8 @@ runner.Tick(Time.deltaTime);               // each frame; advances once the dura
 ```
 
 If a node sets both, the signal wait takes precedence. `StartFrom(graph, nodeId, ctx, registry)` starts at a
-given node (e.g. restoring a saved session) instead of the entry node.
+given node (e.g. restoring a saved session) instead of the entry node; `StartFromPath` restores a whole stack
+(see *Execution path* under [BaseRunner](#baserunner)).
 
 ## Context API reference
 
@@ -632,6 +666,7 @@ whole ecosystem's 1118-test green suite):
 | BaseRunner linear | `Tests/EditMode/Execution/BaseRunnerLinearTests.cs` | Start, Proceed, entry/exit actions, EntryConditions, ChooseById |
 | BaseRunner SubGraph | `Tests/EditMode/Execution/BaseRunnerSubGraphTests.cs` | Push/pop, context isolation, cycle detection, nested depth |
 | BaseRunner history | `Tests/EditMode/Execution/BaseRunnerHistoryTests.cs` | GoBack, GoBackToCheckpoint, depth cap, unlimited |
+| Execution path | `Tests/EditMode/Execution/ExecutionPath*Tests.cs` | `GetExecutionPath`, `StartFromPath` (2–3 levels, context modes, continuation, history), `GraphRunPath.TryResolve` mismatch reasons |
 | Editor tooling | `Tests/EditMode/Editor/` | `GraphValidator` (structural + type-mismatch), `SignalConstantsGenerator`/codegen core |
 
 ---
