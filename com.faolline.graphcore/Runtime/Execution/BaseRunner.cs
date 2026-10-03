@@ -286,6 +286,100 @@ namespace Faolline.GraphCore
         }
 
         /// <summary>
+        /// The run's active levels, root first and deepest last (see <see cref="GraphRunFrame"/>): every level but
+        /// the deepest sits on the <see cref="SubGraphNodeData"/> that entered the next one. Empty before
+        /// <see cref="Start"/>. A copy, not a live view. Never throws, so it is safe to call from any runner event.
+        /// </summary>
+        public IReadOnlyList<GraphRunFrame> GetExecutionPath()
+        {
+            var frames = new List<GraphExecutionState>(_graphStack);   // Stack enumerates top → bottom
+            var path   = new List<GraphRunFrame>(frames.Count);
+            for (int i = frames.Count - 1; i >= 0; i--)
+            {
+                var frame = frames[i];
+                var mode  = GraphRunContextMode.Shared;
+                if (i < frames.Count - 1)
+                {
+                    // Read what EnterSubGraph actually did, not the node's current flags.
+                    if (frame.OpenedLocalContext) mode = GraphRunContextMode.Scoped;
+                    else if (!ReferenceEquals(frame.FrameContext, frames[i + 1].FrameContext)) mode = GraphRunContextMode.Fresh;
+                }
+                path.Add(new GraphRunFrame(frame.Graph != null ? frame.Graph.GraphId : null, frame.CurrentNodeId, mode));
+            }
+            return path;
+        }
+
+        /// <summary>
+        /// Rebuilds a whole run from <paramref name="rootGraph"/> down a saved execution path (as read by
+        /// <see cref="GetExecutionPath"/>) and re-enters ONLY the deepest level's node — entry conditions, enter
+        /// actions, executor and <see cref="OnNodeEntered"/>, as <see cref="StartFrom"/> does. The enclosing levels
+        /// stay on their <see cref="SubGraphNodeData"/> without replaying anything; when the deepest level ends, the
+        /// run returns into its parent exactly as an uninterrupted run would.
+        /// </summary>
+        /// <exception cref="ArgumentNullException">A null root graph, path or context.</exception>
+        /// <exception cref="GraphRunPathException">
+        /// The path does not match the graphs (see <see cref="GraphRunPath"/>). Thrown before the runner or the
+        /// context is modified.
+        /// </exception>
+        public void StartFromPath(BaseGraph rootGraph, IReadOnlyList<GraphRunFrame> path, BaseContext context, NodeExecutorRegistry registry)
+        {
+            if (rootGraph == null)
+                throw new ArgumentNullException(nameof(rootGraph), "[GraphCore] Cannot start: root graph is null.");
+            if (path == null)
+                throw new ArgumentNullException(nameof(path), "[GraphCore] Cannot start: execution path is null.");
+            if (context == null)
+                throw new ArgumentNullException(nameof(context), "[GraphCore] Cannot start: context is null.");
+            if (!GraphRunPath.TryResolve(rootGraph, path, out var graphs, out var error))
+                throw new GraphRunPathException(error);
+
+            _context   = context;
+            _registry  = registry;
+            _rootGraph = rootGraph;
+            _graphStack.Clear();
+            _history.Clear();
+            _historySaturationWarned = false;
+            _historyTrimmed = false;
+            ClearIndexes();
+
+            // Rebuild every level as EnterSubGraph built it, without entering any node. A scoped level's layer and a
+            // fresh level's context restart from the sub-graph's declared defaults: their values are not part of
+            // the root context a save holds.
+            var frameContext = context;
+            for (int i = 0; i < path.Count; i++)
+            {
+                bool openedScope = false;
+                if (i > 0)
+                {
+                    switch (path[i].ContextMode)
+                    {
+                        case GraphRunContextMode.Scoped:
+                            frameContext.BeginLocalContext(graphs[i]);
+                            openedScope = true;
+                            break;
+                        case GraphRunContextMode.Fresh:
+                            frameContext = new BaseContext();
+                            frameContext.InitFromGraph(graphs[i]);
+                            break;
+                    }
+                }
+                _graphStack.Push(new GraphExecutionState
+                {
+                    Graph              = graphs[i],
+                    CurrentNodeId      = path[i].NodeId,
+                    FrameContext       = frameContext,
+                    OpenedLocalContext = openedScope
+                });
+            }
+
+            _state = RunnerState.NodeReady;
+#if UNITY_EDITOR
+            EditorWireProbe();   // registers the root context, as Start does
+#endif
+            _context = frameContext;
+            EnterCurrentNode();
+        }
+
+        /// <summary>
         /// Advances execution: runs exit-actions on the current node, evaluates outgoing
         /// edges, snapshots history, then enters the next node. No-op when <c>State == Ended</c>.
         /// </summary>

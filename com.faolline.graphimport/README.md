@@ -1,7 +1,7 @@
 # Faolline GraphImport
 
-**Version**: 0.6.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.4,
-`com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphdialoguesystem` ≥ 0.20.0,
+**Version**: 0.6.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.44.0,
+`com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphdialoguesystem` ≥ 0.20.1,
 `com.faolline.graphlogging` ≥ 0.2.0, `com.unity.nuget.newtonsoft-json` ≥ 3.2.2
 
 Editor-only tooling that generates real [`graphdialoguesystem`](../com.faolline.graphdialoguesystem/)

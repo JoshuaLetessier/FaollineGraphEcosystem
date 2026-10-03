@@ -4,6 +4,39 @@ All notable changes to **com.faolline.graphsave** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.11.0]
+
+### Added — snapshots taken inside sub-graphs restore the whole stack
+
+`GraphRunSnapshot` was documented "top-level only": it kept the deepest level's node and nothing above it, so a
+save taken inside a zone sub-graph came back with the zone as the root (its End ended the whole run), and the
+game had to resolve that sub-graph by id.
+
+- **`Frames`** (new serialized list of **`GraphRunSnapshot.Frame`**: `GraphId`, `NodeId`, `ContextMode`) —
+  filled by `Capture(runner, context)` from graphcore's `BaseRunner.GetExecutionPath()`, root first.
+  `GraphId`/`CurrentNodeId` keep naming the deepest level.
+- **`HasStack`**, **`RootGraphId`** (the root of the stack — the only graph a game has to load; `GraphId` without a
+  stack), **`GetExecutionPath()`**.
+- **`TryValidate(rootGraph, out GraphRunPathError)`** — pure check of the stack against the root graph (graphcore's
+  `GraphRunPath`): reason, failing level, deepest valid level.
+- **`Restore(runner, graph, context, registry)`** (same signature) — with a stack, `graph` is the ROOT: the stack is
+  checked BEFORE anything is applied; a mismatch logs a `[GraphSave]` error and changes nothing; otherwise
+  `ApplyTo` + `BaseRunner.StartFromPath` rebuilds every level and re-enters only the deepest node.
+- **`Capture(runner, context)`** never throws (it typically runs inside `OnNodeEntered`) and logs a `[GraphSave]`
+  error for each fresh-context sub-graph level whose values the snapshot cannot hold (any such level but the
+  deepest one sitting on its entry node).
+
+### Changed
+- **A snapshot captured from a runner is now tied to its root graph.** Restoring it into a graph whose `GraphId` is
+  not `RootGraphId` is refused with an error — even for a snapshot taken at root level — instead of re-entering a
+  same-id node in whatever graph was passed. Snapshots without a stack (`Capture(context, graphId, nodeId)`, or
+  JSON written before this version, which reads back with an empty `Frames`) restore exactly as before.
+- Floor `com.faolline.graphcore` → 0.44.0 (execution path API).
+
+### Limits (documented)
+- Values written into an Opens Scope sub-graph's local layer, and a fresh-context sub-graph's values, are not
+  saved: those levels restart from their declared defaults (exact for a save taken on their entry node).
+
 ## [0.10.0]
 
 ### Changed

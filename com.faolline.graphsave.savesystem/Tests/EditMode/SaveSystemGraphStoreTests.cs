@@ -177,6 +177,56 @@ namespace Faolline.GraphSave.UnitySaveSystem.Tests
         }
 
         [Test]
+        public void Json_Backend_RoundTripsAStackedSnapshot()
+        {
+            // The real JsonSaveSystem serializes with Newtonsoft, which (unlike JsonUtility) also writes public
+            // get-only properties (HasStack, RootGraphId). They must come back recomputed from Frames, not break the load.
+            var child = ScriptableObject.CreateInstance<BaseGraph>();
+            var root = ScriptableObject.CreateInstance<BaseGraph>();
+            var store = new SaveSystemGraphStore(new JsonSaveSystem<GraphRunSnapshot>());
+            var slot = "graphsave_bridge_stack_" + System.Guid.NewGuid().ToString("N");
+            try
+            {
+                child.AddNode(new StartNodeData { Id = "z-start", NodeType = StartNodeData.NodeTypeId });
+                child.AddNode(new EndNodeData { Id = "z-end", NodeType = EndNodeData.NodeTypeId });
+                child.AddEdge(new BaseEdgeData { Id = "ze", FromNodeId = "z-start", ToNodeId = "z-end" });
+                child.EntryNodeId = "z-start";
+                root.AddNode(new StartNodeData { Id = "c-start", NodeType = StartNodeData.NodeTypeId });
+                root.AddNode(new SubGraphNodeData { Id = "c-sub", NodeType = SubGraphNodeData.NodeTypeId, TargetGraph = child, OpensScope = true });
+                root.AddNode(new EndNodeData { Id = "c-end", NodeType = EndNodeData.NodeTypeId });
+                root.AddEdge(new BaseEdgeData { Id = "c1", FromNodeId = "c-start", ToNodeId = "c-sub" });
+                root.AddEdge(new BaseEdgeData { Id = "c2", FromNodeId = "c-sub", ToNodeId = "c-end" });
+                root.EntryNodeId = "c-start";
+
+                var ctx = new BaseContext();
+                ctx.Set<int>("score", 4);
+                var runner = new BaseRunner();
+                runner.Start(root, ctx, new NodeExecutorRegistry());
+                runner.Proceed();   // c-sub
+                runner.Proceed();   // → z-start (scoped)
+
+                store.Save(slot, GraphRunSnapshot.Capture(runner, ctx));
+                var loaded = store.Load(slot);
+
+                Assert.IsNotNull(loaded);
+                Assert.IsTrue(loaded.HasStack);
+                Assert.AreEqual(root.GraphId, loaded.RootGraphId);
+                Assert.AreEqual(2, loaded.Frames.Count);
+                Assert.AreEqual("c-sub", loaded.Frames[0].NodeId);
+                Assert.AreEqual(child.GraphId, loaded.Frames[1].GraphId);
+                Assert.AreEqual("z-start", loaded.Frames[1].NodeId);
+                Assert.AreEqual(GraphRunContextMode.Scoped, loaded.Frames[1].ContextMode);
+                Assert.IsTrue(loaded.TryValidate(root, out var error), error?.Message);
+            }
+            finally
+            {
+                store.Delete(slot);
+                Object.DestroyImmediate(root);
+                Object.DestroyImmediate(child);
+            }
+        }
+
+        [Test]
         public void Json_Backend_PathTraversalSlot_DoesNotEscapeAndDegradesGracefully()
         {
             // End-to-end through the REAL JsonSaveSystem (not a synthetic double): confirms the external

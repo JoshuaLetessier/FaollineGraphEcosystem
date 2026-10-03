@@ -1,6 +1,6 @@
 # com.faolline.graphgameflow
 
-**Version**: 0.19.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.4, `com.faolline.graphsave` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.2.0
+**Version**: 0.20.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.44.0, `com.faolline.graphsave` ≥ 0.11.0, `com.faolline.graphlogging` ≥ 0.2.0
 
 The **orchestrator / host layer** of the Faolline graph ecosystem. graphcore and graphstandard are strictly
 **headless** (no `MonoBehaviour`, no scene knowledge); graphgameflow is the adapter that **runs** those graphs
@@ -311,15 +311,17 @@ input" node, so a driver-wide timeout would false-positive on the ecosystem's mo
 ### Multiple root graphs — `IGraphCatalog` (since 0.17.0)
 
 A project with more than one independently-loadable root graph (e.g. one per chapter) needs a way to turn
-a saved `GraphRunSnapshot.GraphId` back into the `BaseGraph` asset it refers to — `Restore` needs that asset
-handed to it directly. `GameFlowContext.GraphCatalog` is that seam:
+a saved snapshot back into the ROOT `BaseGraph` asset it was captured under — `Restore`/`Boot(snapshot)` need
+that asset handed to them directly. The key is `GraphRunSnapshot.RootGraphId` (graphsave 0.11.0): sub-graphs
+are reached through the root's own sub-graph nodes, so **only root graphs need to be resolvable**.
+`GameFlowContext.GraphCatalog` is that seam:
 
 ```csharp
 context.GraphCatalog = new DirectGraphCatalog();          // zero-dependency default
-((DirectGraphCatalog)context.GraphCatalog).Register(graph.GraphId, graph);
+((DirectGraphCatalog)context.GraphCatalog).Register(chapterGraph.GraphId, chapterGraph);
 
-context.GraphCatalog.Resolve(snapshot.GraphId,
-    onResolved: graph => snapshot.Restore(runner, graph, context),
+context.GraphCatalog.Resolve(snapshot.RootGraphId,
+    onResolved: root => snapshot.Restore(runner, root, context),
     onFailed:   reason => Debug.LogError(reason));
 ```
 
@@ -331,7 +333,7 @@ resolved via an Addressable key instead of an in-memory map.
 whatever the catalog behind it:
 
 ```csharp
-context.GraphCatalog.Release(snapshot.GraphId);
+context.GraphCatalog.Release(snapshot.RootGraphId);
 ```
 
 `Release` frees everything the catalog holds for that key — every successful `Resolve` made with it, so
@@ -423,7 +425,13 @@ the flow resumes and loads B — all over one shared `GameFlowContext`.
 ## Additional driver features
 
 - **`Boot(GraphRunSnapshot)`**: restore a saved flow by booting from a `com.faolline.graphsave` snapshot,
-  resuming execution at the persisted node and context state.
+  resuming execution at the persisted node and context state. A snapshot captured from the runner
+  (`GraphRunSnapshot.Capture(driver.Runner, driver.Context)`, e.g. in `OnNodeEntered` on checkpoints and Start
+  nodes) carries the whole stack (since 0.20.0): set `Graph` to its ROOT (`snapshot.RootGraphId`) and a save
+  taken inside a sub-graph resumes there, then returns into the enclosing graphs when it ends. A snapshot that
+  does not match `Graph` logs a `[GraphGameFlow]` error and the driver stays inert with the supplied context
+  untouched — check first with `snapshot.TryValidate(driver.Graph, out var error)` to handle it yourself
+  (`Boot` is deferred when called from a driver event, so it cannot return the outcome).
 - **`UseUnscaledTime`**: when enabled, the driver feeds `Time.unscaledDeltaTime` instead of
   `Time.deltaTime`, so timed waits run independently of `Time.timeScale` (useful during pause menus).
 

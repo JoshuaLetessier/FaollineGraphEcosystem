@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.20.1]
+
+### Documentation
+- **`DialoguePlayer.SaveState`/`RestoreFrom` and `DialogueSessionState` are single-level, now stated.** The state
+  keeps only the current node and re-enters it in the player's own graph, so a state saved inside a sub-dialogue
+  cannot be restored. graphsave 0.11.0 restores whole sub-graph stacks for game flows through graphcore 0.44.0's
+  `BaseRunner.GetExecutionPath`/`StartFromPath`; the dialogue player may adopt that later. No code change.
+
 ## [0.20.0]
 
 ### Added

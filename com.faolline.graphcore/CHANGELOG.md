@@ -4,6 +4,32 @@ All notable changes to **com.faolline.graphcore** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.44.0]
+
+### Added — save and restore the whole execution stack
+
+A run inside a sub-graph could only be put back as a single level: `StartFrom` rebuilds ONE frame, so a save taken
+inside a zone sub-graph resumed that zone as if it were the root, and its End ended the whole run instead of
+returning into the chapter graph. The stack was private, so no layer above could do better.
+
+- **`BaseRunner.GetExecutionPath()`** — every active level, root first, as immutable **`GraphRunFrame`**s (graph id,
+  node id, **`GraphRunContextMode`** `Shared`/`Scoped`/`Fresh` read from what the run actually did). A copy; never
+  throws, so it is safe from inside `OnNodeEntered`.
+- **`BaseRunner.StartFromPath(rootGraph, path, context, registry)`** — rebuilds the stack from the supplied root,
+  reaching each deeper graph only through the enclosing `SubGraphNodeData.TargetGraph` (no lookup by id), and
+  re-enters ONLY the deepest node. Enclosing sub-graph nodes replay nothing; ending the deepest sub-graph returns
+  into its parent as in an uninterrupted run. Root `HistoryDepth`, empty history, editor live-cursor probe wired as
+  by `Start`. `Scoped` levels reopen their local layer and `Fresh` levels get a new context, both seeded from the
+  sub-graph's declared defaults.
+- **`GraphRunPath.TryResolve(rootGraph, path, out error)`** (+ an overload returning each level's graph) — the pure
+  check `StartFromPath` runs first. **`GraphRunPathError`**: `Reason` (**`GraphRunPathErrorReason`**: wrong root,
+  repeated graph, node missing, not a sub-graph node, no target, other target, other context mode),
+  `FrameIndex`, `DeepestValidFrameIndex` (the caller picks any fallback — nothing is resumed partially), `Message`.
+- **`GraphRunPathException`** — thrown by `StartFromPath` on a mismatching path, before the runner or the context
+  is touched.
+
+Additive only: `Start`, `StartFrom`, `GoBack` and every existing member are unchanged.
+
 ## [0.43.4]
 
 ### Fixed

@@ -1,6 +1,6 @@
 # com.faolline.graphTest
 
-**Version**: 0.3.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.4, `com.faolline.graphstandard` ≥ 0.18.0
+**Version**: 0.3.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.44.0, `com.faolline.graphstandard` ≥ 0.18.0
 
 **Internal verification package — not for distribution.**
 

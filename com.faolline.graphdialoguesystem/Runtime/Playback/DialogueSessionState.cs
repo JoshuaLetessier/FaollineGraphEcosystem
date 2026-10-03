@@ -17,6 +17,11 @@ namespace Faolline.GraphDialogue
     /// the current position; you decide when to call it (e.g. on <c>OnLine</c> when the node
     /// has <c>IsCheckpoint = true</c>). On restore, enter-conditions and enter-actions of the
     /// checkpoint node re-fire, which is safe for idempotent checkpoint logic.
+    ///
+    /// Single level: only the node the player is on is kept, and it is re-entered in the player's own graph,
+    /// so a state captured while a sub-dialogue was playing cannot be restored. graphcore's
+    /// <c>BaseRunner.GetExecutionPath</c>/<c>StartFromPath</c> (used by graphsave's <c>GraphRunSnapshot</c>) is
+    /// the way to lift that limit later.
     /// </summary>
     [Serializable]
     public sealed class DialogueSessionState
