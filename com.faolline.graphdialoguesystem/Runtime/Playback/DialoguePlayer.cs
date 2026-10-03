@@ -156,6 +156,10 @@ namespace Faolline.GraphDialogue
         /// Best called when <see cref="CurrentStep"/> is a <see cref="LineStep"/> on a checkpoint node
         /// (<c>IsCheckpoint == true</c>), but any active step is accepted.
         /// </para>
+        /// <para>
+        /// Single level: a step emitted from inside a sub-dialogue is saved by its node id only, which
+        /// <see cref="RestoreFrom"/> cannot find in the player's own graph. Save on the dialogue's own checkpoints.
+        /// </para>
         /// </summary>
         public DialogueSessionState SaveState(string graphGuid = "")
         {
@@ -166,7 +170,8 @@ namespace Faolline.GraphDialogue
         /// <summary>
         /// Resumes playback from a previously saved <see cref="DialogueSessionState"/>.
         /// The saved context values are applied before the node is re-entered, so enter-actions
-        /// that read context will see the restored values.
+        /// that read context will see the restored values. The node is re-entered in the player's own
+        /// graph, as a single level (see <see cref="SaveState"/>).
         /// </summary>
         public void RestoreFrom(DialogueSessionState state)
         {

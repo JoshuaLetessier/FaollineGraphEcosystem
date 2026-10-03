@@ -1,6 +1,6 @@
 # com.faolline.graphdialoguesystem
 
-**Version**: 0.20.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore` ≥ 0.43.4, `com.faolline.graphlocalization` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.2.0
+**Version**: 0.20.1 — **Unity**: 6000.x — depends on `com.faolline.graphcore` ≥ 0.44.0, `com.faolline.graphlocalization` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.2.0
 
 A graph-based dialogue library built **entirely on top of** `com.faolline.graphcore` (zero core
 changes), following the `com.faolline.starterGraph` package shape. Author branching, multi-speaker,
@@ -126,6 +126,12 @@ player.Start();
 
 `DialoguePlayer` wraps graphcore's `BaseRunner` — sub-dialogue nesting, cycle detection, and history
 come from the foundation.
+
+**Save / restore is single-level.** `SaveState()` → `DialogueSessionState` keeps the current node and the
+context; `RestoreFrom(state)` re-enters that node in the player's own graph. A state saved while a
+sub-dialogue was playing is therefore not restorable this way — save on checkpoints of the dialogue itself.
+(A game flow saved with graphsave's `GraphRunSnapshot` restores whole sub-graph stacks since graphsave 0.11.0;
+the player could adopt the same graphcore API, `BaseRunner.GetExecutionPath`/`StartFromPath`, later.)
 
 ### Waiting on a signal or timer
 
