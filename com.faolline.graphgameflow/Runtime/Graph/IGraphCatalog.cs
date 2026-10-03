@@ -6,9 +6,11 @@ namespace Faolline.GraphGameFlow
     /// <summary>
     /// The single seam through which a host resolves a stable <see cref="BaseGraph.GraphId"/> to its concrete
     /// asset, independent of any specific loading technology — the graph-side mirror of <see cref="ISceneLoader"/>.
-    /// Needed the moment a project has more than one independently-loadable root graph: <c>GraphRunSnapshot.GraphId</c>
-    /// is informational only, and its <c>Restore</c> requires the caller to already have the <see cref="BaseGraph"/>
-    /// in hand, so restoring a save needs a <c>GraphId → asset</c> resolution step from somewhere.
+    /// Needed the moment a project has more than one independently-loadable root graph: <c>GraphRunSnapshot.Restore</c>
+    /// and <c>GraphFlowDriver.Boot(snapshot)</c> require the caller to already have the ROOT <see cref="BaseGraph"/> in
+    /// hand, so restoring a save needs a <c>GraphRunSnapshot.RootGraphId → asset</c> resolution step from somewhere.
+    /// Sub-graphs never need resolving: a snapshot's stack is rebuilt through the root's own sub-graph nodes, so
+    /// only root graphs have to be registered here.
     /// <para>
     /// Callback-based (not <c>Task</c>/<c>async</c>) to match <see cref="ISceneLoader"/>'s own synchronous-call/
     /// async-callback idiom — resolution may be instantaneous (a direct in-memory lookup) or take several frames

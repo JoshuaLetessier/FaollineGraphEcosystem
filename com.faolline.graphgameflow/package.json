@@ -1,14 +1,14 @@
 {
   "name": "com.faolline.graphgameflow",
-  "version": "0.19.0",
+  "version": "0.20.0",
   "displayName": "Faolline GraphGameFlow",
   "description": "Orchestrator / host layer above com.faolline.graphcore: the Unity host bridge that runs the headless graph runtime inside a live scene. Provides a MonoBehaviour driver (GraphFlowDriver) and the standard scene actions (LoadSceneAction / UnloadSceneAction). This is the one ecosystem layer where Unity-specific concerns (MonoBehaviour, SceneManager, the frame tick) are intentionally allowed.",
   "unity": "6000.0",
   "unityRelease": "0f1",
   "documentationUrl": "https://github.com/JoshuaLetessier/FaollineGraphEcosystem/blob/master/com.faolline.graphgameflow/README.md",
   "dependencies": {
-    "com.faolline.graphcore": "0.43.4",
-    "com.faolline.graphsave": "0.10.0",
+    "com.faolline.graphcore": "0.44.0",
+    "com.faolline.graphsave": "0.11.0",
     "com.faolline.graphlogging": "0.2.0"
   },
   "keywords": [

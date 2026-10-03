@@ -4,6 +4,27 @@ All notable changes to **com.faolline.graphgameflow** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.20.0]
+
+### Added — `Boot(GraphRunSnapshot)` restores the whole stack
+
+A save taken inside a sub-graph (a zone under a chapter graph) booted back with that sub-graph as the driver's
+graph: its End ended the whole flow, and the game had to resolve the sub-graph by id.
+
+- With a snapshot captured from the runner (graphsave 0.11.0, `HasStack`), **`Graph` is the ROOT** of the saved
+  stack (`snapshot.RootGraphId`). `Boot(snapshot)` rebuilds every level through the root's sub-graph nodes
+  (graphcore `BaseRunner.StartFromPath`) and re-enters only the deepest saved node; when that sub-graph ends, the
+  flow continues in the enclosing graphs with the driver's usual events and auto-advance.
+- The snapshot is checked against `Graph` BEFORE the context or the runner is created. A mismatch (wrong root,
+  content changed since the save) logs a `[GraphGameFlow]` error and the driver stays inert, the supplied
+  context untouched. `snapshot.TryValidate(Graph, out error)` gives the same verdict without booting — use it
+  before a deferred `Boot` to handle the case yourself.
+- Snapshots without a stack boot exactly as before (`StartFrom(Graph, CurrentNodeId)`).
+
+### Changed
+- `IGraphCatalog` doc and README: resolve `snapshot.RootGraphId`; only root graphs need to be resolvable.
+- Floors: `com.faolline.graphcore` → 0.44.0, `com.faolline.graphsave` → 0.11.0.
+
 ## [0.19.0]
 
 ### Changed (breaking) — `IGraphCatalog.Release(string graphId)`

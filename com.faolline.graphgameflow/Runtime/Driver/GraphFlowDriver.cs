@@ -203,6 +203,14 @@ namespace Faolline.GraphGameFlow
         /// to the context, then starts the runner at the saved node. The snapshot's context values overwrite
         /// the graph's defaults — this is the "load game" path. Requires a <c>com.faolline.graphsave</c>
         /// dependency.
+        /// <para>
+        /// A snapshot captured from a runner carries the whole execution stack: <see cref="Graph"/> must then be
+        /// its ROOT graph (<c>snapshot.RootGraphId</c>). The stack is rebuilt down through the root's sub-graph
+        /// nodes and only the deepest saved node is re-entered, so a save taken inside a sub-graph returns into
+        /// the enclosing graphs when it ends. A snapshot that does not match <see cref="Graph"/> logs a
+        /// <c>[GraphGameFlow]</c> error and the driver stays inert, the supplied context untouched — check first
+        /// with <c>snapshot.TryValidate(Graph, out var error)</c> to handle that case yourself.
+        /// </para>
         /// </summary>
         public void Boot(GraphSave.GraphRunSnapshot snapshot, GameFlowContext context = null, NodeExecutorRegistry registry = null)
         {
@@ -225,6 +233,13 @@ namespace Faolline.GraphGameFlow
                     Logging.Warning("GraphGameFlow", "[GraphGameFlow] GraphFlowDriver.Boot: no graph assigned; staying inert.");
                     return;
                 }
+                // Checked before the context or the runner is touched: a refused snapshot changes nothing.
+                if (snapshot.HasStack && !snapshot.TryValidate(_graph, out var pathError))
+                {
+                    Logging.Error("GraphGameFlow",
+                        $"[GraphGameFlow] GraphFlowDriver.Boot: the snapshot does not match graph '{_graph.name}': {pathError.Message} Staying inert.");
+                    return;
+                }
 
                 _context = context ?? new GameFlowContext { SceneLoader = SceneLoader };
                 if (_context.SceneLoader == null) _context.SceneLoader = SceneLoader;
@@ -237,8 +252,15 @@ namespace Faolline.GraphGameFlow
                 _running = true;
                 _autoAdvancePending = false;
 
-                var nodeId = string.IsNullOrEmpty(snapshot.CurrentNodeId) ? _graph.EntryNodeId : snapshot.CurrentNodeId;
-                _runner.StartFrom(_graph, nodeId, _context, registry ?? new NodeExecutorRegistry());
+                if (snapshot.HasStack)
+                {
+                    _runner.StartFromPath(_graph, snapshot.GetExecutionPath(), _context, registry ?? new NodeExecutorRegistry());
+                }
+                else
+                {
+                    var nodeId = string.IsNullOrEmpty(snapshot.CurrentNodeId) ? _graph.EntryNodeId : snapshot.CurrentNodeId;
+                    _runner.StartFrom(_graph, nodeId, _context, registry ?? new NodeExecutorRegistry());
+                }
                 DrainAutoAdvance();
             }
             finally { EndDispatch(); }
