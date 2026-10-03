@@ -1,6 +1,6 @@
 # Faolline GraphGameFlow — Addressables Bridge
 
-**Version**: 0.7.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.19.0, `com.unity.addressables` ≥ 2.2.2, `com.faolline.graphlogging` ≥ 0.2.0
+**Version**: 0.7.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphgameflow` ≥ 0.20.0, `com.unity.addressables` ≥ 2.2.2, `com.faolline.graphlogging` ≥ 0.2.0
 
 Optional T3 adapter: an `ISceneLoader`/`ISceneUnloader` (from `com.faolline.graphgameflow`) backed by
 `com.unity.addressables`, so `LoadSceneAction`/`UnloadSceneAction` can load a scene by **Addressable key**

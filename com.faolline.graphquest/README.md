@@ -1,6 +1,6 @@
 # Faolline GraphQuest
 
-**Version**: 0.12.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.43.4, `com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphlocalization` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.2.0
+**Version**: 0.12.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.44.0, `com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphlocalization` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.2.0
 
 `com.faolline.graphquest` — a **quest & objective** domain library above
 [`com.faolline.graphcore`](../com.faolline.graphcore) and [`com.faolline.graphstandard`](../com.faolline.graphstandard).
@@ -143,7 +143,7 @@ remove a prerequisite edge.
 
 ## Dependencies
 
-- `com.faolline.graphcore` 0.43.4
+- `com.faolline.graphcore` 0.44.0
 - `com.faolline.graphstandard` 0.18.0
 - `com.faolline.graphlocalization` 0.10.0 (the neutral text-resolution abstraction; localization is opt-in at
   runtime via `UseLocalization`, the CSV provider needs no Unity Localization)
