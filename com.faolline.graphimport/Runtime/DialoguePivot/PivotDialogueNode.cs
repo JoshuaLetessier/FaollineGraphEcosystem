@@ -39,11 +39,14 @@ namespace Faolline.GraphImport
 
     public sealed class PivotChoiceOption
     {
+        /// <summary>Non-empty and unique within its dialogue (validated by <see cref="DialoguePivotBuilder"/>).</summary>
+        public string Id { get; }
         public string Label { get; }
         public string Next { get; }
 
-        public PivotChoiceOption(string label, string next)
+        public PivotChoiceOption(string id, string label, string next)
         {
+            Id = id;
             Label = label;
             Next = next;
         }

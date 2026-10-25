@@ -1,6 +1,6 @@
 # com.faolline.graphdialoguesystem
 
-**Version**: 0.20.1 — **Unity**: 6000.x — depends on `com.faolline.graphcore` ≥ 0.44.0, `com.faolline.graphlocalization` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.2.0
+**Version**: 0.21.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore` ≥ 0.44.0, `com.faolline.graphlocalization` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.2.0
 
 A graph-based dialogue library built **entirely on top of** `com.faolline.graphcore` (zero core
 changes), following the `com.faolline.starterGraph` package shape. Author branching, multi-speaker,
@@ -99,7 +99,8 @@ Each handle exposes the shared wiring surface — `.To(target)`, `.AsEntry()`, `
 `.Wait(seconds)` / `.ResumeWhen(...)` for signal/time-gated lines (see *Waiting on a signal or timer*
 below) — and `AddSubGraph(...)` wires a jump into another, separately-authored graph. A line adds
 `.Say(text)` / `.Expression(key)`; a choice adds `.Option(label, condition?)`, whose own handle routes
-with `.To(target)` / `.When(condition)`.
+with `.To(target)` / `.When(condition)` / `.Id(...)` (a stable option id, hence a stable `choice_{id}`
+localization key — set it before `.To(...)`, which reads it as the edge port).
 
 ---
 

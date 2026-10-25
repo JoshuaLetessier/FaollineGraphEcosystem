@@ -5,7 +5,8 @@ namespace Faolline.GraphImport
 {
     /// <summary>
     /// Turns a raw <see cref="InterchangeDialogueSet"/> into validated <see cref="PivotDialogue"/>s:
-    /// unique node ids, a matching entry point, no dangling "next" references (FR-006), sub-dialogue
+    /// unique node ids, present and unique option ids, a matching entry point, no dangling "next"
+    /// references (FR-006), sub-dialogue
     /// targets resolved within the set, and no sub-dialogue reference cycle (FR-007) — all before any
     /// asset is touched.
     /// </summary>
@@ -19,11 +20,15 @@ namespace Faolline.GraphImport
             {
                 var nodes = new Dictionary<string, PivotDialogueNode>();
                 var seenIds = new HashSet<string>();
+                var seenOptionIds = new HashSet<string>();
 
                 foreach (var rawNode in dialogue.Nodes)
                 {
                     if (!seenIds.Add(rawNode.Id))
                         throw new DialogueStructureException(dialogue.Id, rawNode.Id, DialogueStructureIssue.DuplicateNodeId);
+
+                    if (rawNode.Kind == InterchangeNodeKind.Choice && rawNode.Options != null)
+                        ValidateOptionIds(dialogue.Id, rawNode, seenOptionIds);
 
                     nodes[rawNode.Id] = ConvertNode(dialogue, rawNode, interchange.Dialogues);
                 }
@@ -52,7 +57,7 @@ namespace Faolline.GraphImport
                     return new PivotLine(node.Id, node.SpeakerKey, node.Text, node.Next);
 
                 case InterchangeNodeKind.Choice:
-                    var options = node.Options.Select(o => new PivotChoiceOption(o.Label, o.Next)).ToList();
+                    var options = node.Options.Select(o => new PivotChoiceOption(o.Id, o.Label, o.Next)).ToList();
                     return new PivotChoice(node.Id, options);
 
                 case InterchangeNodeKind.End:
@@ -61,6 +66,23 @@ namespace Faolline.GraphImport
                 default: // SubDialogue
                     var target = ResolveDialogueRef(dialogue.Id, node.Id, node.TargetDialogue, allDialogues);
                     return new PivotSubDialogueLink(node.Id, new PivotReference("Dialogues", target.Id), node.Next);
+            }
+        }
+
+        /// <summary>
+        /// An option's id is its localization key's source (see DialogueAssetGenerator.StableOptionId),
+        /// so a missing one can't fall back to a fresh GUID — that key would match no exported
+        /// translation. Unique across the whole dialogue, not just the choice: every option of a
+        /// dialogue lands in the same table, keyed by the same prefix.
+        /// </summary>
+        static void ValidateOptionIds(string dialogueId, InterchangeNode choice, HashSet<string> seenOptionIds)
+        {
+            foreach (var option in choice.Options)
+            {
+                if (string.IsNullOrWhiteSpace(option.Id))
+                    throw new DialogueStructureException(dialogueId, choice.Id, DialogueStructureIssue.MissingOptionId);
+                if (!seenOptionIds.Add(option.Id))
+                    throw new DialogueStructureException(dialogueId, choice.Id, DialogueStructureIssue.DuplicateOptionId, option.Id);
             }
         }
 

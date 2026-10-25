@@ -7,6 +7,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
 Reconstructed retroactively from git history (this file did not exist before 0.5.0) — entries before 0.5.0
 describe what actually shipped in each tagged version, including the quest/flow pipeline later removed.
 
+## [0.7.0]
+
+### Fixed
+- **Choice option translations could never land.** The interchange JSON carried no option id, so every generated
+  option got a fresh GUID and its key (`choice_{guid}`) matched nothing the authoring tool exported. Options now
+  keep the tool's own id, namespaced like nodes: key `choice_{dialogueId}_{optionId}`
+  (`DialogueAssetGenerator.StableOptionId`), stable across regenerations.
+
+### Changed
+- **Breaking — interchange contract:** each `choice` option now requires an `id`, unique within its dialogue
+  (`options: [{ id, label, next }]`). A missing or duplicate id is rejected before anything is written
+  (`DialogueStructureIssue.MissingOptionId` / `DuplicateOptionId`; `DialogueStructureException.OptionId` names the
+  duplicate). No fallback id: a generated one would reproduce the unmatchable keys. Exports from older
+  dialogue-studio versions must be re-exported.
+- `InterchangeChoiceOption` and `PivotChoiceOption` gain `Id` (new first constructor parameter).
+- Floor: `com.faolline.graphdialoguesystem` → `0.21.0` (`DialogueOptionHandle.Id`).
+
 ## [0.6.0]
 
 ### Added

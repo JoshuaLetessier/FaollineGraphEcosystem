@@ -25,6 +25,14 @@ namespace Faolline.GraphDialogue
             return _choiceHandle;
         }
 
+        /// <summary>Overrides the auto-GUID with a stable id — which is also the option's localization key
+        /// (<c>choice_{id}</c>) and its edge port, so call it before <see cref="To"/>.</summary>
+        public DialogueOptionHandle Id(string id)
+        {
+            if (!string.IsNullOrWhiteSpace(id)) _option.Id = id;
+            return this;
+        }
+
         /// <summary>Sets the option's gating condition (only available when it passes).</summary>
         public DialogueOptionHandle When(BaseCondition condition)
         {

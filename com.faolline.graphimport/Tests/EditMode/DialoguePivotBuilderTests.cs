@@ -14,8 +14,8 @@ namespace Faolline.GraphImport.Tests
                     ""nodes"": [
                         { ""id"": ""n1"", ""kind"": ""line"", ""speakerKey"": ""tsuki"", ""text"": ""Bonjour"", ""next"": ""n2"" },
                         { ""id"": ""n2"", ""kind"": ""choice"", ""options"": [
-                            { ""label"": ""Demander"", ""next"": ""n3"" },
-                            { ""label"": ""Partir"", ""next"": ""n4"" }
+                            { ""id"": ""o1"", ""label"": ""Demander"", ""next"": ""n3"" },
+                            { ""id"": ""o2"", ""label"": ""Partir"", ""next"": ""n4"" }
                         ] },
                         { ""id"": ""n3"", ""kind"": ""end"", ""reason"": ""Completed"", ""outcomeLabel"": ""asked"" },
                         { ""id"": ""n4"", ""kind"": ""end"", ""reason"": ""Completed"", ""outcomeLabel"": ""left"" }
@@ -45,10 +45,75 @@ namespace Faolline.GraphImport.Tests
             var choice = (PivotChoice)dialogue.Nodes["n2"];
             Assert.AreEqual(2, choice.Options.Count);
             Assert.AreEqual("n3", choice.Options[0].Next);
+            Assert.AreEqual("o1", choice.Options[0].Id);
+            Assert.AreEqual("o2", choice.Options[1].Id);
 
             var end = (PivotEnd)dialogue.Nodes["n3"];
             Assert.AreEqual("Completed", end.Reason);
             Assert.AreEqual("asked", end.OutcomeLabel);
+        }
+
+        [Test]
+        public void Build_OptionWithoutId_Throws()
+        {
+            const string json = @"{
+                ""dialogues"": [
+                    { ""id"": ""DLG_001"", ""name"": ""Test"", ""entryNodeId"": ""c"", ""nodes"": [
+                        { ""id"": ""c"", ""kind"": ""choice"", ""options"": [
+                            { ""id"": ""o1"", ""label"": ""A"", ""next"": ""e"" },
+                            { ""label"": ""B"", ""next"": ""e"" }
+                        ] },
+                        { ""id"": ""e"", ""kind"": ""end"", ""reason"": ""Completed"" }
+                    ] }
+                ]
+            }";
+            var interchange = InterchangeDialogueSet.LoadFromJson(json);
+
+            var ex = Assert.Throws<DialogueStructureException>(() => new DialoguePivotBuilder().Build(interchange));
+            Assert.AreEqual(DialogueStructureIssue.MissingOptionId, ex.Issue);
+            Assert.AreEqual("DLG_001", ex.DialogueId);
+            Assert.AreEqual("c", ex.NodeId);
+        }
+
+        [Test]
+        public void Build_OptionIdReusedAcrossTwoChoicesOfTheSameDialogue_Throws()
+        {
+            const string json = @"{
+                ""dialogues"": [
+                    { ""id"": ""DLG_001"", ""name"": ""Test"", ""entryNodeId"": ""c1"", ""nodes"": [
+                        { ""id"": ""c1"", ""kind"": ""choice"", ""options"": [ { ""id"": ""o1"", ""label"": ""A"", ""next"": ""c2"" } ] },
+                        { ""id"": ""c2"", ""kind"": ""choice"", ""options"": [ { ""id"": ""o1"", ""label"": ""B"", ""next"": ""e"" } ] },
+                        { ""id"": ""e"", ""kind"": ""end"", ""reason"": ""Completed"" }
+                    ] }
+                ]
+            }";
+            var interchange = InterchangeDialogueSet.LoadFromJson(json);
+
+            var ex = Assert.Throws<DialogueStructureException>(() => new DialoguePivotBuilder().Build(interchange));
+            Assert.AreEqual(DialogueStructureIssue.DuplicateOptionId, ex.Issue);
+            Assert.AreEqual("c2", ex.NodeId);
+            Assert.AreEqual("o1", ex.OptionId);
+        }
+
+        [Test]
+        public void Build_SameOptionIdInTwoDifferentDialogues_IsAllowed()
+        {
+            const string json = @"{
+                ""dialogues"": [
+                    { ""id"": ""DLG_A"", ""name"": ""A"", ""entryNodeId"": ""c"", ""nodes"": [
+                        { ""id"": ""c"", ""kind"": ""choice"", ""options"": [ { ""id"": ""o1"", ""label"": ""A"", ""next"": ""e"" } ] },
+                        { ""id"": ""e"", ""kind"": ""end"", ""reason"": ""Completed"" }
+                    ] },
+                    { ""id"": ""DLG_B"", ""name"": ""B"", ""entryNodeId"": ""c"", ""nodes"": [
+                        { ""id"": ""c"", ""kind"": ""choice"", ""options"": [ { ""id"": ""o1"", ""label"": ""B"", ""next"": ""e"" } ] },
+                        { ""id"": ""e"", ""kind"": ""end"", ""reason"": ""Completed"" }
+                    ] }
+                ]
+            }";
+            var interchange = InterchangeDialogueSet.LoadFromJson(json);
+
+            Assert.DoesNotThrow(() => new DialoguePivotBuilder().Build(interchange),
+                "option ids only need to be unique within a dialogue — the generator namespaces them by dialogue id.");
         }
 
         [Test]

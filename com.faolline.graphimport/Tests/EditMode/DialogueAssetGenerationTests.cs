@@ -36,8 +36,8 @@ namespace Faolline.GraphImport.Editor.Tests
                 ["n1"] = new PivotLine("n1", "tsuki", "Bonjour", "n2"),
                 ["n2"] = new PivotChoice("n2", new List<PivotChoiceOption>
                 {
-                    new PivotChoiceOption("Demander", "n3"),
-                    new PivotChoiceOption("Partir", "n4")
+                    new PivotChoiceOption("o1", "Demander", "n3"),
+                    new PivotChoiceOption("o2", "Partir", "n4")
                 }),
                 ["n3"] = new PivotEnd("n3", "Completed", "asked"),
                 ["n4"] = new PivotEnd("n4", "Completed", "left")
@@ -147,6 +147,65 @@ namespace Faolline.GraphImport.Editor.Tests
             var expectedKey = DialogueLocalizationKeys.ForLine(lineNode);
             Assert.AreEqual("line_DLG_001_IO1R3hKAREHK", expectedKey);
             Assert.AreEqual(expectedKey, DialogueLocalizationKeys.LinePrefix + DialogueAssetGenerator.StableNodeId(dialogue, "IO1R3hKAREHK"));
+        }
+
+        const string ChoiceDialogueJson = @"{
+            ""dialogues"": [
+                {
+                    ""id"": ""DLG_001"",
+                    ""name"": ""Parler au tavernier"",
+                    ""entryNodeId"": ""c1"",
+                    ""nodes"": [
+                        { ""id"": ""c1"", ""kind"": ""choice"", ""options"": [
+                            { ""id"": ""kQ3vX9aLm2Pz"", ""label"": ""Demander"", ""next"": ""e1"" },
+                            { ""id"": ""Hn7tR4wYc8Bd"", ""label"": ""Partir"", ""next"": ""e2"" }
+                        ] },
+                        { ""id"": ""e1"", ""kind"": ""end"", ""reason"": ""Completed"", ""outcomeLabel"": ""asked"" },
+                        { ""id"": ""e2"", ""kind"": ""end"", ""reason"": ""Completed"", ""outcomeLabel"": ""left"" }
+                    ]
+                }
+            ]
+        }";
+
+        [Test]
+        public void Generate_ChoiceOptions_KeysComeFromTheExportedOptionIds_AndStillRoute()
+        {
+            var dialogue = new DialoguePivotBuilder().Build(InterchangeDialogueSet.LoadFromJson(ChoiceDialogueJson)).Single();
+            var entry = new PlanEntry("dialogue:DLG_001", PlanEntryKind.DialogueAsset, ScratchFolder + "/DLG_001.asset", "DLG_001", dialogue);
+
+            new DialogueAssetGenerator(new NullProjectAssetResolver()).Generate(entry);
+
+            var graph = AssetDatabase.LoadAssetAtPath<DialogueGraph>(entry.ProposedPath);
+            var choiceNode = graph.Nodes.OfType<Faolline.GraphCore.ChoiceNodeData>().Single();
+            var keys = choiceNode.Choices.Select(DialogueLocalizationKeys.ForChoice).ToList();
+
+            // The bug: these were choice_{fresh GUID}, so the authoring tool's exported translations
+            // (keyed from its own option ids) could never land.
+            CollectionAssert.AreEqual(new[] { "choice_DLG_001_kQ3vX9aLm2Pz", "choice_DLG_001_Hn7tR4wYc8Bd" }, keys);
+            Assert.AreEqual(keys[0], DialogueLocalizationKeys.ChoicePrefix + DialogueAssetGenerator.StableOptionId(dialogue, "kQ3vX9aLm2Pz"));
+
+            // The option id is also the edge port — each option must still reach its own target.
+            var endByOutcome = graph.Nodes.OfType<Faolline.GraphCore.EndNodeData>().ToDictionary(n => n.OutcomeLabel, n => n.Id);
+            var targetOf = graph.Edges.Where(e => e.FromNodeId == choiceNode.Id).ToDictionary(e => e.PortName, e => e.ToNodeId);
+            Assert.AreEqual(endByOutcome["asked"], targetOf["DLG_001_kQ3vX9aLm2Pz"]);
+            Assert.AreEqual(endByOutcome["left"], targetOf["DLG_001_Hn7tR4wYc8Bd"]);
+        }
+
+        [Test]
+        public void Generate_ChoiceOptions_RegeneratingReproducesTheSameKeys()
+        {
+            var dialogue = new DialoguePivotBuilder().Build(InterchangeDialogueSet.LoadFromJson(ChoiceDialogueJson)).Single();
+            var generator = new DialogueAssetGenerator(new NullProjectAssetResolver());
+
+            var first = new PlanEntry("dialogue:DLG_001", PlanEntryKind.DialogueAsset, ScratchFolder + "/First.asset", "DLG_001", dialogue);
+            var second = new PlanEntry("dialogue:DLG_001", PlanEntryKind.DialogueAsset, ScratchFolder + "/Second.asset", "DLG_001", dialogue);
+            generator.Generate(first);
+            generator.Generate(second);
+
+            List<string> KeysOf(PlanEntry e) => AssetDatabase.LoadAssetAtPath<DialogueGraph>(e.ProposedPath)
+                .Nodes.OfType<Faolline.GraphCore.ChoiceNodeData>().Single().Choices.Select(DialogueLocalizationKeys.ForChoice).ToList();
+
+            CollectionAssert.AreEqual(KeysOf(first), KeysOf(second));
         }
 
         [Test]

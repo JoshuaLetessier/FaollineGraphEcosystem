@@ -7,8 +7,8 @@
       "nodes": [
         { "id": "n1", "kind": "line", "speakerKey": "antagoniste", "text": "Bien joué, tu as gagné.", "next": "n2" },
         { "id": "n2", "kind": "choice", "options": [
-          { "label": "Continuer la conversation", "next": "n3" },
-          { "label": "Partir", "next": "n4" }
+          { "id": "o1", "label": "Continuer la conversation", "next": "n3" },
+          { "id": "o2", "label": "Partir", "next": "n4" }
         ] },
         { "id": "n3", "kind": "subDialogue", "targetDialogue": "Rencontre avec Tsuki" },
         { "id": "n4", "kind": "end", "reason": "Completed", "outcomeLabel": "left_early" }

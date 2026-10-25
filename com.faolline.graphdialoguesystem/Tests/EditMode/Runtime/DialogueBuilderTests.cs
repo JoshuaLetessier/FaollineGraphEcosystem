@@ -69,6 +69,35 @@ namespace Faolline.GraphDialogue.Tests
         }
 
         [Test]
+        public void Option_Id_OverridesTheGuid_ForBothTheKeyAndTheEdgePort()
+        {
+            var b = new DialogueGraphBuilder();
+            var hub = b.AddChoice().AsEntry();
+            var end = b.AddEnd();
+            hub.Option("Partir").Id("opt_leave").To(end);
+
+            var g = Track(b.Build());
+            var choice = g.Nodes.OfType<ChoiceNodeData>().Single();
+            var option = choice.Choices.Single();
+
+            Assert.AreEqual("opt_leave", option.Id);
+            Assert.AreEqual("choice_opt_leave", DialogueLocalizationKeys.ForChoice(option));
+            Assert.IsTrue(g.Edges.Any(e => e.FromNodeId == choice.Id && e.PortName == "opt_leave"),
+                "the edge is keyed by the overridden id, so the option still routes.");
+        }
+
+        [Test]
+        public void Option_IdBlank_KeepsTheGuid()
+        {
+            var b = new DialogueGraphBuilder();
+            var hub = b.AddChoice().AsEntry();
+            hub.Option("Partir").Id("  ");
+
+            var option = Track(b.Build()).Nodes.OfType<ChoiceNodeData>().Single().Choices.Single();
+            Assert.IsTrue(System.Guid.TryParse(option.Id, out _), "a blank id never erases the generated one.");
+        }
+
+        [Test]
         public void TitleProvider_ResolvesAuthoredTitles_WithNoTable()
         {
             var b = new DialogueGraphBuilder();

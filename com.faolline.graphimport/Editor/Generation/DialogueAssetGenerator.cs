@@ -18,7 +18,8 @@ namespace Faolline.GraphImport.Editor
     /// time from data the authoring tool already has, rather than only knowable after generation. It
     /// also means re-authoring a dialogue and regenerating it (after deleting the stale asset, per
     /// this pipeline's never-overwrite rule) reproduces the SAME keys, instead of orphaning every
-    /// existing translation on each regeneration.
+    /// existing translation on each regeneration. Choice options get the same treatment
+    /// (<see cref="StableOptionId"/>).
     /// </summary>
     public sealed class DialogueAssetGenerator : IAssetGenerator
     {
@@ -36,6 +37,14 @@ namespace Faolline.GraphImport.Editor
         /// dialogues' same-named nodes from colliding on the same localization key.
         /// </summary>
         public static string StableNodeId(PivotDialogue dialogue, string pivotNodeId) => $"{dialogue.Id}_{pivotNodeId}";
+
+        /// <summary>
+        /// Same rule for choice options: the option's id — hence its localization key
+        /// (<c>DialogueLocalizationKeys.ForChoice</c> = <c>choice_{dialogueId}_{optionId}</c>) — comes
+        /// from the authoring tool's own option id, namespaced by the dialogue's id, instead of the
+        /// builder's fresh GUID that no exported translation could ever match.
+        /// </summary>
+        public static string StableOptionId(PivotDialogue dialogue, string pivotOptionId) => $"{dialogue.Id}_{pivotOptionId}";
 
         public void Generate(PlanEntry entry)
         {
@@ -63,7 +72,7 @@ namespace Faolline.GraphImport.Editor
                     case PivotChoice choice:
                         var choiceHandle = builder.AddChoice().Id(stableId);
                         foreach (var option in choice.Options)
-                            pendingOptions.Add((choiceHandle.Option(option.Label), option.Next));
+                            pendingOptions.Add((choiceHandle.Option(option.Label).Id(StableOptionId(dialogue, option.Id)), option.Next));
                         if (node.Id == dialogue.EntryNodeId) choiceHandle.AsEntry();
                         handle = choiceHandle;
                         break;

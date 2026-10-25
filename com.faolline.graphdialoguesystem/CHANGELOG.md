@@ -4,6 +4,14 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.21.0]
+
+### Added
+- **`DialogueOptionHandle.Id(string)`** — a choice option built in code can now carry a stable id instead of the
+  fresh GUID `.Option(label)` assigns. The id is the option's localization key (`choice_{id}`) and its edge port, so
+  set it before `.To(...)`. Lets an external authoring tool know a choice's key ahead of generation (graphimport
+  0.7.0 uses it), the same way `.Id(...)` on a node already did for line keys.
+
 ## [0.20.1]
 
 ### Documentation

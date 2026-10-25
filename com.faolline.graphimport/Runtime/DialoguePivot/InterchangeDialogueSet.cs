@@ -46,7 +46,7 @@ namespace Faolline.GraphImport
             var n = (JObject)token;
             var kind = ParseKind((string)n["kind"]);
             var options = (n["options"] as JArray)?.Select(o => new InterchangeChoiceOption(
-                (string)o["label"], (string)o["next"]
+                (string)o["id"], (string)o["label"], (string)o["next"]
             )).ToList();
 
             return new InterchangeNode(
@@ -129,11 +129,14 @@ namespace Faolline.GraphImport
 
     public sealed class InterchangeChoiceOption
     {
+        /// <summary>The authoring tool's own option id — the source of the option's localization key.</summary>
+        public string Id { get; }
         public string Label { get; }
         public string Next { get; }
 
-        public InterchangeChoiceOption(string label, string next)
+        public InterchangeChoiceOption(string id, string label, string next)
         {
+            Id = id;
             Label = label;
             Next = next;
         }

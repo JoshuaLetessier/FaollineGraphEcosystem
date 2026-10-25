@@ -42,7 +42,7 @@
     {
       "displayName": "Graph Dialogue System",
       "package": "com.faolline.graphdialoguesystem",
-      "version": "0.20.1",
+      "version": "0.21.0",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphlocalization", "com.faolline.graphlogging" ]
     },
@@ -100,9 +100,9 @@
     {
       "displayName": "Graph Import (data → graph generation)",
       "package": "com.faolline.graphimport",
-      "version": "0.6.0",
+      "version": "0.7.0",
       "required": false,
-      "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphstandard", "com.faolline.graphquest", "com.faolline.graphgameflow", "com.faolline.graphdialoguesystem", "com.faolline.graphlogging" ]
+      "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphstandard", "com.faolline.graphdialoguesystem", "com.faolline.graphlogging" ]
     }
   ]
 }

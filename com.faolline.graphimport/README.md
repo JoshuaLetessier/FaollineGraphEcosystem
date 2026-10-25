@@ -1,7 +1,7 @@
 # Faolline GraphImport
 
-**Version**: 0.6.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.44.0,
-`com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphdialoguesystem` ≥ 0.20.1,
+**Version**: 0.7.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.44.0,
+`com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphdialoguesystem` ≥ 0.21.0,
 `com.faolline.graphlogging` ≥ 0.2.0, `com.unity.nuget.newtonsoft-json` ≥ 3.2.2
 
 Editor-only tooling that generates real [`graphdialoguesystem`](../com.faolline.graphdialoguesystem/)
@@ -60,8 +60,8 @@ One JSON file, a list of dialogues, each a list of nodes:
       "nodes": [
         { "id": "n1", "kind": "line", "speakerKey": "antagoniste", "text": "Bien joué, tu as gagné.", "next": "n2" },
         { "id": "n2", "kind": "choice", "options": [
-          { "label": "Continuer la conversation", "next": "n3" },
-          { "label": "Partir", "next": "n4" }
+          { "id": "o1", "label": "Continuer la conversation", "next": "n3" },
+          { "id": "o2", "label": "Partir", "next": "n4" }
         ] },
         { "id": "n3", "kind": "subDialogue", "targetDialogue": "Rencontre avec Tsuki" },
         { "id": "n4", "kind": "end", "reason": "Completed", "outcomeLabel": "left_early" }
@@ -79,12 +79,12 @@ Node kinds (`InterchangeNodeKind`) — only the fields for that kind matter:
 | `kind` | Fields | Becomes |
 |---|---|---|
 | `line` | `speakerKey`, `text`, `next` | a `DialogueLineHandle`, speaker resolved via `IProjectAssetResolver.ResolveSpeaker` |
-| `choice` | `options: [{ label, next }, …]` | a `DialogueChoiceHandle` with one option per entry |
+| `choice` | `options: [{ id, label, next }, …]` — `id` required, unique within the dialogue | a `DialogueChoiceHandle` with one option per entry |
 | `end` | `reason` (a `graphcore` `EndReason` name, e.g. `"Completed"`), `outcomeLabel` | a `DialogueEndHandle` |
 | `subDialogue` | `targetDialogue` (an id **or** a name — resolved unambiguously within the same file) | a `DialogueSubGraphHandle`, target resolved by `IProjectAssetResolver.ResolveGraph` |
 
 `DialoguePivotBuilder.Build()` validates before anything else runs: every node id unique within its
-dialogue, `entryNodeId` matches a real node, every `next`/option target exists, every `subDialogue` target
+dialogue, every choice option has an `id` unique within its dialogue, `entryNodeId` matches a real node, every `next`/option target exists, every `subDialogue` target
 resolves to exactly one dialogue (by id, falling back to name) with no reference cycle across dialogues.
 Any violation throws (`DialogueStructureException` / `DialogueReferenceException` / `DialogueCycleException`)
 — nothing partial is ever written.
@@ -129,13 +129,21 @@ target — the resolver only ever looks up assets that are part of the same plan
 target generated in an *earlier* run, or hand-authored outside this pipeline, resolves to `null` (the
 same documented-safe "incomplete node" state `graphcore` already uses for an unset `SubGraphNodeData`).
 
-## Stable node ids → stable localization keys
+## Stable ids → stable localization keys
 
-Every generated node's id is overridden to `{dialogueId}_{pivotNodeId}` (`DialogueAssetGenerator.StableNodeId`)
-instead of the builder's default fresh GUID. This makes a line's localization key
-(`DialogueLocalizationKeys.ForLine`, derived from the node's own id) predictable ahead of time — and means
-re-authoring a dialogue and regenerating it (after deleting the stale asset, per the never-overwrite rule
-above) reproduces the *same* keys instead of orphaning every existing translation on each regeneration.
+Every generated node's id is overridden to `{dialogueId}_{pivotNodeId}` (`DialogueAssetGenerator.StableNodeId`),
+and every choice option's id to `{dialogueId}_{optionId}` (`DialogueAssetGenerator.StableOptionId`), instead of
+the builder's default fresh GUIDs. This makes the localization keys predictable ahead of time, so an authoring
+tool can export translations under the keys the generated asset will use:
+
+| Text | Key |
+|---|---|
+| a line | `line_{dialogueId}_{nodeId}` |
+| a choice option | `choice_{dialogueId}_{optionId}` |
+
+It also means re-authoring a dialogue and regenerating it (after deleting the stale asset, per the
+never-overwrite rule above) reproduces the *same* keys instead of orphaning every existing translation on each
+regeneration.
 
 ## Speaker resolution
 
