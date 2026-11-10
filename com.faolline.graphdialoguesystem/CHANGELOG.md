@@ -4,6 +4,21 @@ All notable changes to **com.faolline.graphdialoguesystem** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.22.0]
+
+### Added
+- **Graph-text write-back** for the new graphlocalization check: `DialogueGraphLocalizationAdapter` copies a table
+  text back into the line's `Title`, the choice option's `Title` or the speaker's `Display Name Fallback`
+  (*Faolline ▸ Localization ▸ Update Graph Texts From Tables*, or `GraphTextSync.Apply`). Speakers are matched by
+  name key **and** table, so a speaker filed elsewhere is left alone.
+
+### Changed
+- **README: the table is the reference.** The node/choice `Title` was described as "the source text the table is
+  derived from", which read as "edit the text in the node". It is only the seed copied into the table on the key's
+  first build; the build never overwrites a filled cell and the game shows the table text. New section *The table is
+  the reference*, Quick start and `titleFallback` wording fixed.
+- Floor `com.faolline.graphlocalization` → 0.11.0 (`ApplyGraphText` / `ApplyGlobalText` hooks).
+
 ## [0.21.0]
 
 ### Added

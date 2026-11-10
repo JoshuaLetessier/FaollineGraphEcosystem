@@ -53,6 +53,54 @@ namespace Faolline.GraphDialogue.Editor
         }
 
         /// <summary>
+        /// Graph-text write-back (054): a line key → the line's <c>Title</c>, a choice key → the option's
+        /// <c>Title</c> — the texts <see cref="ExtractGraphKeys"/> seeds the table with.
+        /// </summary>
+        protected override bool ApplyGraphText(DialogueGraph graph, GraphTextDrift drift)
+        {
+            if (graph?.Nodes == null) return false;
+            foreach (var node in graph.Nodes)
+            {
+                if (node is DialogueLineNodeData line && DialogueLocalizationKeys.ForLine(line) == drift.Key)
+                {
+                    line.Title = drift.TableText;
+                    return true;
+                }
+
+                if (node is ChoiceNodeData choiceNode && choiceNode.Choices != null)
+                    foreach (var choice in choiceNode.Choices)
+                        if (choice != null && DialogueLocalizationKeys.ForChoice(choice) == drift.Key)
+                        {
+                            choice.Title = drift.TableText;
+                            return true;
+                        }
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Graph-text write-back (054) for a speaker name: every <see cref="Speaker"/> whose name key and table
+        /// match the drift gets the table text as its <see cref="Speaker.DisplayNameFallback"/> (with Undo). A
+        /// speaker sharing the id but filed in another table (a reported build error) is left alone.
+        /// </summary>
+        protected override bool ApplyGlobalText(GraphTextDrift drift)
+        {
+            bool written = false;
+            foreach (var guid in AssetDatabase.FindAssets("t:Speaker"))
+            {
+                var speaker = AssetDatabase.LoadAssetAtPath<Speaker>(AssetDatabase.GUIDToAssetPath(guid));
+                if (speaker == null || DialogueLocalizationKeys.ForSpeaker(speaker) != drift.Key) continue;
+                if (DialogueLocalizationKeys.ForSpeakerTable(speaker) != drift.Table) continue;
+
+                Undo.RecordObject(speaker, WriteGraphTextUndoName);
+                speaker.DisplayNameFallback = drift.TableText;
+                EditorUtility.SetDirty(speaker);
+                written = true;
+            }
+            return written;
+        }
+
+        /// <summary>
         /// Files each speaker's display-name key under its table group (<see cref="DialogueLocalizationKeys.SpeakerTableGroup"/>),
         /// visiting speakers in asset-path order so the outcome is deterministic. Two speakers sharing a
         /// <see cref="Speaker.SpeakerId"/> but not a group is reported as an error naming both assets; the first
