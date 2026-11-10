@@ -157,7 +157,7 @@ namespace Faolline.GraphTest.Tests
             [DialogueTestsPlay]   = new[] { DialogueRuntime, CoreRuntime, CoreRuntimeCore, LocRuntime, TestRunner, TestRunnerEditor },
             [DialogueUITests]     = new[] { DialogueUI, DialogueRuntime, CoreRuntime, CoreRuntimeCore, LocRuntime, TextMeshPro, UGui, TestRunner, TestRunnerEditor },
             [DialogueUITestsPlay] = new[] { DialogueUI, DialogueRuntime, CoreRuntime, CoreRuntimeCore, LocRuntime, TextMeshPro, UGui, TestRunner, TestRunnerEditor },
-            [QuestTests]          = new[] { QuestRuntime, QuestEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, StdRuntime, LocRuntime, SaveRuntime, TestRunner, TestRunnerEditor },
+            [QuestTests]          = new[] { QuestRuntime, QuestEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, StdRuntime, LocRuntime, LocEditor, SaveRuntime, TestRunner, TestRunnerEditor },
             [FlowTests]           = new[] { FlowRuntime, FlowEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, SaveRuntime, TestRunner, TestRunnerEditor },
             [FlowTestsPlay]       = new[] { FlowRuntime, CoreRuntime, CoreRuntimeCore, TestRunner },
             [ImportTests]         = new[]
