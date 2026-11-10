@@ -96,6 +96,22 @@ namespace Faolline.GraphLocalization
             return first;
         }
 
+        /// <summary>
+        /// The tables the build writes for <paramref name="libName"/>, in build order: one per graph
+        /// (<see cref="LocalizationTableNames.ForGraph"/>), then one per global-key group
+        /// (<see cref="LocalizationTableNames.ForGroup"/>). The single definition of which table holds which key.
+        /// </summary>
+        public IReadOnlyList<LocalizationTableKeys> Tables(string libName)
+        {
+            var result = new List<LocalizationTableKeys>(_graphs.Count);
+            foreach (var graph in _graphs)
+                result.Add(new LocalizationTableKeys(LocalizationTableNames.ForGraph(graph.GraphName), true,
+                    graph.GraphGuid, graph.GraphName, null, graph.Keys));
+            foreach (var (group, keys) in GlobalKeysByGroup())
+                result.Add(new LocalizationTableKeys(LocalizationTableNames.ForGroup(libName, group), false, null, null, group, keys));
+            return result;
+        }
+
         /// <summary>Gets all unique keys across graphs and global keys.</summary>
         public HashSet<string> GetAllKeys()
         {
@@ -106,6 +122,34 @@ namespace Faolline.GraphLocalization
             foreach (var key in _globalKeys)
                 keys.Add(key.Key);
             return keys;
+        }
+    }
+
+    /// <summary>One table of a lib's build and the keys filed in it (see <see cref="LocalizationDatabase.Tables"/>).</summary>
+    public readonly struct LocalizationTableKeys
+    {
+        /// <summary>Table base name (no <c>_Text</c> suffix, no <c>.csv</c> extension).</summary>
+        public readonly string Table;
+        /// <summary>True for a graph's own table, false for a global-key group table.</summary>
+        public readonly bool IsGraphTable;
+        /// <summary>Asset GUID of the graph this table belongs to; null for a global-key group table.</summary>
+        public readonly string GraphGuid;
+        /// <summary>Name of the graph this table belongs to; null for a global-key group table.</summary>
+        public readonly string GraphName;
+        /// <summary>Global-key group (null = the lib's default group, or a graph table).</summary>
+        public readonly string Group;
+        /// <summary>The keys filed in this table.</summary>
+        public readonly IReadOnlyList<LocalizationKeyEntry> Keys;
+
+        public LocalizationTableKeys(string table, bool isGraphTable, string graphGuid, string graphName, string group,
+            IReadOnlyList<LocalizationKeyEntry> keys)
+        {
+            Table = table;
+            IsGraphTable = isGraphTable;
+            GraphGuid = graphGuid;
+            GraphName = graphName;
+            Group = group;
+            Keys = keys ?? Array.Empty<LocalizationKeyEntry>();
         }
     }
 

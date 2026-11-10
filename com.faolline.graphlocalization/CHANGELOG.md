@@ -4,6 +4,33 @@ All notable changes to **com.faolline.graphlocalization** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.11.0]
+
+### Added
+- **Graph texts checked against their tables (`GraphTextSync`).** The build fills empty cells only and never
+  overwrites a filled one: the table is the reference, and a graph text (a node `Title`, a speaker name…) is only the
+  seed copied on the key's first build. A graph text edited afterwards never reached the game, and nothing said so.
+  Every build now compares each key's graph text (`DefaultHint`) with the source-language cell of its table and logs
+  **one warning per lib** listing the mismatches (category `GraphLocalization.Validation`). Whitespace around the
+  text and `
+`/`
+` are ignored; an empty cell is not a mismatch. Nothing is ever written by the check.
+- **Menus** *Faolline ▸ Localization ▸ Check Graph Texts Against Tables* (same report, no build) and *Update Graph
+  Texts From Tables* (copies the table texts back into the graphs, with Undo and a confirmation).
+- **API** for a project validator: `GraphTextSync.FindDrifts()`, `Compare`, `ReadTableTexts`, `Apply(drift)`,
+  `ApplyAll(drifts)`, `FormatReport`; `GraphTextDrift` (lib, graph, table, key, both texts).
+- **Write-back hooks**: `BaseGraphLocalizationAdapter<TGraph>` now implements the new `IGraphTextWriter` and exposes
+  `ApplyGraphText(TGraph, GraphTextDrift)` / `ApplyGlobalText(GraphTextDrift)` (default: write nothing) and
+  `WriteGraphText(TGraph, GraphTextDrift)` for a graph you already hold. An adapter without them still gets its
+  mismatches reported.
+- **`LocalizationDatabase.Tables(libName)`** (+ `LocalizationTableKeys`): the tables a build writes and their keys.
+  The CSV exporter and the Unity syncer now both use it, so "which table holds a key" has one definition.
+- `CsvLocalizationExporter.ReadSourceTexts(...)`, `UnityLocalizationSyncer.ReadSourceTexts(...)`: read-only access
+  to the source-language cell of each key, in the table the build files it under.
+
+### Changed
+- README: new section *The table is the reference*.
+
 ## [0.10.0]
 
 ### BREAKING
