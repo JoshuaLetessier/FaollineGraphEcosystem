@@ -1,6 +1,6 @@
 # com.faolline.graphdialoguesystem
 
-**Version**: 0.21.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore` ≥ 0.44.0, `com.faolline.graphlocalization` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.2.0
+**Version**: 0.22.0 — **Unity**: 6000.x — depends on `com.faolline.graphcore` ≥ 0.44.0, `com.faolline.graphlocalization` ≥ 0.11.0, `com.faolline.graphlogging` ≥ 0.2.0
 
 A graph-based dialogue library built **entirely on top of** `com.faolline.graphcore` (zero core
 changes), following the `com.faolline.starterGraph` package shape. Author branching, multi-speaker,
@@ -36,7 +36,7 @@ com.faolline.graphdialoguesystem
 │   ├── DialogueGraph                BaseGraph subclass ([CreateAssetMenu]); owns its Speakers
 │   ├── DialogueContext / Keys       BaseContext + typed bool/int/float/string (Principle VI)
 │   ├── Nodes/DialogueLineNodeData   StatementNodeData + SpeakerKey + ExpressionKey (line key DERIVED)
-│   ├── Choices/DialogueChoice       BaseChoice (label key DERIVED from the Id; Title = source text)
+│   ├── Choices/DialogueChoice       BaseChoice (label key DERIVED from the Id; Title = first-build seed)
 │   ├── Speakers/Speaker(+Expression) localizable name (key derived) + key→asset expressions
 │   ├── Conditions/                  Always T/F, Bool, Int, Float, String (+ ComparisonOperator)
 │   ├── Actions/                     Log, Set Bool/Int/Float/String
@@ -62,9 +62,11 @@ hand-typed — they are derived from node/choice/speaker identity by `DialogueLo
 2. Double-click it to open the **Dialogue Graph Editor** (one window per asset).
 3. Right-click the canvas → add Start / Line / Choice / SubDialogue / End nodes; connect them.
 4. Assign the graph's **Speakers** (graph inspector → *Speakers*). Select a Line node to pick its
-   **Speaker** + **Expression** from dropdowns and set its **Title** (the source text); select a Choice
-   to add options whose **Title** is the source label, with optional per-option conditions. Localization
-   keys are derived automatically — never typed.
+   **Speaker** + **Expression** from dropdowns and set its **Title** (the line's text); select a Choice
+   to add options whose **Title** is the label, with optional per-option conditions. Localization
+   keys are derived automatically — never typed. The first table build copies each Title into the table;
+   **from then on, edit the text in the table**, not in the node (see
+   [The table is the reference](#the-table-is-the-reference)).
 5. Build/provide translations (see Localization) and press **Run** (set the locale field first).
    Use **✓ Validate** to check the graph for structural issues.
 
@@ -178,7 +180,7 @@ driver.OnNodeEntered += node =>
 driver does not auto-resolve a `ChoiceNodeData`); pick with `driver.ChooseById(optionId)`.
 
 **Missing-key fallback to the authored `Title`**: pass `titleFallback: true` to the presenter so a missing
-localization key shows the node/choice authored `Title` (the source text the table is derived from) instead of
+localization key shows the node/choice authored `Title` (the seed copied into the table on its first build) instead of
 the bare `#key` marker — handy before a table is exported or for an incomplete locale (Strict still throws,
 Audit still records the key):
 
@@ -264,8 +266,27 @@ resolves every line/choice/speaker through its `ILocalizationProvider`, returnin
 - **CSV** (default, no external dependency) or **Unity Localization** String Tables (optional, gated by
   `GRAPHLOCALIZATION_UNITY_LOCALIZATION`) — selected project-wide in the localization settings asset.
 - Keys are **derived** from node/choice/speaker identity (`DialogueLocalizationKeys`); a node/choice
-  **Title** and a speaker **Display Name Fallback** are the source texts pre-filled into the tables.
+  **Title** and a speaker **Display Name Fallback** seed the source-language cell of their table on its first build.
 - Build via **Faolline ▸ Localization ▸ Build All Tables**; review coverage in the dashboard.
+
+### The table is the reference
+
+The game shows the text of the **table**, never the node's. The build only fills **empty** cells: it copies a
+line's/choice's `Title` (or a speaker's `Display Name Fallback`) into the source-language cell the first time the key
+is built, and never overwrites a cell afterwards — so translators' and proofreaders' edits are never lost.
+
+So, once a text is in the table, **change it in the table** (CSV file or Unity String Table), not in the node. A
+change made in the node afterwards does not reach the game.
+
+To keep the graph view readable, the build compares every node/choice/speaker text with its table's source cell and
+logs one warning per lib listing the ones that differ (the node is out of date, or was edited by mistake):
+
+- **Faolline ▸ Localization ▸ Check Graph Texts Against Tables** — the same report, without building.
+- **Faolline ▸ Localization ▸ Update Graph Texts From Tables** — copies the table text back into each out-of-date
+  `Title` / `Display Name Fallback` (with Undo). Nothing is ever copied automatically.
+
+A project-side validator can do the same per finding through `GraphTextSync.FindDrifts()` / `GraphTextSync.Apply(drift)`
+(`com.faolline.graphlocalization`).
 
 ### Separate tables per chapter (Addressables)
 

@@ -27,7 +27,7 @@
     {
       "displayName": "Graph Localization",
       "package": "com.faolline.graphlocalization",
-      "version": "0.10.0",
+      "version": "0.11.0",
       "required": false,
       "dependsOn": [ "com.faolline.graphlogging" ]
     },
@@ -42,7 +42,7 @@
     {
       "displayName": "Graph Dialogue System",
       "package": "com.faolline.graphdialoguesystem",
-      "version": "0.21.0",
+      "version": "0.22.0",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphlocalization", "com.faolline.graphlogging" ]
     },
@@ -93,7 +93,7 @@
     {
       "displayName": "Graph Quest",
       "package": "com.faolline.graphquest",
-      "version": "0.12.1",
+      "version": "0.13.0",
       "required": false,
       "dependsOn": [ "com.faolline.graphcore", "com.faolline.graphstandard", "com.faolline.graphlocalization", "com.faolline.graphlogging" ]
     },

@@ -9,6 +9,7 @@
         "com.faolline.graphcore.Editor",
         "com.faolline.graphstandard.Runtime",
         "com.faolline.graphlocalization.Runtime",
+        "com.faolline.graphlocalization.Editor",
         "com.faolline.graphsave.Runtime",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"

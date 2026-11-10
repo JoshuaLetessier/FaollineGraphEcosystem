@@ -70,5 +70,30 @@ namespace Faolline.GraphQuest.Editor
 
             return count;
         }
+
+        /// <summary>
+        /// Graph-text write-back (054): the quest name/description keys → <see cref="QuestGraph.DisplayName"/> /
+        /// <see cref="QuestGraph.Description"/>, an objective's name/description keys → its <c>Title</c> /
+        /// <see cref="ObjectiveNodeData.Description"/> — the texts <see cref="ExtractGraphKeys"/> seeds the table with,
+        /// under the same effective quest id.
+        /// </summary>
+        protected override bool ApplyGraphText(QuestGraph graph, GraphTextDrift drift)
+        {
+            var questId = graph.ResolveQuestId();
+            if (!string.IsNullOrEmpty(questId))
+            {
+                if (drift.Key == QuestLocalizationKeys.ForQuest(questId)) { graph.DisplayName = drift.TableText; return true; }
+                if (drift.Key == QuestLocalizationKeys.ForQuestDescription(questId)) { graph.Description = drift.TableText; return true; }
+            }
+
+            if (graph.Nodes == null) return false;
+            foreach (var node in graph.Nodes)
+            {
+                if (!(node is ObjectiveNodeData obj) || string.IsNullOrEmpty(obj.Id)) continue;
+                if (drift.Key == QuestLocalizationKeys.ForObjective(obj.Id)) { obj.Title = drift.TableText; return true; }
+                if (drift.Key == QuestLocalizationKeys.ForObjectiveDescription(obj.Id)) { obj.Description = drift.TableText; return true; }
+            }
+            return false;
+        }
     }
 }

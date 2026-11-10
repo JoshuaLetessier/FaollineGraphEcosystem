@@ -4,6 +4,17 @@ All notable changes to **com.faolline.graphquest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.13.0]
+
+### Added
+- **Graph-text write-back** for the new graphlocalization check: `QuestGraphLocalizationAdapter` copies a table text
+  back into the quest's `DisplayName` / `Description` or the objective's `Title` / `Description`, under the same
+  effective quest id (`QuestId`, else `GraphId`) as the keys.
+
+### Changed
+- README: the quest/objective texts only seed the tables on their first build; edit them in the table afterwards.
+- Floor `com.faolline.graphlocalization` → 0.11.0 (`ApplyGraphText` hook).
+
 ## [0.12.1]
 
 ### Changed

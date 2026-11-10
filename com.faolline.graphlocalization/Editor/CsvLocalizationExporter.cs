@@ -49,14 +49,8 @@ namespace Faolline.GraphLocalization.Editor
 
             // Every file this build writes, with its keys: Csv/{lib}/{graph}.csv and Csv/{lib}/{lib}_{group}.csv.
             var files = new List<(string path, string label, List<(string key, string hint)> keys)>();
-            foreach (var graph in db.Graphs)
-                files.Add(($"{libFolder}/{LocalizationTableNames.ForGraph(graph.GraphName)}.csv",
-                    $"{libName}/{graph.GraphName}", CollectKeys(graph.Keys)));
-            foreach (var (group, keys) in db.GlobalKeysByGroup())
-            {
-                var table = LocalizationTableNames.ForGroup(libName, group);
-                files.Add(($"{libFolder}/{table}.csv", $"{libName}/{table}", CollectKeys(keys)));
-            }
+            foreach (var t in db.Tables(libName))
+                files.Add((TablePath(libFolder, t.Table), $"{libName}/{(t.IsGraphTable ? t.GraphName : t.Table)}", CollectKeys(t.Keys)));
 
             var carry = CollectCarry(libFolder, files);
             foreach (var (path, label, keys) in files)
@@ -68,6 +62,37 @@ namespace Faolline.GraphLocalization.Editor
             ReportUnusedFiles(libName, libFolder, written);
             return written;
         }
+
+        /// <summary>
+        /// The non-empty <paramref name="sourceLocale"/> cell of every key of <paramref name="db"/>, read from the file
+        /// the build writes that key to (<c>{outputFolder}/{lib}/{table}.csv</c>) and from nowhere else. Read-only.
+        /// </summary>
+        public static Dictionary<string, string> ReadSourceTexts(string libName, LocalizationDatabase db,
+            string sourceLocale, string outputFolder)
+        {
+            var result = new Dictionary<string, string>(System.StringComparer.Ordinal);
+            if (db == null || string.IsNullOrEmpty(sourceLocale) || string.IsNullOrEmpty(outputFolder)) return result;
+
+            var libFolder = $"{outputFolder}/{Sanitize(libName)}";
+            foreach (var t in db.Tables(libName))
+            {
+                var path = TablePath(libFolder, t.Table);
+                if (!System.IO.File.Exists(path)) continue;
+                var rows = ParseCsv(System.IO.File.ReadAllText(path), out _);
+                foreach (var entry in t.Keys)
+                {
+                    if (entry == null || string.IsNullOrWhiteSpace(entry.Key)) continue;
+                    var key = entry.Key.Trim();   // the export trims keys too
+                    if (result.ContainsKey(key)) continue;
+                    if (rows.TryGetValue(key, out var row) && row.TryGetValue(sourceLocale, out var value)
+                        && !string.IsNullOrEmpty(value))
+                        result[key] = value;
+                }
+            }
+            return result;
+        }
+
+        private static string TablePath(string libFolder, string table) => $"{libFolder}/{table}.csv";
 
         private static void WriteCsv(string path, string label, IReadOnlyList<(string key, string hint)> desired,
             IReadOnlyList<string> locales, string sourceLocale,

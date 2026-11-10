@@ -1,6 +1,6 @@
 # Faolline GraphQuest
 
-**Version**: 0.12.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.44.0, `com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphlocalization` ≥ 0.10.0, `com.faolline.graphlogging` ≥ 0.2.0
+**Version**: 0.13.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.44.0, `com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphlocalization` ≥ 0.11.0, `com.faolline.graphlogging` ≥ 0.2.0
 
 `com.faolline.graphquest` — a **quest & objective** domain library above
 [`com.faolline.graphcore`](../com.faolline.graphcore) and [`com.faolline.graphstandard`](../com.faolline.graphstandard).
@@ -43,7 +43,10 @@ smaller completed-set), never an undo.
 - **Localized text (optional)** — `evaluator.UseLocalization(provider)` resolves objective/quest names &
   descriptions as keys via `com.faolline.graphlocalization` (CSV or Unity Localization); without a provider the
   text stays literal. With Unity Localization, the texts are looked up in the quest's own table only (its graph's
-  `_Text` collection), so displaying a quest never loads other tables.
+  `_Text` collection), so displaying a quest never loads other tables. The quest's `DisplayName`/`Description`
+  and each objective's `Title`/`Description` only **seed** the table on its first build: once a text is in the table,
+  edit it there (the build never overwrites a filled cell). The build warns when a graph text no longer matches its
+  table; **Faolline ▸ Localization ▸ Update Graph Texts From Tables** copies the table texts back into the graph.
 - **Quantified objectives** — set `ObjectiveNodeData.ProgressCollection` (a `CollectionDef`) and `.ProgressTarget`
   directly on the built node (no fluent `ObjectiveBuilder` setter for this yet — see `QuestSampleBuilder.cs` for
   the pattern) to track a collection count against a target; `ObjectiveView` exposes `Progress` / `ProgressTarget`
@@ -145,6 +148,6 @@ remove a prerequisite edge.
 
 - `com.faolline.graphcore` 0.44.0
 - `com.faolline.graphstandard` 0.18.0
-- `com.faolline.graphlocalization` 0.10.0 (the neutral text-resolution abstraction; localization is opt-in at
+- `com.faolline.graphlocalization` 0.11.0 (the neutral text-resolution abstraction; localization is opt-in at
   runtime via `UseLocalization`, the CSV provider needs no Unity Localization)
 - `com.faolline.graphlogging` 0.2.0

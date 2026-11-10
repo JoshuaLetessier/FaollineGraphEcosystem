@@ -1,6 +1,6 @@
 # com.faolline.graphlocalization
 
-**Version**: 0.10.0 — **Unity**: 6000.x — no required dependencies
+**Version**: 0.11.0 — **Unity**: 6000.x — no required dependencies
 
 Provider-agnostic localization for the Faolline graph ecosystem. Resolves localized text at runtime
 through a pluggable `ILocalizationProvider`, and builds translation tables from your graphs at edit
@@ -49,6 +49,38 @@ Pin `#master` to a tag (e.g. `#graphlocalization-v0.1.0`) for reproducible insta
    - both indexed by `Assets/Resources/GraphLocalizationManifest.asset`
 2. **Faolline ▸ Localization ▸ Dashboard** — review coverage per lib/locale.
 3. Translate the empty entries, rebuild as graphs change.
+
+### The table is the reference
+
+The build only fills **empty** cells and never overwrites a filled one. The text an adapter reports for a key (its
+`DefaultHint`: a node `Title`, a speaker name…) is a **seed**: it is copied into the source-language cell the first
+time the key is built, and the table is the reference from then on — the runtime only reads the table. Edit texts in
+the table, not in the graph.
+
+A graph text that no longer matches its table (the graph view is out of date, or someone edited the graph instead of
+the table) is reported, never fixed silently:
+
+- every build logs one warning per lib listing the mismatches (category `GraphLocalization.Validation`);
+- **Faolline ▸ Localization ▸ Check Graph Texts Against Tables** gives the same report without building;
+- **Faolline ▸ Localization ▸ Update Graph Texts From Tables** copies the table text back into the graphs (Undo).
+
+The source language is the one the build pre-fills: the settings' Unity Source Locale (else the Project Locale, else
+the first locale) for Unity Localization, the first CSV locale for CSV. Surrounding whitespace and line-ending style
+are ignored; an empty cell is not a mismatch (the next build fills it).
+
+From code (e.g. a project content validator):
+
+```csharp
+var drifts = GraphTextSync.FindDrifts();                 // Faolline.GraphLocalization.Editor
+foreach (var d in drifts)
+    Debug.LogWarning($"{d.GraphName} / {d.Key}: graph '{d.GraphText}' ≠ table '{d.TableText}'");
+GraphTextSync.Apply(drifts[0]);                          // one fix: table text → graph (Undo + save)
+GraphTextSync.ApplyAll(drifts);                          // or all of them
+```
+
+The write-back goes through the lib's adapter: `BaseGraphLocalizationAdapter<TGraph>` subclasses override
+`ApplyGraphText(TGraph, GraphTextDrift)` (and `ApplyGlobalText(GraphTextDrift)` for global keys); an adapter without
+them reports its mismatches but leaves them alone.
 
 ### Modes
 

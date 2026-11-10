@@ -121,6 +121,10 @@ namespace Faolline.GraphLocalization.Editor
                 }
             }
 
+            // Phase 3: the tables are the reference and a filled cell is never overwritten, so report the graph texts
+            // that no longer match their table (the graph view is out of date). Report only — nothing is written.
+            GraphTextSync.ReportAfterBuild(adapter.LibName, db);
+
             bool changed = !ListsEqual(libEntry.UnityCollections, newUnityCollections)
                 || !ListsEqual(libEntry.UnityAssetCollections, newUnityAssetCollections)
                 || !ListsEqual(libEntry.CsvFiles, newCsvFiles)

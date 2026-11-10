@@ -63,16 +63,8 @@ namespace Faolline.GraphLocalization.Unity.Editor
             // Where every key of this lib must end up — computed first, so translations of keys that moved
             // can be read out of their old collection before any orphan entry is removed.
             var plan = new List<(string table, string folder, IReadOnlyList<LocalizationKeyEntry> keys)>();
-            foreach (var graphEntry in database.Graphs)
-            {
-                var table = LocalizationTableNames.ForGraph(graphEntry.GraphName);
-                plan.Add((table, $"{libFolder}/{table}", graphEntry.Keys));
-            }
-            foreach (var (group, keys) in database.GlobalKeysByGroup())
-            {
-                var table = LocalizationTableNames.ForGroup(libName, group);
-                plan.Add((table, $"{libFolder}/{GlobalFolderName}/{table}", keys));
-            }
+            foreach (var t in database.Tables(libName))
+                plan.Add((t.Table, t.IsGraphTable ? $"{libFolder}/{t.Table}" : $"{libFolder}/{GlobalFolderName}/{t.Table}", t.Keys));
 
             var carry = generateStringTables ? CollectCarry(libFolder, plan) : null;
 
@@ -154,6 +146,37 @@ namespace Faolline.GraphLocalization.Unity.Editor
                 }
             }
             return carry;
+        }
+
+        /// <summary>
+        /// The non-empty source-locale value of every key of <paramref name="database"/>, read from the collection
+        /// the build files that key in (and from no other). Source locale resolved as by the build. Read-only.
+        /// Called via reflection from <c>GraphTextSync</c>.
+        /// </summary>
+        public static Dictionary<string, string> ReadSourceTexts(string libName, LocalizationDatabase database,
+            string sourceLocaleCode)
+        {
+            var result = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (database == null) return result;
+
+            var locales = LocalizationEditorSettings.GetLocales();
+            if (locales == null || locales.Count == 0) return result;
+            // The build already warned about a missing source locale; reading must not repeat it.
+            var source = GetSourceLocale(libName, locales, sourceLocaleCode, warn: false);
+            if (source == null) return result;
+
+            foreach (var t in database.Tables(libName))
+            {
+                var col = LocalizationEditorSettings.GetStringTableCollection(LocalizationTableNames.TextCollection(t.Table));
+                if (!(col?.GetTable(source.Identifier) is StringTable table)) continue;
+                foreach (var entry in t.Keys)
+                {
+                    if (entry == null || string.IsNullOrWhiteSpace(entry.Key) || result.ContainsKey(entry.Key)) continue;
+                    var value = table.GetEntry(entry.Key)?.Value;
+                    if (!string.IsNullOrEmpty(value)) result[entry.Key] = value;
+                }
+            }
+            return result;
         }
 
         /// <summary>
@@ -416,20 +439,20 @@ namespace Faolline.GraphLocalization.Unity.Editor
         // Resolution order: the explicit code from LocalizationSettingsAsset.UnitySourceLocale, then the
         // Project Locale, then the first configured locale — the last one WITH a warning, because it is an
         // alphabetical accident: authored French text would silently be filed as the 'en' source column.
-        private static Locale GetSourceLocale(string libName, IList<Locale> locales, string sourceLocaleCode)
+        private static Locale GetSourceLocale(string libName, IList<Locale> locales, string sourceLocaleCode, bool warn = true)
         {
             if (!string.IsNullOrEmpty(sourceLocaleCode) && locales != null)
             {
                 foreach (var l in locales)
                     if (l != null && l.Identifier.Code == sourceLocaleCode) return l;
-                Logging.Warning("GraphLocalization.Validation", $"[UnityLocalizationSyncer] [{libName}] Unity Source Locale '{sourceLocaleCode}' " +
+                if (warn) Logging.Warning("GraphLocalization.Validation", $"[UnityLocalizationSyncer] [{libName}] Unity Source Locale '{sourceLocaleCode}' " +
                     "(from the localization settings) is not among the project's locales " +
                     "(Project Settings ▸ Localization); falling back.");
             }
             try { var p = UnityLocalizationSettings.ProjectLocale; if (p != null) return p; } catch { }
             if (locales?.Count > 0)
             {
-                Logging.Warning("GraphLocalization.Validation", $"[UnityLocalizationSyncer] [{libName}] No source locale declared: neither the " +
+                if (warn) Logging.Warning("GraphLocalization.Validation", $"[UnityLocalizationSyncer] [{libName}] No source locale declared: neither the " +
                     "settings' Unity Source Locale nor a Project Locale is set. Using the FIRST configured " +
                     $"locale ('{locales[0].Identifier.Code}') as the source — authored text will be pre-filled " +
                     "into that column. Set one of the two if this is not the authoring language.");
