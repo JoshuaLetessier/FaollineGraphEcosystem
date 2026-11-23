@@ -1,6 +1,8 @@
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.StarterGraph;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
@@ -18,13 +20,13 @@ namespace Faolline.GraphTest.Tests
             var setInt   = ScriptableObject.CreateInstance<TestSetIntAction>();    setInt.ParameterKey   = "score"; setInt.Value   = 99;
             var setFloat = ScriptableObject.CreateInstance<TestSetFloatAction>();  setFloat.ParameterKey = "hp";    setFloat.Value = 1.5f;
             var setStr   = ScriptableObject.CreateInstance<TestSetStringAction>(); setStr.ParameterKey   = "name";  setStr.Value   = "boss";
-            var g = ScriptableObject.CreateInstance<TestGraph>();
+            var g = ScriptableObject.CreateInstance<StarterGraphAsset>();
             try
             {
                 var start = new StartNodeData         { Id = "s", NodeType = StartNodeData.NodeTypeId };
-                var a     = new TestStatementNodeData { Id = "a", NodeType = TestStatementNodeData.NodeTypeId };
+                var a     = new StarterStatementNodeData { Id = "a", NodeType = StarterStatementNodeData.NodeTypeId };
                 a.OnEnterActions.Add(setInt); a.OnEnterActions.Add(setFloat); a.OnEnterActions.Add(setStr);
-                var b   = new TestStatementNodeData { Id = "b",   NodeType = TestStatementNodeData.NodeTypeId };
+                var b   = new StarterStatementNodeData { Id = "b",   NodeType = StarterStatementNodeData.NodeTypeId };
                 var end = new EndNodeData           { Id = "end", NodeType = EndNodeData.NodeTypeId };
                 g.AddNode(start); g.AddNode(a); g.AddNode(b); g.AddNode(end); g.EntryNodeId = "s";
                 g.AddEdge(new BaseEdgeData { Id = "e1", FromNodeId = "s", ToNodeId = "a",   PortName = "out" });

@@ -3,6 +3,7 @@ using NUnit.Framework;
 using UnityEditor.Experimental.GraphView;
 using Faolline.GraphCore;
 using Faolline.GraphTest.Editor;
+using Faolline.StarterGraph.Editor;
 
 namespace Faolline.GraphTest.Tests
 {

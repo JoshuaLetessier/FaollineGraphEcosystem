@@ -5,6 +5,9 @@ using UnityEngine.UIElements;
 using Faolline.GraphCore;
 using Faolline.GraphCore.Editor;
 using Faolline.GraphTest.Editor;
+using Faolline.StarterGraph;
+using Faolline.StarterGraph.Editor;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
@@ -19,11 +22,11 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void RefreshNodeColors_AppliesColorOverrideToNodeTitle()
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
-            var view = new TestGraphView();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            var view = new StarterGraphView();
             try
             {
-                var node = new TestStatementNodeData { Id = "n", NodeType = TestStatementNodeData.NodeTypeId };
+                var node = new StarterStatementNodeData { Id = "n", NodeType = StarterStatementNodeData.NodeTypeId };
                 graph.AddNode(node);
                 view.LoadGraph(graph);
 
@@ -42,11 +45,11 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void RefreshNodeColors_NoOverride_DoesNotForceColor()
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
-            var view = new TestGraphView();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            var view = new StarterGraphView();
             try
             {
-                var node = new TestStatementNodeData { Id = "n", NodeType = TestStatementNodeData.NodeTypeId };
+                var node = new StarterStatementNodeData { Id = "n", NodeType = StarterStatementNodeData.NodeTypeId };
                 graph.AddNode(node);
                 view.LoadGraph(graph);
 
@@ -65,11 +68,11 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void RefreshNodeColors_TransparentOverride_IsMadeOpaque()
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
-            var view = new TestGraphView();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            var view = new StarterGraphView();
             try
             {
-                var node = new TestStatementNodeData { Id = "n", NodeType = TestStatementNodeData.NodeTypeId };
+                var node = new StarterStatementNodeData { Id = "n", NodeType = StarterStatementNodeData.NodeTypeId };
                 graph.AddNode(node);
                 view.LoadGraph(graph);
 

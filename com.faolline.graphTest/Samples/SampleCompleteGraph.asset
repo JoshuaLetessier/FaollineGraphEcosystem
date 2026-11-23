@@ -48,7 +48,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd7587f0667a881468fb7220ab03ef93, type: 3}
+  m_Script: {fileID: 11500000, guid: 2d11a49c3226e71418e7c88193ae3f8c, type: 3}
   m_Name: SampleCompleteGraph
   m_EditorClassIdentifier: com.faolline.graphTest.Runtime::Faolline.GraphTest.TestGraph
   _graphId: 54585b85-a389-46dc-b606-b0829e10a808
@@ -96,10 +96,10 @@ MonoBehaviour:
         _hasColorOverride: 0
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
     - rid: 6350023386174586986
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: d3b4fd56-fc7f-4a10-9e75-5137b5e9b013
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 238, y: 0}
         _entryConditions: []
         _onEnterActions:
@@ -112,10 +112,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Intro
     - rid: 6350023386174586987
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 6f3700e7-3cbf-48a6-9a25-fb26046b4c6a
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 436, y: -2}
         _entryConditions: []
         _onEnterActions:
@@ -141,10 +141,10 @@ MonoBehaviour:
         - rid: 6350023386174586999
         - rid: 6350023386174587000
     - rid: 6350023386174586989
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: ab898619-8931-43df-a64a-e3174d7af12c
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 980, y: -140}
         _entryConditions:
         - {fileID: 9103180829389884162}
@@ -156,10 +156,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Porte
     - rid: 6350023386174586990
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 5a8f33d4-77f7-443f-9af4-90bdc52fe508
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 980, y: 140}
         _entryConditions: []
         _onEnterActions:
@@ -183,13 +183,13 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _endReason: 0
     - rid: 6350023386174586999
-      type: {class: TestChoice, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterChoice, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: a518ee8c-6d8e-4ddc-9666-28e575b36bb9
         _condition: {fileID: 9103180829389884162}
         _label: Ouvrir la porte
     - rid: 6350023386174587000
-      type: {class: TestChoice, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterChoice, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 9233b131-a424-42d9-9f9a-bf9cbd198090
         _condition: {fileID: 0}
@@ -205,10 +205,10 @@ MonoBehaviour:
         _hasColorOverride: 0
         _edgeColor: {r: 0, g: 0, b: 0, a: 0}
     - rid: 6350023386174587026
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: b647146a-c25f-4d1e-ac1a-130e3cf31880
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1183, y: -140}
         _entryConditions: []
         _onEnterActions: []

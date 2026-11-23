@@ -3,18 +3,21 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Faolline.GraphCore;
 using Faolline.GraphTest.Editor;
+using Faolline.StarterGraph;
+using Faolline.StarterGraph.Editor;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
     [TestFixture]
-    public class TestNodeInspectorViewTests
+    public class StarterNodeInspectorViewTests
     {
-        private TestNodeInspectorView _inspector;
+        private StarterNodeInspectorView _inspector;
 
         [SetUp]
         public void SetUp()
         {
-            _inspector = new TestNodeInspectorView();
+            _inspector = new StarterNodeInspectorView();
         }
 
         [Test]
@@ -36,8 +39,8 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void BindNode_AfterGraphDestroyed_DoesNotErrorOnSerializedObject()
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
-            var node = new TestStatementNodeData { Id = "n", NodeType = TestStatementNodeData.NodeTypeId };
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            var node = new StarterStatementNodeData { Id = "n", NodeType = StarterStatementNodeData.NodeTypeId };
             graph.AddNode(node);
             _inspector.SetGraph(graph);
             _inspector.BindNode(node);
@@ -72,9 +75,9 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void SetSubGraphTarget_AcceptsNonCyclicGraph()
         {
-            var graphA = ScriptableObject.CreateInstance<TestGraph>();
-            var graphB = ScriptableObject.CreateInstance<TestGraph>();
-            var inspector = new TestNodeInspectorView();
+            var graphA = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            var graphB = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            var inspector = new StarterNodeInspectorView();
             inspector.SetGraph(graphA);
             var node = new SubGraphNodeData { Id = "sg", NodeType = SubGraphNodeData.NodeTypeId };
             try
@@ -93,8 +96,8 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void SetSubGraphTarget_RefusesSelfReference()
         {
-            var graphA = ScriptableObject.CreateInstance<TestGraph>();
-            var inspector = new TestNodeInspectorView();
+            var graphA = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            var inspector = new StarterNodeInspectorView();
             inspector.SetGraph(graphA);
             var node = new SubGraphNodeData { Id = "sg", NodeType = SubGraphNodeData.NodeTypeId };
             try
@@ -119,16 +122,16 @@ namespace Faolline.GraphTest.Tests
         }
 
         [Test]
-        public void BindNode_WithTestStatementNodeData_DoesNotThrow()
+        public void BindNode_WithStarterStatementNodeData_DoesNotThrow()
         {
-            var node = new TestStatementNodeData
+            var node = new StarterStatementNodeData
             {
                 Id = "stmt1",
-                NodeType = TestStatementNodeData.NodeTypeId,
+                NodeType = StarterStatementNodeData.NodeTypeId,
                 Label = "Hello"
             };
             Assert.DoesNotThrow(() => _inspector.BindNode(node),
-                "BindNode with TestStatementNodeData must not throw");
+                "BindNode with StarterStatementNodeData must not throw");
         }
 
         [Test]
@@ -148,8 +151,8 @@ namespace Faolline.GraphTest.Tests
             _inspector.AddChoice(node);
 
             Assert.AreEqual(1, node.Choices.Count, "AddChoice must append one choice");
-            var choice = node.Choices[0] as TestChoice;
-            Assert.IsNotNull(choice, "AddChoice must append a TestChoice");
+            var choice = node.Choices[0] as StarterChoice;
+            Assert.IsNotNull(choice, "AddChoice must append a StarterChoice");
             Assert.IsFalse(string.IsNullOrEmpty(choice.Id), "Appended choice must have a GUID Id");
             Assert.IsFalse(string.IsNullOrEmpty(choice.Label), "Appended choice must have a default label");
         }
@@ -170,10 +173,10 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void ClearInspector_RemovesAllChildren()
         {
-            var node = new TestStatementNodeData
+            var node = new StarterStatementNodeData
             {
                 Id = "stmt1",
-                NodeType = TestStatementNodeData.NodeTypeId
+                NodeType = StarterStatementNodeData.NodeTypeId
             };
             _inspector.BindNode(node);
             _inspector.ClearInspector();
@@ -185,10 +188,10 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void BindNode_AfterClear_DoesNotAccumulateChildren()
         {
-            var node = new TestStatementNodeData
+            var node = new StarterStatementNodeData
             {
                 Id = "stmt1",
-                NodeType = TestStatementNodeData.NodeTypeId,
+                NodeType = StarterStatementNodeData.NodeTypeId,
                 Label = "First"
             };
             _inspector.BindNode(node);

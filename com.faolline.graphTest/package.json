@@ -1,10 +1,11 @@
 {
     "name": "com.faolline.graphTest",
-    "version": "0.3.1",
+    "version": "0.4.0",
     "displayName": "Faolline GraphTest",
-    "description": "Dev-only verification package: exercises the graphcore editor and runtime surface through a concrete test graph, ships the TestGraph sandbox window and sample graphs, and hosts the ecosystem-wide assembly dependency guard (DependencyMatrixTests).",
+    "description": "Dev-only verification package: exercises the graphcore editor and runtime surface through the starterGraph template's graph, window, view and inspector, ships test doubles and sample graphs, and hosts the ecosystem-wide assembly dependency guard (DependencyMatrixTests).",
     "unity": "6000.0",
     "dependencies": {
+        "com.faolline.starterGraph": "0.6.1",
         "com.faolline.graphcore": "0.44.0",
         "com.faolline.graphstandard": "0.18.0",
         "com.faolline.graphlogging": "0.2.0"

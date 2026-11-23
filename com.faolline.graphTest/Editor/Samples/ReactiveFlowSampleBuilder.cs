@@ -3,13 +3,15 @@ using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphTest;
 using Faolline.GraphLogging;
+using Faolline.StarterGraph;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Editor
 {
     /// <summary>
-    /// Generates two sample <see cref="TestGraph"/> assets for the non-linear engines, so the in-game run-cursor
+    /// Generates two sample <see cref="StarterGraphAsset"/> assets for the non-linear engines, so the in-game run-cursor
     /// (v2) can be seen on them: a <b>reactive progression DAG</b> (prerequisite gates → Locked/Available/
-    /// Completed) and a <b>flow fork/join</b> (one fire fans out, then joins). Open either in the TestGraph
+    /// Completed) and a <b>flow fork/join</b> (one fire fans out, then joins). Open either in the StarterGraph
     /// window, drop the matching sample driver (<c>ReactiveSampleDriver</c> / <c>FlowSampleDriver</c>) on a
     /// GameObject with the graph assigned, and press Play — the editor map lights up live.
     /// <para>Menu: <c>Faolline/Create Sample Reactive + Flow Graphs</c>.</para>
@@ -37,7 +39,7 @@ namespace Faolline.GraphTest.Editor
         // A,B,C have no prerequisites (Available at start). Gate needs A AND B. Region needs Gate AND C.
         private static void CreateReactive()
         {
-            var g = ScriptableObject.CreateInstance<TestGraph>();
+            var g = ScriptableObject.CreateInstance<StarterGraphAsset>();
             AssetDatabase.CreateAsset(g, ReactivePath);
 
             var a    = Stmt(g, "Key A",       0,   -150);
@@ -61,7 +63,7 @@ namespace Faolline.GraphTest.Editor
         // Firing Trigger fans out to Left and Right; Merge joins both (AND), then Done fires.
         private static void CreateFlow()
         {
-            var g = ScriptableObject.CreateInstance<TestGraph>();
+            var g = ScriptableObject.CreateInstance<StarterGraphAsset>();
             AssetDatabase.CreateAsset(g, FlowPath);
 
             var trigger = Stmt(g, "Trigger", 0,      0);
@@ -82,12 +84,12 @@ namespace Faolline.GraphTest.Editor
         }
 
         // ── Helpers ───────────────────────────────────────────────────────────────
-        private static TestStatementNodeData Stmt(BaseGraph owner, string label, float x, float y)
+        private static StarterStatementNodeData Stmt(BaseGraph owner, string label, float x, float y)
         {
-            var node = new TestStatementNodeData
+            var node = new StarterStatementNodeData
             {
                 Id = NewId(),
-                NodeType = TestStatementNodeData.NodeTypeId,
+                NodeType = StarterStatementNodeData.NodeTypeId,
                 Label = label,
                 Position = new Vector2(x, y)
             };

@@ -1,16 +1,19 @@
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.StarterGraph;
+using Faolline.StarterGraph.Editor;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
     [TestFixture]
-    public class TestGraphEdgeTests
+    public class StarterGraphEdgeTests
     {
         [Test]
-        public void TestGraph_CanAddAndRetrieveEdge()
+        public void StarterGraph_CanAddAndRetrieveEdge()
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
             try
             {
                 var start = new StartNodeData { Id = "start", NodeType = StartNodeData.NodeTypeId };
@@ -29,9 +32,9 @@ namespace Faolline.GraphTest.Tests
         }
 
         [Test]
-        public void TestGraph_RemoveEdge_DecreasesEdgeCount()
+        public void StarterGraph_RemoveEdge_DecreasesEdgeCount()
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
             try
             {
                 var edge = new BaseEdgeData { Id = "e1", FromNodeId = "a", ToNodeId = "b" };
@@ -49,8 +52,8 @@ namespace Faolline.GraphTest.Tests
         {
             Assert.IsTrue(
                 typeof(Faolline.GraphCore.Editor.BaseEdgeView)
-                    .IsAssignableFrom(typeof(Faolline.GraphTest.Editor.TestEdgeView)),
-                "TestEdgeView must extend BaseEdgeView");
+                    .IsAssignableFrom(typeof(StarterEdgeView)),
+                "StarterEdgeView must extend BaseEdgeView");
         }
     }
 }

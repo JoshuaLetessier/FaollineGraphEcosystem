@@ -4,20 +4,23 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Faolline.GraphCore;
 using Faolline.GraphTest.Editor;
+using Faolline.StarterGraph;
+using Faolline.StarterGraph.Editor;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
     [TestFixture]
-    public class TestGraphViewAddNodeTests
+    public class StarterGraphViewAddNodeTests
     {
-        private TestGraph _graph;
-        private TestGraphView _view;
+        private StarterGraphAsset _graph;
+        private StarterGraphView _view;
 
         [SetUp]
         public void SetUp()
         {
-            _graph = ScriptableObject.CreateInstance<TestGraph>();
-            _view = new TestGraphView();
+            _graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            _view = new StarterGraphView();
             _view.LoadGraph(_graph);
         }
 
@@ -30,11 +33,11 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void AddStatementNode_AddsNodeToGraph()
         {
-            var node = new TestStatementNodeData { NodeType = TestStatementNodeData.NodeTypeId };
+            var node = new StarterStatementNodeData { NodeType = StarterStatementNodeData.NodeTypeId };
             _view.CallAddNodeToCanvas(node, Vector2.zero);
 
             Assert.AreEqual(1, _graph.Nodes.Count,
-                "Adding a TestStatementNodeData must register it in the graph");
+                "Adding a StarterStatementNodeData must register it in the graph");
             Assert.AreSame(node, _graph.Nodes[0]);
         }
 
@@ -96,7 +99,7 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void AddNode_AssignsGuid()
         {
-            var node = new TestStatementNodeData { NodeType = TestStatementNodeData.NodeTypeId };
+            var node = new StarterStatementNodeData { NodeType = StarterStatementNodeData.NodeTypeId };
             _view.CallAddNodeToCanvas(node, Vector2.zero);
 
             Assert.IsFalse(string.IsNullOrEmpty(node.Id),
@@ -106,7 +109,7 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void AddNode_MarksDirty()
         {
-            var node = new TestStatementNodeData { NodeType = TestStatementNodeData.NodeTypeId };
+            var node = new StarterStatementNodeData { NodeType = StarterStatementNodeData.NodeTypeId };
             _view.CallAddNodeToCanvas(node, Vector2.zero);
 
             Assert.IsTrue(_view.IsDirty);
@@ -116,7 +119,7 @@ namespace Faolline.GraphTest.Tests
         public void LoadGraph_ReconnectsEdgesToPorts()
         {
             var start = new StartNodeData         { Id = "s", NodeType = StartNodeData.NodeTypeId };
-            var stmt  = new TestStatementNodeData { Id = "n", NodeType = TestStatementNodeData.NodeTypeId };
+            var stmt  = new StarterStatementNodeData { Id = "n", NodeType = StarterStatementNodeData.NodeTypeId };
             _graph.AddNode(start);
             _graph.AddNode(stmt);
             _graph.AddEdge(new BaseEdgeData { Id = "e1", FromNodeId = "s", ToNodeId = "n", PortName = "out" });
@@ -135,8 +138,8 @@ namespace Faolline.GraphTest.Tests
         public void LoadGraph_ReconnectsChoiceEdgeByChoiceId()
         {
             var choice = new ChoiceNodeData       { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
-            choice.Choices.Add(new TestChoice { Id = "pick", Label = "Pick" });
-            var target = new TestStatementNodeData { Id = "t", NodeType = TestStatementNodeData.NodeTypeId };
+            choice.Choices.Add(new StarterChoice { Id = "pick", Label = "Pick" });
+            var target = new StarterStatementNodeData { Id = "t", NodeType = StarterStatementNodeData.NodeTypeId };
             _graph.AddNode(choice);
             _graph.AddNode(target);
             _graph.AddEdge(new BaseEdgeData { Id = "e1", FromNodeId = "c", ToNodeId = "t", PortName = "pick" });
@@ -153,7 +156,7 @@ namespace Faolline.GraphTest.Tests
         public void LoadGraph_ReloadingSameGraph_PreservesData()
         {
             _graph.AddNode(new StartNodeData         { Id = "s", NodeType = StartNodeData.NodeTypeId });
-            _graph.AddNode(new TestStatementNodeData { Id = "n", NodeType = TestStatementNodeData.NodeTypeId });
+            _graph.AddNode(new StarterStatementNodeData { Id = "n", NodeType = StarterStatementNodeData.NodeTypeId });
             _graph.AddEdge(new BaseEdgeData { Id = "e1", FromNodeId = "s", ToNodeId = "n", PortName = "out" });
 
             _view.LoadGraph(_graph);
@@ -167,10 +170,10 @@ namespace Faolline.GraphTest.Tests
         public void LoadGraph_SwitchingBetweenGraphs_PreservesBothDatasets()
         {
             _graph.AddNode(new StartNodeData         { Id = "as", NodeType = StartNodeData.NodeTypeId });
-            _graph.AddNode(new TestStatementNodeData { Id = "an", NodeType = TestStatementNodeData.NodeTypeId });
+            _graph.AddNode(new StarterStatementNodeData { Id = "an", NodeType = StarterStatementNodeData.NodeTypeId });
             _graph.AddEdge(new BaseEdgeData { Id = "ae", FromNodeId = "as", ToNodeId = "an", PortName = "out" });
 
-            var other = ScriptableObject.CreateInstance<TestGraph>();
+            var other = ScriptableObject.CreateInstance<StarterGraphAsset>();
             other.AddNode(new StartNodeData { Id = "bs", NodeType = StartNodeData.NodeTypeId });
             try
             {
@@ -189,12 +192,12 @@ namespace Faolline.GraphTest.Tests
         public void RemoveChoice_KeepsSurvivingChoiceEdgeConnected()
         {
             var choice = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
-            var choiceA = new TestChoice { Id = "a", Label = "A" };
-            var choiceB = new TestChoice { Id = "b", Label = "B" };
+            var choiceA = new StarterChoice { Id = "a", Label = "A" };
+            var choiceB = new StarterChoice { Id = "b", Label = "B" };
             choice.Choices.Add(choiceA);
             choice.Choices.Add(choiceB);
-            var targetA = new TestStatementNodeData { Id = "ta", NodeType = TestStatementNodeData.NodeTypeId };
-            var targetB = new TestStatementNodeData { Id = "tb", NodeType = TestStatementNodeData.NodeTypeId };
+            var targetA = new StarterStatementNodeData { Id = "ta", NodeType = StarterStatementNodeData.NodeTypeId };
+            var targetB = new StarterStatementNodeData { Id = "tb", NodeType = StarterStatementNodeData.NodeTypeId };
             _graph.AddNode(choice);
             _graph.AddNode(targetA);
             _graph.AddNode(targetB);
@@ -202,7 +205,7 @@ namespace Faolline.GraphTest.Tests
             _graph.AddEdge(new BaseEdgeData { Id = "eb", FromNodeId = "c", ToNodeId = "tb", PortName = "b" });
             _view.LoadGraph(_graph);
 
-            var inspector = new TestNodeInspectorView();
+            var inspector = new StarterNodeInspectorView();
             inspector.SetGraph(_graph);
             inspector.SetGraphView(_view);
 
@@ -217,12 +220,12 @@ namespace Faolline.GraphTest.Tests
     }
 
     // Extension method to expose AddNodeToCanvas for tests
-    internal static class TestGraphViewTestExtensions
+    internal static class StarterGraphViewTestExtensions
     {
-        public static void CallAddNodeToCanvas(this TestGraphView view, BaseNodeData node, Vector2 position)
+        public static void CallAddNodeToCanvas(this StarterGraphView view, BaseNodeData node, Vector2 position)
         {
             // Use reflection to call the protected AddNodeToCanvas method
-            var method = typeof(TestGraphView).GetMethod(
+            var method = typeof(StarterGraphView).GetMethod(
                 "AddNodeToCanvas",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             method?.Invoke(view, new object[] { node, position });

@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.StarterGraph;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
@@ -25,7 +27,7 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void AwaitNode_HoldsThenResumes_OnHostSignal()
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
             _so.Add(graph);
 
             var start = new StartNodeData     { Id = "start", NodeType = StartNodeData.NodeTypeId };
@@ -67,7 +69,7 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void PayloadCondition_BranchesResume_OnSignalPayload()
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
             _so.Add(graph);
 
             var cond = ScriptableObject.CreateInstance<TestSignalPayloadCondition>();

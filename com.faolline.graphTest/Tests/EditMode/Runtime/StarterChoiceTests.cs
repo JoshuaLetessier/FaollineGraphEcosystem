@@ -2,38 +2,39 @@ using System;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
     [TestFixture]
-    public class TestChoiceTests
+    public class StarterChoiceTests
     {
         [Test]
-        public void TestChoice_IsBaseChoiceSubclass()
+        public void StarterChoice_IsBaseChoiceSubclass()
         {
             Assert.IsTrue(
-                typeof(BaseChoice).IsAssignableFrom(typeof(TestChoice)),
-                "TestChoice must derive from BaseChoice");
+                typeof(BaseChoice).IsAssignableFrom(typeof(StarterChoice)),
+                "StarterChoice must derive from BaseChoice");
         }
 
         [Test]
-        public void TestChoice_HasSerializableAttribute()
+        public void StarterChoice_HasSerializableAttribute()
         {
-            var attrs = typeof(TestChoice).GetCustomAttributes(typeof(SerializableAttribute), inherit: false);
-            Assert.IsNotEmpty(attrs, "TestChoice must be [Serializable] for [SerializeReference] storage");
+            var attrs = typeof(StarterChoice).GetCustomAttributes(typeof(SerializableAttribute), inherit: false);
+            Assert.IsNotEmpty(attrs, "StarterChoice must be [Serializable] for [SerializeReference] storage");
         }
 
         [Test]
         public void Label_RoundTrips()
         {
-            var choice = new TestChoice { Label = "Go left" };
+            var choice = new StarterChoice { Label = "Go left" };
             Assert.AreEqual("Go left", choice.Label);
         }
 
         [Test]
         public void Label_DefaultsToEmptyNotNull()
         {
-            var choice = new TestChoice();
+            var choice = new StarterChoice();
             Assert.AreEqual(string.Empty, choice.Label,
                 "Label must default to an empty string, never null");
         }
@@ -41,7 +42,7 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void Label_NullAssignment_CoercesToEmpty()
         {
-            var choice = new TestChoice { Label = "x" };
+            var choice = new StarterChoice { Label = "x" };
             choice.Label = null;
             Assert.AreEqual(string.Empty, choice.Label,
                 "Assigning null to Label must coerce to empty string");
@@ -50,7 +51,7 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void InheritsIdAndCondition()
         {
-            var choice = new TestChoice { Id = "abc", Condition = null };
+            var choice = new StarterChoice { Id = "abc", Condition = null };
             Assert.AreEqual("abc", choice.Id, "Id is inherited from BaseChoice");
             Assert.IsNull(choice.Condition, "Condition is inherited from BaseChoice and may be null");
         }

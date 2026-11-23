@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd7587f0667a881468fb7220ab03ef93, type: 3}
+  m_Script: {fileID: 11500000, guid: 2d11a49c3226e71418e7c88193ae3f8c, type: 3}
   m_Name: SampleHistoryStress
   m_EditorClassIdentifier: com.faolline.graphTest.Runtime::Faolline.GraphTest.TestGraph
   _graphId: 6fce22e4-4ef0-4160-ada8-f8b060d5b88a
@@ -137,10 +137,10 @@ MonoBehaviour:
         _hasColorOverride: 0
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
     - rid: 6350023396253237416
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 3f4ca5f4-5038-4fc5-8ced-c83e1f529e7e
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 200, y: 0}
         _entryConditions: []
         _onEnterActions: []
@@ -150,10 +150,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 1
     - rid: 6350023396253237417
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 7525909e-9dae-41c2-88e3-c705adee742f
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 400, y: 0}
         _entryConditions: []
         _onEnterActions: []
@@ -163,10 +163,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 2
     - rid: 6350023396253237418
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 978ad510-f284-4e12-8e9f-88ca063a01e4
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 600, y: 0}
         _entryConditions: []
         _onEnterActions: []
@@ -176,10 +176,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 3
     - rid: 6350023396253237419
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 98f2ef2a-d626-4aa0-b4d5-c6ce448e5ac0
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 800, y: 0}
         _entryConditions: []
         _onEnterActions: []
@@ -189,10 +189,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 4
     - rid: 6350023396253237420
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: ad002ca1-8aeb-40dd-a64d-9f49672c2533
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1000, y: 0}
         _entryConditions: []
         _onEnterActions: []
@@ -202,10 +202,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 5
     - rid: 6350023396253237421
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: d8c4e909-1d4e-4a04-8a82-eefab885d844
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1200, y: 0}
         _entryConditions: []
         _onEnterActions: []
@@ -215,10 +215,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 6
     - rid: 6350023396253237422
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: a3326089-1acc-4fed-9181-8cb48fd1d334
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1400, y: 0}
         _entryConditions: []
         _onEnterActions: []
@@ -228,10 +228,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 7
     - rid: 6350023396253237423
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 02101074-5263-4307-855f-ad4567d0c6d5
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1600, y: 0}
         _entryConditions: []
         _onEnterActions: []
@@ -241,10 +241,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 8
     - rid: 6350023396253237424
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 64e5c9b3-6695-4677-a8f0-b52a544260be
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1800, y: 0}
         _entryConditions: []
         _onEnterActions: []
@@ -254,10 +254,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 9
     - rid: 6350023396253237425
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 5a600e9d-ab3c-451a-a368-d6a7aaa2ae55
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 0, y: 130}
         _entryConditions: []
         _onEnterActions: []
@@ -267,10 +267,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 10
     - rid: 6350023396253237426
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 8c07c1c0-8424-431d-adc8-065b01f64d10
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 200, y: 130}
         _entryConditions: []
         _onEnterActions: []
@@ -280,10 +280,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 11
     - rid: 6350023396253237427
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 9cf3a386-58b2-4dae-8eb7-0ea45cecf358
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 400, y: 130}
         _entryConditions: []
         _onEnterActions: []
@@ -293,10 +293,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 12
     - rid: 6350023396253237428
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 72581378-6452-4515-8192-5d28c75b36f0
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 600, y: 130}
         _entryConditions: []
         _onEnterActions: []
@@ -306,10 +306,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 13
     - rid: 6350023396253237429
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: b2096356-e9ec-4c24-9cd3-374187ef9115
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 800, y: 130}
         _entryConditions: []
         _onEnterActions: []
@@ -319,10 +319,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 14
     - rid: 6350023396253237430
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: dfc632d2-dd4e-4014-aafc-3583c9dc60b6
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1000, y: 130}
         _entryConditions: []
         _onEnterActions: []
@@ -332,10 +332,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 15
     - rid: 6350023396253237431
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 4839f30e-dc9e-43fd-9be2-0ad440dc8574
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1200, y: 130}
         _entryConditions: []
         _onEnterActions: []
@@ -345,10 +345,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 16
     - rid: 6350023396253237432
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: c8a0e16d-4beb-4eb7-82d6-62ef0c91b63d
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1400, y: 130}
         _entryConditions: []
         _onEnterActions: []
@@ -358,10 +358,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 17
     - rid: 6350023396253237433
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 1f849872-00ce-48d4-9dcb-0555000dccab
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1600, y: 130}
         _entryConditions: []
         _onEnterActions: []
@@ -371,10 +371,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 18
     - rid: 6350023396253237434
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: f5538a96-77a6-470a-b05d-468d355be308
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1800, y: 130}
         _entryConditions: []
         _onEnterActions: []
@@ -384,10 +384,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 19
     - rid: 6350023396253237435
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 784099dc-04ab-4546-bde2-ca3a1e8aec62
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 0, y: 260}
         _entryConditions: []
         _onEnterActions: []
@@ -397,10 +397,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 20
     - rid: 6350023396253237436
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: fbbf5cf4-0141-4a94-9aa1-aa617f549f00
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 200, y: 260}
         _entryConditions: []
         _onEnterActions: []
@@ -410,10 +410,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 21
     - rid: 6350023396253237437
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 9d4e952d-fb36-4aaa-bc30-a8e5ac0edb7f
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 400, y: 260}
         _entryConditions: []
         _onEnterActions: []
@@ -423,10 +423,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 22
     - rid: 6350023396253237438
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 292afeae-ee00-4f04-8517-aa30c1031253
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 600, y: 260}
         _entryConditions: []
         _onEnterActions: []
@@ -436,10 +436,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 23
     - rid: 6350023396253237439
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 2b5f7991-eb7b-47fe-83fc-58ce521612ab
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 800, y: 260}
         _entryConditions: []
         _onEnterActions: []
@@ -449,10 +449,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 24
     - rid: 6350023396253237440
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 8c5c8ed6-794a-46a7-a969-854fefd57139
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1000, y: 260}
         _entryConditions: []
         _onEnterActions: []
@@ -462,10 +462,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 25
     - rid: 6350023396253237441
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: f4e0daa6-8aa7-4f6a-8157-a0abfc113326
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1200, y: 260}
         _entryConditions: []
         _onEnterActions: []
@@ -475,10 +475,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 26
     - rid: 6350023396253237442
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 8c241213-de3f-40ba-91f0-c438464e253e
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1400, y: 260}
         _entryConditions: []
         _onEnterActions: []
@@ -488,10 +488,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 27
     - rid: 6350023396253237443
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: f5c4fb00-b077-4d5b-a9e1-c6d1ec17fcc9
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1600, y: 260}
         _entryConditions: []
         _onEnterActions: []
@@ -501,10 +501,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 28
     - rid: 6350023396253237444
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 85b21e60-87bd-4193-88ba-9fa8d84fd174
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1800, y: 260}
         _entryConditions: []
         _onEnterActions: []
@@ -514,10 +514,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 29
     - rid: 6350023396253237445
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 27269614-633a-4760-aac5-5d44a2be8e21
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 0, y: 390}
         _entryConditions: []
         _onEnterActions: []
@@ -527,10 +527,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 30
     - rid: 6350023396253237446
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 4a4310d5-3b21-44f6-9ee6-b702bf4d1d41
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 200, y: 390}
         _entryConditions: []
         _onEnterActions: []
@@ -540,10 +540,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 31
     - rid: 6350023396253237447
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 12799868-eae9-4370-bc33-3c0671a9f994
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 400, y: 390}
         _entryConditions: []
         _onEnterActions: []
@@ -553,10 +553,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 32
     - rid: 6350023396253237448
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: e1049437-804f-4ff5-bc60-e2d235cacba4
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 600, y: 390}
         _entryConditions: []
         _onEnterActions: []
@@ -566,10 +566,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 33
     - rid: 6350023396253237449
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: d5bf4546-02c6-4bfa-97a9-dd2c3ac0f81b
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 800, y: 390}
         _entryConditions: []
         _onEnterActions: []
@@ -579,10 +579,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 34
     - rid: 6350023396253237450
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 90269851-99de-4bf5-b8dd-44be5b0cc72b
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1000, y: 390}
         _entryConditions: []
         _onEnterActions: []
@@ -592,10 +592,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 35
     - rid: 6350023396253237451
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 3d8a1331-a7a1-4dfc-8490-7bc557aa07e2
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1200, y: 390}
         _entryConditions: []
         _onEnterActions: []
@@ -605,10 +605,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 36
     - rid: 6350023396253237452
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: b49a4838-a06a-41a0-a9e0-0406693b1f0b
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1400, y: 390}
         _entryConditions: []
         _onEnterActions: []
@@ -618,10 +618,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 37
     - rid: 6350023396253237453
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 85e61840-a5ac-4847-84e6-2140baa2e16e
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1600, y: 390}
         _entryConditions: []
         _onEnterActions: []
@@ -631,10 +631,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 38
     - rid: 6350023396253237454
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: c97fdd09-b354-4114-be6c-1ad29f793ee6
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1800, y: 390}
         _entryConditions: []
         _onEnterActions: []
@@ -644,10 +644,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 39
     - rid: 6350023396253237455
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 076df558-1a2f-463a-962c-7d2ed7eb6873
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 0, y: 520}
         _entryConditions: []
         _onEnterActions: []
@@ -657,10 +657,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 40
     - rid: 6350023396253237456
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 3e6241c5-e664-47f6-a9d4-b60b4abcde81
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 200, y: 520}
         _entryConditions: []
         _onEnterActions: []
@@ -670,10 +670,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 41
     - rid: 6350023396253237457
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 59602b88-f71e-4b0e-80d2-93ef6b16171d
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 400, y: 520}
         _entryConditions: []
         _onEnterActions: []
@@ -683,10 +683,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 42
     - rid: 6350023396253237458
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: f1afac36-e6c0-4f65-b878-f6bbdef64659
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 600, y: 520}
         _entryConditions: []
         _onEnterActions: []
@@ -696,10 +696,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 43
     - rid: 6350023396253237459
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: fa7ab50c-3e78-492f-a075-064c17fe11d1
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 800, y: 520}
         _entryConditions: []
         _onEnterActions: []
@@ -709,10 +709,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 44
     - rid: 6350023396253237460
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 0a86531c-eaf3-4f50-99bd-595684f95419
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1000, y: 520}
         _entryConditions: []
         _onEnterActions: []
@@ -722,10 +722,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 45
     - rid: 6350023396253237461
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 3c76a272-b476-4096-8dd9-b5ea8f4298ae
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1200, y: 520}
         _entryConditions: []
         _onEnterActions: []
@@ -735,10 +735,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 46
     - rid: 6350023396253237462
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: cd648b1c-eaa3-416a-b753-82b75caf0f40
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1400, y: 520}
         _entryConditions: []
         _onEnterActions: []
@@ -748,10 +748,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 47
     - rid: 6350023396253237463
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: c43304d9-907a-4f5d-a5c9-5d1eb56d1282
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1600, y: 520}
         _entryConditions: []
         _onEnterActions: []
@@ -761,10 +761,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 48
     - rid: 6350023396253237464
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 06d67876-1958-4f10-aa66-2389e45275eb
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 1800, y: 520}
         _entryConditions: []
         _onEnterActions: []
@@ -774,10 +774,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Step 49
     - rid: 6350023396253237465
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 437dfabc-fe93-4051-90e2-66e82010bba8
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 0, y: 650}
         _entryConditions: []
         _onEnterActions: []

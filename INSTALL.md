@@ -57,7 +57,7 @@ Internal / not distributed:
 
 ```
 com.faolline.starterGraph          → graphcore, graphlogging — minimal template (fork this)
-com.faolline.graphTest             → graphcore, graphstandard, graphlogging — integration tests, sandbox, dependency guard
+com.faolline.graphTest             → starterGraph, graphcore, graphstandard, graphlogging — integration tests, sandbox, dependency guard
 ```
 
 ## Which package do I need?

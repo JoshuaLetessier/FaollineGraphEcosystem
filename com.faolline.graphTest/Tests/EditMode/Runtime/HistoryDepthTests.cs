@@ -1,6 +1,8 @@
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.StarterGraph;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
@@ -11,9 +13,9 @@ namespace Faolline.GraphTest.Tests
     [TestFixture]
     public class HistoryDepthTests
     {
-        private static TestGraph BuildChain(int steps, int historyDepth)
+        private static StarterGraphAsset BuildChain(int steps, int historyDepth)
         {
-            var g = ScriptableObject.CreateInstance<TestGraph>();
+            var g = ScriptableObject.CreateInstance<StarterGraphAsset>();
             g.HistoryDepth = historyDepth;
 
             g.AddNode(new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId });
@@ -23,7 +25,7 @@ namespace Faolline.GraphTest.Tests
             for (int i = 1; i <= steps; i++)
             {
                 var id = $"n{i}";
-                g.AddNode(new TestStatementNodeData { Id = id, NodeType = TestStatementNodeData.NodeTypeId, Label = $"Step {i}" });
+                g.AddNode(new StarterStatementNodeData { Id = id, NodeType = StarterStatementNodeData.NodeTypeId, Label = $"Step {i}" });
                 g.AddEdge(new BaseEdgeData { Id = $"e{i}", FromNodeId = prev, ToNodeId = id, PortName = "out" });
                 prev = id;
             }
