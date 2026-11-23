@@ -3,6 +3,8 @@ using NUnit.Framework;
 using UnityEditor.Experimental.GraphView;
 using Faolline.GraphCore;
 using Faolline.GraphTest.Editor;
+using Faolline.StarterGraph;
+using Faolline.StarterGraph.Editor;
 
 namespace Faolline.GraphTest.Tests
 {
@@ -34,8 +36,8 @@ namespace Faolline.GraphTest.Tests
         public void RebuildPorts_CreatesOnePortPerChoice()
         {
             var node = NewChoiceNode();
-            node.Choices.Add(new TestChoice { Id = "id-left",  Label = "Go left" });
-            node.Choices.Add(new TestChoice { Id = "id-right", Label = "Go right" });
+            node.Choices.Add(new StarterChoice { Id = "id-left",  Label = "Go left" });
+            node.Choices.Add(new StarterChoice { Id = "id-right", Label = "Go right" });
 
             var view = new ChoiceNodeView(node);
             view.RebuildPorts();
@@ -48,8 +50,8 @@ namespace Faolline.GraphTest.Tests
         public void OutputPort_PortNameIsChoiceId()
         {
             var node = NewChoiceNode();
-            node.Choices.Add(new TestChoice { Id = "id-left",  Label = "Go left" });
-            node.Choices.Add(new TestChoice { Id = "id-right", Label = "Go right" });
+            node.Choices.Add(new StarterChoice { Id = "id-left",  Label = "Go left" });
+            node.Choices.Add(new StarterChoice { Id = "id-right", Label = "Go right" });
 
             var view = new ChoiceNodeView(node);
 
@@ -62,8 +64,8 @@ namespace Faolline.GraphTest.Tests
         public void RebuildPorts_AfterRemovingChoice_DropsPort()
         {
             var node = NewChoiceNode();
-            var left  = new TestChoice { Id = "id-left",  Label = "Go left" };
-            var right = new TestChoice { Id = "id-right", Label = "Go right" };
+            var left  = new StarterChoice { Id = "id-left",  Label = "Go left" };
+            var right = new StarterChoice { Id = "id-right", Label = "Go right" };
             node.Choices.Add(left);
             node.Choices.Add(right);
 

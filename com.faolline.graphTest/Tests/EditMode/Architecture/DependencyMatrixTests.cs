@@ -137,9 +137,10 @@ namespace Faolline.GraphTest.Tests
                 DialogueRuntime, LogRuntime,
             },
 
-            // ── Dev tooling (internal-only packages) ────────────────────────────
+            // ── Dev tooling (internal-only packages; graphTest builds on the starterGraph template
+            //    so its suite exercises the template's graph, window, view and inspector) ──────
             [GraphTestRuntime] = new[] { CoreRuntime, CoreRuntimeCore, StdRuntime, LogRuntime },
-            [GraphTestEditor]  = new[] { GraphTestRuntime, CoreRuntime, CoreRuntimeCore, CoreEditor, LogRuntime },
+            [GraphTestEditor]  = new[] { GraphTestRuntime, StarterRuntime, CoreRuntime, CoreRuntimeCore, CoreEditor, LogRuntime },
             [StarterRuntime]   = new[] { CoreRuntime, CoreRuntimeCore },
             [StarterEditor]    = new[] { CoreRuntime, CoreRuntimeCore, CoreEditor, StarterRuntime, LogRuntime },
 
@@ -166,7 +167,7 @@ namespace Faolline.GraphTest.Tests
                 StdRuntime, StdEditor, QuestRuntime, QuestEditor, FlowRuntime, FlowEditor, DialogueRuntime,
                 TestRunner, TestRunnerEditor,
             },
-            [GraphTestTests]      = new[] { GraphTestRuntime, GraphTestEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, TestRunner, TestRunnerEditor },
+            [GraphTestTests]      = new[] { GraphTestRuntime, GraphTestEditor, StarterRuntime, StarterEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, TestRunner, TestRunnerEditor },
             [StarterTests]        = new[] { StarterRuntime, StarterEditor, CoreRuntime, CoreRuntimeCore, CoreEditor, TestRunner, TestRunnerEditor },
         };
 

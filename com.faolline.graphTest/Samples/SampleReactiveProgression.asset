@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd7587f0667a881468fb7220ab03ef93, type: 3}
+  m_Script: {fileID: 11500000, guid: 2d11a49c3226e71418e7c88193ae3f8c, type: 3}
   m_Name: SampleReactiveProgression
   m_EditorClassIdentifier: com.faolline.graphTest.Runtime::Faolline.GraphTest.TestGraph
   _graphId: 22e0342c-aa13-46ce-81d4-dd605c93f795
@@ -32,10 +32,10 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 2948308848149266510
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 0acb2baa-a5a8-4d46-958a-b0c320b26fa1
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _title: 
         _position: {x: 0, y: -150}
         _entryConditions: []
@@ -49,10 +49,10 @@ MonoBehaviour:
         _waitDuration: 0
         _label: Key A
     - rid: 2948308848149266511
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: f17ffa87-7ee3-481f-9545-a03a89e8e13b
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _title: 
         _position: {x: 0, y: 0}
         _entryConditions: []
@@ -66,10 +66,10 @@ MonoBehaviour:
         _waitDuration: 0
         _label: Key B
     - rid: 2948308848149266512
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 7842940e-94bc-4a75-8a69-daec27a21e7c
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _title: 
         _position: {x: 0, y: 150}
         _entryConditions: []
@@ -83,10 +83,10 @@ MonoBehaviour:
         _waitDuration: 0
         _label: Switch C
     - rid: 2948308848149266513
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: bcb56524-8cfc-429a-8a6e-ffd624254362
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _title: 
         _position: {x: 345, y: -72}
         _entryConditions: []
@@ -100,10 +100,10 @@ MonoBehaviour:
         _waitDuration: 0
         _label: Gate (A+B)
     - rid: 2948308848149266514
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 10c6075d-36d9-471e-a181-d53e23de4086
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _title: 
         _position: {x: 600, y: 0}
         _entryConditions: []

@@ -9,7 +9,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd7587f0667a881468fb7220ab03ef93, type: 3}
+  m_Script: {fileID: 11500000, guid: 2d11a49c3226e71418e7c88193ae3f8c, type: 3}
   m_Name: SampleFlowFork
   m_EditorClassIdentifier: com.faolline.graphTest.Runtime::Faolline.GraphTest.TestGraph
   _graphId: 3e468216-bfcb-48f8-a635-2eeb2194e246
@@ -33,10 +33,10 @@ MonoBehaviour:
     version: 2
     RefIds:
     - rid: 2948308848149266500
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 921b665f-1435-4b79-bc24-1695b299deb7
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _title: 
         _position: {x: 0, y: 0}
         _entryConditions: []
@@ -50,10 +50,10 @@ MonoBehaviour:
         _waitDuration: 0
         _label: Trigger
     - rid: 2948308848149266501
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: dc4856f2-eb9a-4eae-8a49-a195e01b733b
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _title: 
         _position: {x: 300, y: -120}
         _entryConditions: []
@@ -67,10 +67,10 @@ MonoBehaviour:
         _waitDuration: 0
         _label: Left
     - rid: 2948308848149266502
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 9036240e-c8d2-4eeb-ad79-f71af8b36ed2
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _title: 
         _position: {x: 300, y: 120}
         _entryConditions: []
@@ -84,10 +84,10 @@ MonoBehaviour:
         _waitDuration: 0
         _label: Right
     - rid: 2948308848149266503
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: e717d273-265c-44b8-ace1-34fc2f6313f0
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _title: 
         _position: {x: 600, y: 0}
         _entryConditions: []
@@ -101,10 +101,10 @@ MonoBehaviour:
         _waitDuration: 0
         _label: Merge
     - rid: 2948308848149266504
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 57430286-6b74-4904-bf14-1f8deabe45cb
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _title: 
         _position: {x: 900, y: 0}
         _entryConditions: []

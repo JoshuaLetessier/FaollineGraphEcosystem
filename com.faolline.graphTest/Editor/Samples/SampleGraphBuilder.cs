@@ -3,11 +3,13 @@ using UnityEngine;
 using Faolline.GraphCore;
 using Faolline.GraphTest;
 using Faolline.GraphLogging;
+using Faolline.StarterGraph;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Editor
 {
     /// <summary>
-    /// Editor utility that generates a self-contained sample <see cref="TestGraph"/> asset
+    /// Editor utility that generates a self-contained sample <see cref="StarterGraphAsset"/> asset
     /// exercising every feature end-to-end: bool parameters, enter/exit actions, an entry
     /// condition, a checkpoint node, and a Choice node with a conditional choice.
     /// Conditions and actions are stored as sub-assets so the graph is fully portable.
@@ -24,7 +26,7 @@ namespace Faolline.GraphTest.Editor
         {
             EnsureFolder();
 
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
             AssetDatabase.CreateAsset(graph, AssetPath);
 
             // The Test* actions/conditions use the raw-string context channel (TestContextKeys), so no parameter
@@ -43,25 +45,25 @@ namespace Faolline.GraphTest.Editor
             // ── Nodes ─────────────────────────────────────────────────────────────
             var start = new StartNodeData { Id = NewId(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
 
-            var intro = new TestStatementNodeData { Id = NewId(), NodeType = TestStatementNodeData.NodeTypeId, Label = "Intro", Position = new Vector2(240, 0) };
+            var intro = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Intro", Position = new Vector2(240, 0) };
             intro.OnEnterActions.Add(logIntro);
             intro.OnEnterActions.Add(setDoorOpen);   // opens the door so the conditional choice becomes available
             intro.OnExitActions.Add(logExitIntro);
 
-            var checkpoint = new TestStatementNodeData { Id = NewId(), NodeType = TestStatementNodeData.NodeTypeId, Label = "Checkpoint", Position = new Vector2(480, 0), IsCheckpoint = true };
+            var checkpoint = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Checkpoint", Position = new Vector2(480, 0), IsCheckpoint = true };
             checkpoint.OnEnterActions.Add(logCheckpoint);
 
             var choice = new ChoiceNodeData { Id = NewId(), NodeType = ChoiceNodeData.NodeTypeId, Position = new Vector2(720, 0) };
-            var openDoorChoice = new TestChoice { Id = NewId(), Label = "Ouvrir la porte", Condition = doorCond };
-            var leaveChoice    = new TestChoice { Id = NewId(), Label = "Partir" };
+            var openDoorChoice = new StarterChoice { Id = NewId(), Label = "Ouvrir la porte", Condition = doorCond };
+            var leaveChoice    = new StarterChoice { Id = NewId(), Label = "Partir" };
             choice.Choices.Add(openDoorChoice);
             choice.Choices.Add(leaveChoice);
 
-            var doorPath = new TestStatementNodeData { Id = NewId(), NodeType = TestStatementNodeData.NodeTypeId, Label = "Porte", Position = new Vector2(980, -140) };
+            var doorPath = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Porte", Position = new Vector2(980, -140) };
             doorPath.EntryConditions.Add(doorCond);  // entry condition exercised here
             doorPath.OnEnterActions.Add(logDoorPath);
 
-            var leavePath = new TestStatementNodeData { Id = NewId(), NodeType = TestStatementNodeData.NodeTypeId, Label = "Sortie", Position = new Vector2(980, 140) };
+            var leavePath = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Sortie", Position = new Vector2(980, 140) };
             leavePath.OnEnterActions.Add(logLeavePath);
 
             var end = new EndNodeData { Id = NewId(), NodeType = EndNodeData.NodeTypeId, Position = new Vector2(1240, 0) };
@@ -114,12 +116,12 @@ namespace Faolline.GraphTest.Editor
             const string pname = "name";
 
             // ── Child graph: Start → Statement → End ──────────────────────────────
-            var child = ScriptableObject.CreateInstance<TestGraph>();
+            var child = ScriptableObject.CreateInstance<StarterGraphAsset>();
             AssetDatabase.CreateAsset(child, ChildPath);
 
             var childLog = Sub<TestLogAction>(child, "ChildLog"); childLog.Message = "Inside sub-graph";
             var cStart = new StartNodeData         { Id = NewId(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
-            var cStmt  = new TestStatementNodeData { Id = NewId(), NodeType = TestStatementNodeData.NodeTypeId, Label = "Child", Position = new Vector2(240, 0) };
+            var cStmt  = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Child", Position = new Vector2(240, 0) };
             cStmt.OnEnterActions.Add(childLog);
             var cEnd   = new EndNodeData           { Id = NewId(), NodeType = EndNodeData.NodeTypeId, Position = new Vector2(480, 0) };
             child.AddNode(cStart); child.AddNode(cStmt); child.AddNode(cEnd);
@@ -129,7 +131,7 @@ namespace Faolline.GraphTest.Editor
             EditorUtility.SetDirty(child);
 
             // ── Parent graph ──────────────────────────────────────────────────────
-            var parent = ScriptableObject.CreateInstance<TestGraph>();
+            var parent = ScriptableObject.CreateInstance<StarterGraphAsset>();
             AssetDatabase.CreateAsset(parent, AuthoringPath);
 
             // The Test* typed actions/conditions use the raw-string context channel: the Setup node's enter
@@ -152,7 +154,7 @@ namespace Faolline.GraphTest.Editor
 
             // Nodes
             var start = new StartNodeData         { Id = NewId(), NodeType = StartNodeData.NodeTypeId, Position = new Vector2(0, 0) };
-            var setup = new TestStatementNodeData { Id = NewId(), NodeType = TestStatementNodeData.NodeTypeId, Label = "Setup", Position = new Vector2(240, 0) };
+            var setup = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Setup", Position = new Vector2(240, 0) };
             setup.OnEnterActions.Add(logSetup);
             setup.OnEnterActions.Add(setScore);
             setup.OnEnterActions.Add(setHp);
@@ -162,16 +164,16 @@ namespace Faolline.GraphTest.Editor
             var sub = new SubGraphNodeData { Id = NewId(), NodeType = SubGraphNodeData.NodeTypeId, TargetGraph = child, InheritParentContext = true, Position = new Vector2(480, 0) };
 
             var choice = new ChoiceNodeData { Id = NewId(), NodeType = ChoiceNodeData.NodeTypeId, Position = new Vector2(720, 0) };
-            var winChoice       = new TestChoice { Id = NewId(), Label = "Win (score >= 3)",        Condition = winCond };
-            var retreatChoice   = new TestChoice { Id = NewId(), Label = "Retreat (hp < 0.5)",      Condition = retreatCond };
-            var surrenderChoice = new TestChoice { Id = NewId(), Label = "Surrender (name=villain)", Condition = villainCond };
+            var winChoice       = new StarterChoice { Id = NewId(), Label = "Win (score >= 3)",        Condition = winCond };
+            var retreatChoice   = new StarterChoice { Id = NewId(), Label = "Retreat (hp < 0.5)",      Condition = retreatCond };
+            var surrenderChoice = new StarterChoice { Id = NewId(), Label = "Surrender (name=villain)", Condition = villainCond };
             choice.Choices.Add(winChoice);
             choice.Choices.Add(retreatChoice);
             choice.Choices.Add(surrenderChoice);
 
-            var winPath       = new TestStatementNodeData { Id = NewId(), NodeType = TestStatementNodeData.NodeTypeId, Label = "Win",       Position = new Vector2(980, -180) }; winPath.OnEnterActions.Add(logWin);
-            var retreatPath   = new TestStatementNodeData { Id = NewId(), NodeType = TestStatementNodeData.NodeTypeId, Label = "Retreat",   Position = new Vector2(980, 0) };    retreatPath.OnEnterActions.Add(logRetreat);
-            var surrenderPath = new TestStatementNodeData { Id = NewId(), NodeType = TestStatementNodeData.NodeTypeId, Label = "Surrender", Position = new Vector2(980, 180) };  surrenderPath.OnEnterActions.Add(logSurrender);
+            var winPath       = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Win",       Position = new Vector2(980, -180) }; winPath.OnEnterActions.Add(logWin);
+            var retreatPath   = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Retreat",   Position = new Vector2(980, 0) };    retreatPath.OnEnterActions.Add(logRetreat);
+            var surrenderPath = new StarterStatementNodeData { Id = NewId(), NodeType = StarterStatementNodeData.NodeTypeId, Label = "Surrender", Position = new Vector2(980, 180) };  surrenderPath.OnEnterActions.Add(logSurrender);
 
             // US1 — three End nodes with distinct end reasons
             var endWin       = new EndNodeData { Id = NewId(), NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed, Position = new Vector2(1240, -180) };
@@ -220,7 +222,7 @@ namespace Faolline.GraphTest.Editor
             const int depth  = 10;
             const int perRow = 10;
 
-            var g = ScriptableObject.CreateInstance<TestGraph>();
+            var g = ScriptableObject.CreateInstance<StarterGraphAsset>();
             AssetDatabase.CreateAsset(g, Folder + "/SampleHistoryStress.asset");
             g.HistoryDepth = depth;
 
@@ -231,10 +233,10 @@ namespace Faolline.GraphTest.Editor
             string prev = start.Id;
             for (int i = 1; i <= steps; i++)
             {
-                var node = new TestStatementNodeData
+                var node = new StarterStatementNodeData
                 {
                     Id = NewId(),
-                    NodeType = TestStatementNodeData.NodeTypeId,
+                    NodeType = StarterStatementNodeData.NodeTypeId,
                     Label = $"Step {i}",
                     Position = GridPos(i, perRow)
                 };

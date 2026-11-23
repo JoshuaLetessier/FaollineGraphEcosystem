@@ -22,7 +22,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd7587f0667a881468fb7220ab03ef93, type: 3}
+  m_Script: {fileID: 11500000, guid: 2d11a49c3226e71418e7c88193ae3f8c, type: 3}
   m_Name: SampleChildGraph
   m_EditorClassIdentifier: com.faolline.graphTest.Runtime::Faolline.GraphTest.TestGraph
   _graphId: a017a134-febc-4d73-bc19-f08edcd583f5
@@ -52,10 +52,10 @@ MonoBehaviour:
         _hasColorOverride: 0
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
     - rid: 6350023396253237303
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 57cc6f56-8628-4a7e-9bb6-6de7db0989e5
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 240, y: 0}
         _entryConditions: []
         _onEnterActions:

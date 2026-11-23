@@ -3,20 +3,23 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Faolline.GraphCore;
 using Faolline.GraphTest.Editor;
+using Faolline.StarterGraph;
+using Faolline.StarterGraph.Editor;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
     [TestFixture]
-    public class TestGraphEditorWindowSessionTests
+    public class StarterGraphEditorWindowSessionTests
     {
-        private TestGraphEditorWindow _window;
-        private TestGraph _graph;
+        private StarterGraphEditorWindow _window;
+        private StarterGraphAsset _graph;
 
         [SetUp]
         public void SetUp()
         {
-            _window = ScriptableObject.CreateInstance<TestGraphEditorWindow>();
-            _graph  = ScriptableObject.CreateInstance<TestGraph>();
+            _window = ScriptableObject.CreateInstance<StarterGraphEditorWindow>();
+            _graph  = ScriptableObject.CreateInstance<StarterGraphAsset>();
 
             var start = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
             var end   = new EndNodeData   { Id = "e", NodeType = EndNodeData.NodeTypeId };
@@ -78,18 +81,18 @@ namespace Faolline.GraphTest.Tests
         // ── Choice selection ──────────────────────────────────────────────────
 
         // Start → Choice(Left→A, Right→B) → A→End, B→End
-        private static TestGraph BuildChoiceGraph(BaseCondition leftCondition = null)
+        private static StarterGraphAsset BuildChoiceGraph(BaseCondition leftCondition = null)
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
 
             var start  = new StartNodeData        { Id = "start", NodeType = StartNodeData.NodeTypeId };
             var choice = new ChoiceNodeData        { Id = "choice", NodeType = ChoiceNodeData.NodeTypeId };
-            var a      = new TestStatementNodeData { Id = "a", NodeType = TestStatementNodeData.NodeTypeId, Label = "A" };
-            var b      = new TestStatementNodeData { Id = "b", NodeType = TestStatementNodeData.NodeTypeId, Label = "B" };
+            var a      = new StarterStatementNodeData { Id = "a", NodeType = StarterStatementNodeData.NodeTypeId, Label = "A" };
+            var b      = new StarterStatementNodeData { Id = "b", NodeType = StarterStatementNodeData.NodeTypeId, Label = "B" };
             var end    = new EndNodeData           { Id = "end", NodeType = EndNodeData.NodeTypeId };
 
-            choice.Choices.Add(new TestChoice { Id = "left",  Label = "Left",  Condition = leftCondition });
-            choice.Choices.Add(new TestChoice { Id = "right", Label = "Right" });
+            choice.Choices.Add(new StarterChoice { Id = "left",  Label = "Left",  Condition = leftCondition });
+            choice.Choices.Add(new StarterChoice { Id = "right", Label = "Right" });
 
             graph.AddNode(start);
             graph.AddNode(choice);
@@ -128,7 +131,7 @@ namespace Faolline.GraphTest.Tests
                 Assert.IsTrue(_window.IsWaitingForChoice, "Must pause at the choice first");
 
                 LogAssert.Expect(LogType.Log,
-                    new System.Text.RegularExpressions.Regex("Node: graphtest/statement \"A\""));
+                    new System.Text.RegularExpressions.Regex("Node: startergraph/statement \"A\""));
                 LogAssert.Expect(LogType.Log,
                     new System.Text.RegularExpressions.Regex(@"Graph ended"));
 
@@ -149,7 +152,7 @@ namespace Faolline.GraphTest.Tests
                 _window.ExecuteGraph(graph);
 
                 LogAssert.Expect(LogType.Log,
-                    new System.Text.RegularExpressions.Regex("Node: graphtest/statement \"B\""));
+                    new System.Text.RegularExpressions.Regex("Node: startergraph/statement \"B\""));
 
                 _window.Choose("right");
 
@@ -191,14 +194,14 @@ namespace Faolline.GraphTest.Tests
             var setScore = ScriptableObject.CreateInstance<TestSetIntAction>();
             setScore.ParameterKey = "score"; setScore.Value = 5;
 
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
             try
             {
                 var start  = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
                 start.OnEnterActions.Add(setScore);
                 var choice = new ChoiceNodeData { Id = "c", NodeType = ChoiceNodeData.NodeTypeId };
-                choice.Choices.Add(new TestChoice { Id = "high",  Label = "High",     Condition = passCond });
-                choice.Choices.Add(new TestChoice { Id = "vhigh", Label = "VeryHigh", Condition = failCond });
+                choice.Choices.Add(new StarterChoice { Id = "high",  Label = "High",     Condition = passCond });
+                choice.Choices.Add(new StarterChoice { Id = "vhigh", Label = "VeryHigh", Condition = failCond });
                 var end = new EndNodeData { Id = "e", NodeType = EndNodeData.NodeTypeId };
                 graph.AddNode(start); graph.AddNode(choice); graph.AddNode(end); graph.EntryNodeId = "s";
                 graph.AddEdge(new BaseEdgeData { Id = "e0", FromNodeId = "s", ToNodeId = "c", PortName = "out" });

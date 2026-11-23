@@ -91,7 +91,7 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: dd7587f0667a881468fb7220ab03ef93, type: 3}
+  m_Script: {fileID: 11500000, guid: 2d11a49c3226e71418e7c88193ae3f8c, type: 3}
   m_Name: SampleAuthoringGraph
   m_EditorClassIdentifier: com.faolline.graphTest.Runtime::Faolline.GraphTest.TestGraph
   _graphId: 3af0c1b3-4d50-45b9-86ad-f82370a8f9ef
@@ -144,10 +144,10 @@ MonoBehaviour:
         _hasColorOverride: 0
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
     - rid: 6350023396253237308
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: f784be77-7dd0-42df-970b-a2e2c5c28213
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 240, y: 0}
         _entryConditions: []
         _onEnterActions:
@@ -191,10 +191,10 @@ MonoBehaviour:
         - rid: 6350023396253237327
         - rid: 6350023396253237328
     - rid: 6350023396253237311
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 33981742-54b5-4c19-8ea3-0fe76b5d16db
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 980, y: -180}
         _entryConditions: []
         _onEnterActions:
@@ -205,10 +205,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Win
     - rid: 6350023396253237312
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: f152daf7-28e6-4bc1-8114-19f0cc808de1
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 980, y: 0}
         _entryConditions: []
         _onEnterActions:
@@ -219,10 +219,10 @@ MonoBehaviour:
         _nodeColor: {r: 0, g: 0, b: 0, a: 0}
         _label: Retreat
     - rid: 6350023396253237313
-      type: {class: TestStatementNodeData, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterStatementNodeData, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: e8a040a7-d21d-4f74-84ea-cf8b299e4e54
-        _nodeType: graphtest/statement
+        _nodeType: startergraph/statement
         _position: {x: 980, y: 180}
         _entryConditions: []
         _onEnterActions:
@@ -362,19 +362,19 @@ MonoBehaviour:
         _hasColorOverride: 0
         _edgeColor: {r: 0, g: 0, b: 0, a: 0}
     - rid: 6350023396253237326
-      type: {class: TestChoice, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterChoice, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 1c942814-e774-4359-a959-ee6eae10bde5
         _condition: {fileID: 371271298798117096}
         _label: Win (score >= 3)
     - rid: 6350023396253237327
-      type: {class: TestChoice, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterChoice, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 39c525dd-75f9-4182-a29a-918e96007ce5
         _condition: {fileID: -7428729100903954045}
         _label: Retreat (hp < 0.5)
     - rid: 6350023396253237328
-      type: {class: TestChoice, ns: Faolline.GraphTest, asm: com.faolline.graphTest.Runtime}
+      type: {class: StarterChoice, ns: Faolline.StarterGraph, asm: com.faolline.starterGraph.Runtime}
       data:
         _id: 08a73bda-220f-4245-baae-454dd6a04da3
         _condition: {fileID: 5340128916033068883}

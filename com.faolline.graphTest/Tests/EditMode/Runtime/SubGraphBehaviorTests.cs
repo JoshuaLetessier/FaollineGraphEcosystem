@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.StarterGraph;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
@@ -20,13 +22,13 @@ namespace Faolline.GraphTest.Tests
         }
 
         // parent: Start → SubGraph(child, inherit) → End ; child: Start → Stmt(set marker=1) → End
-        private static (TestGraph parent, TestGraph child, TestSetIntAction marker) BuildParentChild(bool inherit)
+        private static (StarterGraphAsset parent, StarterGraphAsset child, TestSetIntAction marker) BuildParentChild(bool inherit)
         {
             var marker = ScriptableObject.CreateInstance<TestSetIntAction>();
             marker.ParameterKey = "marker"; marker.Value = 1;
 
-            var child = ScriptableObject.CreateInstance<TestGraph>();
-            var cstmt = new TestStatementNodeData { Id = "cstmt", NodeType = TestStatementNodeData.NodeTypeId };
+            var child = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            var cstmt = new StarterStatementNodeData { Id = "cstmt", NodeType = StarterStatementNodeData.NodeTypeId };
             cstmt.OnEnterActions.Add(marker);
             child.AddNode(new StartNodeData { Id = "cs", NodeType = StartNodeData.NodeTypeId });
             child.AddNode(cstmt);
@@ -35,7 +37,7 @@ namespace Faolline.GraphTest.Tests
             child.AddEdge(new BaseEdgeData { Id = "c1", FromNodeId = "cs",    ToNodeId = "cstmt", PortName = "out" });
             child.AddEdge(new BaseEdgeData { Id = "c2", FromNodeId = "cstmt", ToNodeId = "ce",    PortName = "out" });
 
-            var parent = ScriptableObject.CreateInstance<TestGraph>();
+            var parent = ScriptableObject.CreateInstance<StarterGraphAsset>();
             parent.AddNode(new StartNodeData    { Id = "ps", NodeType = StartNodeData.NodeTypeId });
             parent.AddNode(new SubGraphNodeData { Id = "sg", NodeType = SubGraphNodeData.NodeTypeId, TargetGraph = child, InheritParentContext = inherit });
             parent.AddNode(new EndNodeData      { Id = "pe", NodeType = EndNodeData.NodeTypeId });
@@ -81,9 +83,9 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void SubGraph_NestedTwoLevels_ReachesDeepestNode()
         {
-            var l3 = ScriptableObject.CreateInstance<TestGraph>();
+            var l3 = ScriptableObject.CreateInstance<StarterGraphAsset>();
             l3.AddNode(new StartNodeData         { Id = "l3s",  NodeType = StartNodeData.NodeTypeId });
-            l3.AddNode(new TestStatementNodeData { Id = "deep", NodeType = TestStatementNodeData.NodeTypeId, Label = "deep" });
+            l3.AddNode(new StarterStatementNodeData { Id = "deep", NodeType = StarterStatementNodeData.NodeTypeId, Label = "deep" });
             l3.AddNode(new EndNodeData           { Id = "l3e",  NodeType = EndNodeData.NodeTypeId });
             l3.EntryNodeId = "l3s";
             l3.AddEdge(new BaseEdgeData { Id = "l3a", FromNodeId = "l3s",  ToNodeId = "deep", PortName = "out" });
@@ -114,8 +116,8 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void SubGraph_RuntimeCycle_ThrowsGraphCycleException()
         {
-            var a = ScriptableObject.CreateInstance<TestGraph>();
-            var b = ScriptableObject.CreateInstance<TestGraph>();
+            var a = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            var b = ScriptableObject.CreateInstance<StarterGraphAsset>();
             BuildSubGraphOnlyGraph(a, "a", b);
             BuildSubGraphOnlyGraph(b, "b", a); // a → b → a forms a cycle
             try
@@ -137,13 +139,13 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void SubGraph_ChildEndReason_DoesNotOverrideRootEndReason()
         {
-            var child = ScriptableObject.CreateInstance<TestGraph>();
+            var child = ScriptableObject.CreateInstance<StarterGraphAsset>();
             child.AddNode(new StartNodeData { Id = "cs", NodeType = StartNodeData.NodeTypeId });
             child.AddNode(new EndNodeData   { Id = "ce", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Cancelled });
             child.EntryNodeId = "cs";
             child.AddEdge(new BaseEdgeData { Id = "c1", FromNodeId = "cs", ToNodeId = "ce", PortName = "out" });
 
-            var parent = ScriptableObject.CreateInstance<TestGraph>();
+            var parent = ScriptableObject.CreateInstance<StarterGraphAsset>();
             parent.AddNode(new StartNodeData    { Id = "ps", NodeType = StartNodeData.NodeTypeId });
             parent.AddNode(new SubGraphNodeData { Id = "sg", NodeType = SubGraphNodeData.NodeTypeId, TargetGraph = child });
             parent.AddNode(new EndNodeData      { Id = "pe", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Completed });
@@ -173,15 +175,15 @@ namespace Faolline.GraphTest.Tests
 
         // ── Helpers ─────────────────────────────────────────────────────────────
 
-        private static TestGraph WrapInSubGraph(TestGraph target, string prefix)
+        private static StarterGraphAsset WrapInSubGraph(StarterGraphAsset target, string prefix)
         {
-            var g = ScriptableObject.CreateInstance<TestGraph>();
+            var g = ScriptableObject.CreateInstance<StarterGraphAsset>();
             BuildSubGraphOnlyGraph(g, prefix, target);
             return g;
         }
 
         // Builds: Start → SubGraph(target) → End, with ids prefixed.
-        private static void BuildSubGraphOnlyGraph(TestGraph g, string prefix, TestGraph target)
+        private static void BuildSubGraphOnlyGraph(StarterGraphAsset g, string prefix, StarterGraphAsset target)
         {
             g.AddNode(new StartNodeData    { Id = prefix + "s",  NodeType = StartNodeData.NodeTypeId });
             g.AddNode(new SubGraphNodeData { Id = prefix + "sg", NodeType = SubGraphNodeData.NodeTypeId, TargetGraph = target });
@@ -191,7 +193,7 @@ namespace Faolline.GraphTest.Tests
             g.AddEdge(new BaseEdgeData { Id = prefix + "2", FromNodeId = prefix + "sg", ToNodeId = prefix + "e",  PortName = "out" });
         }
 
-        private static void Cleanup(TestGraph parent, TestGraph child, Object extra)
+        private static void Cleanup(StarterGraphAsset parent, StarterGraphAsset child, Object extra)
         {
             Object.DestroyImmediate(parent);
             Object.DestroyImmediate(child);

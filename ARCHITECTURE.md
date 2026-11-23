@@ -50,7 +50,7 @@ Core (their own coupling to ScriptableObject types runs too deep to be worth res
 | **T2 · Verticals** | `graphdialoguesystem`, `graphquest`, `graphgameflow` | T0, T1 | **another vertical**, external packages |
 | **T3 · Adapters** | `graphsave.savesystem`, `graphgameflow.addressables`; the `Localization.Unity` and `UI` sub-assemblies | the package they adapt + **one** external dependency family | other adapters |
 | **T4 · Generation tooling** | `graphimport` | T0, T1, **any number of T2 verticals** (Editor-only) | being referenced BY a T0–T3 assembly (one-way: tooling depends on verticals, never the reverse); doing anything at gameplay/runtime |
-| **Dev tooling** | `graphTest`, `starterGraph` | T0, T1 | being installed in a consumer project |
+| **Dev tooling** | `graphTest`, `starterGraph` | T0, T1; `graphTest` also references `starterGraph` (its suite runs on the template's graph, window, view and inspector) | being installed in a consumer project |
 
 Tier definitions:
 

@@ -2,6 +2,8 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEditor;
 using Faolline.GraphCore;
+using Faolline.StarterGraph;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
@@ -16,15 +18,15 @@ namespace Faolline.GraphTest.Tests
         private const string Path =
             "Assets/FaollineGraphEcosystem/com.faolline.graphTest/Samples/SampleAuthoringGraph.asset";
 
-        private static TestGraph LoadOrIgnore()
+        private static StarterGraphAsset LoadOrIgnore()
         {
-            var graph = AssetDatabase.LoadAssetAtPath<TestGraph>(Path);
+            var graph = AssetDatabase.LoadAssetAtPath<StarterGraphAsset>(Path);
             if (graph == null)
                 Assert.Ignore("SampleAuthoringGraph asset not present — run 'Faolline/Create Sample TestGraph 008 (Authoring)'.");
             return graph;
         }
 
-        private static (BaseRunner runner, TestGameContext ctx, List<string> visited) StartSample(TestGraph graph)
+        private static (BaseRunner runner, TestGameContext ctx, List<string> visited) StartSample(StarterGraphAsset graph)
         {
             var ctx = new TestGameContext();
             ctx.InitFromGraph(graph);
@@ -77,7 +79,7 @@ namespace Faolline.GraphTest.Tests
 
             var choice = DrainToChoice(runner);
             Assert.IsNotNull(choice);
-            var win = choice.Choices.Find(c => (c as TestChoice)?.Label.StartsWith("Win") == true);
+            var win = choice.Choices.Find(c => (c as StarterChoice)?.Label.StartsWith("Win") == true);
             Assert.IsNotNull(win, "Sample must have a Win choice");
 
             runner.ChooseById(win.Id);
@@ -98,7 +100,7 @@ namespace Faolline.GraphTest.Tests
 
             var choice = DrainToChoice(runner);
             Assert.IsNotNull(choice);
-            var retreat = choice.Choices.Find(c => (c as TestChoice)?.Label.StartsWith("Retreat") == true);
+            var retreat = choice.Choices.Find(c => (c as StarterChoice)?.Label.StartsWith("Retreat") == true);
             Assert.IsNotNull(retreat, "Sample must have a Retreat choice");
 
             runner.ChooseById(retreat.Id);

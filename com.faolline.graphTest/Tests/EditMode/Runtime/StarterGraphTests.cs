@@ -3,31 +3,33 @@ using System.Linq;
 using NUnit.Framework;
 using UnityEngine;
 using Faolline.GraphCore;
+using Faolline.StarterGraph;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
     [TestFixture]
-    public class TestGraphTests
+    public class StarterGraphTests
     {
         [Test]
-        public void TestGraph_IsBaseGraphSubclass()
+        public void StarterGraph_IsBaseGraphSubclass()
         {
             Assert.IsTrue(
-                typeof(BaseGraph).IsAssignableFrom(typeof(TestGraph)),
-                "TestGraph must be a subclass of BaseGraph");
+                typeof(BaseGraph).IsAssignableFrom(typeof(StarterGraphAsset)),
+                "StarterGraph must be a subclass of BaseGraph");
         }
 
         [Test]
-        public void TestGraph_HasCreateAssetMenuAttribute()
+        public void StarterGraph_HasCreateAssetMenuAttribute()
         {
-            var attrs = typeof(TestGraph).GetCustomAttributes(typeof(CreateAssetMenuAttribute), inherit: false);
-            Assert.IsNotEmpty(attrs, "TestGraph must have a [CreateAssetMenu] attribute");
+            var attrs = typeof(StarterGraphAsset).GetCustomAttributes(typeof(CreateAssetMenuAttribute), inherit: false);
+            Assert.IsNotEmpty(attrs, "StarterGraph must have a [CreateAssetMenu] attribute");
         }
 
         [Test]
-        public void TestGraph_CreateInstance_Succeeds()
+        public void StarterGraph_CreateInstance_Succeeds()
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
             try
             {
                 Assert.IsNotNull(graph);
@@ -40,8 +42,8 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void EndNode_EndReason_SurvivesSerializationRoundTrip()
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
-            TestGraph clone = null;
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            StarterGraphAsset clone = null;
             try
             {
                 graph.AddNode(new EndNodeData { Id = "e", NodeType = EndNodeData.NodeTypeId, EndReason = EndReason.Cancelled });
@@ -63,9 +65,9 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void SubGraphNode_TargetAndInheritFlag_SurviveSerializationRoundTrip()
         {
-            var child = ScriptableObject.CreateInstance<TestGraph>();
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
-            TestGraph clone = null;
+            var child = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            StarterGraphAsset clone = null;
             try
             {
                 graph.AddNode(new SubGraphNodeData
@@ -94,15 +96,15 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void ChoiceNode_WithTwoChoicesAndEdges_SurvivesSerializationRoundTrip()
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
-            TestGraph clone = null;
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            StarterGraphAsset clone = null;
             try
             {
                 var choiceNode = new ChoiceNodeData { Id = "choice", NodeType = ChoiceNodeData.NodeTypeId };
-                choiceNode.Choices.Add(new TestChoice { Id = "id-left",  Label = "Go left" });
-                choiceNode.Choices.Add(new TestChoice { Id = "id-right", Label = "Go right" });
-                var nodeA = new TestStatementNodeData { Id = "a", NodeType = TestStatementNodeData.NodeTypeId };
-                var nodeB = new TestStatementNodeData { Id = "b", NodeType = TestStatementNodeData.NodeTypeId };
+                choiceNode.Choices.Add(new StarterChoice { Id = "id-left",  Label = "Go left" });
+                choiceNode.Choices.Add(new StarterChoice { Id = "id-right", Label = "Go right" });
+                var nodeA = new StarterStatementNodeData { Id = "a", NodeType = StarterStatementNodeData.NodeTypeId };
+                var nodeB = new StarterStatementNodeData { Id = "b", NodeType = StarterStatementNodeData.NodeTypeId };
 
                 graph.AddNode(choiceNode);
                 graph.AddNode(nodeA);
@@ -117,7 +119,7 @@ namespace Faolline.GraphTest.Tests
                 Assert.IsNotNull(clonedChoice, "Cloned graph must still contain the ChoiceNodeData");
                 Assert.AreEqual(2, clonedChoice.Choices.Count, "Both choices must survive serialization");
 
-                var labels = clonedChoice.Choices.OfType<TestChoice>().Select(c => c.Label).ToList();
+                var labels = clonedChoice.Choices.OfType<StarterChoice>().Select(c => c.Label).ToList();
                 CollectionAssert.AreEquivalent(new[] { "Go left", "Go right" }, labels,
                     "Choice labels must be preserved across serialization");
 

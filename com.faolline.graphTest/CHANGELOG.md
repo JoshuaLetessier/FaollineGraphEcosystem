@@ -4,6 +4,29 @@ All notable changes to **com.faolline.graphTest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.4.0]
+
+### Changed
+- **graphTest now builds on the starterGraph template instead of carrying its own copy.** The duplicated
+  skeleton is gone: `TestGraph`, `TestChoice`, `TestStatementNodeData`, `TestGraphEditorWindow`,
+  `TestGraphView`, `TestNodeInspectorView`, `TestEdgeView` and the five node views. Tests and sample
+  builders use `StarterGraph`, `StarterChoice`, `StarterStatementNodeData` and the StarterGraph editor
+  instead. The whole suite now covers the template, and a graphcore API change lands once instead of twice.
+- **The six sample graphs are `StarterGraph` assets.** They were re-pointed in place (script reference,
+  managed-reference types, `graphtest/statement` → `startergraph/statement`), so asset GUIDs, GraphIds and
+  node ids are unchanged. Double-clicking one opens the StarterGraph editor; the sandbox window runs with a
+  `StarterContext` (the Test* doubles read raw-string keys, so any context works).
+- Test files renamed after their subject: `TestGraph*Tests` → `StarterGraph*Tests`, `TestChoiceTests` →
+  `StarterChoiceTests`, `TestStatementNodeDataTests` → `StarterStatementNodeDataTests`,
+  `TestNodeInspectorViewTests` → `StarterNodeInspectorViewTests`.
+- New dependency: `com.faolline.starterGraph` 0.6.1. `DependencyMatrixTests` allows graphTest.Editor →
+  starterGraph.Runtime and graphTest.Tests → starterGraph.Runtime/Editor; `ARCHITECTURE.md` updated.
+
+### Removed
+- The **Faolline ▸ Open TestGraph Editor** menu and the `GraphTest ▸ Test Graph` create menu. Use
+  **Faolline ▸ Open StarterGraph Editor** and `StarterGraph ▸ Starter Graph`. The sample builders keep
+  their **Create Sample TestGraph …** menus.
+
 ## [0.3.1]
 
 ### Fixed

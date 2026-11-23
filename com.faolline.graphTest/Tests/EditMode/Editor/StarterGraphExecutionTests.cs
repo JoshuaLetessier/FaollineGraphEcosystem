@@ -4,18 +4,21 @@ using UnityEngine;
 using UnityEngine.TestTools;
 using Faolline.GraphCore;
 using Faolline.GraphTest.Editor;
+using Faolline.StarterGraph;
+using Faolline.StarterGraph.Editor;
+using StarterGraphAsset = Faolline.StarterGraph.StarterGraph;
 
 namespace Faolline.GraphTest.Tests
 {
     [TestFixture]
-    public class TestGraphExecutionTests
+    public class StarterGraphExecutionTests
     {
-        private TestGraph BuildLinearGraph()
+        private StarterGraphAsset BuildLinearGraph()
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
 
             var start = new StartNodeData   { Id = "start", NodeType = StartNodeData.NodeTypeId };
-            var stmt  = new TestStatementNodeData { Id = "stmt", NodeType = TestStatementNodeData.NodeTypeId, Label = "hello" };
+            var stmt  = new StarterStatementNodeData { Id = "stmt", NodeType = StarterStatementNodeData.NodeTypeId, Label = "hello" };
             var end   = new EndNodeData     { Id = "end",   NodeType = EndNodeData.NodeTypeId };
 
             graph.AddNode(start);
@@ -32,7 +35,7 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void ExecuteGraph_LinearChain_LogsAllThreeNodes()
         {
-            var window = ScriptableObject.CreateInstance<TestGraphEditorWindow>();
+            var window = ScriptableObject.CreateInstance<StarterGraphEditorWindow>();
             var graph  = BuildLinearGraph();
             try
             {
@@ -51,7 +54,7 @@ namespace Faolline.GraphTest.Tests
                 Assert.AreEqual(3, visitedTypes.Count,
                     "A Start→Statement→End chain must visit exactly 3 nodes");
                 Assert.AreEqual(StartNodeData.NodeTypeId,           visitedTypes[0]);
-                Assert.AreEqual(TestStatementNodeData.NodeTypeId,   visitedTypes[1]);
+                Assert.AreEqual(StarterStatementNodeData.NodeTypeId,   visitedTypes[1]);
                 Assert.AreEqual(EndNodeData.NodeTypeId,             visitedTypes[2]);
                 Assert.AreEqual(RunnerState.Ended, runner.State);
             }
@@ -63,18 +66,18 @@ namespace Faolline.GraphTest.Tests
         }
 
         // Start → Choice(Left→A, Right→B) → A→End, B→End
-        private static TestGraph BuildChoiceGraph(BaseCondition leftCondition = null)
+        private static StarterGraphAsset BuildChoiceGraph(BaseCondition leftCondition = null)
         {
-            var graph = ScriptableObject.CreateInstance<TestGraph>();
+            var graph = ScriptableObject.CreateInstance<StarterGraphAsset>();
 
             var start  = new StartNodeData       { Id = "start", NodeType = StartNodeData.NodeTypeId };
             var choice = new ChoiceNodeData       { Id = "choice", NodeType = ChoiceNodeData.NodeTypeId };
-            var a      = new TestStatementNodeData { Id = "a", NodeType = TestStatementNodeData.NodeTypeId, Label = "A" };
-            var b      = new TestStatementNodeData { Id = "b", NodeType = TestStatementNodeData.NodeTypeId, Label = "B" };
+            var a      = new StarterStatementNodeData { Id = "a", NodeType = StarterStatementNodeData.NodeTypeId, Label = "A" };
+            var b      = new StarterStatementNodeData { Id = "b", NodeType = StarterStatementNodeData.NodeTypeId, Label = "B" };
             var end    = new EndNodeData          { Id = "end", NodeType = EndNodeData.NodeTypeId };
 
-            choice.Choices.Add(new TestChoice { Id = "left",  Label = "Left",  Condition = leftCondition });
-            choice.Choices.Add(new TestChoice { Id = "right", Label = "Right" });
+            choice.Choices.Add(new StarterChoice { Id = "left",  Label = "Left",  Condition = leftCondition });
+            choice.Choices.Add(new StarterChoice { Id = "right", Label = "Right" });
 
             graph.AddNode(start);
             graph.AddNode(choice);
@@ -95,7 +98,7 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void ExecuteGraph_ReachingChoiceNode_PausesAndLogsWaiting()
         {
-            var window = ScriptableObject.CreateInstance<TestGraphEditorWindow>();
+            var window = ScriptableObject.CreateInstance<StarterGraphEditorWindow>();
             var graph  = BuildChoiceGraph();
             try
             {
@@ -120,7 +123,7 @@ namespace Faolline.GraphTest.Tests
         public void ChoiceNode_WithAllFailingConditions_HaltsAsStuck()
         {
             var falseCond = ScriptableObject.CreateInstance<TestAlwaysFalseCondition>();
-            var window = ScriptableObject.CreateInstance<TestGraphEditorWindow>();
+            var window = ScriptableObject.CreateInstance<StarterGraphEditorWindow>();
             // Both choices unavailable: left fails, right also gated false.
             var graph  = BuildChoiceGraph(leftCondition: falseCond);
             var rightChoice = ((ChoiceNodeData)graph.Nodes[1]).Choices[1];
@@ -146,13 +149,13 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void SubGraphNode_RunsChildThenResumesParent()
         {
-            var child  = ScriptableObject.CreateInstance<TestGraph>();
-            var parent = ScriptableObject.CreateInstance<TestGraph>();
+            var child  = ScriptableObject.CreateInstance<StarterGraphAsset>();
+            var parent = ScriptableObject.CreateInstance<StarterGraphAsset>();
             try
             {
                 // child: Start → Statement("inner") → End
                 child.AddNode(new StartNodeData         { Id = "cs",    NodeType = StartNodeData.NodeTypeId });
-                child.AddNode(new TestStatementNodeData { Id = "cstmt", NodeType = TestStatementNodeData.NodeTypeId, Label = "inner" });
+                child.AddNode(new StarterStatementNodeData { Id = "cstmt", NodeType = StarterStatementNodeData.NodeTypeId, Label = "inner" });
                 child.AddNode(new EndNodeData           { Id = "ce",    NodeType = EndNodeData.NodeTypeId });
                 child.EntryNodeId = "cs";
                 child.AddEdge(new BaseEdgeData { Id = "ce1", FromNodeId = "cs",    ToNodeId = "cstmt", PortName = "out" });
@@ -187,7 +190,7 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void SubGraphNode_NullTarget_HaltsAsStuck()
         {
-            var parent = ScriptableObject.CreateInstance<TestGraph>();
+            var parent = ScriptableObject.CreateInstance<StarterGraphAsset>();
             try
             {
                 parent.AddNode(new StartNodeData    { Id = "ps", NodeType = StartNodeData.NodeTypeId });
@@ -216,8 +219,8 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void ExecuteGraph_EndReasonCancelled_LogsCancelled()
         {
-            var window = ScriptableObject.CreateInstance<TestGraphEditorWindow>();
-            var graph  = ScriptableObject.CreateInstance<TestGraph>();
+            var window = ScriptableObject.CreateInstance<StarterGraphEditorWindow>();
+            var graph  = ScriptableObject.CreateInstance<StarterGraphAsset>();
             try
             {
                 var start = new StartNodeData { Id = "s", NodeType = StartNodeData.NodeTypeId };
@@ -242,11 +245,11 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void ExecuteGraph_NullGraph_LogsError()
         {
-            var window = ScriptableObject.CreateInstance<TestGraphEditorWindow>();
+            var window = ScriptableObject.CreateInstance<StarterGraphEditorWindow>();
             try
             {
                 LogAssert.Expect(LogType.Error,
-                    "[GraphTest] No graph loaded. Open a TestGraph asset first.");
+                    "[StarterGraph] No graph loaded. Open a StarterGraph asset first.");
                 window.ExecuteGraph(null);
             }
             finally { Object.DestroyImmediate(window); }
@@ -255,13 +258,13 @@ namespace Faolline.GraphTest.Tests
         [Test]
         public void ExecuteGraph_NoEntryNodeId_LogsError()
         {
-            var window = ScriptableObject.CreateInstance<TestGraphEditorWindow>();
-            var graph  = ScriptableObject.CreateInstance<TestGraph>();
+            var window = ScriptableObject.CreateInstance<StarterGraphEditorWindow>();
+            var graph  = ScriptableObject.CreateInstance<StarterGraphAsset>();
             try
             {
                 // Graph has no EntryNodeId set
                 LogAssert.Expect(LogType.Error,
-                    "[GraphTest] Graph has no entry node set. Add a Start node and save before running.");
+                    "[StarterGraph] Graph has no entry node set. Add a Start node and save before running.");
                 window.ExecuteGraph(graph);
             }
             finally
