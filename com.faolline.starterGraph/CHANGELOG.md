@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/) and the p
 
 Internal verification package — not for distribution; history starts being tracked from 0.4.0.
 
+## [0.6.1]
+
+### Fixed
+- **Template fork procedure no longer causes GUID conflicts.** The README now says to duplicate the folder
+  inside Unity (Ctrl+D), not in the file explorer, to delete the copied sample asset (it keeps pointing at
+  the original package's scripts) and to regenerate it from the renamed sample builder. It also lists the
+  `[Icon]` and the sample builder's `Folder` constant among the things to rename.
+- `StarterGraph`'s create menu read `StarterGraph/Test Graph`, a leftover from the graphTest origin; it is
+  now `StarterGraph/Starter Graph`.
+- The README described the package as a "verification package"; it is the template to fork.
+- **Recorded the dependency floors** already in `package.json`: `com.faolline.graphcore` 0.44.0 and
+  `com.faolline.graphlogging` 0.2.0, raised by ecosystem-wide syncs without a version bump here.
+
 ## [0.6.0]
 
 ### Changed

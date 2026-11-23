@@ -1,11 +1,15 @@
 # com.faolline.graphTest
 
-**Version**: 0.3.0 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.44.0, `com.faolline.graphstandard` ≥ 0.18.0
+**Version**: 0.3.1 — **Unity**: 6000.x — **Depends on**: `com.faolline.graphcore` ≥ 0.44.0, `com.faolline.graphstandard` ≥ 0.18.0, `com.faolline.graphlogging` ≥ 0.2.0
 
 **Internal verification package — not for distribution.**
 
-Integration test suite for the Faolline Graph Ecosystem. Exercises the graphcore editor and runtime
-surface through concrete test graph types, sample builders, and NUnit test assemblies.
+Three things in one dev-only package:
+- an integration test suite that exercises the graphcore editor and runtime surface through a concrete
+  test graph type;
+- a **sandbox** for trying graphcore by hand: the TestGraph editor window (**Faolline ▸ Open TestGraph
+  Editor**) and six sample graphs;
+- the ecosystem-wide **assembly dependency guard**, `DependencyMatrixTests` (see "Architecture" below).
 
 It is **not** part of the consumable ecosystem: it is intentionally absent from the module selector
 whitelist and nothing depends on it. Kept in the repo for development and CI only.
@@ -15,8 +19,10 @@ whitelist and nothing depends on it. Kept in the repo for development and CI onl
 ## What it tests
 
 - **TestGraph / TestGameContext** — concrete graph and context subclasses used as test fixtures
-- **Test actions & conditions** — `TestAction`, `TestCondition`, and typed variants that record
-  invocations for assertion (not real logic — pure verification scaffolding)
+- **Test actions & conditions** — `TestLogAction`, `TestSet{Bool,Int,Float,String}Action`,
+  `TestRecipeAction`, `Test{Bool,Int,Float,String}Condition`, collection/signal conditions and the
+  always-true/false doubles. They are verification scaffolding on the raw-string key channel, not the
+  canonical nodes (those live in graphcore / graphstandard)
 - **Sample builders** — menu items that generate fully-wired sample graphs for manual inspection
 - **Editor integration** — `TestGraphEditorWindow` exercises the graph editor surface
 - **Architecture** — `Tests/EditMode/Architecture/DependencyMatrixTests.cs` re-reads every ecosystem
@@ -71,7 +77,7 @@ com.faolline.graphTest/
   Samples/                     ← Generated sample graph assets (SampleAuthoringGraph, SampleChildGraph,
                                   SampleCompleteGraph, SampleFlowFork, SampleHistoryStress, SampleReactiveProgression)
   Tests/
-    EditMode/                  ← NUnit test assembly (~25 files)
+    EditMode/                  ← NUnit test assembly (21 test files)
       Architecture/              ← DependencyMatrixTests — see "Architecture" above
       Editor/                    ← Editor-surface tests (graph view, inspector, node views, window session)
       Runtime/                   ← Runtime coverage (actions, conditions, history, signals, sub-graphs, typed context)

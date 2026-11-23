@@ -1,8 +1,8 @@
 {
     "name": "com.faolline.graphTest",
-    "version": "0.3.0",
+    "version": "0.3.1",
     "displayName": "Faolline GraphTest",
-    "description": "Concrete verification package for com.faolline.graphcore. Exercises the full editor and runtime surface.",
+    "description": "Dev-only verification package: exercises the graphcore editor and runtime surface through a concrete test graph, ships the TestGraph sandbox window and sample graphs, and hosts the ecosystem-wide assembly dependency guard (DependencyMatrixTests).",
     "unity": "6000.0",
     "dependencies": {
         "com.faolline.graphcore": "0.44.0",

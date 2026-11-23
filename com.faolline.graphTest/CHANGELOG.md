@@ -4,6 +4,17 @@ All notable changes to **com.faolline.graphTest** are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/) and the project uses
 [Semantic Versioning](https://semver.org/).
 
+## [0.3.1]
+
+### Fixed
+- **README and package description brought in line with the package.** They now say it also hosts the
+  TestGraph sandbox window, the sample graphs and the ecosystem-wide `DependencyMatrixTests`. The README no
+  longer names `TestAction`/`TestCondition`, which do not exist (the doubles are `TestLogAction`,
+  `TestSetIntAction`, `TestIntCondition`, …).
+- **Recorded the dependency floors** already in `package.json`: `com.faolline.graphcore` 0.44.0,
+  `com.faolline.graphstandard` 0.18.0 and `com.faolline.graphlogging` 0.2.0, raised by ecosystem-wide syncs
+  without a version bump here.
+
 ## [0.3.0]
 
 ### Changed

@@ -56,8 +56,8 @@ com.faolline.graphimport           → graphcore, graphstandard, graphdialoguesy
 Internal / not distributed:
 
 ```
-com.faolline.starterGraph          → graphcore              — minimal template (fork this)
-com.faolline.graphTest             → graphcore, graphstandard — integration tests
+com.faolline.starterGraph          → graphcore, graphlogging — minimal template (fork this)
+com.faolline.graphTest             → graphcore, graphstandard, graphlogging — integration tests, sandbox, dependency guard
 ```
 
 ## Which package do I need?
